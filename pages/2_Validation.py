@@ -1,14 +1,16 @@
 import streamlit as st
 from modules.categorization import predict_category_ai
 
-from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category
+from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_unique_members, update_transaction_member
+from modules.ui import load_css
 import re
 import pandas as pd
 
 st.set_page_config(page_title="Validation", page_icon="✅", layout="wide")
+load_css()
 
 # Helper for validation with optional memory
-def validate_with_memory(tx_id, label, category, remember):
+def validate_with_memory(tx_id, label, category, remember, member_update=None):
     if remember:
         pattern = re.sub(r'(?i)CARTE|CB\*?\d*|\d{2}/\d{2}/\d{2}', '', label).strip()
         clean_pattern = re.sub(r'[^a-zA-Z\s]', '', pattern).strip().upper()
@@ -18,11 +20,16 @@ def validate_with_memory(tx_id, label, category, remember):
             add_learning_rule(clean_pattern, category)
             
     update_transaction_category(tx_id, category)
+    if member_update:
+        update_transaction_member(tx_id, member_update)
 
 st.title("✅ Validation des dépenses")
 
 # Load data
 df = get_pending_transactions()
+all_members = get_unique_members() # Get available members
+if not all_members:
+    all_members = ["Aurélien", "Élise", "Compte Joint"] # Fallback defaults
 
 if df.empty:
     st.success("Toutes les transactions sont validées ! 🎉")
@@ -62,8 +69,27 @@ else:
             
             with col1:
                 st.caption(row['date'])
-                if 'member' in row and row['member']:
-                     st.caption(f"Cards: {row['member']}")
+                
+                # Dynamic Member Selection
+                current_member = row.get('member', '')
+                member_key = f"mem_sel_{row['id']}"
+                
+                # Check if "Inconnu" or empty -> Allow selection
+                # We check literal 'Inconnu' (str) or empty
+                is_unknown = (current_member == 'Inconnu' or not current_member)
+                
+                if is_unknown:
+                    # Provide selectbox
+                    selected_member_val = st.selectbox(
+                        "Qui ?", 
+                        ["Inconnu"] + all_members, 
+                        key=member_key,
+                        label_visibility="collapsed"
+                    )
+                else:
+                    st.caption(f"Cards: {current_member}")
+                    selected_member_val = None
+
             with col2:
                 st.markdown(f"**{row['label']}**")
                 if row.get('ai_confidence'):
@@ -112,9 +138,12 @@ else:
 
                 with c3:
                     if st.button("OK", key=f"btn_{row['id']}", type="primary"):
-                        validate_with_memory(row['id'], row['label'], st.session_state[cat_key], remember)
+                        # If member was "Inconnu", we use the selectbox value to update, UNLESS it's still Inconnu
+                        final_member = None
+                        if is_unknown and selected_member_val and selected_member_val != "Inconnu":
+                            final_member = selected_member_val
+                            
+                        validate_with_memory(row['id'], row['label'], st.session_state[cat_key], remember, final_member)
                         st.rerun()
-            
-            st.divider()
             
             st.divider()

@@ -1,37 +1,175 @@
-/* Palette
-   Bleu profond: #1F3A5F
-   Bleu clair: #4F81BD
-   Gris fond: #F4F6F8
-   Texte: #2E2E2E
-   Accent: #E5533D
-*/
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
+:root {
+    --primary-color: #0F172A;
+    /* Deep Navy text/headers */
+    --secondary-color: #3B82F6;
+    /* Bright Blue Action */
+    --accent-color: #10B981;
+    /* Success Green */
+    --bg-color: #F8FAFC;
+    /* Light Blue-Grey Background */
+    --card-bg: #FFFFFF;
+    --text-color: #334155;
+    --text-light: #64748B;
+    --border-color: #E2E8F0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Global Reset & Typography */
+html,
+body,
+[class*="css"] {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+}
+
+/* Streamlit Main Container */
 .stApp {
-    background-color: #F4F6F8;
-    color: #2E2E2E;
+    background-color: var(--bg-color);
 }
 
-h1, h2, h3 {
-    color: #1F3A5F !important;
+/* Headings */
+h1,
+h2,
+h3 {
+    color: var(--primary-color) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.025em;
 }
 
+h1 {
+    font-size: 2.25rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+h2 {
+    font-size: 1.5rem !important;
+    margin-top: 2rem !important;
+}
+
+h3 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+}
+
+/* Buttons - Premium Feel */
 .stButton button {
-    background-color: #4F81BD;
+    background-color: var(--primary-color);
     color: white;
+    font-weight: 500;
     border-radius: 8px;
+    padding: 0.5rem 1rem;
     border: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .stButton button:hover {
-    background-color: #1F3A5F;
-    color: white;
+    background-color: #1E293B;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
-/* Custom Metrics Card */
-div[data-testid="metric-container"] {
-    background-color: white;
-    border: 1px solid #ddd;
-    padding: 15px;
+.stButton button:active {
+    transform: translateY(0);
+}
+
+/* Secondary Button (if needed, mimicking secondary style via css selector on specific buttons if possible, or generic override) */
+/* We can't target specifically "secondary" in pure streamlit easily without key hacks, but we can style the generic button well. */
+
+/* Inputs & Selectboxes */
+.stTextInput input,
+.stSelectbox div[data-baseweb="select"] {
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border-color: var(--border-color);
+    background-color: white;
+}
+
+/* Cards (Metrics & Custom) */
+div[data-testid="metric-container"] {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease;
+}
+
+div[data-testid="metric-container"]:hover {
+    box-shadow: var(--shadow-md);
+}
+
+div[data-testid="metric-container"] label {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Custom Card Class (for HTML usage) */
+.custom-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.card-trend-positive {
+    color: var(--accent-color);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.card-trend-negative {
+    color: #EF4444;
+    /* Red */
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #F1F5F9;
+    /* Slightly darker than main bg */
+    border-right: 1px solid var(--border-color);
+}
+
+/* Plotly Charts Container */
+.js-plotly-plot {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
 }

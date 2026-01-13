@@ -1,12 +1,14 @@
 import streamlit as st
 from modules.data_manager import get_all_transactions, update_transaction_category
 from modules.categorization import clean_label, predict_category_ai
+from modules.ui import load_css
 import pandas as pd
 import json
 import google.generativeai as genai
 import os
 
 st.set_page_config(page_title="Assistant Audit", page_icon="🕵️", layout="wide")
+load_css()
 st.title("🕵️ Assistant d'Audit")
 st.markdown("Je scanne vos transactions pour détecter des incohérences ou des erreurs de catégorisation.")
 
@@ -97,40 +99,87 @@ def ai_audit_batch(df):
         st.error(f"Erreur audit IA: {e}")
         return []
 
-# UI
-if st.button("Lancer l'analyse 🔎", type="primary"):
-    with st.spinner("Analyse des incohérences et vérification IA..."):
-        df = get_all_transactions()
-        
-        if df.empty:
-            st.warning("Pas de transactions à analyser.")
-        else:
-            inconsistencies = detect_inconsistencies(df)
-            ai_suggestions = ai_audit_batch(df)
-            
-            st.session_state['audit_results'] = inconsistencies + ai_suggestions
-            st.rerun()
+from modules.analytics import detect_recurring_payments
+from modules.ui import card_kpi
 
-if 'audit_results' in st.session_state:
-    results = st.session_state['audit_results']
-    
-    if not results:
-        st.success("Aucune anomalie détectée ! Tout semble propre. ✨")
-    else:
-        st.info(f"{len(results)} anomalies potentielles trouvées.")
+tab_audit, tab_sub = st.tabs(["🔎 Audit & Qualité", "💸 Abonnements & Récurrents"])
+
+with tab_audit:
+    # --- EXISTING AUDIT LOGIC ---
+    if st.button("Lancer l'analyse 🔎", type="primary"):
+        with st.spinner("Analyse des incohérences et vérification IA..."):
+            df = get_all_transactions()
+            
+            if df.empty:
+                st.warning("Pas de transactions à analyser.")
+            else:
+                inconsistencies = detect_inconsistencies(df)
+                ai_suggestions = ai_audit_batch(df)
+                
+                st.session_state['audit_results'] = inconsistencies + ai_suggestions
+                st.rerun()
+
+    if 'audit_results' in st.session_state:
+        results = st.session_state['audit_results']
         
-        for i, item in enumerate(results):
-            with st.expander(f"{item['type']} : {item['label']}"):
-                st.write(f"**Détails :** {item['details']}")
-                
-                # Show related transactions
-                st.dataframe(item['rows'][['date', 'label', 'amount', 'category_validated']])
-                
-                if item.get('suggested_category'):
-                    if st.button(f"Accepter la correction ({item['suggested_category']})", key=f"fix_{i}"):
-                        # Apply correction to all rows
-                        for tx_id in item['rows']['id']:
-                            update_transaction_category(tx_id, item['suggested_category'])
-                        st.success("Correction appliquée !")
-                        st.session_state['audit_results'].pop(i) # Remove from list (simple update)
-                        st.rerun()
+        if not results:
+            st.success("Aucune anomalie détectée ! Tout semble propre. ✨")
+        else:
+            st.info(f"{len(results)} anomalies potentielles trouvées.")
+            
+            for i, item in enumerate(results):
+                with st.expander(f"{item['type']} : {item['label']}"):
+                    st.write(f"**Détails :** {item['details']}")
+                    st.dataframe(item['rows'][['date', 'label', 'amount', 'category_validated']])
+                    
+                    if item.get('suggested_category'):
+                        if st.button(f"Accepter la correction ({item['suggested_category']})", key=f"fix_{i}"):
+                            for tx_id in item['rows']['id']:
+                                update_transaction_category(tx_id, item['suggested_category'])
+                            st.success("Correction appliquée !")
+                            st.session_state['audit_results'].pop(i)
+                            st.rerun()
+
+with tab_sub:
+    st.header("Détection des Abonnements")
+    st.markdown("Analyse des paiements récurrents sur la base de vos transactions passées.")
+    
+    df_sub = get_all_transactions()
+    if df_sub.empty:
+        st.info("Importez des données pour détecter vos abonnements.")
+    else:
+        recurring = detect_recurring_payments(df_sub)
+        
+        if recurring.empty:
+            st.warning("Aucun paiement récurrent détecté pour l'instant (il faut au moins 2 occurrences).")
+        else:
+            # Display KPIs
+            monthly_total = recurring['avg_amount'].sum()
+            
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                card_kpi("Budget Mensuel Estimé", f"{abs(monthly_total):.2f} €", trend="Fixe", trend_color="neutral")
+            with col_s2:
+                card_kpi("Abonnements détectés", f"{len(recurring)}", trend="Actifs", trend_color="neutral")
+            
+            st.divider()
+            st.subheader("Détails des récurrences")
+            
+            # Formating for display
+            display_rec = recurring[['label', 'avg_amount', 'frequency_days', 'category', 'last_date']].copy()
+            display_rec['avg_amount'] = display_rec['avg_amount'].apply(lambda x: f"{x:.2f} €")
+            display_rec['frequency_days'] = display_rec['frequency_days'].apply(lambda x: f"~{x:.0f} jours")
+            
+            st.dataframe(
+                display_rec,
+                column_config={
+                    "label": "Libellé",
+                    "avg_amount": "Montant Moyen",
+                    "frequency_days": "Fréquence",
+                    "category": "Catégorie",
+                    "last_date": "Dernière transaction"
+                },
+                use_container_width=True
+            )
+            
+            st.markdown("*> Note : Cette liste est basée sur la régularité des paiements (intervalle ~30 jours) et la constance du montant.*")

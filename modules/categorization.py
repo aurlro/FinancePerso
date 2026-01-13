@@ -1,5 +1,6 @@
 import google.generativeai as genai
 from dotenv import load_dotenv
+from modules.logger import logger
 import os
 import json
 import re
@@ -12,26 +13,8 @@ if api_key:
     genai.configure(api_key=api_key)
 
 # Mock rules for MVP
-RULES = [
-    (r"INTERMARCHE", "Alimentation"),
-    (r"CARREFOUR", "Alimentation"),
-    (r"E.LECLERC", "Alimentation"),
-    (r"SUPER U", "Alimentation"),
-    (r"BOULANGERIE", "Alimentation"),
-    (r"SELECTA", "Alimentation"),
-    (r"SNCF", "Transport"),
-    (r"TOTAL", "Transport"),
-    (r"UBER", "Transport"),
-    (r"AMAZON", "Achats"),
-    (r"SPOTIFY", "Abonnements"),
-    (r"NETFLIX", "Abonnements"),
-    (r"ORANGE", "Abonnements"),
-    (r"FREE MOBILE", "Abonnements"),
-    (r"LOUVRE", "Loisirs"),
-    (r"CINEMA", "Loisirs"),
-    (r"REST", "Restaurants"),
-    (r"CAFE", "Restaurants"),
-]
+# Rules have been migrated to database (see modules/data_manager.py)
+RULES = []
 
 PROMPT_TEMPLATE = """
 Tu es un expert en catégorisation financière. Analyse la transaction suivante et détermine la catégorie la plus appropriée.
@@ -72,6 +55,7 @@ def clean_label(label):
 # So if we import data_manager here, it should be fine.
 
 from modules.data_manager import get_learning_rules
+from modules.ai_manager import get_ai_provider, get_active_model_name
 
 def apply_rules(label):
     """
@@ -99,12 +83,14 @@ def apply_rules(label):
                 try:
                     if re.search(pattern, label_upper, re.IGNORECASE):
                         return row['category'], 1.0
+                    if pattern.upper() in label_upper: # fallback double check
+                         return row['category'], 1.0
                 except re.error:
                     # Fallback for bad regex: simple string check
                     if pattern.upper() in label_upper:
                          return row['category'], 1.0
     except Exception as e:
-        print(f"Rule Error: {e}")
+        logger.error(f"Rule Error: {e}")
 
     # 2. Hardcoded Rules
     for pattern, category in RULES:
@@ -114,31 +100,24 @@ def apply_rules(label):
 
 def predict_category_ai(label, amount, date):
     """
-    Real Gemini API call.
+    Generic AI API call via Manager.
     """
-    if not api_key:
-        return "Inconnu", 0.0
-    
     # Pre-clean label for better AI focus
     cleaned_label = clean_label(label)
     
     try:
-        # Use gemini-2.0-flash which is generally available and faster
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        provider = get_ai_provider()
+        model_name = get_active_model_name()
+        
         # We pass both original and cleaned, just in case context helps, but emphasize cleaned.
         prompt = PROMPT_TEMPLATE.format(label=f"{cleaned_label} (Original: {label})", amount=amount, date=date)
-        response = model.generate_content(prompt)
         
-        # Parse JSON from text (Gemini might wrap in ```json ... ```)
-        text = response.text
-        # Cleanup markdown code blocks if present
-        text = text.replace("```json", "").replace("```", "").strip()
+        data = provider.generate_json(prompt, model_name=model_name)
         
-        data = json.loads(text)
         return data.get("category", "Inconnu"), float(data.get("confidence", 0.5))
         
     except Exception as e:
-        print(f"AI Error: {e}")
+        logger.error(f"AI Manager Error: {e}")
         return "Inconnu", 0.0
 
 def categorize_transaction(label, amount, date):
@@ -158,15 +137,12 @@ def categorize_transaction(label, amount, date):
 
 def generate_financial_report(stats_json):
     """
-    Generate a financial report using Gemini.
+    Generate a financial report using generic AI provider.
     stats_json: dict containing monthly totals, top categories, ytd data...
     """
-    if not api_key:
-        return "Clé API manquante. Impossible de générer le rapport."
-
     try:
-        # Based on available models: gemini-2.0-flash is a good choice (fast/cheap/smart)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        provider = get_ai_provider()
+        model_name = get_active_model_name()
         
         prompt = f"""
         Tu es un conseiller financier personnel bienveillant et perspicace.
@@ -185,8 +161,7 @@ def generate_financial_report(stats_json):
         Ne mentionne pas "JSON" dans ta réponse, parle directement à l'utilisateur.
         """
         
-        response = model.generate_content(prompt)
-        return response.text
+        return provider.generate_text(prompt, model_name=model_name)
         
     except Exception as e:
         return f"Erreur lors de la génération du rapport : {e}"

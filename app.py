@@ -8,12 +8,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Chargement du style
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+from modules.ui import load_css
 
-local_css("assets/style.css")
+load_css()
 
 st.title("Bienvenue sur MyFinance Companion")
 
