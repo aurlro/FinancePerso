@@ -66,6 +66,9 @@ def detect_recurring_payments(df):
                 "is_subscription_candidate": True
             })
             
+    if not recurring_items:
+        return pd.DataFrame(columns=["label", "avg_amount", "frequency_days", "count", "last_date", "category", "is_subscription_candidate"])
+        
     return pd.DataFrame(recurring_items).sort_values(by='avg_amount')
 
 from modules.data_manager import get_learning_rules
