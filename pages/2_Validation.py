@@ -1,13 +1,14 @@
 import streamlit as st
 from modules.categorization import predict_category_ai
 
-from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_unique_members, update_transaction_member
+from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_unique_members, update_transaction_member, init_db
 from modules.ui import load_css
 import re
 import pandas as pd
 
 st.set_page_config(page_title="Validation", page_icon="✅", layout="wide")
 load_css()
+init_db()  # Ensure tables exist
 
 # Helper for validation with optional memory
 def validate_with_memory(tx_id, label, category, remember, member_update=None):

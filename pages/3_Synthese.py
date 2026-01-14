@@ -170,8 +170,10 @@ else:
     # We use max_date from data to know "current month context"
     if not df.empty:
         max_date = df['date'].max()
-        # Ensure max_date is date object
-        if isinstance(max_date, pd.Timestamp):
+        # Ensure max_date is date object (could be string, Timestamp, or date)
+        if isinstance(max_date, str):
+            max_date = pd.to_datetime(max_date).date()
+        elif isinstance(max_date, pd.Timestamp):
             max_date = max_date.date()
     else:
         max_date = today
