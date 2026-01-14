@@ -153,7 +153,9 @@ if uploaded_file is not None:
                     if num_duplicates > 0:
                         st.warning(f"⚠️ **{num_duplicates} doublons détectés** (déjà importés). Ils seront ignorés.")
                         with st.expander(f"Voir les {num_duplicates} doublons"):
-                            st.dataframe(df[duplicates_mask][['date', 'label', 'amount']].head(20))
+                            df_dup_preview = df[duplicates_mask][['date', 'label', 'amount']].copy()
+                            df_dup_preview.columns = ['Date', 'Libellé', 'Montant'] # Clean display
+                            st.dataframe(df_dup_preview.head(20))
                     
                     if num_new == 0:
                         st.error("❌ Toutes les transactions sont déjà importées !")
@@ -166,7 +168,11 @@ if uploaded_file is not None:
                 
                 # Preview new transactions
                 st.subheader("Aperçu des nouvelles transactions")
-                st.dataframe(df.head(10))
+                df_new_preview = df[~duplicates_mask].head(10).copy() if not existing_df.empty else df.head(10).copy()
+                # Rename for display
+                df_new_display = df_new_preview[['date', 'label', 'amount']].copy()
+                df_new_display.columns = ['Date', 'Libellé', 'Montant']
+                st.dataframe(df_new_display)
                 
                 # --- STEP 4: CATEGORIZATION & IMPORT ---
                 st.divider()

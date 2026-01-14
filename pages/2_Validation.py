@@ -88,7 +88,7 @@ else:
                         label_visibility="collapsed"
                     )
                 else:
-                    st.caption(f"Cards: {current_member}")
+                    st.caption(f"Membre : {current_member}")
                     selected_member_val = None
 
             with col2:

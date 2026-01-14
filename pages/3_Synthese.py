@@ -95,13 +95,21 @@ else:
     with curr_col1:
         st.subheader("Fixe vs Variable")
         df_type = df_expenses.groupby('type')['amount'].sum().reset_index()
-        fig_type = px.pie(df_type, values='amount', names='type', hole=0.5, color_discrete_sequence=['#4F81BD', '#E5533D'])
+        df_type.columns = ['Type', 'Montant']  # French labels
+        fig_type = px.pie(df_type, values='Montant', names='Type', hole=0.5, 
+                          color_discrete_sequence=['#4F81BD', '#E5533D'])
+        fig_type.update_traces(textposition='inside', textinfo='percent+label')
+        fig_type.update_layout(showlegend=False)
         st.plotly_chart(fig_type, use_container_width=True)
         
     with curr_col2:
         st.subheader("Dépenses par Catégorie")
         df_cat = df_expenses.groupby('display_category')['amount'].sum().reset_index()
-        fig_cat = px.bar(df_cat, x='display_category', y='amount', color='display_category')
+        df_cat.columns = ['Catégorie', 'Montant']  # French labels
+        df_cat = df_cat.sort_values('Montant', ascending=True)  # Sort for better viz
+        fig_cat = px.bar(df_cat, x='Montant', y='Catégorie', orientation='h',
+                         color='Catégorie', color_discrete_sequence=px.colors.qualitative.Set2)
+        fig_cat.update_layout(showlegend=False, xaxis_title='Montant (€)', yaxis_title='')
         st.plotly_chart(fig_cat, use_container_width=True)
 
     st.divider()
@@ -216,19 +224,19 @@ else:
                 
                 col_f1, col_f2, col_f3 = st.columns(3)
                 with col_f1:
-                    card_kpi("Solde Actuel", f"{current_balance:+.0f} €", trend=f"Rev: {current_income:.0f}€", trend_color="positive" if current_balance>0 else "negative")
+                    card_kpi("Solde Actuel", f"{current_balance:+.0f} €", trend=f"Recettes: {current_income:.0f}€", trend_color="positive" if current_balance>0 else "negative")
                 with col_f2:
-                    card_kpi("Dépenses Projetées", f"{projected_total_expenses:.0f} €", trend=f"dont {projected_variable:.0f}€ var.", trend_color="negative")
+                    card_kpi("Dépenses Projetées", f"{projected_total_expenses:.0f} €", trend=f"soit {projected_variable:.0f}€ var.", trend_color="negative")
                 with col_f3:
-                    trend_txt = "Epargne" if projected_balance > 0 else "Déficit"
+                    trend_txt = "Épargne" if projected_balance > 0 else "Déficit potentiel"
                     color = "positive" if projected_balance >= 0 else "negative"
-                    card_kpi("Atterrissage Fin de Mois", f"{projected_balance:+.0f} €", trend=trend_txt, trend_color=color)
+                    card_kpi("Atterrissage Estimé", f"{projected_balance:+.0f} €", trend=trend_txt, trend_color=color)
                     
-                st.info(f"💡 Basé sur un rythme journalier de {avg_daily_var:.0f}€ (var). À ce rythme, vous finirez le mois à **{projected_balance:+.0f}€**.")
+                st.info(f"💡 Basé sur une moyenne de **{avg_daily_var:.0f}€** par jour (variable). À ce rythme, l'estimation fin de mois est de **{projected_balance:+.0f}€**.")
             else:
                 st.write("Début de mois, pas assez de données pour projeter.")
     else:
-        st.caption(f"Prévisions disponibles uniquement pour le mois en cours ({today.strftime('%B %Y')}). Données affichées : {max_date.strftime('%Y-%m')}")
+        st.caption(f"Prévisions disponibles pour le mois en cours ({today.strftime('%B %Y')}). Données actuelles : {max_date.strftime('%Y-%m')}")
 
     st.divider()
     
@@ -243,9 +251,12 @@ else:
     df_monthly['month_year'] = df_monthly['date'].dt.strftime('%Y-%m')
     
     df_stacked = df_monthly.groupby(['month_year', 'display_category'])['amount'].sum().reset_index()
+    df_stacked.columns = ['Mois', 'Catégorie', 'Montant']  # French labels
     
-    fig_stacked = px.bar(df_stacked, x='month_year', y='amount', color='display_category', 
-                         title="Dépenses mensuelles empilées", barmode='stack')
+    fig_stacked = px.bar(df_stacked, x='Mois', y='Montant', color='Catégorie', 
+                         title="Dépenses mensuelles empilées", barmode='stack',
+                         color_discrete_sequence=px.colors.qualitative.Set2)
+    fig_stacked.update_layout(xaxis_title='', yaxis_title='Montant (€)', legend_title='Catégorie')
     st.plotly_chart(fig_stacked, use_container_width=True)
 
     st.divider()
