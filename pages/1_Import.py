@@ -98,9 +98,11 @@ if uploaded_file is not None:
         
         with col_q2:
             st.subheader("📅 Période")
-            # Generate years starting from 2024
-            years = list(range(2024, 2027))  # 2024, 2025, 2026
-            selected_year = st.selectbox("Année", years, index=len(years)-1)  # Default to latest
+            # Dynamic years: from 2024 to current year + 1 (future-proof)
+            import datetime
+            current_year = datetime.date.today().year
+            years = list(range(2024, current_year + 2))  # 2024 to next year
+            selected_year = st.selectbox("Année", years, index=len(years)-2)  # Default to current year
             
             months = ["Tous", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
                      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
