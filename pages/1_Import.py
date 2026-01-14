@@ -1,6 +1,6 @@
 import streamlit as st
 from modules.ingestion import load_transaction_file
-from modules.data_manager import save_transactions, init_db
+from modules.data_manager import save_transactions, init_db, get_all_transactions
 from modules.categorization import categorize_transaction
 from modules.ui import load_css
 from modules.utils import validate_csv_file
@@ -8,13 +8,13 @@ import pandas as pd
 
 st.set_page_config(page_title="Import", page_icon="📥")
 load_css()
-
-# Ensure DB is ready
 init_db()
 
 st.title("📥 Import des relevés")
 
-# 1. Configuration Zone
+# --- STEP 1: FILE UPLOAD ---
+st.header("1️⃣ Sélection du fichier")
+
 st.sidebar.header("Configuration")
 import_mode = st.sidebar.radio("Format de la banque", ["BoursoBank (Auto)", "Autre (Toutes banques)"])
 
@@ -33,8 +33,6 @@ if import_mode == "Autre (Toutes banques)":
         'mapping': {}
     }
 
-st.markdown("Chargez vos fichiers CSV pour alimenter votre assistant.")
-
 uploaded_file = st.file_uploader("Choisir un fichier CSV", type=['csv'])
 
 if uploaded_file is not None:
@@ -48,7 +46,6 @@ if uploaded_file is not None:
     if import_mode == "Autre (Toutes banques)":
         st.info("Veuillez mapper les colonnes de votre fichier.")
         try:
-            # Read just the header to get columns
             uploaded_file.seek(0)
             preview_df = pd.read_csv(uploaded_file, sep=sep, skiprows=skiprows, nrows=2)
             cols = preview_df.columns.tolist()
@@ -69,8 +66,6 @@ if uploaded_file is not None:
                 'label': col_label,
                 'member': col_member if col_member != "-- Ignorer --" else None
             }
-            
-            # Allow user to proceed
             ready_to_import = True
         except Exception as e:
             st.error(f"Impossible de lire l'en-tête du fichier : {e}")
@@ -79,50 +74,129 @@ if uploaded_file is not None:
         ready_to_import = True
 
     if ready_to_import:
-        # Account Selection
-        account_name = st.text_input("Nom du compte (ex: Compte Courant, Joint, Livret A)", value="Compte Principal")
+        # --- STEP 2: QUESTIONNAIRE ---
+        st.divider()
+        st.header("2️⃣ Paramètres d'import")
         
-        # Preview
-        st.subheader("Prévisualisation")
+        col_q1, col_q2 = st.columns(2)
         
-        # Run ingestion
+        with col_q1:
+            st.subheader("📁 Compte associé")
+            # Get existing accounts
+            existing_accounts = get_all_transactions()['account_label'].dropna().unique().tolist()
+            if not existing_accounts:
+                existing_accounts = ["Compte Principal"]
+            
+            account_choice = st.radio("Compte", ["Compte existant", "Créer un nouveau compte"])
+            
+            if account_choice == "Compte existant":
+                account_name = st.selectbox("Sélectionner le compte", existing_accounts)
+            else:
+                account_name = st.text_input("Nom du nouveau compte", placeholder="Ex: Compte Joint, Livret A...")
+                if not account_name:
+                    account_name = "Nouveau Compte"
+        
+        with col_q2:
+            st.subheader("📅 Période")
+            # Generate years starting from 2024
+            years = list(range(2024, 2027))  # 2024, 2025, 2026
+            selected_year = st.selectbox("Année", years, index=len(years)-1)  # Default to latest
+            
+            months = ["Tous", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
+                     "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+            selected_month = st.selectbox("Mois (optionnel)", months)
+        
+        # Parse file
+        st.divider()
+        st.header("3️⃣ Prévisualisation & Doublons")
+        
         try:
             mode_arg = "bourso_preset" if "Bourso" in import_mode else "custom"
             df = load_transaction_file(uploaded_file, mode=mode_arg, config=config)
             
-            if isinstance(df, tuple): # Error case
-                 st.error(f"Erreur lors de la lecture : {df[1]}")
+            if isinstance(df, tuple):
+                st.error(f"Erreur lors de la lecture : {df[1]}")
+                st.stop()
             elif df is not None:
-                st.dataframe(df.head())
-                st.info(f"{len(df)} transactions détectées.")
+                # Apply period filter
+                df['date'] = pd.to_datetime(df['date'])
+                df = df[df['date'].dt.year == selected_year]
                 
-                # Auto-categorization
-                if st.checkbox("Lancer la catégorisation automatique (Règles + IA)", value=True):
-                    with st.spinner("Analyse en cours..."):
-                        results = df.apply(lambda row: categorize_transaction(row['label'], row['amount'], row['date']), axis=1)
+                if selected_month != "Tous":
+                    month_num = months.index(selected_month)  # 1-indexed since "Tous" is 0
+                    df = df[df['date'].dt.month == month_num]
+                
+                df['date'] = df['date'].dt.date  # Convert back to date
+                
+                if df.empty:
+                    st.warning(f"Aucune transaction trouvée pour {selected_month} {selected_year}.")
+                    st.stop()
+                
+                st.info(f"📊 {len(df)} transactions trouvées pour {selected_month if selected_month != 'Tous' else 'toute l\\'année'} {selected_year}.")
+                
+                # --- DUPLICATE DETECTION ---
+                existing_df = get_all_transactions()
+                
+                if not existing_df.empty:
+                    # Create comparison keys
+                    df['_dup_key'] = df.apply(lambda r: f"{r['date']}_{r['label']}_{r['amount']}", axis=1)
+                    existing_df['_dup_key'] = existing_df.apply(lambda r: f"{r['date']}_{r['label']}_{r['amount']}", axis=1)
+                    
+                    duplicates_mask = df['_dup_key'].isin(existing_df['_dup_key'])
+                    num_duplicates = duplicates_mask.sum()
+                    num_new = len(df) - num_duplicates
+                    
+                    df = df.drop(columns=['_dup_key'])
+                    
+                    if num_duplicates > 0:
+                        st.warning(f"⚠️ **{num_duplicates} doublons détectés** (déjà importés). Ils seront ignorés.")
+                        with st.expander(f"Voir les {num_duplicates} doublons"):
+                            st.dataframe(df[duplicates_mask][['date', 'label', 'amount']].head(20))
+                    
+                    if num_new == 0:
+                        st.error("❌ Toutes les transactions sont déjà importées !")
+                        st.stop()
+                    
+                    st.success(f"✅ **{num_new} nouvelles transactions** prêtes à l'import.")
+                else:
+                    num_new = len(df)
+                    st.success(f"✅ {num_new} nouvelles transactions prêtes à l'import.")
+                
+                # Preview new transactions
+                st.subheader("Aperçu des nouvelles transactions")
+                st.dataframe(df.head(10))
+                
+                # --- STEP 4: CATEGORIZATION & IMPORT ---
+                st.divider()
+                st.header("4️⃣ Import")
+                
+                auto_cat = st.checkbox("Lancer la catégorisation automatique (Règles + IA)", value=True)
+                
+                if st.button("🚀 Valider et Importer", type="primary"):
+                    with st.spinner("Import en cours..."):
+                        # Categorize if requested
+                        if auto_cat:
+                            results = df.apply(lambda row: categorize_transaction(row['label'], row['amount'], row['date']), axis=1)
+                            df['category_validated'] = results.apply(lambda x: x[0] if x[0] else 'Inconnu')
+                            df['ai_confidence'] = results.apply(lambda x: x[2])
+                            df['status'] = results.apply(lambda x: 'validated' if x[1] == 'rule' else 'pending')
                         
-                        df['category_validated'] = results.apply(lambda x: x[0] if x[0] else 'Inconnu')
-                        df['ai_confidence'] = results.apply(lambda x: x[2])
-                        df['status'] = results.apply(lambda x: 'validated' if x[1] == 'rule' else 'pending') 
-                
-                # Assign selected account
-                df['account_label'] = account_name
-                
-                st.dataframe(df.head())
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Valider et Importer", type="primary"):
+                        # Assign account
+                        df['account_label'] = account_name
+                        
+                        # Save
                         count, skipped = save_transactions(df)
+                        
                         if count > 0:
-                            st.success(f"{count} transactions importées !")
+                            st.success(f"🎉 {count} transactions importées avec succès !")
                             st.balloons()
                         if skipped > 0:
-                            st.warning(f"{skipped} doublons ignorés.")
-                        if count == 0 and skipped > 0:
-                             st.info("Aucune nouvelle transaction.")
-                
+                            st.info(f"{skipped} doublons ignorés.")
+                        if count == 0:
+                            st.info("Aucune nouvelle transaction à importer.")
+                        
         except Exception as e:
             st.error(f"Une erreur est survenue : {e}")
 
 st.divider()
+st.caption("💡 Les transactions seront analysées par notre IA pour proposer des catégories.")
