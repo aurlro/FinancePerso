@@ -3,6 +3,7 @@ from modules.ingestion import load_transaction_file
 from modules.data_manager import save_transactions, init_db
 from modules.categorization import categorize_transaction
 from modules.ui import load_css
+from modules.utils import validate_csv_file
 import pandas as pd
 
 st.set_page_config(page_title="Import", page_icon="📥")
@@ -37,6 +38,12 @@ st.markdown("Chargez vos fichiers CSV pour alimenter votre assistant.")
 uploaded_file = st.file_uploader("Choisir un fichier CSV", type=['csv'])
 
 if uploaded_file is not None:
+    # Validate file
+    is_valid, error_msg = validate_csv_file(uploaded_file)
+    if not is_valid:
+        st.error(f"⚠️ Fichier invalide : {error_msg}")
+        st.stop()
+    
     # Handle Column Mapping for Custom Mode
     if import_mode == "Autre (Toutes banques)":
         st.info("Veuillez mapper les colonnes de votre fichier.")

@@ -101,8 +101,10 @@ def ai_audit_batch(df):
 
 from modules.analytics import detect_recurring_payments
 from modules.ui import card_kpi
+from modules.data_manager import add_learning_rule, get_learning_rules
+from modules.analytics import detect_financial_profile
 
-tab_audit, tab_sub = st.tabs(["🔎 Audit & Qualité", "💸 Abonnements & Récurrents"])
+tab_audit, tab_sub, tab_setup = st.tabs(["🔎 Audit & Qualité", "💸 Abonnements & Récurrents", "🏗️ Configuration Assistée"])
 
 with tab_audit:
     # --- EXISTING AUDIT LOGIC ---
@@ -132,13 +134,108 @@ with tab_audit:
                     st.write(f"**Détails :** {item['details']}")
                     st.dataframe(item['rows'][['date', 'label', 'amount', 'category_validated']])
                     
-                    if item.get('suggested_category'):
-                        if st.button(f"Accepter la correction ({item['suggested_category']})", key=f"fix_{i}"):
-                            for tx_id in item['rows']['id']:
-                                update_transaction_category(tx_id, item['suggested_category'])
-                            st.success("Correction appliquée !")
+                    col_act1, col_act2, col_act3 = st.columns([1, 1, 2])
+                    
+                    with col_act1:
+                        if item.get('suggested_category'):
+                            if st.button("✅ Accepter", key=f"fix_{i}", help=f"Appliquer : {item['suggested_category']}"):
+                                for tx_id in item['rows']['id']:
+                                    update_transaction_category(tx_id, item['suggested_category'])
+                                st.success("Correction appliquée !")
+                                st.session_state['audit_results'].pop(i)
+                                st.rerun()
+
+                    with col_act2:
+                        if st.button("❌ Ignorer", key=f"ignore_{i}", help="Ne pas corriger"):
                             st.session_state['audit_results'].pop(i)
                             st.rerun()
+                            
+                    with col_act3:
+                        # Manual correction
+                        options = ["Alimentation", "Transport", "Loisirs", "Santé", "Logement", "Revenus", "Autre", "Restaurants", "Abonnements", "Achats", "Services"]
+                        # Pre-select current if in list, else first
+                        current_cat = item['rows'].iloc[0]['category_validated']
+                        idx = options.index(current_cat) if current_cat in options else 0
+                        
+                        manual_cat = st.selectbox("Autre correction", options, key=f"manual_{i}", index=idx, label_visibility="collapsed")
+                        
+                        if st.button("Appliquer", key=f"apply_manual_{i}"):
+                             for tx_id in item['rows']['id']:
+                                    update_transaction_category(tx_id, manual_cat)
+                             st.success("Correction manuelle appliquée !")
+                             st.session_state['audit_results'].pop(i)
+                             st.rerun()
+
+with tab_setup:
+    st.header("🏗️ Configuration Assistée")
+    st.markdown("Répondez à quelques questions pour configurer automatiquement vos catégories principales (Salaire, Loyer...)")
+    
+    if st.button("Lancer l'analyse 🚀", type="primary"):
+        df = get_all_transactions()
+        if df.empty:
+            st.warning("Importez d'abord des données.")
+        else:
+            candidates = detect_financial_profile(df)
+            st.session_state['setup_candidates'] = candidates
+            st.rerun()
+            
+    if 'setup_candidates' in st.session_state:
+        cands = st.session_state['setup_candidates']
+        if not cands:
+            st.success("🎉 Tout semble déjà configuré ! Je n'ai pas trouvé de nouvelles récurrences inconnues.")
+            if st.button("Forcer une ré-analyse complète (incluant le déjà connu)"):
+                 # TBD: logic to clear cache or ignore existing checks
+                 pass
+        else:
+            st.info(f"J'ai trouvé **{len(cands)}** nouvelles suggestions personnalisées pour vous.")
+            
+            # Form
+            with st.form("onboarding_form"):
+                selection_map = {}
+                
+                for i, cand in enumerate(cands):
+                    st.divider()
+                    col1, col2 = st.columns([2, 1])
+                    with col1:
+                        st.markdown(f"**{cand['label']}** (~{cand['amount']:.0f} €)")
+                        st.caption(f"Détecté comme : {cand['type']}")
+                    with col2:
+                        # User choice
+                        choice = st.radio(
+                            "C'est bien ça ?",
+                            ("Oui, confirmer", "Non, ignorer", "Changer catégorie"),
+                            key=f"q_{i}",
+                            horizontal=True,
+                            label_visibility="collapsed"
+                        )
+                        
+                        if choice == "Changer catégorie":
+                            new_cat = st.selectbox("Catégorie correcte", 
+                                         ["Revenus", "Logement", "Emprunt immobilier", "Assurances", "Abonnements"], 
+                                         key=f"cat_{i}")
+                            selection_map[i] = {"action": "save", "cat": new_cat}
+                        elif choice == "Oui, confirmer":
+                             selection_map[i] = {"action": "save", "cat": cand['default_category']}
+                        else:
+                             selection_map[i] = {"action": "skip"}
+
+                submitted = st.form_submit_button("Sauvegarder ma configuration ✅")
+                
+                if submitted:
+                    count = 0
+                    for i, cand in enumerate(cands):
+                        decision = selection_map.get(i)
+                        if decision and decision['action'] == "save":
+                            # Create Learning Rule (+ Validate existing?)
+                            # For simplicity, we just add the rule. The user can re-validate or next import acts.
+                            # Ideally we also define priority.
+                            add_learning_rule(cand['label'], decision['cat'])
+                            count += 1
+                    
+                    st.success(f"{count} règles de configuration créées ! 🚀")
+                    del st.session_state['setup_candidates']  
+                    # Rerurn to refresh rules in background? 
+                    # st.rerun() is inside button logic, might need sleep or direct message.
 
 with tab_sub:
     st.header("Détection des Abonnements")

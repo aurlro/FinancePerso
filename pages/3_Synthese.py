@@ -11,6 +11,31 @@ st.title("📊 Tableau de bord")
 
 df = get_all_transactions()
 
+# SMART ONBOARDING NOTIFICATION
+# Check if there are new suggestions (only once per session to avoid spam)
+if 'onboarding_checked' not in st.session_state:
+    st.session_state['onboarding_checked'] = False
+
+if not st.session_state['onboarding_checked'] and not df.empty:
+    from modules.analytics import detect_financial_profile
+    suggestions = detect_financial_profile(df)
+    
+    if suggestions:
+        st.session_state['onboarding_suggestions_count'] = len(suggestions)
+        st.session_state['onboarding_checked'] = True # Avoid re-checking on every rerun
+        
+if st.session_state.get('onboarding_suggestions_count', 0) > 0:
+    with st.expander("🔔 **Configuration Assistée** - Nouvelles suggestions détectées !", expanded=True):
+        st.info(f"J'ai détecté **{st.session_state['onboarding_suggestions_count']}** éléments importants à configurer (Salaire, Loyer, Factures...).")
+        col_n1, col_n2 = st.columns([1, 1])
+        with col_n1:
+            if st.button("Configurer maintenant ➡️", type="primary"):
+                st.switch_page("pages/5_Assistant.py")
+        with col_n2:
+            if st.button("Me rappeler plus tard"):
+                st.session_state['onboarding_suggestions_count'] = 0
+                st.rerun()
+
 if df.empty:
     st.info("Aucune donnée disponible. Commencez par importer des relevés.")
 else:

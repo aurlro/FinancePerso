@@ -1,6 +1,7 @@
 import google.generativeai as genai
 from dotenv import load_dotenv
 from modules.logger import logger
+from modules.utils import clean_label  # Centralized utility
 import os
 import json
 import re
@@ -12,7 +13,6 @@ api_key = os.getenv("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 
-# Mock rules for MVP
 # Rules have been migrated to database (see modules/data_manager.py)
 RULES = []
 
@@ -31,21 +31,6 @@ Réponds UNIQUEMENT au format JSON :
   "confidence": 0.0 à 1.0 (estimation de ta certitude)
 }}
 """
-
-def clean_label(label):
-    """
-    Remove common bank noise to help AI focus on merchant name.
-    Ex: 'Carte 30/12/25 Ittrattoria 4 Cb*6759' -> 'Ittrattoria 4'
-    """
-    # Remove dates (dd/mm/yy or dd/mm)
-    label = re.sub(r'\d{2}/\d{2}(/\d{2,4})?', '', label)
-    # Remove "Carte", "Cb", numbers with *
-    label = re.sub(r'(?i)CARTE|CB\*?\d*|PRLV|SEPA|VIR', '', label)
-    # Remove leading/trailing non-alphanumeric
-    label = re.sub(r'^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$', '', label)
-    # Remove multiple spaces
-    label = re.sub(r'\s+', ' ', label)
-    return label.strip()
 
 # Avoid circular imports by importing inside function or passing rules
 # But here we want a clean import. 

@@ -67,3 +67,77 @@ def detect_recurring_payments(df):
             })
             
     return pd.DataFrame(recurring_items).sort_values(by='avg_amount')
+
+from modules.data_manager import get_learning_rules
+
+def detect_financial_profile(df):
+    """
+    Detect candidates for key financial items: Salary, Rent, Loans, Utilities.
+    Filters out items that already have a learning rule.
+    """
+    candidates = []
+    
+    # Get existing rules to avoid redundancy
+    rules = get_learning_rules()
+    existing_patterns = rules['pattern'].unique().tolist() if not rules.empty else []
+    
+    def is_new(label_clean):
+        # Simple exact match check. Could be fuzzier.
+        return label_clean not in existing_patterns
+    
+    # 1. Salary: Positives > 500
+    incomes = df[df['amount'] > 500].copy()
+    if not incomes.empty:
+        incomes['clean'] = incomes['label'].apply(clean_label)
+        grouped = incomes.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
+        for _, row in grouped.iterrows():
+            if is_new(row['clean']):
+                candidates.append({
+                    "type": "Salaire (estimé)",
+                    "label": row['clean'],
+                    "amount": row['amount'],
+                    "confidence": "Haute" if row['date'] > 1 else "Moyenne",
+                    "default_category": "Revenus"
+                })
+
+    # 2. Fixed Expenses & Bills
+    expenses = df[df['amount'] < 0].copy()
+    if not expenses.empty:
+        expenses['clean'] = expenses['label'].apply(clean_label)
+        grouped = expenses.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
+        
+        # Keywords map
+        KEYWORD_MAP = {
+            "Logement": ["LOYER", "IMMO"],
+            "Emprunt immobilier": ["PRET", "CREDIT", "ECHEANCE"],
+            "Assurances": ["ASSURANCE", "MACIF", "MAIF", "AXA", "ALLIANZ"],
+            "Abonnements": ["EDF", "ENGIE", "TOTALENERGIE", "EAU", "SUEZ", "VEOLIA", "ORANGE", "SFR", "BOUYGUES", "FREE", "NETFLIX", "SPOTIFY", "AMAZON PRIME"]
+        }
+        
+        for _, row in grouped.iterrows():
+            if not is_new(row['clean']):
+                continue
+                
+            label_upper = row['clean'].upper()
+            found_cat = None
+            
+            # Check keywords
+            for cat, keywords in KEYWORD_MAP.items():
+                if any(k in label_upper for k in keywords):
+                    found_cat = cat
+                    break
+            
+            # Heuristics for Big Amounts (likely Rent/Loan if not matched)
+            if not found_cat and row['amount'] < -600:
+                found_cat = "Logement"
+            
+            if found_cat:
+                candidates.append({
+                    "type": f"Dépense Récurrente ({found_cat})",
+                    "label": row['clean'],
+                    "amount": row['amount'],
+                    "confidence": "Haute",
+                    "default_category": found_cat
+                })
+    
+    return candidates
