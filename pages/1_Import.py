@@ -134,7 +134,8 @@ if uploaded_file is not None:
                     st.warning(f"Aucune transaction trouvée pour {selected_month} {selected_year}.")
                     st.stop()
                 
-                st.info(f"📊 {len(df)} transactions trouvées pour {selected_month if selected_month != 'Tous' else 'toute l\\'année'} {selected_year}.")
+                period_label = selected_month if selected_month != 'Tous' else "toute l'année"
+                st.info(f"📊 {len(df)} transactions trouvées pour {period_label} {selected_year}.")
                 
                 # --- DUPLICATE DETECTION ---
                 existing_df = get_all_transactions()
