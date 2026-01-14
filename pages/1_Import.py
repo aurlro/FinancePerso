@@ -1,6 +1,6 @@
 import streamlit as st
 from modules.ingestion import load_transaction_file
-from modules.data_manager import save_transactions, init_db, get_all_transactions
+from modules.data_manager import save_transactions, init_db, get_all_transactions, get_recent_imports
 from modules.categorization import categorize_transaction
 from modules.ui import load_css
 from modules.utils import validate_csv_file
@@ -11,6 +11,21 @@ load_css()
 init_db()
 
 st.title("📥 Import des relevés")
+
+# --- RECENT IMPORTS SUMMARY ---
+if 'hide_import_summary' not in st.session_state:
+    st.session_state.hide_import_summary = False
+
+recent_imports = get_recent_imports(limit=1)
+if not recent_imports.empty and not st.session_state.hide_import_summary:
+    last_imp = recent_imports.iloc[0]
+    date_str = pd.to_datetime(last_imp['import_date']).strftime('%d/%m à %H:%M')
+    with st.container(border=True):
+        c1, c2 = st.columns([0.92, 0.08])
+        c1.markdown(f"ℹ️ **Dernier import :** {last_imp['count']} transactions sur **{last_imp['account_label']}** (le {date_str})")
+        if c2.button("✖️", key="hide_imp_btn", help="Masquer"):
+            st.session_state.hide_import_summary = True
+            st.rerun()
 
 # --- STEP 1: FILE UPLOAD ---
 st.header("1️⃣ Sélection du fichier")
@@ -182,27 +197,58 @@ if uploaded_file is not None:
                 auto_cat = st.checkbox("Lancer la catégorisation automatique (Règles + IA)", value=True)
                 
                 if st.button("🚀 Valider et Importer", type="primary"):
-                    with st.spinner("Import en cours..."):
+                    status_container = st.empty()
+                    progress_bar = st.progress(0)
+                    
+                    with st.status("Traitement des transactions...", expanded=True) as status:
                         # Categorize if requested
                         if auto_cat:
-                            results = df.apply(lambda row: categorize_transaction(row['label'], row['amount'], row['date']), axis=1)
-                            df['category_validated'] = results.apply(lambda x: x[0] if x[0] else 'Inconnu')
-                            df['ai_confidence'] = results.apply(lambda x: x[2])
-                            df['status'] = results.apply(lambda x: 'validated' if x[1] == 'rule' else 'pending')
+                            st.write("Analyse et catégorisation des transactions...")
+                            all_results = []
+                            total = len(df)
+                            rules_count = 0
+                            ai_count = 0
+                            
+                            for i, (idx, row) in enumerate(df.iterrows()):
+                                # Update feedback every few records to avoid flickering
+                                progress_bar.progress((i + 1) / total)
+                                if (i + 1) % 5 == 0 or (i + 1) == total:
+                                    status.update(label=f"Traitement : {i+1}/{total} transactions...")
+                                
+                                # Call categorization
+                                cat, source, conf = categorize_transaction(row['label'], row['amount'], row['date'])
+                                all_results.append((cat, source, conf))
+                                
+                                if source == 'rule':
+                                    rules_count += 1
+                                else:
+                                    ai_count += 1
+                            
+                            df['category_validated'] = [r[0] if r[0] else 'Inconnu' for r in all_results]
+                            df['ai_confidence'] = [r[2] for r in all_results]
+                            df['status'] = ['validated' if r[1] == 'rule' else 'pending' for r in all_results]
+                            
+                            st.write(f"✅ Analyse terminée : {rules_count} par règles, {ai_count} par IA.")
                         
                         # Assign account
                         df['account_label'] = account_name
                         
                         # Save
+                        st.write("Sauvegarde dans la base de données...")
                         count, skipped = save_transactions(df)
+                        status.update(label="Importation terminée !", state="complete", expanded=False)
+                    
+                    # Clean up feedback widgets
+                    progress_bar.empty()
                         
-                        if count > 0:
-                            st.success(f"🎉 {count} transactions importées avec succès !")
-                            st.balloons()
-                        if skipped > 0:
-                            st.info(f"{skipped} doublons ignorés.")
-                        if count == 0:
-                            st.info("Aucune nouvelle transaction à importer.")
+                    if count > 0:
+                        st.success(f"🎉 Nous venons d'importer {count} lignes sur le compte **{account_name}**.")
+                        st.session_state.hide_import_summary = False
+                        st.balloons()
+                    if skipped > 0:
+                        st.info(f"{skipped} doublons ignorés.")
+                    if count == 0:
+                        st.info("Aucune nouvelle transaction à importer.")
                         
         except Exception as e:
             st.error(f"Une erreur est survenue : {e}")

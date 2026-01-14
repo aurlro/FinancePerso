@@ -215,3 +215,16 @@ def update_transaction_member(tx_id, new_member):
         c = conn.cursor()
         c.execute("UPDATE transactions SET member = ? WHERE id = ?", (new_member, tx_id))
         conn.commit()
+
+def get_recent_imports(limit=3):
+    """Returns a summary of the latest import sessions."""
+    with get_db_connection() as conn:
+        query = """
+        SELECT account_label, COUNT(*) as count, import_date 
+        FROM transactions 
+        GROUP BY import_date, account_label 
+        ORDER BY import_date DESC 
+        LIMIT ?
+        """
+        return pd.read_sql(query, conn, params=(limit,))
+
