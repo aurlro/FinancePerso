@@ -1,11 +1,17 @@
 import streamlit as st
-from modules.data_manager import get_all_transactions
+from modules.data_manager import get_all_transactions, init_db
 from modules.ui import load_css, card_kpi
 import pandas as pd
 import plotly.express as px
+import datetime
+import calendar
+from modules.analytics import detect_financial_profile
+from modules.data_manager import get_budgets, get_categories_with_emojis, get_all_tags, get_categories_df
+from modules.categorization import generate_financial_report
 
 st.set_page_config(page_title="Synthèse", page_icon="📊", layout="wide")
 load_css()
+init_db()  # Ensure migrations are run
 
 st.title("📊 Tableau de bord")
 
@@ -17,7 +23,6 @@ if 'onboarding_checked' not in st.session_state:
     st.session_state['onboarding_checked'] = False
 
 if not st.session_state['onboarding_checked'] and not df.empty:
-    from modules.analytics import detect_financial_profile
     suggestions = detect_financial_profile(df)
     
     if suggestions:
@@ -59,6 +64,38 @@ else:
         if selected_members:
             df = df[df['member'].isin(selected_members)]
             
+    # Beneficiary Filter
+    if 'beneficiary' in df.columns:
+        beneficiaries = df['beneficiary'].dropna().unique().tolist()
+        if beneficiaries:
+            selected_benefs = st.sidebar.multiselect("Bénéficiaires", beneficiaries, default=beneficiaries)
+            if selected_benefs:
+                df = df[df['beneficiary'].isin(selected_benefs)]
+    
+    # Tag Filter
+    if 'tags' in df.columns:
+        all_available_tags = get_all_tags()
+        if all_available_tags:
+            selected_tags = st.sidebar.multiselect("Filtrer par Tags 🏷️", all_available_tags)
+            if selected_tags:
+                # Mask where ANY of the selected tags matches one of the row's tags
+                def match_tags(row_tags):
+                    if not row_tags: return False
+                    row_tags_list = [t.strip().lower() for t in str(row_tags).split(',')]
+                    return any(tag.lower() in row_tags_list for tag in selected_tags)
+                
+                df = df[df['tags'].apply(match_tags)]
+            
+    st.sidebar.divider()
+    show_internal = st.sidebar.checkbox("Afficher virements internes 🔄", value=False)
+    show_hors_budget = st.sidebar.checkbox("Afficher hors budget 🚫", value=False)
+    
+    # Global exclusion for KPIs and Charts unless toggled
+    if not show_internal:
+        df = df[df['category_validated'] != 'Virement Interne']
+    if not show_hors_budget:
+        df = df[df['category_validated'] != 'Hors Budget']
+
     # KPI
     col1, col2, col3 = st.columns(3)
     
@@ -80,14 +117,24 @@ else:
     col_chart1, col_chart2 = st.columns(2)
     
     # Logic for Fixed vs Variable
-    FIXED_CATEGORIES = ["Abonnements", "Logement", "Impôts", "Assurances", "Emprunt immobilier"]
-    # We could allow user to configure this later in "Rules" or "Config"
+    cat_props = get_categories_df()
+    FIXED_CATEGORIES = cat_props[cat_props['is_fixed'] == 1]['name'].tolist()
     
     df_expenses = df[df['amount'] < 0].copy()
     df_expenses['amount'] = df_expenses['amount'].abs()
-    df_expenses['display_category'] = df_expenses.apply(lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu"), axis=1)
     
-    df_expenses['type'] = df_expenses['display_category'].apply(lambda x: 'Fixe' if x in FIXED_CATEGORIES else 'Variable')
+    cat_emoji_map = get_categories_with_emojis()
+    def get_cat_with_emoji(cat_name):
+        emoji = cat_emoji_map.get(cat_name, "🏷️")
+        return f"{emoji} {cat_name}"
+
+    df_expenses['raw_category'] = df_expenses.apply(
+        lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu"), 
+        axis=1
+    )
+    df_expenses['display_category'] = df_expenses['raw_category'].apply(get_cat_with_emoji)
+    
+    df_expenses['type'] = df_expenses['raw_category'].apply(lambda x: 'Fixe' if x in FIXED_CATEGORIES else 'Variable')
     
     # Graphs
     curr_col1, curr_col2 = st.columns(2)
@@ -116,7 +163,6 @@ else:
 
     # BUDGETS SECTION
     st.header("🎯 Suivi des Budgets")
-    from modules.data_manager import get_budgets
     budgets = get_budgets()
     
     if budgets.empty:
@@ -130,8 +176,11 @@ else:
         today = pd.Timestamp.now().date()
         if not df.empty:
              max_date_data = df['date'].max()
-             if isinstance(max_date_data, pd.Timestamp):
+             if isinstance(max_date_data, str):
+                 max_date_data = pd.to_datetime(max_date_data).date()
+             elif isinstance(max_date_data, pd.Timestamp):
                  max_date_data = max_date_data.date()
+             
              if max_date_data.year == today.year and max_date_data.month == today.month:
                  target_month_str = today.strftime('%Y-%m')
              else:
@@ -169,9 +218,6 @@ else:
 
     # FORECASTING SECTION
     st.header("🔮 Prévisions Fin de Mois")
-    
-    import datetime
-    import calendar
     
     today = datetime.date.today()
     # Find active month in data or use today
@@ -246,7 +292,11 @@ else:
     # We need to use valid categories
     df_monthly = df[df['amount'] < 0].copy()
     df_monthly['amount'] = df_monthly['amount'].abs()
-    df_monthly['display_category'] = df_monthly.apply(lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu"), axis=1)
+    
+    df_monthly['display_category'] = df_monthly.apply(
+        lambda x: get_cat_with_emoji(x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu")), 
+        axis=1
+    )
     # Extract Month-Year for grouping
     df_monthly['month_year'] = df_monthly['date'].dt.strftime('%Y-%m')
     
@@ -258,6 +308,53 @@ else:
                          color_discrete_sequence=px.colors.qualitative.Set2)
     fig_stacked.update_layout(xaxis_title='', yaxis_title='Montant (€)', legend_title='Catégorie')
     st.plotly_chart(fig_stacked, use_container_width=True)
+
+    st.divider()
+
+    # NEW: Beneficiary and Tags Analysis
+    col_new1, col_new2 = st.columns(2)
+    
+    with col_new1:
+        st.subheader("Répartition par Bénéficiaire")
+        if 'beneficiary' in df_expenses.columns and not df_expenses['beneficiary'].isna().all():
+            df_benef = df_expenses.groupby('beneficiary')['amount'].sum().reset_index()
+            df_benef.columns = ['Bénéficiaire', 'Montant']
+            fig_benef = px.pie(df_benef, values='Montant', names='Bénéficiaire', hole=0.4,
+                               color_discrete_sequence=px.colors.qualitative.Pastel)
+            st.plotly_chart(fig_benef, use_container_width=True)
+        else:
+            st.info("Aucune donnée bénéficiaire disponible.")
+
+    with col_new2:
+        st.subheader("Analyse des Tags")
+        if 'tags' in df_expenses.columns and not df_expenses['tags'].isna().all():
+            # Split tags (comma separated)
+            all_tags = []
+            for t in df_expenses['tags'].dropna():
+                all_tags.extend([tag.strip().lower() for tag in t.split(',') if tag.strip()])
+                
+            if all_tags:
+                df_tags = pd.Series(all_tags).value_counts().reset_index()
+                df_tags.columns = ['Tag', 'Total']
+                
+                # Let's also calculate amount per tag
+                tag_amounts = {}
+                for idx, row in df_expenses.iterrows():
+                    if pd.notna(row['tags']):
+                        ts = [t.strip().lower() for t in str(row['tags']).split(',') if t.strip()]
+                        for t in ts:
+                            tag_amounts[t] = tag_amounts.get(t, 0) + row['amount']
+                
+                df_tag_money = pd.DataFrame(list(tag_amounts.items()), columns=['Tag', 'Montant']).sort_values('Montant', ascending=False)
+                
+                fig_tags = px.bar(df_tag_money.head(10), x='Montant', y='Tag', orientation='h',
+                                  color='Tag', color_discrete_sequence=px.colors.qualitative.Safe)
+                fig_tags.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'}, xaxis_title="Montant (€)")
+                st.plotly_chart(fig_tags, use_container_width=True)
+            else:
+                st.info("Aucun tag utilisé pour le moment.")
+        else:
+            st.info("Aucune donnée de tag disponible.")
 
     st.divider()
 

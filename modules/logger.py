@@ -1,5 +1,4 @@
 import logging
-import os
 
 # Create logger with standard configuration
 def setup_logger(name):

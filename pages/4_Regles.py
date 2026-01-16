@@ -1,10 +1,11 @@
 import streamlit as st
-from modules.data_manager import get_learning_rules, delete_learning_rule, add_learning_rule
-from modules.ui import load_css
 import pandas as pd
+from modules.data_manager import get_learning_rules, delete_learning_rule, add_learning_rule, set_budget, get_budgets, get_categories, init_db
+from modules.ui import load_css
 
 st.set_page_config(page_title="Règles & Mémoire", page_icon="🧠", layout="wide")
 load_css()
+init_db()  # Ensure migrations are applied
 
 st.title("🧠 Mémoire de l'assistant")
 st.markdown("Gérez ici les règles de catégorisation automatique.")
@@ -16,10 +17,7 @@ with st.expander("➕ Ajouter une nouvelle règle", expanded=False):
         with col_pat:
             new_pattern = st.text_input("Mot-clé ou Pattern (Regex)", placeholder="Ex: UBER ou ^UBER.*TRIP")
         with col_cat:
-            CATEGORIES = [
-                "Alimentation", "Transport", "Logement", "Santé", "Loisirs", 
-                "Achats", "Abonnements", "Restaurants", "Services", "Virements", "Inconnu"
-            ]
+            CATEGORIES = get_categories()
             new_category = st.selectbox("Catégorie cible", CATEGORIES)
             
         submitted = st.form_submit_button("Ajouter la règle")
@@ -62,16 +60,12 @@ else:
 
 st.header("🎯 Budgets Mensuels")
 st.markdown("Définissez vos objectifs de dépenses mensuelles par catégorie.")
-from modules.data_manager import set_budget, get_budgets
 
 # Load existing budgets
 budgets_df = get_budgets()
 budget_map = dict(zip(budgets_df['category'], budgets_df['amount']))
 
-CATEGORIES = [
-    "Alimentation", "Transport", "Logement", "Santé", "Loisirs", 
-    "Achats", "Abonnements", "Restaurants", "Services", "Virements"
-]
+CATEGORIES = get_categories()
 
 with st.form("budget_form"):
     cols = st.columns(3)

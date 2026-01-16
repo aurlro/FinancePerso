@@ -1,6 +1,6 @@
 import pandas as pd
-import re
 from modules.categorization import clean_label
+from modules.data_manager import get_learning_rules
 
 def detect_recurring_payments(df):
     """
@@ -10,8 +10,8 @@ def detect_recurring_payments(df):
     if df.empty:
         return pd.DataFrame()
 
-    # Work on a copy
-    data = df.copy()
+    # Work on a copy and exclude internal transfers
+    data = df[~df['category_validated'].isin(['Virement Interne', 'Hors Budget'])].copy()
     
     # 1. Clean labels for grouping
     # We use a stricter cleaning here to ensure slight variations (dates) don't break grouping
@@ -71,7 +71,6 @@ def detect_recurring_payments(df):
         
     return pd.DataFrame(recurring_items).sort_values(by='avg_amount')
 
-from modules.data_manager import get_learning_rules
 
 def detect_financial_profile(df):
     """

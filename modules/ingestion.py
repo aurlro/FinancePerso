@@ -1,6 +1,28 @@
 import pandas as pd
-import io
+import hashlib
 import re
+
+def generate_tx_hash(df):
+    """
+    Generate a unique hash for each transaction.
+    To handle identical transactions on same day, we add an occurrence index.
+    """
+    if df.empty:
+        return df
+        
+    # Sort to ensure stable index
+    df = df.sort_values(by=['date', 'label', 'amount'])
+    
+    # Create a helper for duplicate count (occurrence index)
+    # This ensures that if I buy 2 tickets of 2€ same day, they have different hashes.
+    df['_occ'] = df.groupby(['date', 'label', 'amount']).cumcount()
+    
+    def calculate_hash(row):
+        base = f"{row['date']}|{row['label']}|{row['amount']}|{row['account_label']}|{row['_occ']}"
+        return hashlib.sha256(base.encode()).hexdigest()[:16]
+        
+    df['tx_hash'] = df.apply(calculate_hash, axis=1)
+    return df.drop(columns=['_occ'])
 
 def parse_bourso_csv(file):
     """
@@ -33,22 +55,14 @@ def parse_bourso_csv(file):
 
         df_clean['date'] = pd.to_datetime(df_clean['date'], format='%Y-%m-%d').dt.date
 
-        # MEMBER EXTRACTION (Hardcoded specific for user context, maybe keep this as a "Post-process" for everyone?)
-        # Let's keep it here for this preset
-        CARD_MAP = {
-            '6759': 'Aurélien',
-            '7238': 'Élise',
-            '3857': 'Aurélien'
-        }
-        
-        def extract_member(label):
+        def extract_card_suffix(label):
             match = re.search(r'CB\*(\d{4})', str(label), re.IGNORECASE)
             if match:
-                card_end = match.group(1)
-                return CARD_MAP.get(card_end, f"Carte {card_end}")
-            return "Inconnu"
+                return match.group(1)
+            return None
 
-        df_clean['member'] = df_clean['label'].apply(extract_member)
+        df_clean['card_suffix'] = df_clean['label'].apply(extract_card_suffix)
+        df_clean['member'] = df_clean['card_suffix'].apply(lambda x: f"Carte {x}" if x else "Inconnu")
         df_clean['status'] = 'pending'
         df_clean['category_validated'] = 'Inconnu'
         
@@ -60,8 +74,8 @@ def parse_bourso_csv(file):
             if col not in df_clean.columns:
                 df_clean[col] = None
 
-        final_cols = ['date', 'label', 'amount', 'original_category', 'account_id', 'status', 'category_validated', 'account_label', 'member']
-        return df_clean[final_cols]
+        final_cols = ['date', 'label', 'amount', 'original_category', 'account_id', 'status', 'category_validated', 'account_label', 'member', 'card_suffix']
+        return generate_tx_hash(df_clean[final_cols])
         
     except Exception as e:
         return None, f"Erreur Bourso: {str(e)}"
@@ -83,7 +97,7 @@ def parse_generic_csv(file, config):
             sep=config.get('sep', ';'), 
             decimal=config.get('decimal', ','), 
             skiprows=config.get('skiprows', 0),
-            encoding='utf-8', # Consider adding encoding option if needed
+            encoding='utf-8-sig', # Handle BOM from Excel/Bourso
             thousands=config.get('thousands', None)
         )
         
@@ -112,15 +126,17 @@ def parse_generic_csv(file, config):
              
         if 'member' not in df_clean.columns:
             # Member extraction (Generic regex for CB*XXXX is useful generally)
-            def extract_member_generic(label):
+            def extract_card_suffix_generic(label):
                 match = re.search(r'CB\*(\d{4})', str(label), re.IGNORECASE)
                 if match:
-                    return f"Carte {match.group(1)}"
-                return "" # Empty string better than Inconnu for generic?
+                    return match.group(1)
+                return None
                 
-            df_clean['member'] = df_clean['label'].apply(extract_member_generic)
+            df_clean['card_suffix'] = df_clean['label'].apply(extract_card_suffix_generic)
+            df_clean['member'] = df_clean['card_suffix'].apply(lambda x: f"Carte {x}" if x else "")
         else:
-             # Clean up if mapped
+             # If member was mapped from CSV, we don't have suffix usually
+             df_clean['card_suffix'] = None
              df_clean['member'] = df_clean['member'].fillna("")
         
         # Fill missing
@@ -130,13 +146,13 @@ def parse_generic_csv(file, config):
         df_clean['original_category'] = None
         df_clean['account_id'] = None
         
-        final_cols = ['date', 'label', 'amount', 'original_category', 'account_id', 'status', 'category_validated', 'account_label', 'member']
+        final_cols = ['date', 'label', 'amount', 'original_category', 'account_id', 'status', 'category_validated', 'account_label', 'member', 'card_suffix']
         # Add missing columns with None
         for col in final_cols:
             if col not in df_clean.columns:
                 df_clean[col] = None
                 
-        return df_clean[final_cols]
+        return generate_tx_hash(df_clean[final_cols])
         
     except Exception as e:
         return None, f"Erreur Générique: {str(e)}"

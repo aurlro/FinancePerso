@@ -1,14 +1,15 @@
 import streamlit as st
-from modules.data_manager import get_all_transactions, update_transaction_category
-from modules.categorization import clean_label, predict_category_ai
-from modules.ui import load_css
 import pandas as pd
 import json
-import google.generativeai as genai
-import os
+from modules.data_manager import get_all_transactions, update_transaction_category, add_learning_rule, get_learning_rules, init_db, get_categories
+from modules.categorization import clean_label, predict_category_ai
+from modules.ui import load_css, card_kpi
+from modules.ai_manager import get_ai_provider, get_active_model_name
+from modules.analytics import detect_recurring_payments, detect_financial_profile
 
 st.set_page_config(page_title="Assistant Audit", page_icon="🕵️", layout="wide")
 load_css()
+init_db()
 st.title("🕵️ Assistant d'Audit")
 st.markdown("Je scanne vos transactions pour détecter des incohérences ou des erreurs de catégorisation.")
 
@@ -21,7 +22,8 @@ def detect_inconsistencies(df):
     df['clean'] = df['label'].apply(clean_label)
     
     # Filter only validated or relevant categories
-    df_valid = df[df['status'] != 'pending'].copy()
+    df_valid = df[(df['status'] != 'pending') & 
+                  (~df['category_validated'].isin(['Virement Interne', 'Hors Budget']))].copy()
     if df_valid.empty: return []
 
     # Group by clean label
@@ -58,11 +60,9 @@ def ai_audit_batch(df):
     
     prompt_data = unique_pairs.to_dict(orient='records')
     
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key: return []
-
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        provider = get_ai_provider()
+        model_name = get_active_model_name()
         prompt = f"""
         Analyse ces paires (Libellé, Catégorie) et identifie celles qui semblent ERRONÉES.
         Ignore les cas ambigus, concentre-toi sur les erreurs flagrantes (ex: 'McDonalds' en 'Santé', 'Impôts' en 'Loisirs').
@@ -76,9 +76,7 @@ def ai_audit_batch(df):
         Si aucune erreur, renvoie [].
         """
         
-        response = model.generate_content(prompt)
-        text = response.text.replace("```json", "").replace("```", "").strip()
-        suggestions = json.loads(text)
+        suggestions = provider.generate_json(prompt, model_name=model_name)
         
         # Link back to transactions
         results = []
@@ -99,10 +97,6 @@ def ai_audit_batch(df):
         st.error(f"Erreur audit IA: {e}")
         return []
 
-from modules.analytics import detect_recurring_payments
-from modules.ui import card_kpi
-from modules.data_manager import add_learning_rule, get_learning_rules
-from modules.analytics import detect_financial_profile
 
 tab_audit, tab_sub, tab_setup = st.tabs(["🔎 Audit & Qualité", "💸 Abonnements & Récurrents", "🏗️ Configuration Assistée"])
 
@@ -132,7 +126,16 @@ with tab_audit:
             for i, item in enumerate(results):
                 with st.expander(f"{item['type']} : {item['label']}"):
                     st.write(f"**Détails :** {item['details']}")
-                    st.dataframe(item['rows'][['date', 'label', 'amount', 'category_validated']])
+                    st.dataframe(
+                        item['rows'][['date', 'label', 'amount', 'category_validated']],
+                        column_config={
+                            "date": "Date",
+                            "label": "Libellé",
+                            "amount": "Montant",
+                            "category_validated": "Catégorie"
+                        },
+                        use_container_width=True
+                    )
                     
                     col_act1, col_act2, col_act3 = st.columns([1, 1, 2])
                     
@@ -152,7 +155,7 @@ with tab_audit:
                             
                     with col_act3:
                         # Manual correction
-                        options = ["Alimentation", "Transport", "Loisirs", "Santé", "Logement", "Revenus", "Autre", "Restaurants", "Abonnements", "Achats", "Services"]
+                        options = get_categories()
                         # Pre-select current if in list, else first
                         current_cat = item['rows'].iloc[0]['category_validated']
                         idx = options.index(current_cat) if current_cat in options else 0
@@ -211,7 +214,7 @@ with tab_setup:
                         
                         if choice == "Changer catégorie":
                             new_cat = st.selectbox("Catégorie correcte", 
-                                         ["Revenus", "Logement", "Emprunt immobilier", "Assurances", "Abonnements"], 
+                                         get_categories(), 
                                          key=f"cat_{i}")
                             selection_map[i] = {"action": "save", "cat": new_cat}
                         elif choice == "Oui, confirmer":

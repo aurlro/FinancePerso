@@ -1,24 +1,19 @@
-import google.generativeai as genai
 from dotenv import load_dotenv
 from modules.logger import logger
-from modules.utils import clean_label  # Centralized utility
-import os
+from modules.utils import clean_label
+from modules.data_manager import get_learning_rules, get_categories
+from modules.ai_manager import get_ai_provider, get_active_model_name
 import json
 import re
 
 load_dotenv()
-
-# Configure API
-api_key = os.getenv("GEMINI_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
 
 # Rules have been migrated to database (see modules/data_manager.py)
 RULES = []
 
 PROMPT_TEMPLATE = """
 Tu es un expert en catégorisation financière. Analyse la transaction suivante et détermine la catégorie la plus appropriée.
-Catégories possibles : Alimentation, Transport, Logement, Santé, Loisirs, Achats, Abonnements, Restaurants, Services, Virements, Inconnu.
+Catégories possibles : {categories}
 
 Transaction :
 - Libellé : {label}
@@ -39,8 +34,6 @@ Réponds UNIQUEMENT au format JSON :
 # Categorization is imported by 1_Import.py.
 # So if we import data_manager here, it should be fine.
 
-from modules.data_manager import get_learning_rules
-from modules.ai_manager import get_ai_provider, get_active_model_name
 
 def apply_rules(label):
     """
@@ -55,6 +48,8 @@ def apply_rules(label):
     try:
         df_rules = get_learning_rules()
         if not df_rules.empty:
+            # Sort by priority DESC
+            df_rules = df_rules.sort_values(by='priority', ascending=False)
             for index, row in df_rules.iterrows():
                 # User rules are stored as patterns (regex or simple string)
                 # We assume simple string match if not valid regex, or just regex.
@@ -92,11 +87,19 @@ def predict_category_ai(label, amount, date):
     
     try:
         provider = get_ai_provider()
-        model_name = get_active_model_name()
+        # Get dynamic categories
+        categories_list = get_categories()
+        categories_str = ", ".join(categories_list)
         
         # We pass both original and cleaned, just in case context helps, but emphasize cleaned.
-        prompt = PROMPT_TEMPLATE.format(label=f"{cleaned_label} (Original: {label})", amount=amount, date=date)
+        prompt = PROMPT_TEMPLATE.format(
+            categories=categories_str,
+            label=f"{cleaned_label} (Original: {label})", 
+            amount=amount, 
+            date=date
+        )
         
+        model_name = get_active_model_name()
         data = provider.generate_json(prompt, model_name=model_name)
         
         return data.get("category", "Inconnu"), float(data.get("confidence", 0.5))

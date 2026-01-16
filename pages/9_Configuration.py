@@ -1,9 +1,10 @@
 import streamlit as st
 import os
 import pandas as pd
-from modules.ui import load_css
-from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH
 import shutil
+import sqlite3
+from modules.ui import load_css
+from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping
 
 # Page Setup
 st.set_page_config(page_title="Configuration", page_icon="⚙️")
@@ -13,7 +14,7 @@ init_db() # Ensure tables exist
 st.title("⚙️ Configuration")
 
 # TABS
-tab_api, tab_members, tab_data = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "💾 Données & Danger"])
+tab_api, tab_members, tab_cats, tab_data = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "💾 Données & Danger"])
 
 # --- TAB 1: API ---
 with tab_api:
@@ -113,23 +114,103 @@ with tab_members:
     with col_add:
         st.subheader("Ajouter un membre")
         with st.form("add_member_form"):
-            new_name = st.text_input("Nom", placeholder="Ex: Aurélien, Élise, Enfant1...")
+            new_name = st.text_input("Nom du membre", placeholder="Ex: Aurélien, Élise...")
             if st.form_submit_button("Ajouter"):
                 if new_name:
                     if add_member(new_name):
-                        st.success(f"{new_name} ajouté !")
+                        st.success(f"Membre '{new_name}' ajouté !")
                         st.rerun()
                     else:
                         st.error("Ce membre existe déjà.")
                 else:
                     st.warning("Veuillez entrer un nom.")
 
-# --- TAB 3: DATA ---
+    st.divider()
+    st.subheader("💳 Correspondance des Cartes")
+    st.markdown("Associez un numéro de carte (4 derniers chiffres) à un membre pour l'import automatique.")
+    
+    from modules.data_manager import apply_member_mappings_to_pending
+    if st.button("🔄 Appliquer les correspondances aux transactions en attente", help="Reparcourt toutes les transactions non validées pour mettre à jour le payeur selon votre configuration actuelle."):
+        count = apply_member_mappings_to_pending()
+        st.success(f"{count} transaction(s) mise(s) à jour !")
+        st.rerun()
+    
+    mapping_df = get_member_mappings_df()
+    
+    col_m1, col_m2 = st.columns([1, 1])
+    with col_m1:
+        if mapping_df.empty:
+            st.info("Aucune correspondance configurée.")
+        else:
+            for index, row in mapping_df.iterrows():
+                cm1, cm2 = st.columns([3, 1])
+                cm1.write(f"💳 **{row['card_suffix']}** ➔ {row['member_name']}")
+                if cm2.button("🗑️", key=f"del_map_{row['id']}"):
+                    delete_member_mapping(row['id'])
+                    st.rerun()
+    
+    with col_m2:
+        with st.form("add_mapping_form"):
+            suffix = st.text_input("4 derniers chiffres", placeholder="Ex: 6759")
+            m_name = st.selectbox("Membre", members_df['name'].tolist() if not members_df.empty else ["Anonyme"])
+            if st.form_submit_button("Ajouter la carte"):
+                if suffix and m_name:
+                    add_member_mapping(suffix, m_name)
+                    st.success("Mise à jour effectuée !")
+                    st.rerun()
+
+# --- TAB 3: CATEGORIES ---
+with tab_cats:
+    st.header("Gestion des Catégories")
+    st.markdown("Personnalisez les catégories de dépenses pour votre budget.")
+    
+    # List categories
+    cats_df = get_categories_df()
+    
+    col_list_cat, col_add_cat = st.columns([1, 1])
+    
+    with col_list_cat:
+        st.subheader("Catégories existantes")
+        if cats_df.empty:
+            st.info("Aucune catégorie configurée.")
+        else:
+            for index, row in cats_df.iterrows():
+                with st.expander(f"{row['emoji']} {row['name']} {' (Fixe)' if row['is_fixed'] else ''}", expanded=False):
+                    c1, c2 = st.columns([3, 1])
+                    new_emoji = c1.text_input("Emoji", value=row['emoji'], key=f"emoji_val_{row['id']}")
+                    is_fixed = c1.checkbox("Dépense Fixe (ex: Loyer, Abonnement)", value=bool(row['is_fixed']), key=f"fixed_val_{row['id']}")
+                    if c1.button("Mettre à jour", key=f"upd_cat_{row['id']}"):
+                        update_category_emoji(row['id'], new_emoji)
+                        update_category_fixed(row['id'], int(is_fixed))
+                        st.rerun()
+                    
+                    if c2.button("🗑️ Supprimer", key=f"del_cat_{row['id']}"):
+                        delete_category(row['id'])
+                        st.rerun()
+
+    with col_add_cat:
+        st.subheader("Ajouter une catégorie")
+        with st.form("add_cat_form"):
+            col_a1, col_a2, col_a3 = st.columns([3, 1, 1])
+            new_cat_name = col_a1.text_input("Nom de la catégorie", placeholder="Ex: Enfants...")
+            new_cat_emoji = col_a2.text_input("Emoji", value="🏷️")
+            new_is_fixed = col_a3.checkbox("Fixe", value=False)
+            
+            if st.form_submit_button("Ajouter"):
+                if new_cat_name:
+                    if add_category(new_cat_name, new_cat_emoji, int(new_is_fixed)):
+                        st.success(f"Catégorie '{new_cat_name}' ajoutée !")
+                        st.rerun()
+                    else:
+                        st.error("Cette catégorie existe déjà.")
+                else:
+                    st.warning("Veuillez entrer un nom.")
+
+# --- TAB 4: DATA ---
 with tab_data:
     st.header("Export des Données")
     st.markdown("Téléchargez toutes vos transactions au format CSV pour sauvegarde ou analyse externe.")
     
-    import sqlite3
     conn = sqlite3.connect(DB_PATH)
     df_all = pd.read_sql("SELECT * FROM transactions", conn)
     conn.close()
@@ -148,7 +229,6 @@ with tab_data:
     st.warning("Actions irréversibles. Manipulez avec précaution.")
     
     with st.expander("Supprimer des données"):
-        from modules.data_manager import get_available_months
         months = get_available_months()
         
         if months:
