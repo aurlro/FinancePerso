@@ -3,19 +3,13 @@
 
 :root {
     --primary-color: #0F172A;
-    /* Deep Navy text/headers */
     --secondary-color: #3B82F6;
-    /* Bright Blue Action */
     --accent-color: #10B981;
-    /* Success Green */
     --bg-color: #F8FAFC;
-    /* Light Blue-Grey Background */
     --card-bg: #FFFFFF;
     --text-color: #334155;
     --text-light: #64748B;
     --border-color: #E2E8F0;
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 /* Global Reset & Typography */
@@ -27,12 +21,10 @@ body,
     background-color: var(--bg-color);
 }
 
-/* Streamlit Main Container */
 .stApp {
     background-color: var(--bg-color);
 }
 
-/* Headings */
 h1,
 h2,
 h3 {
@@ -41,135 +33,112 @@ h3 {
     letter-spacing: -0.025em;
 }
 
-h1 {
-    font-size: 2.25rem !important;
-    margin-bottom: 1.5rem !important;
-}
-
-h2 {
-    font-size: 1.5rem !important;
-    margin-top: 2rem !important;
-}
-
-h3 {
-    font-size: 1.25rem !important;
-    font-weight: 600 !important;
-}
-
-/* Buttons - Premium Feel */
-.stButton button {
-    background-color: var(--primary-color);
-    color: white;
-    font-weight: 500;
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    border: none;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-}
-
-.stButton button:hover {
-    background-color: #1E293B;
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
-}
-
-.stButton button:active {
-    transform: translateY(0);
-}
-
-/* Secondary Button (if needed, mimicking secondary style via css selector on specific buttons if possible, or generic override) */
-/* We can't target specifically "secondary" in pure streamlit easily without key hacks, but we can style the generic button well. */
-
-/* Inputs & Selectboxes */
-.stTextInput input,
-.stSelectbox div[data-baseweb="select"] {
-    border-radius: 8px;
-    border-color: var(--border-color);
-    background-color: white;
-}
-
-/* Cards (Metrics & Custom) */
-div[data-testid="metric-container"] {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s ease;
-}
-
-div[data-testid="metric-container"]:hover {
-    box-shadow: var(--shadow-md);
-}
-
-div[data-testid="metric-container"] label {
-    font-size: 0.875rem;
-    color: var(--text-light);
-    font-weight: 500;
-}
-
-div[data-testid="metric-container"] div[data-testid="stMetricValue"] {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-/* Custom Card Class (for HTML usage) */
-.custom-card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 1rem;
-}
-
-.card-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-light);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.card-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.card-trend-positive {
-    color: var(--accent-color);
-    font-size: 0.875rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.card-trend-negative {
-    color: #EF4444;
-    /* Red */
-    font-size: 0.875rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
 /* Sidebar */
 section[data-testid="stSidebar"] {
     background-color: #F1F5F9;
-    /* Slightly darker than main bg */
     border-right: 1px solid var(--border-color);
 }
 
-/* Plotly Charts Container */
-.js-plotly-plot {
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--border-color);
+/* --- Block-Based Transaction Design --- */
+
+/* COMMON CARD STYLE */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg),
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos) {
+    border-radius: 12px !important;
+    padding: 0.8rem 1.2rem !important;
+    margin-bottom: 0.75rem !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid #E2E8F0 !important;
+    border-left: 5px solid #3B82F6 !important;
+    /* Visual anchor */
+}
+
+/* EXPENSE BLOCK (RED ACCENT) */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg) {
+    background-color: #FFF1F2 !important;
+    border-left: 6px solid #E11D48 !important;
+}
+
+/* INCOME BLOCK (GREEN ACCENT) */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos) {
+    background-color: #F0FDF4 !important;
+    border-left: 6px solid #059669 !important;
+}
+
+/* HOVER EFFECT */
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg):hover,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos):hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    filter: brightness(0.98);
+}
+
+/* INTERNAL ACTIONS Area */
+div.stVerticalBlock:has(> div > div > .tx-actions) {
+    background: #FFFFFF !important;
+    border-radius: 8px !important;
+    padding: 0.8rem !important;
+    margin: 0.5rem 0 !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.tx-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.tx-date-acc {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.status-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.badge-isolated {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-group {
+    background: #DBEAFE;
+    color: #1E40AF;
+}
+
+.tx-label {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0.2rem 0;
+}
+
+.tx-amount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.tx-amount-neg {
+    color: #E11D48;
+}
+
+.tx-amount-pos {
+    color: #059669;
+}
+
+/* Compact Grids */
+.compact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.5rem;
 }

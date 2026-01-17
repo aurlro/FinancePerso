@@ -41,26 +41,27 @@ if not all_members:
 if df.empty:
     st.success("Toutes les transactions sont validées ! 🎉")
 else:
-# Filters
-    col_filter1, col_filter2 = st.columns(2)
-    filtered_df = df.copy()
-    
-    with col_filter1:
+    # Filters in Sidebar
+    with st.sidebar:
+        st.header("🔍 Filtres")
+        filtered_df = df.copy()
+        
         if 'account_label' in df.columns:
-            accounts = df['account_label'].unique().tolist()
-            sel_acc = st.multiselect("Filtrer par Compte", accounts)
+            accounts = sorted(df['account_label'].unique().tolist())
+            sel_acc = st.multiselect("Par Compte", accounts)
             if sel_acc:
                 filtered_df = filtered_df[filtered_df['account_label'].isin(sel_acc)]
                 
-    with col_filter2:
         if 'member' in df.columns:
-            members = [m for m in df['member'].unique() if m]
-            sel_mem = st.multiselect("Filtrer par Membre", members)
+            members = sorted([m for m in df['member'].unique() if m])
+            sel_mem = st.multiselect("Par Membre", members)
             if sel_mem:
                 filtered_df = filtered_df[filtered_df['member'].isin(sel_mem)]
+                
+        st.divider()
+        st.caption("💡 Astuce : Le regroupement intelligent fusionne les opérations identiques pour une validation plus rapide.")
 
-    st.divider()
-    col_sort1, col_sort2 = st.columns([2, 1])
+    col_sort1, col_sort2, col_sort3 = st.columns([2, 1, 1])
     with col_sort1:
         sort_options = {
             "Gros groupes (Défaut)": "count",
@@ -69,19 +70,19 @@ else:
             "Montant (Décroissant)": "amount_desc",
             "Montant (Croissant)": "amount_asc"
         }
-        sort_choice = st.selectbox("Trier par", list(sort_options.keys()))
+        sort_choice = st.selectbox("Trier par", list(sort_options.keys()), label_visibility="visible")
         sort_key = sort_options[sort_choice]
 
-    st.markdown(f"**{len(filtered_df)}** transactions affichées (sur {len(df)} en attente).")
+    with col_sort2:
+        st.markdown(f"<p style='margin-top:28px; font-weight:600; color:#64748B;'>{len(filtered_df)} en attente</p>", unsafe_allow_html=True)
     
-    with st.expander("💡 Aide : Virement Interne vs Compte à compte", expanded=False):
-        st.info("""
-        **Virement Interne** (🔄) : C'est votre catégorie pour les transferts entre vos propres comptes suivis ici. 
-        Elle est exclue des graphiques de dépenses pour ne pas fausser votre budget.
-        
-        **Virements de compte à compte** : C'est souvent le libellé brut de votre banque. 
-        Même si la banque le dit, validez-le bien en **Virement Interne** pour une comptabilité propre.
-        """)
+    with col_sort3:
+        with st.popover("❓ Aide", use_container_width=True):
+            st.info("""
+            **Virement Interne** (🔄) : Pour les transferts entre vos comptes suivis. Exclu des graphiques de dépenses.
+            
+            **Dégrouper** : Si une opération dans un groupe est différente, utilisez le bouton dans 'Détails' pour l'isoler.
+            """)
     
     st.divider()
 
@@ -101,7 +102,6 @@ else:
     base_options = ["", "Famille", "Maison"]
     full_member_list = sorted(list(set(base_options + all_members)))
 
-    st.divider()
     all_acc_labels = get_all_account_labels()
     from modules.data_manager import get_member_mappings
     active_card_maps = get_member_mappings()
@@ -161,214 +161,169 @@ else:
             group_count = len(group_df)
             group_total = group_df['amount'].sum()
             group_id = row['id']
+            
+            # --- START PREMIUM CARD ---
+            marker_class = "tx-card-marker-neg" if group_total < 0 else "tx-card-marker-pos"
             with st.container(border=True):
-                col1, col2, col3, col4, col5 = st.columns([1.5, 2, 1, 2, 2.5])
+                st.markdown(f'<div class="{marker_class}" style="display:none;"></div>', unsafe_allow_html=True)
                 
-                with col1:
-                    st.caption(f"📅 {row['date']}")
-                    if 'account_label' in row and row['account_label']:
-                        st.caption(f"🏦 {row['account_label']}")
-                    if group_count > 1:
-                        st.info(f"**{group_count} op.**")
-                if str(group_name).startswith("single_"):
-                    st.warning("📦 **Isolée**")
-
-                with col2:
-                    st.markdown(f"**{row['label']}**")
-                    
-                    # Target account detection
-                    current_acc = row.get('account_label', '')
-                    detected_target = None
-                    label_up = str(row['label']).upper()
-                    for acc in all_acc_labels:
-                        if acc != current_acc and acc.upper() in label_up:
-                            detected_target = acc
-                            break
-                    
-                    if detected_target:
-                        st.success(f"🎯 Vers : **{detected_target}**")
-
-                    if group_count > 1:
-                        st.caption("Et autres similaires")
-                    
-                with col3:
-                    color = "red" if group_total < 0 else "green"
-                    st.markdown(f"<h4 style='color:{color}; margin:0;'>{group_total:.2f} €</h4>", unsafe_allow_html=True)
+                # Header Section
+                st.markdown(f"""
+<div class="tx-header">
+<div class="tx-date-acc">
+📅 {row['date']} &nbsp; • &nbsp; 🏦 {row.get('account_label', 'Compte Principal')}
+</div>
+<div style="display: flex; gap: 0.5rem;">
+{f'<span class="status-badge badge-isolated">📦 Isolée</span>' if str(group_name).startswith("single_") else ""}
+{f'<span class="status-badge badge-group">📦 {group_count} opérations</span>' if group_count > 1 else ""}
+</div>
+</div>
+""", unsafe_allow_html=True)
+            
+            # Body: Label & Amount
+            c_body1, c_body2 = st.columns([3.5, 1])
+            with c_body1:
+                st.markdown(f'<div class="tx-label">{row["label"]}</div>', unsafe_allow_html=True)
                 
-                with col4:
-                    # Category selector
-                    cat_key = f"cat_{row['id']}"
-                    if cat_key not in st.session_state:
-                        current_cat = row.get('category_validated') if row.get('category_validated') != 'Inconnu' else (row['original_category'] or "Inconnu")
-                        st.session_state[cat_key] = current_cat if current_cat in available_categories else "Inconnu"
-                    
-                    options = list(available_categories)
-                    if row['original_category'] and row['original_category'] not in options:
-                        options.append(row['original_category'])
-                    
-                    # Ensure current_cat is in options to avoid error
-                    if st.session_state[cat_key] not in options:
-                        options.append(st.session_state[cat_key])
-                    
-                    def format_cat(cat_name):
-                        emoji = cat_emoji_map.get(cat_name, "🏷️")
-                        return f"{emoji} {cat_name}"
+                # Target account detection
+                current_acc = row.get('account_label', '')
+                detected_target = None
+                label_up = str(row['label']).upper()
+                for acc in all_acc_labels:
+                    if acc != current_acc and acc.upper() in label_up:
+                        detected_target = acc
+                        break
+                if detected_target:
+                    st.markdown(f'<span style="color:#059669; font-size:0.75rem; font-weight:700;">🎯 Vers : {detected_target}</span>', unsafe_allow_html=True)
+                elif group_count > 1:
+                    st.caption("Et autres opérations similaires")
+            
+            with c_body2:
+                amt_class = "tx-amount-pos" if group_total >= 0 else "tx-amount-neg"
+                st.markdown(f'<div class="tx-amount {amt_class}">{group_total:.2f} €</div>', unsafe_allow_html=True)
 
-                    # Explicitly find index to avoid reset bug
-                    try:
-                        cat_idx = options.index(st.session_state[cat_key])
-                    except ValueError:
-                        cat_idx = 0
-
-                    st.selectbox(
-                        "Catégorie", 
-                        options, 
-                        index=cat_idx,
-                        key=cat_key,
-                        format_func=format_cat,
-                        label_visibility="collapsed"
-                    )
-                    
-                    # Payeur / Bénéficiaire en ligne
-                    c_m1, c_m2 = st.columns(2)
-                    with c_m1:
-                        current_member = row.get('member', '')
-                        suffix = row.get('card_suffix')
-                        
-                        # Authoritative override: if we have an active mapping for this card, use it
-                        if suffix and suffix in active_card_maps:
-                            current_member = active_card_maps[suffix]
-                        
-                        if not current_member or current_member == 'Inconnu':
-                            current_member = ""
-                        
-                        member_sel_key = f"mem_sel_{group_id}"
-                        member_input_key = f"mem_input_{group_id}"
-                        
-                        # Prepare options: all known members + common roles + Autre trigger
-                        payeur_options = sorted(list(set(all_members + ["Maison", "Famille"])))
-                        if current_member and current_member not in payeur_options:
-                            payeur_options = sorted(payeur_options + [current_member])
-                        payeur_options.append("✍️ Saisie libre...")
-                        
-                        # Find initial index
-                        try:
-                            init_idx = payeur_options.index(current_member) if current_member in payeur_options else 0
-                        except:
-                            init_idx = 0
-                            
-                        sel_choice = st.selectbox("👤 Payeur", options=payeur_options, index=init_idx, key=member_sel_key, help="Choisissez un membre ou saisissez un nouveau nom via 'Saisie libre'")
-                        
-                        if sel_choice == "✍️ Saisie libre...":
-                            member_val = st.text_input("Nom du payeur", key=member_input_key, placeholder="ex: Employeur, Remboursement...")
-                        else:
-                            member_val = sel_choice
-                    
-                    with c_m2:
-                        beneficiary_key = f"benef_sel_{group_id}"
-                        beneficiary_input_key = f"benef_input_{group_id}"
-                        
-                        current_benef = row.get('beneficiary', 'Famille')
-                        if not current_benef:
-                            current_benef = ""
-                            
-                        benef_options = sorted(list(set(full_member_list + ["Maison", "Famille"])))
-                        if current_benef and current_benef not in benef_options:
-                            benef_options = sorted(benef_options + [current_benef])
-                        benef_options.append("✍️ Saisie libre...")
-                        
-                        try:
-                            # Default to "Famille" if exists, else first
-                            if current_benef in benef_options:
-                                b_idx = benef_options.index(current_benef)
-                            elif "Famille" in benef_options:
-                                b_idx = benef_options.index("Famille")
-                            else:
-                                b_idx = 0
-                        except:
-                            b_idx = 0
-                            
-                        b_choice = st.selectbox("🎯 Pour qui ?", options=benef_options, index=b_idx, key=beneficiary_key, help="À qui profite cette dépense ?")
-                        
-                        if b_choice == "✍️ Saisie libre...":
-                            beneficiary_val = st.text_input("Nom du bénéficiaire", key=beneficiary_input_key, placeholder="ex: Ami, Voyage...")
-                        else:
-                            beneficiary_val = b_choice
-
-                with col5:
-                    # Tags input - Advanced
-                    existing_tags = get_all_tags()
-                    tag_key = f"tag_sel_{group_id}"
-                    new_tag_key = f"tag_new_{group_id}"
-                    
-                    # Initial value for multiselect
-                    current_tags_str = row.get('tags', '') if row.get('tags') else ""
-                    current_tags = [t.strip() for t in current_tags_str.split(',') if t.strip()]
-                    
-                    # Filter current tags to ensure they are in existing_tags to avoid multiselect error
-                    # If they are not in existing_tags, we add them temporarily
-                    tag_options = sorted(list(set(existing_tags + current_tags)))
-                    
-                    selected_tags = st.multiselect("🏷️ Tags", options=tag_options, default=current_tags, key=tag_key, help="Choisissez des tags existants")
-                    new_tag = st.text_input("➕ Nouveau tag", key=new_tag_key, placeholder="ex: noël, vacances...", help="Appuyez sur Entrée pour ajouter ce tag")
-                    
-                    final_tags_list = list(set(selected_tags + ([new_tag.strip()] if new_tag.strip() else [])))
-                    final_tags_str = ", ".join(final_tags_list)
-
-                    # Buttons
-                    c_btn1, c_btn2 = st.columns([1, 3])
-                    with c_btn1:
-                        st.button(
-                            "🪄", 
-                            key=f"ai_{group_id}", 
-                            help="Demander à Gemini", 
-                            on_click=run_ai_categorization, 
-                            args=(group_id, row['label'], row['amount'], row['date'])
-                        )
-                        remember = st.checkbox("Mém.", key=f"mem_check_{group_id}", help="Créer une règle", value=True)
-                    
-                    with c_btn2:
-                        btn_label = f"Valider ({group_count})" if group_count > 1 else "Valider"
-                        if st.button(btn_label, key=f"btn_bulk_{group_id}", type="primary", use_container_width=True):
-                            # member_val is already computed above based on selection/input
-                                
-                            validate_with_memory(
-                                group_ids, 
-                                row['label'], 
-                                st.session_state[cat_key], 
-                                remember, 
-                                member_val,
-                                tags=final_tags_str,
-                                beneficiary=beneficiary_val
-                            )
-                            st.toast(f"✅ {group_count} transaction(s) validée(s) !", icon="🎉")
-                            
-                            # If it was the last group
-                            if len(display_groups) == 1:
-                                st.balloons()
-                                st.session_state['last_validation_success'] = True
-                                
-                            st.rerun()
+            # Actions & Inputs Area
+            with st.container():
+                st.markdown('<div class="tx-actions"></div>', unsafe_allow_html=True)
+            
+            # Row 1: Category & Tags
+            c_input1, c_input2 = st.columns([1, 1])
+            with c_input1:
+                cat_key = f"cat_{row['id']}"
+                if cat_key not in st.session_state:
+                    current_cat = row.get('category_validated') if row.get('category_validated') != 'Inconnu' else (row['original_category'] or "Inconnu")
+                    st.session_state[cat_key] = current_cat if current_cat in available_categories else "Inconnu"
                 
-                st.divider()
+                options = list(available_categories)
+                if row['original_category'] and row['original_category'] not in options:
+                    options.append(row['original_category'])
                 
-                # Drill-down: individual transactions in the group
-                with st.expander(f"🔍 Détail des {group_count} opérations"):
-                    st.write("Libellé complet | Date | Montant | Action")
-                    for _, sub_row in group_df.iterrows():
-                        c_d1, c_d2, c_d3, c_d4 = st.columns([4, 1, 1, 1])
-                        with c_d1:
-                            st.caption(sub_row['label'])
-                        with c_d2:
-                            st.caption(sub_row['date'])
-                        with c_d3:
-                            st.caption(f"{sub_row['amount']:.2f} €")
-                        with c_d4:
-                            # Use type="secondary" and specific key to avoid conflicts
-                            if st.button("Dégrouper", key=f"isole_{sub_row['id']}", help="Sortir cette opération du groupe", type="secondary"):
-                                st.session_state['excluded_tx_ids'].add(int(sub_row['id']))
-                                st.toast("✂️ Opération extraite du groupe", icon="⚡")
-                                # No rerun needed, fragment will update
+                if st.session_state[cat_key] not in options:
+                    options.append(st.session_state[cat_key])
+                
+                def format_cat(cat_name):
+                    emoji = cat_emoji_map.get(cat_name, "🏷️")
+                    return f"{emoji} {cat_name}"
+
+                try:
+                    cat_idx = options.index(st.session_state[cat_key])
+                except:
+                    cat_idx = 0
+
+                st.selectbox("Catégorie", options, index=cat_idx, key=cat_key, format_func=format_cat)
+                
+            with c_input2:
+                # Tags input
+                tag_key = f"tag_sel_{group_id}"
+                new_tag_key = f"tag_new_{group_id}"
+                current_tags_str = row.get('tags', '') if row.get('tags') else ""
+                current_tags = [t.strip() for t in current_tags_str.split(',') if t.strip()]
+                existing_tags = get_all_tags()
+                tag_options = sorted(list(set(existing_tags + current_tags)))
+                
+                selected_tags = st.multiselect("🏷️ Tags", options=tag_options, default=current_tags, key=tag_key)
+                new_tag = st.text_input("➕ Nouveau tag", key=new_tag_key, placeholder="Ex: noël...")
+                
+                final_tags_list = list(set(selected_tags + ([new_tag.strip()] if new_tag.strip() else [])))
+                final_tags_str = ", ".join(final_tags_list)
+
+            # Row 2: Payeur & Bénéficiaire
+            c_input3, c_input4 = st.columns([1, 1])
+            with c_input3:
+                current_member = row.get('member', '')
+                suffix = row.get('card_suffix')
+                if suffix and suffix in active_card_maps:
+                    current_member = active_card_maps[suffix]
+                if not current_member or current_member == 'Inconnu':
+                    current_member = ""
+                
+                member_sel_key = f"mem_sel_{group_id}"
+                member_input_key = f"mem_input_{group_id}"
+                payeur_options = sorted(list(set(all_members + ["Maison", "Famille"])))
+                if current_member and current_member not in payeur_options:
+                    payeur_options = sorted(payeur_options + [current_member])
+                payeur_options.append("✍️ Saisie libre...")
+                
+                try:
+                    init_idx = payeur_options.index(current_member) if current_member in payeur_options else 0
+                except:
+                    init_idx = 0
+                
+                sel_choice = st.selectbox("👤 Payeur", options=payeur_options, index=init_idx, key=member_sel_key)
+                if sel_choice == "✍️ Saisie libre...":
+                    member_val = st.text_input("Nom du payeur", key=member_input_key)
+                else:
+                    member_val = sel_choice
+                    
+            with c_input4:
+                beneficiary_key = f"benef_sel_{group_id}"
+                beneficiary_input_key = f"benef_input_{group_id}"
+                current_benef = row.get('beneficiary', 'Famille')
+                if not current_benef: current_benef = ""
+                
+                benef_options = sorted(list(set(full_member_list + ["Maison", "Famille"])))
+                if current_benef and current_benef not in benef_options:
+                    benef_options = sorted(benef_options + [current_benef])
+                benef_options.insert(0, "") # Placeholder for clear
+                benef_options.append("✍️ Saisie libre...")
+                
+                try:
+                    if current_benef in benef_options: b_idx = benef_options.index(current_benef)
+                    else: b_idx = benef_options.index("Famille") if "Famille" in benef_options else 0
+                except: b_idx = 0
+                
+                b_choice = st.selectbox("🎯 Pour qui ?", options=benef_options, index=b_idx, key=beneficiary_key)
+                if b_choice == "✍️ Saisie libre...":
+                    beneficiary_val = st.text_input("Nom du bénéficiaire", key=beneficiary_input_key)
+                else:
+                    beneficiary_val = b_choice
+
+
+            # Bottom Controls (AI, Memory, Validate)
+            c_ctrl1, c_ctrl2, c_ctrl3 = st.columns([0.5, 1, 3])
+            with c_ctrl1:
+                st.button("🪄", key=f"ai_{group_id}", help="Suggérer via IA", 
+                          on_click=run_ai_categorization, args=(group_id, row['label'], row['amount'], row['date']))
+            with c_ctrl2:
+                remember = st.checkbox("Mémoriser", key=f"mem_check_{group_id}", value=True)
+            with c_ctrl3:
+                btn_label = f"Valider {group_count} opérations" if group_count > 1 else "Valider l'opération"
+                if st.button(btn_label, key=f"btn_bulk_{group_id}", type="primary", use_container_width=True):
+                    validate_with_memory(group_ids, row['label'], st.session_state[cat_key], remember, member_val, tags=final_tags_str, beneficiary=beneficiary_val)
+                    st.toast(f"✅ Transaction(s) validée(s) !", icon="🎉")
+                    if len(display_groups) == 1: st.balloons()
+                    st.rerun()
+
+            with st.expander(f"🔍 Détails ({group_count} lignes)"):
+                for _, sub_row in group_df.iterrows():
+                    cd1, cd2, cd3, cd4 = st.columns([4, 1, 1, 1])
+                    cd1.caption(sub_row['label'])
+                    cd2.caption(sub_row['date'])
+                    cd3.caption(f"{sub_row['amount']:.2f} €")
+                    if cd4.button("Dégrouper", key=f"isole_{sub_row['id']}", type="secondary"):
+                        st.session_state['excluded_tx_ids'].add(int(sub_row['id']))
+                        st.toast("✂️ Opération isolée", icon="⚡")
+            
 
     # Call the fragment
     show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps)
