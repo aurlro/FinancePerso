@@ -360,7 +360,6 @@ else:
 
     # AI Financial Report Section
     st.subheader("🔮 Analyse & Conseils IA")
-    from modules.categorization import generate_financial_report
     import datetime
 
     # Prepare data for AI

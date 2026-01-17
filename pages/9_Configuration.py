@@ -4,7 +4,7 @@ import pandas as pd
 import shutil
 import sqlite3
 from modules.ui import load_css
-from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping
+from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping, get_all_transactions, delete_transactions_by_period
 
 # Page Setup
 st.set_page_config(page_title="Configuration", page_icon="⚙️")
@@ -211,9 +211,7 @@ with tab_data:
     st.header("Export des Données")
     st.markdown("Téléchargez toutes vos transactions au format CSV pour sauvegarde ou analyse externe.")
     
-    conn = sqlite3.connect(DB_PATH)
-    df_all = pd.read_sql("SELECT * FROM transactions", conn)
-    conn.close()
+    df_all = get_all_transactions()
     
     csv = df_all.to_csv(index=False).encode('utf-8')
     st.download_button(
@@ -234,12 +232,7 @@ with tab_data:
         if months:
             target_month = st.selectbox("Sélectionner le mois à supprimer", months)
             if st.button(f"🗑️ Supprimer tout le mois {target_month}", type="secondary"):
-                conn = sqlite3.connect(DB_PATH)
-                c = conn.cursor()
-                c.execute("DELETE FROM transactions WHERE strftime('%Y-%m', date) = ?", (target_month,))
-                deleted = c.rowcount
-                conn.commit()
-                conn.close()
+                deleted = delete_transactions_by_period(target_month)
                 st.success(f"{deleted} transactions supprimées pour {target_month}.")
                 st.rerun()
         else:

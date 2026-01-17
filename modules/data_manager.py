@@ -8,6 +8,9 @@ from contextlib import contextmanager
 import unicodedata
 from modules.logger import logger
 
+import streamlit as st
+import os
+
 DB_PATH = "Data/finance.db"
 
 @contextmanager
@@ -59,6 +62,12 @@ def init_db():
             c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_hash ON transactions(tx_hash)")
         if 'card_suffix' not in columns:
             c.execute("ALTER TABLE transactions ADD COLUMN card_suffix TEXT")
+        
+        # Performance Indexes
+        c.execute("CREATE INDEX IF NOT EXISTS idx_status ON transactions(status)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_date ON transactions(date)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_category ON transactions(category_validated)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_member ON transactions(member)")
         
         # Create categories table
         c.execute('''
@@ -277,6 +286,7 @@ def save_transactions(df):
                 new_count += 1
             
         conn.commit()
+        st.cache_data.clear() # Invalidate cache on new imports
         return new_count, skipped_count
 
 def apply_member_mappings_to_pending():
@@ -302,6 +312,14 @@ def get_pending_transactions():
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM transactions WHERE status='pending'", conn)
 
+@st.cache_data
+def get_all_hashes():
+    """Retrieve all hashes for duplicate detection without loading full rows."""
+    with get_db_connection() as conn:
+        df = pd.read_sql("SELECT tx_hash FROM transactions WHERE tx_hash IS NOT NULL", conn)
+        return set(df['tx_hash'].tolist())
+
+@st.cache_data(show_spinner="Chargement des données...")
 def get_all_transactions():
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM transactions", conn)
@@ -351,12 +369,14 @@ def bulk_update_transaction_status(tx_ids, new_category, tags=None, beneficiary=
         params = [new_category, tags, beneficiary] + list(tx_ids)
         c.execute(query, params)
         conn.commit()
+        st.cache_data.clear() # Invalidate cache on validation
 
 def delete_transaction(tx_id):
     with get_db_connection() as conn:
         c = conn.cursor()
         c.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
+        st.cache_data.clear()
 
 def delete_transactions_by_period(month_str):
     """Delete transactions for a specific month (YYYY-MM). Returns deleted count."""
@@ -365,6 +385,7 @@ def delete_transactions_by_period(month_str):
         c.execute("DELETE FROM transactions WHERE strftime('%Y-%m', date) = ?", (month_str,))
         deleted_count = c.rowcount
         conn.commit()
+        st.cache_data.clear()
         return deleted_count
 
 def get_all_account_labels():

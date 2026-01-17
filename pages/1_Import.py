@@ -1,6 +1,6 @@
 import streamlit as st
 from modules.ingestion import load_transaction_file
-from modules.data_manager import save_transactions, init_db, get_all_transactions, get_recent_imports
+from modules.data_manager import save_transactions, init_db, get_all_transactions, get_recent_imports, get_all_hashes, get_all_account_labels
 from modules.categorization import categorize_transaction
 from modules.ui import load_css
 from modules.utils import validate_csv_file
@@ -99,7 +99,7 @@ if uploaded_file is not None:
         with col_q1:
             st.subheader("📁 Compte associé")
             # Get existing accounts
-            existing_accounts = get_all_transactions()['account_label'].dropna().unique().tolist()
+            existing_accounts = get_all_account_labels()
             if not existing_accounts:
                 existing_accounts = ["Compte Principal"]
             
@@ -153,18 +153,12 @@ if uploaded_file is not None:
                 st.info(f"📊 {len(df)} transactions trouvées pour {period_label} {selected_year}.")
                 
                 # --- DUPLICATE DETECTION ---
-                existing_df = get_all_transactions()
+                existing_hashes = get_all_hashes()
                 
-                if not existing_df.empty:
-                    # Create comparison keys
-                    df['_dup_key'] = df.apply(lambda r: f"{r['date']}_{r['label']}_{r['amount']}", axis=1)
-                    existing_df['_dup_key'] = existing_df.apply(lambda r: f"{r['date']}_{r['label']}_{r['amount']}", axis=1)
-                    
-                    duplicates_mask = df['_dup_key'].isin(existing_df['_dup_key'])
+                if existing_hashes:
+                    duplicates_mask = df['tx_hash'].isin(existing_hashes)
                     num_duplicates = duplicates_mask.sum()
                     num_new = len(df) - num_duplicates
-                    
-                    df = df.drop(columns=['_dup_key'])
                     
                     if num_duplicates > 0:
                         st.warning(f"⚠️ **{num_duplicates} doublons détectés** (déjà importés). Ils seront ignorés.")
@@ -184,7 +178,7 @@ if uploaded_file is not None:
                 
                 # Preview new transactions
                 st.subheader("Aperçu des nouvelles transactions")
-                df_new_preview = df[~duplicates_mask].head(10).copy() if not existing_df.empty else df.head(10).copy()
+                df_new_preview = df[~duplicates_mask].head(10).copy() if existing_hashes else df.head(10).copy()
                 # Rename for display
                 df_new_display = df_new_preview[['date', 'label', 'amount']].copy()
                 df_new_display.columns = ['Date', 'Libellé', 'Montant']
