@@ -10,6 +10,7 @@ from modules.logger import logger
 
 import streamlit as st
 import os
+from modules.backup_manager import auto_backup_daily
 
 DB_PATH = "Data/finance.db"
 
@@ -24,6 +25,7 @@ def get_db_connection():
 
 def init_db():
     """Initialize database schema and run migrations."""
+    auto_backup_daily() # Automatic daily versioning
     with get_db_connection() as conn:
         c = conn.cursor()
         

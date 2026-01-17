@@ -208,8 +208,50 @@ with tab_cats:
 
 # --- TAB 4: DATA ---
 with tab_data:
-    st.header("Export des Données")
-    st.markdown("Téléchargez toutes vos transactions au format CSV pour sauvegarde ou analyse externe.")
+    st.header("💾 Sauvegardes")
+    st.markdown("L'application effectue une sauvegarde automatique chaque jour.")
+    
+    from modules.backup_manager import list_backups, restore_backup, create_backup
+    
+    backups = list_backups()
+    
+    if backups:
+        # Mini dashboard for backups
+        st.caption(f"**{len(backups)}** sauvegardes disponibles (Rétention : 1 an)")
+        
+        # Display as a table with actions
+        df_bkp = pd.DataFrame(backups)
+        df_bkp['Taille'] = df_bkp['size'].apply(lambda x: f"{x/1024:.0f} KB")
+        df_bkp['Date'] = df_bkp['date'].dt.strftime('%d/%m/%Y %H:%M')
+        
+        # We'll use a loop to provide a restore button for each
+        for b in backups[:10]: # Show last 10
+            c1, c2, c3 = st.columns([2, 1, 1])
+            c1.write(f"📄 {b['date'].strftime('%d/%m/%Y %H:%M')}")
+            c2.write(f"{b['size']/1024:.0f} KB")
+            if c3.button("Restaurer", key=f"restore_{b['filename']}", help="Restaurer cette version (une sécurité sera créée avant)"):
+                success, msg = restore_backup(b['filename'])
+                if success:
+                    st.success(msg)
+                    st.balloons()
+                    st.cache_data.clear() # Clear streamlit cache
+                else:
+                    st.error(msg)
+        
+        if len(backups) > 10:
+            st.info("Plus de sauvegardes sont disponibles dans le dossier Data/backups.")
+            
+    else:
+        st.info("Aucune sauvegarde trouvée.")
+        
+    if st.button("Lancer une sauvegarde manuelle 🛡️"):
+        path = create_backup(label="manual")
+        if path:
+            st.success(f"Sauvegarde créée avec succès !")
+            st.rerun()
+
+    st.divider()
+    st.header("📤 Export des Données")
     
     df_all = get_all_transactions()
     
