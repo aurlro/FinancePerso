@@ -4,7 +4,7 @@ import pandas as pd
 import shutil
 import sqlite3
 from modules.ui import load_css
-from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping, get_all_transactions, delete_transactions_by_period
+from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping, get_all_transactions, delete_transactions_by_period, get_all_tags, remove_tag_from_all_transactions, get_learning_rules, delete_learning_rule, rename_member, merge_categories, get_categories, get_orphan_labels, auto_fix_common_inconsistencies, update_member_type, delete_and_replace_label
 
 # Page Setup
 st.set_page_config(page_title="Configuration", page_icon="⚙️")
@@ -14,7 +14,7 @@ init_db() # Ensure tables exist
 st.title("⚙️ Configuration")
 
 # TABS
-tab_api, tab_members, tab_cats, tab_data = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "💾 Données & Danger"])
+tab_api, tab_members, tab_cats, tab_tags_rules, tab_audit, tab_data = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "🧠 Tags & Règles", "🧹 Audit & Nettoyage", "💾 Données & Danger"])
 
 # --- TAB 1: API ---
 with tab_api:
@@ -94,31 +94,80 @@ with tab_members:
     st.header("Membres du Foyer")
     st.markdown("Définissez les personnes associées à ce compte pour l'attribution des dépenses.")
     
-    # List members
     members_df = get_members()
     
     col_list, col_add = st.columns([1, 1])
     
     with col_list:
-        st.subheader("Membres existants")
         if members_df.empty:
             st.info("Aucun membre configuré.")
         else:
-            for index, row in members_df.iterrows():
-                c1, c2 = st.columns([3, 1])
-                c1.write(f"👤 **{row['name']}**")
-                if c2.button("🗑️", key=f"del_mem_{row['id']}"):
-                    delete_member(row['id'])
-                    st.rerun()
+            if 'editing_member_id' not in st.session_state:
+                st.session_state['editing_member_id'] = None
+                
+            # --- HOUSEHOLD GROUP ---
+            foyer_df = members_df[members_df['member_type'] == 'HOUSEHOLD']
+            st.subheader("🏘️ Membres du Foyer")
+            if foyer_df.empty:
+                st.caption("Aucun membre du foyer.")
+            else:
+                for index, row in foyer_df.iterrows():
+                    member_id, member_name = row['id'], row['name']
+                    if st.session_state['editing_member_id'] == member_id:
+                        c1, c2, c3 = st.columns([3, 0.5, 0.5])
+                        with c1: st.text_input("Nom", value=member_name, key=f"edit_in_{member_id}", label_visibility="collapsed")
+                        with c2: 
+                            if st.button("✅", key=f"sv_{member_id}"):
+                                rename_member(member_name, st.session_state[f"edit_in_{member_id}"])
+                                st.session_state['editing_member_id'] = None
+                                st.rerun()
+                        with c3:
+                            if st.button("❌", key=f"cl_{member_id}"):
+                                st.session_state['editing_member_id'] = None
+                                st.rerun()
+                    else:
+                        c1, c2, c3, c4 = st.columns([3, 1, 0.5, 0.5])
+                        c1.write(f"👤 **{member_name}**")
+                        if c2.button("➡️ Tiers", key=f"to_ext_{member_id}", help="Déplacer vers Tiers"):
+                            update_member_type(member_id, 'EXTERNAL')
+                            st.rerun()
+                        if c3.button("✏️", key=f"ed_{member_id}"):
+                            st.session_state['editing_member_id'] = member_id
+                            st.rerun()
+                        if c4.button("🗑️", key=f"dl_{member_id}"):
+                            delete_member(member_id); st.rerun()
+
+            # --- EXTERNAL GROUP ---
+            st.divider()
+            tiers_df = members_df[members_df['member_type'] == 'EXTERNAL']
+            st.subheader("👤 Tiers (Externes)")
+            st.caption("Organismes ou personnes externes (CPAM, LBC, Impôts, Amis...)")
+            if tiers_df.empty:
+                st.caption("Aucun tiers configuré.")
+            else:
+                for index, row in tiers_df.iterrows():
+                    member_id, member_name = row['id'], row['name']
+                    c1, c2, c3, c4 = st.columns([3, 1, 0.5, 0.5])
+                    c1.write(f"💼 {member_name}")
+                    if c2.button("🏘️ Foyer", key=f"to_ho_{member_id}", help="Déplacer vers Foyer"):
+                        update_member_type(member_id, 'HOUSEHOLD')
+                        st.rerun()
+                    if c3.button("✏️", key=f"ed_e_{member_id}"):
+                        st.session_state['editing_member_id'] = member_id
+                        st.rerun()
+                    if c4.button("🗑️", key=f"dl_e_{member_id}"):
+                        delete_member(member_id); st.rerun()
 
     with col_add:
-        st.subheader("Ajouter un membre")
+        st.subheader("Ajouter un membre / tiers")
         with st.form("add_member_form"):
-            new_name = st.text_input("Nom du membre", placeholder="Ex: Aurélien, Élise...")
+            new_name = st.text_input("Nom", placeholder="Ex: CPAM, Jean-Marc...")
+            new_type = st.radio("Type", ["Membres du Foyer", "Tiers (Externe)"], horizontal=True)
             if st.form_submit_button("Ajouter"):
                 if new_name:
-                    if add_member(new_name):
-                        st.success(f"Membre '{new_name}' ajouté !")
+                    m_type = 'EXTERNAL' if "Tiers" in new_type else 'HOUSEHOLD'
+                    if add_member(new_name, m_type):
+                        st.success(f"'{new_name}' ajouté !")
                         st.rerun()
                     else:
                         st.error("Ce membre existe déjà.")
@@ -203,10 +252,144 @@ with tab_cats:
                         st.rerun()
                     else:
                         st.error("Cette catégorie existe déjà.")
-                else:
+                    st.warning("Veuillez entrer un nom.")
+    
                     st.warning("Veuillez entrer un nom.")
 
-# --- TAB 4: DATA ---
+
+# --- TAB 4: TAGS & RULES ---
+with tab_tags_rules:
+    col_tr1, col_tr2 = st.columns([1, 1])
+    
+    # --- TAGS ---
+    with col_tr1:
+        st.header("🏷️ Gestion des Tags")
+        st.markdown("Liste des tags utilisés dans vos transactions.")
+        
+        all_tags = get_all_tags()
+        if not all_tags:
+            st.info("Aucun tag trouvé.")
+        else:
+            # Paging or scrolling logic if too many? For now list all.
+            # Use a container with fixed height if list is huge?
+            with st.container(height=500):
+                for tag in all_tags:
+                    c1, c2 = st.columns([3, 1])
+                    c1.write(f"🔹 **{tag}**")
+                    if c2.button("🗑️", key=f"del_tag_{tag}", help=f"Supprimer le tag '{tag}' de toutes les transactions"):
+                        count = remove_tag_from_all_transactions(tag)
+                        st.success(f"Tag '{tag}' retiré de {count} transactions.")
+                        st.rerun()
+
+    # --- RULES ---
+    with col_tr2:
+        st.header("🧠 Règles d'Apprentissage")
+        st.markdown("Historique des associations mémorisées (Tiers -> Catégorie).")
+        
+        rules_df = get_learning_rules()
+        if rules_df.empty:
+            st.info("Aucune règle mémorisée.")
+        else:
+             with st.container(height=500):
+                 for index, row in rules_df.iterrows():
+                     c1, c2 = st.columns([3, 1])
+                     c1.markdown(f"**{row['pattern']}** ➔ {row['category']}")
+                     if c2.button("🗑️", key=f"del_rule_{row['id']}"):
+                         delete_learning_rule(row['id'])
+                         st.rerun()
+
+# --- TAB 5: AUDIT & CLEANUP ---
+with tab_audit:
+    st.header("🧹 Audit & Nettoyage de Données")
+    st.markdown("Outils pour maintenir la cohérence de vos données (membres, catégories, etc.)")
+    
+    # --- AUTOMATIC FIX ---
+    with st.expander("🪄 Corrections Automatiques", expanded=True):
+        st.info("Cette option corrige les fautes de frappe courantes et les différences d'accents (ex: Élise ➔ Elise) sur la base de vos membres officiels.")
+        if st.button("Lancer les corrections magiques ✨"):
+            count = auto_fix_common_inconsistencies()
+            if count > 0:
+                st.success(f"Fait ! {count} transactions ont été nettoyées.")
+            else:
+                st.info("Aucune correction évidente trouvée.")
+            st.rerun()
+
+    # --- MEMBER CLEANUP (Orphans) ---
+    st.divider()
+    st.subheader("👤 Nettoyage des Membres & Bénéficiaires")
+    st.markdown("Identifiez les noms qui apparaissent dans vos transactions mais qui ne figurent pas dans votre liste de membres officiels.")
+    
+    orphans = get_orphan_labels()
+    official_members_list = sorted([m['name'] for m in get_members().to_dict('records')] + ["Maison", "Famille", "Inconnu"])
+    
+    if not orphans:
+        st.success("Félicitations ! Tous les noms dans vos transactions correspondent à des membres connus. ✨")
+    else:
+        st.warning(f"Il y a **{len(orphans)}** noms de membres ou bénéficiaires 'inconnus' dans votre base.")
+        
+        for i, orphan in enumerate(orphans):
+            c1, c2, c3, c4, c5 = st.columns([2, 1.5, 1, 1, 0.5])
+            c1.write(f"❓ **{orphan}**")
+            
+            with c2:
+                target = st.selectbox("Fusionner avec...", official_members_list, key=f"merge_orphan_{i}", label_visibility="collapsed")
+            
+            with c3:
+                if st.button("🔀 Fusion", key=f"btn_orphan_{i}", help="Fusionner avec un membre officiel"):
+                    count = rename_member(orphan, target)
+                    st.success(f"'{orphan}' ➔ '{target}' ({count} transactions)")
+                    st.rerun()
+            
+            with c4:
+                if st.button("👥 Tiers", key=f"btn_tiers_{i}", help="Enregistrer comme nouveau Tiers officiel"):
+                    add_member(orphan, 'EXTERNAL')
+                    st.success(f"'{orphan}' ajouté aux Tiers !")
+                    st.rerun()
+            
+            with c5:
+                if st.button("🗑️", key=f"btn_del_{i}", help="Supprimer partout et remplacer par 'Inconnu'"):
+                    count = delete_and_replace_label(orphan, "Inconnu")
+                    st.success(f"'{orphan}' supprimé ({count} transactions nettoyées)")
+                    st.rerun()
+
+    # --- CATEGORY MERGE SECTION ---
+    st.divider()
+    st.subheader("🔀 Fusionner des catégories")
+    st.info("""
+        Transférez toutes les transactions d'une catégorie vers une autre (utile pour les doublons).
+    """)
+    
+    col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
+    
+    all_cats = get_categories()
+    with col_m1:
+        source_cat = st.selectbox(
+            "Catégorie à absorber",
+            all_cats,
+            key="merge_source_audit",
+            help="Cette catégorie sera vidée de ses transactions"
+        )
+    
+    with col_m2:
+        target_options = [c for c in all_cats if c != source_cat]
+        target_cat = st.selectbox(
+            "Catégorie cible",
+            target_options if target_options else [""],
+            key="merge_target_audit",
+            help="Cette catégorie recevra toutes les transactions"
+        )
+    
+    with col_m3:
+        st.markdown("<div style='height: 0.1rem;'></div>", unsafe_allow_html=True)
+        if st.button("Fusionner", key="btn_merge_cat_audit", use_container_width=True, type="primary"):
+            if source_cat and target_cat and source_cat != target_cat:
+                result = merge_categories(source_cat, target_cat)
+                st.success(f"✅ {result['transactions']} transactions transférées !")
+                st.rerun()
+            else:
+                st.warning("Veuillez sélectionner deux catégories différentes.")
+
+# --- TAB 6: DATA ---
 with tab_data:
     st.header("💾 Sauvegardes")
     st.markdown("L'application effectue une sauvegarde automatique chaque jour.")

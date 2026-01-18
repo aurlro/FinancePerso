@@ -202,6 +202,25 @@ with tab_setup:
                     with col1:
                         st.markdown(f"**{cand['label']}** (~{cand['amount']:.0f} €)")
                         st.caption(f"Détecté comme : {cand['type']}")
+                        
+                        # Add details button
+                        with st.popover("👁️ Voir détails", use_container_width=False):
+                            st.markdown("### 📊 Informations complètes")
+                            details_data = cand.get('sample_transactions', pd.DataFrame())
+                            if not details_data.empty:
+                                # Show first transaction as example
+                                sample = details_data.iloc[0]
+                                st.markdown(f"**Libellé complet** : `{sample.get('label', 'N/A')}`")
+                                st.markdown(f"**Date** : {sample.get('date', 'N/A')}")
+                                st.markdown(f"**Montant** : {sample.get('amount', 0):.2f} €")
+                                st.markdown(f"**Compte** : {sample.get('account_label', 'N/A')}")
+                                st.markdown(f"**Catégorie actuelle** : {sample.get('category_validated', 'Inconnu')}")
+                                
+                                if len(details_data) > 1:
+                                    st.markdown(f"*({len(details_data)} transactions similaires trouvées)*")
+                            else:
+                                st.info("Aucun détail disponible")
+                                
                     with col2:
                         # User choice
                         choice = st.radio(

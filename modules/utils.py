@@ -7,17 +7,26 @@ import re
 def clean_label(label):
     """
     Remove common bank noise to help AI focus on merchant name.
-    Ex: 'Carte 30/12/25 Ittrattoria 4 Cb*6759' -> 'Ittrattoria 4'
+    Ex: 'VIR Virement de Aurelien...' -> 'Virement Aurelien'
     """
     # Remove dates (dd/mm/yy or dd/mm)
     label = re.sub(r'\d{2}/\d{2}(/\d{2,4})?', '', label)
-    # Remove "Carte", "Cb", numbers with *
-    label = re.sub(r'(?i)CARTE|CB\*?\d*|PRLV|SEPA|VIR', '', label)
+    
+    # Remove technical bank prefixes but KEEP "Virement", "Cotisation" if they are part of the name
+    # We remove "CARTE", "CB", "PRLV" (Prélèvement can be noisy but let's see), "SEPA", "VIR" (often redundant with Virement)
+    label = re.sub(r'(?i)\b(CARTE|CB|PRLV|SEPA|VIR)\b\*?\d*', '', label)
+    
+    # Remove numbers with * that are often card references
+    label = re.sub(r'\b\d{4,}\b', '', label) # Long numbers
+    
     # Remove leading/trailing non-alphanumeric
     label = re.sub(r'^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$', '', label)
+    
     # Remove multiple spaces
     label = re.sub(r'\s+', ' ', label)
-    return label.strip()
+    
+    # Title Case
+    return label.strip().title()
 
 def extract_card_member(label, card_map=None):
     """

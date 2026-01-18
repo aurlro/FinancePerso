@@ -64,6 +64,8 @@ def init_db():
             c.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_hash ON transactions(tx_hash)")
         if 'card_suffix' not in columns:
             c.execute("ALTER TABLE transactions ADD COLUMN card_suffix TEXT")
+        if 'is_manually_ungrouped' not in columns:
+            c.execute("ALTER TABLE transactions ADD COLUMN is_manually_ungrouped INTEGER DEFAULT 0")
         
         # Performance Indexes
         c.execute("CREATE INDEX IF NOT EXISTS idx_status ON transactions(status)")
@@ -145,6 +147,12 @@ def init_db():
             )
         ''')
 
+        # Migration: Add member_type column if it doesn't exist
+        c.execute("PRAGMA table_info(members)")
+        columns_mem = [info[1] for info in c.fetchall()]
+        if 'member_type' not in columns_mem:
+            c.execute("ALTER TABLE members ADD COLUMN member_type TEXT DEFAULT 'HOUSEHOLD'")
+
         conn.commit()
 
 # --- Budget Functions ---
@@ -162,15 +170,23 @@ def get_budgets():
             return pd.DataFrame(columns=['category', 'amount'])
 
 # --- Member Functions ---
-def add_member(name):
+def add_member(name, member_type='HOUSEHOLD'):
     with get_db_connection() as conn:
         c = conn.cursor()
         try:
-            c.execute("INSERT INTO members (name) VALUES (?)", (name,))
+            c.execute("INSERT INTO members (name, member_type) VALUES (?, ?)", (name, member_type))
             conn.commit()
             return True
         except sqlite3.IntegrityError:
             return False
+
+def update_member_type(member_id, member_type):
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE members SET member_type = ? WHERE id = ?", (member_type, member_id))
+        conn.commit()
+        st.cache_data.clear()
+
 
 def delete_member(member_id):
     with get_db_connection() as conn:
@@ -181,6 +197,113 @@ def delete_member(member_id):
 def get_members():
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM members ORDER BY name", conn)
+
+def rename_member(old_name, new_name):
+    """
+    Rename a member and propagate the change to all transactions and mappings.
+    Returns the total number of affected rows.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # Update member table
+        c.execute("UPDATE members SET name = ? WHERE name = ?", (new_name, old_name))
+        
+        # Update all transactions (member field)
+        c.execute("UPDATE transactions SET member = ? WHERE member = ?", (new_name, old_name))
+        tx_count = c.rowcount
+        
+        # Update all transactions (beneficiary field)
+        c.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (new_name, old_name))
+        tx_count += c.rowcount
+        
+        # Update member mappings
+        c.execute("UPDATE member_mappings SET member_name = ? WHERE member_name = ?", (new_name, old_name))
+        
+        conn.commit()
+        st.cache_data.clear()
+        return tx_count
+
+def get_orphan_labels():
+    """
+    Find values in transactions.member or transactions.beneficiary that are NOT in the members table.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # Get members
+        c.execute("SELECT name FROM members")
+        official_members = {r[0] for r in c.fetchall()}
+        # Standard reserved names
+        official_members.update({'Maison', 'Famille', 'Inconnu', 'Anonyme', '', None})
+        
+        # Get unique values from transactions
+        c.execute("SELECT DISTINCT member FROM transactions")
+        txn_members = {r[0] for r in c.fetchall() if r[0]}
+        
+        c.execute("SELECT DISTINCT beneficiary FROM transactions")
+        txn_benefs = {r[0] for r in c.fetchall() if r[0]}
+        
+        all_txn_values = txn_members.union(txn_benefs)
+        orphans = all_txn_values - official_members
+        
+        return sorted(list(orphans))
+
+def auto_fix_common_inconsistencies():
+    """
+    Fix obvious typos like accented names if the unaccented version is the official member.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # Mapping of (Wrong -> Correct)
+        fixes = {
+            "Élise": "Elise",
+            "Aurelien": "Aurélien",
+            "Anonyme": "Inconnu"
+        }
+        
+        total_fixed = 0
+        for wrong, right in fixes.items():
+            # Only fix if 'wrong' exists in transactions but 'right' is an official member
+            c.execute("SELECT count(*) FROM members WHERE name = ?", (right,))
+            if c.fetchone()[0] > 0:
+                # Update transactions
+                c.execute("UPDATE transactions SET member = ? WHERE member = ?", (right, wrong))
+                total_fixed += c.rowcount
+                c.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (right, wrong))
+                total_fixed += c.rowcount
+                
+        conn.commit()
+        if total_fixed > 0:
+            st.cache_data.clear()
+        return total_fixed
+
+def delete_and_replace_label(old_label, replacement_label="Inconnu"):
+    """
+    1. Update all transactions using this label in member or beneficiary fields.
+    2. Delete any member mapping for this label.
+    3. Delete the member from the members table if it exists.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # 1. Update transactions
+        c.execute("UPDATE transactions SET member = ? WHERE member = ?", (replacement_label, old_label))
+        count = c.rowcount
+        c.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (replacement_label, old_label))
+        count += c.rowcount
+        
+        # 2. Delete mappings
+        c.execute("DELETE FROM member_mappings WHERE member_name = ?", (old_label,))
+        
+        # 3. Delete from members table
+        c.execute("DELETE FROM members WHERE name = ?", (old_label,))
+        
+        conn.commit()
+        st.cache_data.clear()
+        return count
+
 
 # --- Learning Rules Functions ---
 def add_learning_rule(pattern, category, priority=1):
@@ -250,6 +373,47 @@ def get_categories_with_emojis():
 def get_categories_df():
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM categories ORDER BY name", conn)
+
+def merge_categories(source_category, target_category):
+    """
+    Merge source_category into target_category.
+    Updates all transactions and learning rules.
+    Returns dict with counts of affected rows.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # Update transactions (validated category)
+        c.execute("""
+            UPDATE transactions 
+            SET category_validated = ? 
+            WHERE category_validated = ?
+        """, (target_category, source_category))
+        tx_count = c.rowcount
+        
+        # Update transactions (original category)
+        c.execute("""
+            UPDATE transactions 
+            SET original_category = ? 
+            WHERE original_category = ?
+        """, (target_category, source_category))
+        
+        # Update learning rules
+        c.execute("""
+            UPDATE learning_rules 
+            SET category = ? 
+            WHERE category = ?
+        """, (target_category, source_category))
+        rule_count = c.rowcount
+        
+        conn.commit()
+        st.cache_data.clear()
+        
+        return {
+            'transactions': tx_count,
+            'rules': rule_count
+        }
+
 
 # --- Transaction Functions ---
 def transaction_exists(cursor, tx_hash):
@@ -370,8 +534,17 @@ def bulk_update_transaction_status(tx_ids, new_category, tags=None, beneficiary=
         """
         params = [new_category, tags, beneficiary] + list(tx_ids)
         c.execute(query, params)
+        c.execute(query, params)
         conn.commit()
         st.cache_data.clear() # Invalidate cache on validation
+
+def mark_transaction_as_ungrouped(tx_id):
+    """Marks a transaction to be permanently excluded from smart grouping."""
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE transactions SET is_manually_ungrouped = 1 WHERE id = ?", (tx_id,))
+        conn.commit()
+        st.cache_data.clear()
 
 def delete_transaction(tx_id):
     with get_db_connection() as conn:
@@ -415,6 +588,33 @@ def get_all_tags():
             all_tags.update(tags_list)
         
         return sorted(list(all_tags))
+
+def remove_tag_from_all_transactions(tag_to_remove):
+    """
+    Removes a specific tag from all transactions that contain it.
+    Performs string manipulation on the comma-separated tags field.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        # Find all transactions with this tag (simple LIKE for efficiency first)
+        pattern = f"%{tag_to_remove}%"
+        c.execute("SELECT id, tags FROM transactions WHERE tags LIKE ?", (pattern,))
+        rows = c.fetchall()
+        
+        updated_count = 0
+        for tx_id, tags_str in rows:
+            if not tags_str: continue
+            
+            current_tags = [t.strip() for t in tags_str.split(',') if t.strip()]
+            if tag_to_remove in current_tags:
+                current_tags.remove(tag_to_remove)
+                new_tags_str = ", ".join(current_tags)
+                c.execute("UPDATE transactions SET tags = ? WHERE id = ?", (new_tags_str, tx_id))
+                updated_count += 1
+        
+        conn.commit()
+        st.cache_data.clear()
+        return updated_count
 
 def get_unique_members():
     def norm(s):
