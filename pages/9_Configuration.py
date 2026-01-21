@@ -505,10 +505,16 @@ with tab_audit:
                         c1.markdown(f"📦 **{label}** ({count} tx)")
                         c1.caption(f"Total : {total_amount:.2f}€")
                         
+                        # Suggest Revenus if total amount is positive
+                        if total_amount > 0 and "Revenus" in all_categories:
+                            group_default = "Revenus"
+                        else:
+                            group_default = default_cat
+
                         target_cat = c2.selectbox(
                             "Catégorie", 
                             all_categories, 
-                            index=all_categories.index(default_cat),
+                            index=all_categories.index(group_default),
                             key=f"bulk_cat_{label}",
                             label_visibility="collapsed"
                         )

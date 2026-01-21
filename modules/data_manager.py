@@ -91,17 +91,34 @@ def init_db():
             c.execute("ALTER TABLE categories ADD COLUMN emoji TEXT DEFAULT '🏷️'")
         if 'is_fixed' not in columns_cat:
             c.execute("ALTER TABLE categories ADD COLUMN is_fixed INTEGER DEFAULT 0")
+        if 'suggested_tags' not in columns_cat:
+            c.execute("ALTER TABLE categories ADD COLUMN suggested_tags TEXT")
 
         # Initialize/Migrate default categories
-        # name, emoji, is_fixed
+        # name, emoji, is_fixed, suggested_tags
         default_cats = [
-            ("Alimentation", "🛒", 0), ("Transport", "🚗", 0), ("Loisirs", "🎮", 0), 
-            ("Santé", "🏥", 0), ("Logement", "🏠", 1), ("Revenus", "💰", 0), 
-            ("Autre", "📦", 0), ("Restaurants", "🍴", 0), ("Abonnements", "📱", 1), 
-            ("Achats", "🛍️", 0), ("Services", "🛠️", 0), ("Virement Interne", "🔄", 0),
-            ("Hors Budget", "🚫", 0), ("Impôts", "🧾", 1), ("Assurances", "🛡️", 1)
+            ("Alimentation", "🛒", 0, "Courses, Supermarché, Bio"), 
+            ("Transport", "🚗", 0, "Essence, Péage, Parking, SNCF"), 
+            ("Loisirs", "🎮", 0, "Cinéma, Sortie, Sport"), 
+            ("Santé", "🏥", 0, "Docteur, Pharmacie, Dentiste, Mutuelle, Remboursement"), 
+            ("Logement", "🏠", 1, "Loyer, Travaux, Meuble, Déco"), 
+            ("Revenus", "💰", 0, "Salaire, Virement, Remboursement"), 
+            ("Autre", "📦", 0, ""), 
+            ("Restaurants", "🍴", 0, "Restau, Bar, Café, Deliveroo"), 
+            ("Abonnements", "📱", 1, "Netflix, Spotify, Internet, Mobile"),
+            ("Services", "🛠️", 0, "Assurance, Banque, Impôts"),
+            ("Cadeaux", "🎁", 0, "Anniversaire, Noël"),
+            ("Virement Interne", "🔄", 0, ""),
+            ("Inconnu", "❓", 0, ""),
+            ("Hors Budget", "🚫", 0, ""), 
+            ("Impôts", "🧾", 1, ""), 
+            ("Assurances", "🛡️", 1, "")
         ]
-        c.executemany("INSERT OR IGNORE INTO categories (name, emoji, is_fixed) VALUES (?, ?, ?)", default_cats)
+        
+        for name, emoji, is_fixed, s_tags in default_cats:
+            c.execute("INSERT OR IGNORE INTO categories (name, emoji, is_fixed, suggested_tags) VALUES (?, ?, ?, ?)", (name, emoji, is_fixed, s_tags))
+            # Also update existing categories if suggested_tags is empty
+            c.execute("UPDATE categories SET suggested_tags = ? WHERE name = ? AND (suggested_tags IS NULL OR suggested_tags = '')", (s_tags, name))
         
         # Create member mappings table
         c.execute('''
@@ -152,6 +169,32 @@ def init_db():
         columns_mem = [info[1] for info in c.fetchall()]
         if 'member_type' not in columns_mem:
             c.execute("ALTER TABLE members ADD COLUMN member_type TEXT DEFAULT 'HOUSEHOLD'")
+
+        # Initialize/Migrate default members
+        default_members = [
+            ("Aurélien", "HOUSEHOLD"),
+            ("Elise", "HOUSEHOLD"),
+            ("Famille", "HOUSEHOLD"),
+            ("Maison", "HOUSEHOLD"),
+            ("Elise Carraud", "EXTERNAL")
+        ]
+        c.executemany("INSERT OR IGNORE INTO members (name, member_type) VALUES (?, ?)", default_members)
+        
+        # Initialize/Migrate default rules for internal transfers
+        default_rules = [
+            ("VIR INST CARRAUD ELISE", "Virement Interne", 5),
+            ("VIR VRT de Elise CARRAUD", "Virement Interne", 5),
+            ("VIR SEPA CARRAUD ELISE", "Virement Interne", 5)
+        ]
+        c.executemany("INSERT OR IGNORE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)", default_rules)
+
+        # Initialize default card mappings for the user
+        default_mappings = [
+            ("6759", "Aurélien"),
+            ("7238", "Duo"),
+            ("9533", "Aurélien")
+        ]
+        c.executemany("INSERT OR IGNORE INTO member_mappings (card_suffix, member_name) VALUES (?, ?)", default_mappings)
 
         conn.commit()
 
@@ -251,33 +294,106 @@ def get_orphan_labels():
 
 def auto_fix_common_inconsistencies():
     """
-    Fix obvious typos like accented names if the unaccented version is the official member.
+    Magic Fix 2.0:
+    1. Fix common typos (accented names)
+    2. Auto-delete duplicates
+    3. Normalize tags to lowercase
+    4. Re-apply rules to pending transactions
     """
+    total_fixed = 0
     with get_db_connection() as conn:
         c = conn.cursor()
         
-        # Mapping of (Wrong -> Correct)
-        fixes = {
-            "Élise": "Elise",
-            "Aurelien": "Aurélien",
-            "Anonyme": "Inconnu"
-        }
-        
-        total_fixed = 0
+        # 1. Accent fixes
+        fixes = {"Élise": "Elise", "Aurelien": "Aurélien", "Anonyme": "Inconnu"}
         for wrong, right in fixes.items():
             # Only fix if 'wrong' exists in transactions but 'right' is an official member
             c.execute("SELECT count(*) FROM members WHERE name = ?", (right,))
             if c.fetchone()[0] > 0:
-                # Update transactions
                 c.execute("UPDATE transactions SET member = ? WHERE member = ?", (right, wrong))
                 total_fixed += c.rowcount
                 c.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (right, wrong))
                 total_fixed += c.rowcount
+        
+        # 2. Auto-delete duplicates (Robust logic)
+        query = "SELECT date, label, amount, COUNT(*) as c FROM transactions GROUP BY date, label, amount HAVING c > 1"
+        dups = pd.read_sql(query, conn)
+        for _, row in dups.iterrows():
+            c.execute("SELECT id FROM transactions WHERE date = ? AND label = ? AND amount = ? ORDER BY id ASC", (str(row['date']), row['label'], row['amount']))
+            ids = [r[0] for r in c.fetchall()]
+            to_delete = ids[1:]
+            if to_delete:
+                c.execute(f"DELETE FROM transactions WHERE id IN ({','.join(['?']*len(to_delete))})", to_delete)
+                total_fixed += c.rowcount
+        
+        # 3. Normalize tags (lowercase and dedupe)
+        c.execute("SELECT id, tags FROM transactions WHERE tags IS NOT NULL AND tags != ''")
+        idx_tags = c.fetchall()
+        for tx_id, tags_str in idx_tags:
+            normalized = ", ".join(sorted(list(set([t.strip().lower() for t in tags_str.split(',') if t.strip()]))))
+            if normalized != tags_str:
+                c.execute("UPDATE transactions SET tags = ? WHERE id = ?", (normalized, tx_id))
+                total_fixed += 1
                 
         conn.commit()
-        if total_fixed > 0:
-            st.cache_data.clear()
-        return total_fixed
+
+    # 4. Re-apply rules (Local import to avoid circular dependency)
+    try:
+        from modules.categorization import apply_rules
+        with get_db_connection() as conn:
+            # We fetch fresh pending list
+            pending_df = pd.read_sql("SELECT id, label FROM transactions WHERE status='pending'", conn)
+            c = conn.cursor()
+            for _, row in pending_df.iterrows():
+                cat, conf = apply_rules(row['label'])
+                if cat:
+                    c.execute("UPDATE transactions SET category_validated = ?, status = 'validated' WHERE id = ?", (cat, row['id']))
+                    total_fixed += c.rowcount
+            conn.commit()
+    except Exception as e:
+        logger.error(f"Error re-applying rules in magic fix: {e}")
+
+    if total_fixed > 0:
+        st.cache_data.clear()
+    return total_fixed
+
+def get_suggested_mappings():
+    """
+    Identify recurring card suffixes in labels that are not yet mapped to a member.
+    """
+    with get_db_connection() as conn:
+        query = """
+            SELECT card_suffix, COUNT(*) as occurrence, MAX(label) as example_label
+            FROM transactions
+            WHERE card_suffix IS NOT NULL 
+              AND card_suffix NOT IN (SELECT card_suffix FROM member_mappings)
+            GROUP BY card_suffix
+            HAVING occurrence >= 2
+            ORDER BY occurrence DESC
+        """
+        return pd.read_sql(query, conn)
+
+def get_transfer_inconsistencies():
+    """Identifie les virements mal catégorisés."""
+    with get_db_connection() as conn:
+        TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
+        likes = " OR ".join([f"upper(label) LIKE '%{k}%'" for k in TRANSFER_KEYWORDS])
+        
+        query_missing = f"""
+            SELECT * FROM transactions 
+            WHERE category_validated NOT IN ('Virement Interne', 'Revenus', 'Hors Budget') 
+            AND ({likes})
+        """
+        
+        query_wrong = f"""
+            SELECT * FROM transactions 
+            WHERE category_validated = 'Virement Interne' 
+            AND NOT ({likes})
+        """
+        
+        missing = pd.read_sql(query_missing, conn)
+        wrong = pd.read_sql(query_wrong, conn)
+        return missing, wrong
 
 def delete_and_replace_label(old_label, replacement_label="Inconnu"):
     """
@@ -350,6 +466,12 @@ def update_category_fixed(cat_id, is_fixed):
         c.execute("UPDATE categories SET is_fixed = ? WHERE id = ?", (is_fixed, cat_id))
         conn.commit()
 
+def update_category_suggested_tags(cat_id, tags_list_str):
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("UPDATE categories SET suggested_tags = ? WHERE id = ?", (tags_list_str, cat_id))
+        conn.commit()
+
 def delete_category(cat_id):
     with get_db_connection() as conn:
         c = conn.cursor()
@@ -369,6 +491,16 @@ def get_categories_with_emojis():
     with get_db_connection() as conn:
         df = pd.read_sql("SELECT name, emoji FROM categories", conn)
         return dict(zip(df['name'], df['emoji']))
+
+def get_categories_suggested_tags():
+    """Returns a dict {name: [tags]}."""
+    with get_db_connection() as conn:
+        df = pd.read_sql("SELECT name, suggested_tags FROM categories", conn)
+        res = {}
+        for _, row in df.iterrows():
+            tags = [t.strip() for t in str(row['suggested_tags']).split(',') if t.strip() and t != 'None']
+            res[row['name']] = tags
+        return res
 
 def get_categories_df():
     with get_db_connection() as conn:
@@ -457,22 +589,48 @@ def save_transactions(df):
 
 def apply_member_mappings_to_pending():
     """Update all pending transactions based on current mappings."""
-    card_maps = get_member_mappings()
-    if not card_maps:
-        return 0
-        
-    updated = 0
     with get_db_connection() as conn:
         c = conn.cursor()
+        card_maps = get_member_mappings()
+        count = 0
         for suffix, member in card_maps.items():
-            c.execute("""
-                UPDATE transactions 
-                SET member = ? 
-                WHERE status = 'pending' AND card_suffix = ?
-            """, (member, suffix))
-            updated += c.rowcount
+            c.execute("UPDATE transactions SET member = ? WHERE card_suffix = ? AND status = 'pending'", (member, suffix))
+            count += c.rowcount
         conn.commit()
-    return updated
+        return count
+
+def get_transaction_count(date, label, amount):
+    """Count existing transactions with same criteria to help generate stable hash."""
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT COUNT(*) FROM transactions WHERE date = ? AND label = ? AND amount = ?", (str(date), label, amount))
+        return c.fetchone()[0]
+
+def get_duplicates_report():
+    """Find transactions with same date, label, amount."""
+    with get_db_connection() as conn:
+        query = """
+            SELECT date, label, amount, COUNT(*) as count 
+            FROM transactions 
+            GROUP BY date, label, amount 
+            HAVING count > 1
+        """
+        return pd.read_sql(query, conn)
+
+def get_transactions_by_criteria(date, label, amount):
+    """Retrieve transactions matching specific criteria."""
+    with get_db_connection() as conn:
+        query = "SELECT * FROM transactions WHERE date = ? AND label = ? AND amount = ?"
+        return pd.read_sql(query, conn, params=(str(date), label, amount))
+
+def delete_transaction_by_id(tx_id):
+    """Delete a specific transaction."""
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+        conn.commit()
+        st.cache_data.clear()
+        return c.rowcount
 
 def get_pending_transactions():
     with get_db_connection() as conn:
@@ -533,7 +691,6 @@ def bulk_update_transaction_status(tx_ids, new_category, tags=None, beneficiary=
             WHERE id IN ({placeholders})
         """
         params = [new_category, tags, beneficiary] + list(tx_ids)
-        c.execute(query, params)
         c.execute(query, params)
         conn.commit()
         st.cache_data.clear() # Invalidate cache on validation
