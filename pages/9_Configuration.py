@@ -494,18 +494,29 @@ with tab_audit:
             
             # Display groups
             with st.expander("Voir et corriger les groupes de virements", expanded=True):
+                all_categories = get_categories()
+                default_cat = "Virement Interne" if "Virement Interne" in all_categories else all_categories[0]
+                
                 for label, group in final_groups.items():
                     with st.container(border=True):
-                        c1, c2 = st.columns([3, 1])
+                        c1, c2, c3 = st.columns([2, 1, 1])
                         count = len(group)
                         total_amount = group['amount'].sum()
-                        c1.markdown(f"📦 **{label}** ({count} transactions)")
+                        c1.markdown(f"📦 **{label}** ({count} tx)")
                         c1.caption(f"Total : {total_amount:.2f}€")
                         
-                        if c2.button(f"Tout corriger", key=f"bulk_fix_{label}", help="Passer tout le groupe en Virement Interne"):
+                        target_cat = c2.selectbox(
+                            "Catégorie", 
+                            all_categories, 
+                            index=all_categories.index(default_cat),
+                            key=f"bulk_cat_{label}",
+                            label_visibility="collapsed"
+                        )
+                        
+                        if c3.button(f"Tout corriger", key=f"bulk_fix_{label}"):
                             from modules.data_manager import bulk_update_transaction_status
-                            bulk_update_transaction_status(group['id'].tolist(), "Virement Interne")
-                            st.success(f"Groupe '{label}' corrigé !")
+                            bulk_update_transaction_status(group['id'].tolist(), target_cat)
+                            st.success(f"Groupe '{label}' corrigé en '{target_cat}' !")
                             st.rerun()
                         
                         # Show individual transactions if user wants
