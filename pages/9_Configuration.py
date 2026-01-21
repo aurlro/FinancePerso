@@ -511,18 +511,23 @@ with tab_audit:
                         else:
                             group_default = default_cat
 
+                        # Safe and unique key for Streamlit
+                        import hashlib
+                        safe_key = hashlib.md5(label.encode()).hexdigest()[:12]
+
                         target_cat = c2.selectbox(
                             "Catégorie", 
                             all_categories, 
                             index=all_categories.index(group_default),
-                            key=f"bulk_cat_{label}",
+                            key=f"bulk_cat_{safe_key}",
                             label_visibility="collapsed"
                         )
                         
-                        if c3.button(f"Tout corriger", key=f"bulk_fix_{label}"):
+                        if c3.button(f"Tout corriger", key=f"bulk_fix_{safe_key}"):
                             from modules.data_manager import bulk_update_transaction_status
-                            bulk_update_transaction_status(group['id'].tolist(), target_cat)
-                            st.success(f"Groupe '{label}' corrigé en '{target_cat}' !")
+                            tx_ids = group['id'].tolist()
+                            bulk_update_transaction_status(tx_ids, target_cat)
+                            st.success(f"Corrigé ! {len(tx_ids)} tx en '{target_cat}'")
                             st.rerun()
                         
                         # Show individual transactions if user wants

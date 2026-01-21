@@ -378,11 +378,18 @@ def get_transfer_inconsistencies():
     with get_db_connection() as conn:
         TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
         likes = " OR ".join([f"upper(label) LIKE '%{k}%'" for k in TRANSFER_KEYWORDS])
-        
+        # Missing transfers: 
+        # 1. Transactions that are still pending (must be reviewed)
+        # 2. Transactions in generic/unclear categories (Virements, Inconnu...)
+        # 3. Only flag if they are NOT already Virement Interne or Hors Budget
         query_missing = f"""
             SELECT * FROM transactions 
-            WHERE category_validated NOT IN ('Virement Interne', 'Revenus', 'Hors Budget') 
-            AND ({likes})
+            WHERE ({likes})
+            AND category_validated NOT IN ('Virement Interne', 'Hors Budget') 
+            AND (
+                status = 'pending'
+                OR category_validated IN ('Virements', 'Virements reçus', 'Inconnu')
+            )
         """
         
         query_wrong = f"""
