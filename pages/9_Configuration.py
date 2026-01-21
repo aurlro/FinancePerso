@@ -3,8 +3,23 @@ import os
 import pandas as pd
 import shutil
 import sqlite3
+import difflib
 from modules.ui import load_css
-from modules.data_manager import get_members, add_member, delete_member, init_db, DB_PATH, get_available_months, get_categories_df, add_category, delete_category, update_category_emoji, update_category_fixed, get_member_mappings_df, add_member_mapping, delete_member_mapping, get_all_transactions, delete_transactions_by_period, get_all_tags, remove_tag_from_all_transactions, get_learning_rules, delete_learning_rule, rename_member, merge_categories, get_categories, get_orphan_labels, auto_fix_common_inconsistencies, update_member_type, delete_and_replace_label
+from modules.utils import clean_label
+from modules.data_manager import (
+    get_members, add_member, delete_member, init_db, DB_PATH, 
+    get_available_months, get_categories_df, add_category, 
+    delete_category, update_category_emoji, update_category_fixed, 
+    get_member_mappings_df, add_member_mapping, delete_member_mapping, 
+    get_all_transactions, delete_transactions_by_period, get_all_tags, 
+    remove_tag_from_all_transactions, get_learning_rules, delete_learning_rule, 
+    rename_member, merge_categories, get_categories, get_orphan_labels, 
+    auto_fix_common_inconsistencies, update_member_type, 
+    delete_and_replace_label, get_duplicates_report, 
+    get_transactions_by_criteria, delete_transaction_by_id, 
+    get_suggested_mappings, get_transfer_inconsistencies, 
+    update_transaction_category
+)
 
 # Page Setup
 st.set_page_config(page_title="Configuration", page_icon="⚙️")
@@ -228,9 +243,15 @@ with tab_cats:
                     c1, c2 = st.columns([3, 1])
                     new_emoji = c1.text_input("Emoji", value=row['emoji'], key=f"emoji_val_{row['id']}")
                     is_fixed = c1.checkbox("Dépense Fixe (ex: Loyer, Abonnement)", value=bool(row['is_fixed']), key=f"fixed_val_{row['id']}")
+                    
+                    suggested_tags_val = row.get('suggested_tags', '') if row.get('suggested_tags') else ''
+                    new_suggested_tags = c1.text_input("Tags suggérés (séparés par des virgules)", value=suggested_tags_val, key=f"tags_val_{row['id']}")
+                    
                     if c1.button("Mettre à jour", key=f"upd_cat_{row['id']}"):
                         update_category_emoji(row['id'], new_emoji)
                         update_category_fixed(row['id'], int(is_fixed))
+                        from modules.data_manager import update_category_suggested_tags
+                        update_category_suggested_tags(row['id'], new_suggested_tags)
                         st.rerun()
                     
                     if c2.button("🗑️ Supprimer", key=f"del_cat_{row['id']}"):
@@ -304,14 +325,22 @@ with tab_audit:
     st.markdown("Outils pour maintenir la cohérence de vos données (membres, catégories, etc.)")
     
     # --- AUTOMATIC FIX ---
-    with st.expander("🪄 Corrections Automatiques", expanded=True):
-        st.info("Cette option corrige les fautes de frappe courantes et les différences d'accents (ex: Élise ➔ Elise) sur la base de vos membres officiels.")
-        if st.button("Lancer les corrections magiques ✨"):
+    with st.expander("🪄 Corrections Automatiques (Magic Fix 2.0)", expanded=True):
+        st.info("""
+            **Le Magic Fix 2.0 nettoie votre base en un clic :**
+            - 🛠️ Corrige les fautes de frappe et accents sur les membres.
+            - 🧹 Supprime automatiquement tous les doublons détectés.
+            - 🏷️ Normalise les tags (minuscules et dédoublonnage).
+            - 🧠 Ré-applique vos règles aux transactions en attente.
+        """)
+        if st.button("Lancer les corrections magiques ✨", type="primary"):
+            from modules.backup_manager import create_backup
+            create_backup(label="pre_magic_fix")
             count = auto_fix_common_inconsistencies()
             if count > 0:
-                st.success(f"Fait ! {count} transactions ont été nettoyées.")
+                st.success(f"Fait ! {count} corrections/nettoyages effectués.")
             else:
-                st.info("Aucune correction évidente trouvée.")
+                st.info("Tout semble déjà propre ! ✨")
             st.rerun()
 
     # --- MEMBER CLEANUP (Orphans) ---
@@ -388,6 +417,130 @@ with tab_audit:
                 st.rerun()
             else:
                 st.warning("Veuillez sélectionner deux catégories différentes.")
+
+    # --- DUPLICATE FINDER ---
+    st.divider()
+    st.subheader("🕵️ Détecteur de Doublons")
+    st.markdown("Identifie les transactions identiques (même date, libellé et montant) pour nettoyage.")
+    
+    dup_df = get_duplicates_report()
+    
+    if dup_df.empty:
+        st.success("Aucun doublon détecté ! ✨")
+    else:
+        st.warning(f"**{len(dup_df)}** groupes de doublons potentiels trouvés.")
+        for i, row in dup_df.iterrows():
+            with st.expander(f"📌 {row['date']} • {row['label']} • {row['amount']:.2f}€ ({row['count']} fois)"):
+                # Get details
+                details = get_transactions_by_criteria(row['date'], row['label'], row['amount'])
+                
+                # Show each with a delete button
+                for _, d_row in details.iterrows():
+                    c1, c2, c3 = st.columns([3, 1, 0.5])
+                    c1.write(f"🏢 {d_row['account_label']} | 👤 {d_row['member']}")
+                    c2.write(f":grey[{d_row['import_date']}]")
+                    if c3.button("🗑️", key=f"del_dup_{d_row['id']}"):
+                        delete_transaction_by_id(d_row['id'])
+                        st.toast("Transaction supprimée")
+                        st.rerun()
+                
+                if st.button("🪄 Garder un seul (Auto)", key=f"clean_grp_{i}"):
+                    # Keep the one with highest ID or lowest ID? Let's say keeping the first imported or last.
+                    # Usually better to keep the one that might have been validated.
+                    # But let's just keep the first one for simplicity.
+                    to_delete = details.iloc[1:]['id'].tolist()
+                    deleted_count = 0
+                    for tid in to_delete:
+                        deleted_count += delete_transaction_by_id(tid)
+                    st.success(f"{deleted_count} doublons supprimés.")
+                    st.rerun()
+
+    # --- TRANSFER AUDIT ---
+    st.divider()
+    st.subheader("🔄 Audit des Virements")
+    st.markdown("Identifiez les virements internes qui pourraient être mal catégorisés.")
+    
+    missing_t, wrong_t = get_transfer_inconsistencies()
+    
+    if missing_t.empty and wrong_t.empty:
+        st.success("Aucune incohérence de virement détectée. ✨")
+    else:
+        if not missing_t.empty:
+            st.warning(f"**{len(missing_t)}** transactions ressemblent à des virements mais n'ont pas la catégorie 'Virement Interne'.")
+            
+            # --- Grouping Logic ---
+            missing_t['clean'] = missing_t['label'].apply(clean_label)
+            groups = []
+            
+            # Group by exact cleaned label first
+            exact_groups = missing_t.groupby('clean')
+            
+            # Process groups for similarity
+            processed_labels = []
+            final_groups = {} # clean_label -> list of rows
+            
+            for label, group in exact_groups:
+                found_match = False
+                for existing_label in final_groups.keys():
+                    # Similarity check
+                    similarity = difflib.SequenceMatcher(None, label, existing_label).ratio()
+                    if similarity >= 0.8:
+                        final_groups[existing_label] = pd.concat([final_groups[existing_label], group])
+                        found_match = True
+                        break
+                
+                if not found_match:
+                    final_groups[label] = group
+            
+            # Display groups
+            with st.expander("Voir et corriger les groupes de virements", expanded=True):
+                for label, group in final_groups.items():
+                    with st.container(border=True):
+                        c1, c2 = st.columns([3, 1])
+                        count = len(group)
+                        total_amount = group['amount'].sum()
+                        c1.markdown(f"📦 **{label}** ({count} transactions)")
+                        c1.caption(f"Total : {total_amount:.2f}€")
+                        
+                        if c2.button(f"Tout corriger", key=f"bulk_fix_{label}", help="Passer tout le groupe en Virement Interne"):
+                            from modules.data_manager import bulk_update_transaction_status
+                            bulk_update_transaction_status(group['id'].tolist(), "Virement Interne")
+                            st.success(f"Groupe '{label}' corrigé !")
+                            st.rerun()
+                        
+                        # Show individual transactions if user wants
+                        if st.checkbox(f"Détails", key=f"show_detail_{label}"):
+                            for _, row in group.iterrows():
+                                st.write(f"  • {row['date']} • {row['label']} • {row['amount']:.2f}€")
+        
+        if not wrong_t.empty:
+            st.info(f"**{len(wrong_t)}** transactions sont catégorisées 'Virement Interne' mais n'en ont pas l'air.")
+            with st.expander("Voir les virements douteux"):
+                for _, row in wrong_t.iterrows():
+                    st.write(f"❓ {row['date']} • **{row['label']}** • {row['amount']:.2f}€")
+
+    # --- CARD SUGGESTIONS ---
+    st.divider()
+    st.subheader("💳 Suggestions de Membres (Cartes)")
+    st.markdown("Numéros de carte détectés dans vos libellés qui ne sont pas encore associés à un membre.")
+    
+    suggestions = get_suggested_mappings()
+    if suggestions.empty:
+        st.success("Toutes vos cartes semblent déjà mappées ! ✨")
+    else:
+        for _, row in suggestions.iterrows():
+            with st.container(border=True):
+                c1, c2, c3 = st.columns([2, 2, 1])
+                c1.write(f"💳 Carte **{row['card_suffix']}**")
+                c1.caption(f"Vue {row['occurrence']} fois (ex: {row['example_label']})")
+                
+                members_list = sorted(get_members()['name'].tolist())
+                target_m = c2.selectbox("Attribuer à", members_list, key=f"sugg_m_{row['card_suffix']}", label_visibility="collapsed")
+                
+                if c3.button("Associer", key=f"btn_sugg_{row['card_suffix']}", use_container_width=True):
+                    add_member_mapping(row['card_suffix'], target_m)
+                    st.success(f"Carte {row['card_suffix']} associée à {target_m} !")
+                    st.rerun()
 
 # --- TAB 6: DATA ---
 with tab_data:
