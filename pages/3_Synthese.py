@@ -3,6 +3,7 @@ from modules.data_manager import get_all_transactions, init_db
 from modules.ui import load_css, card_kpi
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import datetime
 import calendar
 from modules.analytics import detect_financial_profile
@@ -203,35 +204,96 @@ else:
     
     st.divider()
     
-    # --- EVOLUTION CHART (New) ---
+    # --- EVOLUTION CHART (Fixed) ---
     st.subheader("📉 Évolution des Flux")
     
-    # Group by month and type
+    # Group by month
     df_evol = df_current.copy()
     df_evol['Mois'] = df_evol['date_dt'].dt.strftime('%Y-%m')
     
-    # Summarize Income vs Expenses
-    evol_data = []
-    for m, g in df_evol.groupby('Mois'):
+    # Complete the date range to avoid gaps
+    all_months = pd.date_range(start=df_evol['date_dt'].min(), end=df_evol['date_dt'].max(), freq='MS').strftime('%Y-%m').tolist()
+    
+    monthly_data = []
+    for m in all_months:
+        g = df_evol[df_evol['Mois'] == m]
         inc = g[g['amount'] > 0]['amount'].sum()
         exp = abs(g[g['amount'] < 0]['amount'].sum())
-        evol_data.append({"Mois": m, "Type": "Revenus", "Montant": inc})
-        evol_data.append({"Mois": m, "Type": "Dépenses", "Montant": exp})
+        monthly_data.append({"Mois": m, "Revenus": inc, "Dépenses": exp})
     
-    df_evol_plot = pd.DataFrame(evol_data)
+    df_plot = pd.DataFrame(monthly_data)
     
-    if not df_evol_plot.empty:
-        fig_evol = px.area(df_evol_plot, x="Mois", y="Montant", color="Type",
-                           color_discrete_map={"Revenus": "#22c55e", "Dépenses": "#ef4444"},
-                           line_shape="spline", barmode="overlay")
+    if not df_plot.empty:
+        import numpy as np
+        fig_evol = go.Figure()
         
-        # Add Cash Flow line
-        df_net = df_evol.groupby('Mois').apply(lambda x: x['amount'].sum()).reset_index()
-        df_net.columns = ['Mois', 'Net']
-        fig_evol.add_scatter(x=df_net['Mois'], y=df_net['Net'], name="Solde Net", 
-                             line=dict(color="white", width=3, dash="dot"))
+        # Calculate min for the fill trick
+        min_line = np.minimum(df_plot['Revenus'], df_plot['Dépenses'])
         
-        fig_evol.update_layout(xaxis_title="", yaxis_title="Montant (€)", height=400)
+        # 1. Base trace for Surplus (Green area between min and Revenus)
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=min_line,
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=df_plot['Revenus'],
+            fill='tonexty',
+            fillcolor='rgba(34, 197, 94, 0.3)',
+            line=dict(width=0),
+            name="Zone de Surplus (Épargne)",
+            hoverinfo='skip'
+        ))
+        
+        # 2. Base trace for Deficit (Red area between min and Dépenses)
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=min_line,
+            line=dict(width=0),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=df_plot['Dépenses'],
+            fill='tonexty',
+            fillcolor='rgba(239, 68, 68, 0.3)',
+            line=dict(width=0),
+            name="Zone de Déficit",
+            hoverinfo='skip'
+        ))
+        
+        # 3. Solid lines on top
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=df_plot['Revenus'],
+            name="Revenus",
+            line=dict(color="#22c55e", width=4, shape='spline'),
+            mode='lines+markers'
+        ))
+        fig_evol.add_trace(go.Scatter(
+            x=df_plot['Mois'], y=df_plot['Dépenses'],
+            name="Dépenses",
+            line=dict(color="#ef4444", width=4, shape='spline'),
+            mode='lines+markers'
+        ))
+        
+        # 4. Solde Net (Line)
+        df_net = df_plot.copy()
+        df_net['Solde'] = df_net['Revenus'] - df_net['Dépenses']
+        fig_evol.add_trace(go.Scatter(
+            x=df_net['Mois'], y=df_net['Solde'],
+            name="Caisse (Net)",
+            line=dict(color="white" if not st.get_option("theme.base") == "light" else "black", width=2, dash='dot'),
+            mode='lines'
+        ))
+        
+        fig_evol.update_layout(
+            xaxis_title="", 
+            yaxis_title="Montant (€)", 
+            height=450,
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            margin=dict(l=0, r=0, t=50, b=0)
+        )
         st.plotly_chart(fig_evol, use_container_width=True)
     else:
         st.info("Sélectionnez une période avec des données pour voir l'évolution.")
@@ -246,7 +308,11 @@ else:
         cat_props = get_categories_df()
         FIXED_CATEGORIES = cat_props[cat_props['is_fixed'] == 1]['name'].tolist()
         
-        df_exp = df_current[df_current['amount'] < 0].copy()
+        # Exclude 'Revenus', 'Virement Interne' and 'Hors Budget' from expense charts
+        df_exp = df_current[
+            (df_current['amount'] < 0) & 
+            (~df_current['category_validated'].isin(['Revenus', 'Virement Interne', 'Hors Budget']))
+        ].copy()
         df_exp['amount'] = df_exp['amount'].abs()
         cat_emoji_map = get_categories_with_emojis()
         
@@ -354,13 +420,15 @@ else:
     
     st.subheader("Évolution Mensuelle par Catégorie")
     df['date'] = pd.to_datetime(df['date'])
-    # Resample to month
-    # We need to use valid categories
-    df_monthly = df[df['amount'] < 0].copy()
+    # Resample to month - Exclude non-expense categories and only keep actual spending
+    exclude_cats = ['Revenus', 'Virement Interne', 'Hors Budget']
+    df_monthly = df[(df['amount'] < 0) & (~df['category_validated'].isin(exclude_cats))].copy()
     df_monthly['amount'] = df_monthly['amount'].abs()
     
     df_monthly['display_category'] = df_monthly.apply(
-        lambda x: get_cat_with_emoji(x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu")), 
+        lambda x: (
+            lambda v: f"{cat_emoji_map.get(v, '🏷️')} {v}"
+        )(x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu")), 
         axis=1
     )
     # Extract Month-Year for grouping
@@ -380,13 +448,42 @@ else:
     # BENEFICIARY & TAGS ANALYSIS
     col_a1, col_a2 = st.columns(2)
     with col_a1:
-        st.subheader("👥 Par Bénéficiaire")
         if 'beneficiary_display' in df_current.columns:
-            df_benef = df_current[df_current['amount'] < 0].groupby('beneficiary_display')['amount'].sum().abs().reset_index()
-            df_benef.columns = ['Bénéficiaire', 'Montant']
-            fig_benef = px.pie(df_benef.head(15), values='Montant', names='Bénéficiaire', hole=0.4,
-                               color_discrete_sequence=px.colors.qualitative.Pastel)
-            st.plotly_chart(fig_benef, use_container_width=True)
+            # 1. Household Members Chart
+            household_members_only = official_list + ['Famille', 'Maison']
+            
+            df_members = df_current[df_current['amount'] < 0].copy()
+            df_members = df_members[df_members['beneficiary_display'].isin(household_members_only)]
+            
+            df_members_sum = df_members.groupby('beneficiary_display')['amount'].sum().abs().reset_index()
+            df_members_sum.columns = ['Membre', 'Montant']
+            
+            st.subheader("👥 Par Membre du Foyer")
+            if not df_members_sum.empty:
+                fig_members = px.pie(df_members_sum, values='Montant', names='Membre', hole=0.4,
+                                     color_discrete_sequence=px.colors.qualitative.Pastel)
+                st.plotly_chart(fig_members, use_container_width=True)
+            else:
+                st.info("Aucune dépense affectée aux membres sur cette période.")
+
+            st.divider()
+
+            # 2. Third-party Beneficiaries Chart
+            household_exclude = official_list + ['Famille', 'Maison', 'Inconnu', 'Anonyme', '']
+            
+            df_tiers = df_current[df_current['amount'] < 0].copy()
+            df_tiers = df_tiers[~df_tiers['beneficiary_display'].isin(household_exclude)]
+            
+            df_tiers_sum = df_tiers.groupby('beneficiary_display')['amount'].sum().abs().reset_index()
+            df_tiers_sum.columns = ['Bénéficiaire', 'Montant']
+            
+            st.subheader("🏢 Par Bénéficiaire (Tiers)")
+            if not df_tiers_sum.empty:
+                fig_tiers = px.pie(df_tiers_sum.head(15), values='Montant', names='Bénéficiaire', hole=0.4,
+                                   color_discrete_sequence=px.colors.qualitative.Pastel)
+                st.plotly_chart(fig_tiers, use_container_width=True)
+            else:
+                st.info("Aucun bénéficiaire tiers détecté sur cette période.")
     with col_a2:
         st.subheader("🏷️ Par Tags")
         if 'tags' in df_current.columns:
