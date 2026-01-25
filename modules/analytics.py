@@ -158,3 +158,41 @@ def detect_financial_profile(df):
                 })
     
     return candidates
+
+def get_monthly_savings_trend(months=12):
+    """
+    Calculate monthly Incoming, Outgoing, and Savings Rate for the last N months.
+    Returns DataFrame with columns ['Month', 'Revenus', 'Dépenses', 'Epargne', 'Taux'].
+    """
+    from modules.data_manager import get_db_connection
+    import datetime
+    
+    with get_db_connection() as conn:
+        # Get last 12 months data
+        # We exclude internal transfers and 'Hors Budget'
+        # Group by YYYY-MM
+        query = """
+            SELECT strftime('%Y-%m', date) as month, 
+                   SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as income,
+                   SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) as expense
+            FROM transactions 
+            WHERE category_validated NOT IN ('Virement Interne', 'Hors Budget') 
+              AND status = 'validated'
+            GROUP BY month 
+            ORDER BY month DESC 
+            LIMIT ?
+        """
+        df = pd.read_sql(query, conn, params=(months,))
+        
+        if df.empty:
+            return pd.DataFrame()
+            
+        df = df.sort_values('month') # Chronological order
+        
+        # Calculate derived metrics
+        df['Revenus'] = df['income']
+        df['Dépenses'] = df['expense'].abs()
+        df['Epargne'] = df['Revenus'] - df['Dépenses']
+        df['Taux'] = df.apply(lambda row: (row['Epargne'] / row['Revenus'] * 100) if row['Revenus'] > 0 else 0, axis=1)
+        
+        return df[['month', 'Revenus', 'Dépenses', 'Epargne', 'Taux']]

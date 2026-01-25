@@ -29,7 +29,7 @@ init_db() # Ensure tables exist
 st.title("⚙️ Configuration")
 
 # TABS
-tab_api, tab_members, tab_cats, tab_tags_rules, tab_audit, tab_data = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "🧠 Tags & Règles", "🧹 Audit & Nettoyage", "💾 Données & Danger"])
+tab_api, tab_members, tab_cats, tab_tags_rules, tab_audit, tab_data, tab_backup = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "🧠 Tags & Règles", "🧹 Audit & Nettoyage", "💾 Données & Danger", "💾 Sauvegardes"])
 
 # --- TAB 1: API ---
 with tab_api:
@@ -335,10 +335,13 @@ with tab_audit:
         """)
         if st.button("Lancer les corrections magiques ✨", type="primary"):
             from modules.backup_manager import create_backup
+            from modules.data_manager import auto_fix_common_inconsistencies, learn_tags_from_history
             create_backup(label="pre_magic_fix")
             count = auto_fix_common_inconsistencies()
-            if count > 0:
-                st.success(f"Fait ! {count} corrections/nettoyages effectués.")
+            count_learned = learn_tags_from_history()
+            
+            if count > 0 or count_learned > 0:
+                st.success(f"Fait ! {count} corrections + {count_learned} tags appris.")
             else:
                 st.info("Tout semble déjà propre ! ✨")
             st.rerun()
@@ -417,6 +420,48 @@ with tab_audit:
                 st.rerun()
             else:
                 st.warning("Veuillez sélectionner deux catégories différentes.")
+
+    # --- GHOST BUSTER (Category Cleanup) ---
+    st.divider()
+    st.subheader("👻 Chasse aux Catégories Fantômes")
+    st.markdown("Identifiez les catégories utilisées dans les transactions mais qui n'existent pas officiellement (souvent issues des imports).")
+    
+    from modules.data_manager import get_all_categories_including_ghosts, add_category, merge_categories
+    
+    all_cats_status = get_all_categories_including_ghosts()
+    ghosts = [c for c in all_cats_status if c['type'] == 'GHOST']
+    
+    if not ghosts:
+        st.success("Aucune catégorie fantôme détectée ! 🛡️")
+    else:
+        st.warning(f"**{len(ghosts)}** catégories fantômes détectées.")
+        
+        # Display as a clean table with actions
+        for g in ghosts:
+            g_name = g['name']
+            with st.container(border=True):
+                c1, c2, c3_options, c4_action = st.columns([2, 1, 2, 1], vertical_alignment="center")
+                c1.markdown(f"👻 **{g_name}**")
+                
+                # Option A: Create it
+                if c2.button("Créer ✅", key=f"create_ghost_{g_name}", help="Ajouter aux catégories officielles"):
+                    add_category(g_name)
+                    st.success(f"Catégorie '{g_name}' officialisée !")
+                    st.rerun()
+                
+                # Option B: Migrate it
+                # Select target category
+                official_names = [c['name'] for c in all_cats_status if c['type'] == 'OFFICIAL']
+                target = c3_options.selectbox("Ou fusionner vers...", [""] + official_names, key=f"sel_mig_{g_name}", label_visibility="collapsed")
+                
+                if c4_action.button("Fusionner 🔀", key=f"mig_ghost_{g_name}"):
+                    if target:
+                        from modules.data_manager import merge_categories
+                        res = merge_categories(g_name, target)
+                        st.success(f"Transféré ! {res['transactions']} transactions déplacées.")
+                        st.rerun()
+                    else:
+                        st.warning("Choisissez une cible.")
 
     # --- DUPLICATE FINDER ---
     st.divider()
@@ -652,3 +697,50 @@ with tab_data:
                 conn.close()
                 st.error("Base de données entièrement vidée.")
                 st.rerun()
+
+    with tab_backup:
+        st.header("Gestion des Sauvegardes")
+        st.info("Les sauvegardes sont automatiques (1 par jour). Vous pouvez aussi en créer manuellement.")
+        
+        col_b1, col_b2 = st.columns([1, 2])
+        with col_b1:
+            if st.button("💾 Créer une sauvegarde maintenant", type="primary", use_container_width=True):
+                path = create_backup(label="manual")
+                if path:
+                    st.success(f"Sauvegarde créée : {os.path.basename(path)}")
+                    st.rerun()
+                else:
+                    st.error("Erreur lors de la création de la sauvegarde.")
+        
+        st.divider()
+        st.subheader("Historique")
+        
+        backups = list_backups()
+        if not backups:
+            st.warning("Aucune sauvegarde trouvée.")
+        else:
+            # Table Header
+            c1, c2, c3 = st.columns([3, 2, 2])
+            c1.markdown("**Fichier**")
+            c2.markdown("**Date**")
+            c3.markdown("**Action**")
+            
+            for b in backups:
+                with st.container():
+                    col_file, col_date, col_action = st.columns([3, 2, 2])
+                    col_file.markdown(f"📄 `{b['filename']}`")
+                    col_date.text(b['date'].strftime('%d/%m/%Y %H:%M'))
+                    
+                    with col_action:
+                        # Download Button
+                        with open(b['path'], "rb") as f:
+                            st.download_button(
+                                label="⬇️ Télécharger",
+                                data=f,
+                                file_name=b['filename'],
+                                mime="application/x-sqlite3",
+                                key=f"dl_{b['filename']}"
+                            )
+            
+            if len(backups) > 10:
+                st.caption("Affichage des 10 dernières sauvegardes.")

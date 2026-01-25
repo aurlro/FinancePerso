@@ -108,7 +108,8 @@ if uploaded_file is not None:
             if account_choice == "Compte existant":
                 account_name = st.selectbox("Sélectionner le compte", existing_accounts)
             else:
-                account_name = st.text_input("Nom du nouveau compte", placeholder="Ex: Compte Joint, Livret A...")
+                default_acc = st.session_state.get('default_account_name', "")
+                account_name = st.text_input("Nom du nouveau compte", value=default_acc, placeholder="Ex: Compte Joint, Livret A...")
                 if not account_name:
                     account_name = "Nouveau Compte"
         

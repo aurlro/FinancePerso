@@ -11,7 +11,7 @@ def generate_tx_hash(df):
     if df.empty:
         return df
         
-    from modules.data_manager import get_transaction_count
+    # from modules.data_manager import get_transaction_count (Removed for count-based logic)
     
     # Sort to ensure stable local index
     df = df.sort_values(by=['date', 'label', 'amount'])
@@ -20,17 +20,13 @@ def generate_tx_hash(df):
     df['_local_occ'] = df.groupby(['date', 'label', 'amount']).cumcount()
     
     def calculate_hash(row):
-        # 2. Get global occurrence index (already in DB)
-        db_count = get_transaction_count(row['date'], row['label'], row['amount'])
-        
-        # 3. Final occurrence is DB count + local index
-        global_occ = db_count + row['_local_occ']
-        
-        # We exclude account_label to recognize same tx regardless of import source
-        # We normalize label to avoid trivial diffs (spaces, case)
+        # Hash is now purely based on content + local index.
+        # Deduplication against DB happens in data_manager.save_transactions by checking counts.
         norm_label = str(row['label']).strip().upper()
         
-        base = f"{row['date']}|{norm_label}|{row['amount']}|{global_occ}"
+        # New hash = SHA(date|label|amount|local_occ)
+        # This hash represents "The Nth occurrence of this transaction in THIS file".
+        base = f"{row['date']}|{norm_label}|{row['amount']}|{row['_local_occ']}"
         return hashlib.sha256(base.encode()).hexdigest()[:16]
         
     df['tx_hash'] = df.apply(calculate_hash, axis=1)

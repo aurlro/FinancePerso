@@ -357,6 +357,47 @@ def auto_fix_common_inconsistencies():
         st.cache_data.clear()
     return total_fixed
 
+def learn_tags_from_history():
+    """
+    Scans all validated transactions.
+    For each category, identifies frequently used tags and adds them to the 'suggested_tags' (allowed) list.
+    This bootstraps the Strict Mode.
+    """
+    count_learned = 0
+    with get_db_connection() as conn:
+        # Get all tags by category
+        df = pd.read_sql("SELECT category_validated, tags FROM transactions WHERE status='validated' AND tags != ''", conn)
+        
+        cat_tags_map = {}
+        
+        for _, row in df.iterrows():
+            cat = row['category_validated']
+            if not cat or cat == 'Inconnu': continue
+            
+            tags = [t.strip() for t in row['tags'].split(',') if t.strip()]
+            if cat not in cat_tags_map: cat_tags_map[cat] = set()
+            cat_tags_map[cat].update(tags)
+            
+        # Update DB
+        c = conn.cursor()
+        for cat, tags in cat_tags_map.items():
+            # Get existing
+            c.execute("SELECT id, suggested_tags FROM categories WHERE name = ?", (cat,))
+            row = c.fetchone()
+            if row:
+                cat_id, existing_str = row
+                existing = set([t.strip() for t in str(existing_str).split(',') if t.strip() and t != 'None'])
+                
+                # Merge
+                new_set = existing.union(tags)
+                if len(new_set) > len(existing):
+                    new_str = ", ".join(sorted(list(new_set)))
+                    c.execute("UPDATE categories SET suggested_tags = ? WHERE id = ?", (new_str, cat_id))
+                    count_learned += (len(new_set) - len(existing))
+        
+        conn.commit()
+    return count_learned
+
 def get_suggested_mappings():
     """
     Identify recurring card suffixes in labels that are not yet mapped to a member.
@@ -513,6 +554,54 @@ def get_categories_df():
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM categories ORDER BY name", conn)
 
+def get_all_categories_including_ghosts():
+    """
+    Returns a list of all categories found in transactions, distinguishing official vs ghost.
+    Returns: [{'name': 'Foo', 'type': 'OFFICIAL'}, {'name': 'Bar', 'type': 'GHOST'}]
+    """
+    with get_db_connection() as conn:
+        # Official
+        official_df = pd.read_sql("SELECT name FROM categories", conn)
+        official_set = set(official_df['name'].tolist())
+        
+        # Used
+        used_df = pd.read_sql("SELECT DISTINCT category_validated FROM transactions WHERE category_validated IS NOT NULL AND category_validated != 'Inconnu'", conn)
+        used_set = set(used_df['category_validated'].tolist())
+        
+        all_cats = []
+        # Union
+        all_names = sorted(list(official_set.union(used_set)))
+        
+        for name in all_names:
+            all_cats.append({
+                'name': name,
+                'type': 'OFFICIAL' if name in official_set else 'GHOST'
+            })
+            
+        return all_cats
+
+def add_tag_to_category(cat_name, new_tag):
+    """
+    Adds a tag to the allowed/suggested list of a category.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, suggested_tags FROM categories WHERE name = ?", (cat_name,))
+        row = c.fetchone()
+        if not row:
+            return False # Category doesn't exist
+            
+        cat_id, current_tags_str = row
+        current_tags = [t.strip() for t in str(current_tags_str).split(',') if t.strip() and t != 'None']
+        
+        if new_tag not in current_tags:
+            current_tags.append(new_tag)
+            new_tags_str = ", ".join(sorted(current_tags))
+            c.execute("UPDATE categories SET suggested_tags = ? WHERE id = ?", (new_tags_str, cat_id))
+            conn.commit()
+            return True
+        return True # Already exists
+
 def merge_categories(source_category, target_category):
     """
     Merge source_category into target_category.
@@ -562,7 +651,15 @@ def transaction_exists(cursor, tx_hash):
     return cursor.fetchone() is not None
 
 def save_transactions(df):
-    """Save transactions using tx_hash to skip duplicates."""
+    """
+    Save transactions using Count-Based Verification to handle duplicates robustly.
+    1. Group input by (date, label, amount).
+    2. Count existing in DB for each group.
+    3. Insert only the surplus (Delta = Input_Count - DB_Count).
+    """
+    if df.empty:
+        return 0, 0
+
     with get_db_connection() as conn:
         c = conn.cursor()
         
@@ -572,23 +669,55 @@ def save_transactions(df):
         # Pre-process member mappings
         card_maps = get_member_mappings()
         
-        for _, row in df.iterrows():
-            # Get dict early to avoid pandas copy-on-write issues during iteration
-            row_dict = row.to_dict()
+        # Ensure date is string for consistent grouping/querying
+        df['date_str'] = df['date'].astype(str)
+        
+        # Group by signature
+        # We process each unique signature (date, label, amount)
+        grouped = df.groupby(['date_str', 'label', 'amount'])
+        
+        for (date, label, amount), group in grouped:
+            # 1. Count in DB
+            c.execute("SELECT COUNT(*) FROM transactions WHERE date = ? AND label = ? AND amount = ?", (date, label, amount))
+            db_count = c.fetchone()[0]
             
-            # Apply member mapping if card_suffix exists
-            suffix = row_dict.get('card_suffix')
-            if suffix and suffix in card_maps:
-                row_dict['member'] = card_maps[suffix]
+            # 2. Count in Input
+            input_count = len(group)
+            
+            # 3. Calculate Delta
+            # If DB has 2 and Input has 3, we need to insert 1 (the 3rd one).
+            # If DB has 3 and Input has 3, we insert 0.
+            # If DB has 5 (manually added?) and Input has 3, we insert 0.
+            to_insert_count = max(0, input_count - db_count)
+            skipped_count += (input_count - to_insert_count)
+            
+            if to_insert_count > 0:
+                # We simply take the *last* N rows from the input group.
+                # Why last? Because they have higher '_local_occ' index if we generated it, 
+                # ensuring hashes are distinct if we re-import larger files.
+                # Actually _local_occ logic in ingestion produced 0,1,2... 
+                # If DB has 1 (index 0), we want to insert index 1 and 2.
+                # So we take the slice `[db_count:]` from the group (which is sorted by ingestion).
+                # But to be safe, we just take the last 'to_insert_count' rows.
                 
-            if transaction_exists(c, row_dict.get('tx_hash')):
-                skipped_count += 1
-            else:
-                cols = ', '.join(row_dict.keys())
-                placeholders = ', '.join(['?'] * len(row_dict))
-                query = f"INSERT INTO transactions ({cols}) VALUES ({placeholders})"
-                c.execute(query, list(row_dict.values()))
-                new_count += 1
+                rows_to_insert = group.tail(to_insert_count)
+                
+                for _, row in rows_to_insert.iterrows():
+                    row_dict = row.to_dict()
+                    
+                    # Cleanup temp cols
+                    if 'date_str' in row_dict: del row_dict['date_str']
+                    
+                    # Apply member mapping
+                    suffix = row_dict.get('card_suffix')
+                    if suffix and suffix in card_maps:
+                        row_dict['member'] = card_maps[suffix]
+                    
+                    cols = ', '.join(row_dict.keys())
+                    placeholders = ', '.join(['?'] * len(row_dict))
+                    query = f"INSERT INTO transactions ({cols}) VALUES ({placeholders})"
+                    c.execute(query, list(row_dict.values()))
+                    new_count += 1
             
         conn.commit()
         st.cache_data.clear() # Invalidate cache on new imports
@@ -826,3 +955,61 @@ def get_recent_imports(limit=3):
         """
         return pd.read_sql(query, conn, params=(limit,))
 
+
+# --- App Initialization & Global Stats ---
+def is_app_initialized():
+    """
+    Check if the app has any data. 
+    Returns True if at least one transaction exists.
+    """
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        # Check for transactions table existence first to avoid error on fresh init
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'")
+        if not c.fetchone():
+            return False
+            
+        c.execute("SELECT 1 FROM transactions LIMIT 1")
+        return c.fetchone() is not None
+
+def get_global_stats():
+    """
+    Get high-level stats for the homepage dashboard.
+    Returns dict with simplified KPIs.
+    """
+    with get_db_connection() as conn:
+        try:
+            # 1. Total Transactions
+            df_count = pd.read_sql("SELECT COUNT(*) as c FROM transactions", conn)
+            total_tx = df_count.iloc[0]['c']
+            
+            # 2. Last Import Date
+            df_last = pd.read_sql("SELECT MAX(import_date) as last_imp FROM transactions", conn)
+            last_import = df_last.iloc[0]['last_imp']
+            
+            # 3. Current Month Savings (Approx)
+            import datetime
+            today = datetime.date.today()
+            month_str = today.strftime('%Y-%m')
+            
+            query_month = f"SELECT amount FROM transactions WHERE strftime('%Y-%m', date) = '{month_str}'"
+            df_curr = pd.read_sql(query_month, conn)
+            
+            if not df_curr.empty:
+                inc = df_curr[df_curr['amount'] > 0]['amount'].sum()
+                exp = abs(df_curr[df_curr['amount'] < 0]['amount'].sum())
+                savings = inc - exp
+                savings_rate = (savings / inc * 100) if inc > 0 else 0
+            else:
+                inc, exp, savings, savings_rate = 0, 0, 0, 0
+                
+            return {
+                "total_transactions": total_tx,
+                "last_import": last_import,
+                "current_month_savings": savings,
+                "current_month_rate": savings_rate,
+                "initialized": True
+            }
+        except Exception as e:
+            logger.error(f"Error getting global stats: {e}")
+            return {"initialized": False}

@@ -298,6 +298,47 @@ else:
     else:
         st.info("Sélectionnez une période avec des données pour voir l'évolution.")
 
+    # --- SAVINGS TREND ANALYTICS (Proposal 3) ---
+    st.divider()
+    st.subheader("📈 Tendance d'Épargne (12 derniers mois)")
+    
+    from modules.analytics import get_monthly_savings_trend
+    df_trend = get_monthly_savings_trend(months=12)
+    
+    if not df_trend.empty:
+        # Create combo chart: Bars for Cashflow, Line for Savings Rate
+        fig_trend = go.Figure()
+        
+        # Bars for Savings Amount (Absolute)
+        fig_trend.add_trace(go.Bar(
+            x=df_trend['month'], 
+            y=df_trend['Epargne'],
+            name="Epargne (€)",
+            marker_color=df_trend['Epargne'].apply(lambda x: '#22c55e' if x >= 0 else '#ef4444')
+        ))
+        
+        # Line for Rate (%)
+        fig_trend.add_trace(go.Scatter(
+            x=df_trend['month'], 
+            y=df_trend['Taux'],
+            name="Taux (%)",
+            yaxis="y2",
+            line=dict(color="#3b82f6", width=3),
+            mode='lines+markers'
+        ))
+        
+        fig_trend.update_layout(
+            xaxis_title="",
+            yaxis=dict(title="Montant (€)", showgrid=False),
+            yaxis2=dict(title="Taux (%)", overlaying="y", side="right", range=[-20, 80], showgrid=True),
+            height=400,
+            hovermode="x unified",
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+        )
+        st.plotly_chart(fig_trend, use_container_width=True)
+    else:
+        st.info("Pas assez de données historiques pour la tendance d'épargne.")
+
     st.divider()
 
     # --- CATEGORY & DRILL DOWN ---

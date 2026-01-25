@@ -151,6 +151,40 @@ else:
     # Store pending tag additions per group (for auto-select)
     if 'pending_tag_additions' not in st.session_state:
         st.session_state['pending_tag_additions'] = {}
+        
+    # --- BULK SELECTION STATE ---
+    if 'bulk_selected_groups' not in st.session_state:
+        st.session_state['bulk_selected_groups'] = set()
+
+    # --- BULK ACTION BAR ---
+    if st.session_state['bulk_selected_groups']:
+        count_sel = len(st.session_state['bulk_selected_groups'])
+        with st.container():
+            st.info(f"⚡ **{count_sel} groupes sélectionnés**")
+            b_c1, b_c2, b_c3 = st.columns([2, 1, 1])
+            with b_c1:
+                bulk_cat = st.selectbox("Appliquer Catégorie", available_categories, key="bulk_cat_select")
+            with b_c2:
+                if st.button("Appliquer", type="primary", key="btn_apply_bulk"):
+                    for grp_id_list in st.session_state['bulk_selected_groups']:
+                        # The set stores tuples of IDs, or we need a map. 
+                        # Let's store just the group identifier or list of IDs? 
+                        # Ideally we stored list of IDs. But set needs hashable. 
+                        # We will convert list to tuple for storage.
+                        # Wait, we need to know WHICH transactions.
+                        # Ideally `bulk_selected_groups` stores group_names (clean_group) or we re-fetch?
+                        # Simpler: Store tuple of IDs.
+                        tx_ids = list(grp_id_list)
+                        bulk_update_transaction_status(tx_ids, bulk_cat)
+                        
+                    st.success(f"Catégorie '{bulk_cat}' appliquée à {count_sel} groupes !")
+                    st.session_state['bulk_selected_groups'] = set()
+                    st.rerun()
+            with b_c3:
+                if st.button("Désélectionner", key="btn_clear_bulk"):
+                    st.session_state['bulk_selected_groups'] = set()
+                    st.rerun()
+            st.divider()
 
     @st.fragment
     def show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix=""):
@@ -257,8 +291,19 @@ else:
                 del st.session_state['pending_tag_additions'][group_id]
 
             # --- SMART EXPANDER LAYOUT ---
-            # Columns: [Expander (90%)] [Validate Button (10%)]
-            c_exp, c_btn = st.columns([0.90, 0.10], vertical_alignment="top")
+            # Columns: [Checkbox (5%)] [Expander (85%)] [Validate Button (10%)]
+            c_chk, c_exp, c_btn = st.columns([0.05, 0.85, 0.10], vertical_alignment="top")
+            
+            group_ids_tuple = tuple(group_ids)
+            is_selected = group_ids_tuple in st.session_state['bulk_selected_groups']
+            
+            with c_chk:
+                st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
+                if st.checkbox("Select", value=is_selected, key=f"d_chk_{group_id}{key_suffix}", label_visibility="collapsed"):
+                    st.session_state['bulk_selected_groups'].add(group_ids_tuple)
+                else:
+                    if group_ids_tuple in st.session_state['bulk_selected_groups']:
+                        st.session_state['bulk_selected_groups'].remove(group_ids_tuple)
             
             # Construct Label with Markdown
             # Pattern: :grey[Date] • **Title** • :color[**Amount**] :grey[(Count)]
@@ -404,42 +449,80 @@ else:
                         t_col1, t_col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
                         
                         existing_tags = get_all_tags()
-                        # Merge DB tags with Session custom tags
-                        all_tag_opts = sorted(list(set(existing_tags + st.session_state['temp_custom_tags'] + current_tags)))
+                        current_cat_name = st.session_state[cat_key]
+                        allowed_tags = cat_suggested_tags.get(current_cat_name, [])
+                        
+                        # Strict Mode Logic:
+                        # If the category has specific rules (allowed_tags is not empty), we favor them.
+                        # We always include:
+                        # 1. Tags already on the transaction (current_tags)
+                        # 2. Tags just created in this session (st.session_state['temp_custom_tags'])
+                        # 3. Tags explicitly allowed/suggested for this category.
+                        # If allowed_tags is empty, we fallback to showing ALL tags (permissive).
+                        
+                        if allowed_tags:
+                            # Strict/Focused List
+                            display_tags = sorted(list(set(allowed_tags + current_tags + st.session_state['temp_custom_tags'])))
+                        else:
+                            # Permissive List
+                            display_tags = sorted(list(set(existing_tags + st.session_state['temp_custom_tags'] + current_tags)))
                         
                         with t_col1:
-                             selected_tags = st.multiselect("🏷️ Tags", all_tag_opts, default=current_tags, key=tag_key)
+                             # We use display_tags as options. 
+                             # Warning: if current_tags contains something not in display_tags (shouldn't happen due to set union), it crashes.
+                             selected_tags = st.multiselect("🏷️ Tags", display_tags, default=current_tags, key=tag_key)
                         
                         with t_col2:
                              with st.popover("➕", use_container_width=True):
                                  new_tag_in = st.text_input("Nouveau tag", key=f"new_tag_{group_id}{key_suffix}")
                                  if st.button("Ajouter", key=f"add_tag_btn_{group_id}{key_suffix}"):
-                                     if new_tag_in and new_tag_in not in all_tag_opts:
-                                         st.session_state['temp_custom_tags'].append(new_tag_in)
-                                         # Mark for auto-select on next rerun
+                                     if new_tag_in:
+                                         # 1. Add to session state for immediate availability
+                                         if new_tag_in not in st.session_state['temp_custom_tags']:
+                                             st.session_state['temp_custom_tags'].append(new_tag_in)
+                                         
+                                         # 2. Persist strict association: Add this tag to the Category's allowed list
+                                         from modules.data_manager import add_tag_to_category
+                                         add_tag_to_category(current_cat_name, new_tag_in)
+                                         
+                                         # 3. Auto-select for this transaction
                                          if 'pending_tag_additions' not in st.session_state:
                                              st.session_state['pending_tag_additions'] = {}
                                          st.session_state['pending_tag_additions'][group_id] = [new_tag_in]
-                                         st.toast(f"Tag '{new_tag_in}' ajouté et sélectionné !", icon="🏷️")
+                                         
+                                         st.toast(f"Tag '{new_tag_in}' créé et associé à '{current_cat_name}' !", icon="🔗")
                                          st.rerun()
                                           
-                        # Show suggested tags for the category
+                        # Show suggested tags for the category (Modern Layout with Pills)
                         current_cat_name = st.session_state[cat_key]
                         suggestions = cat_suggested_tags.get(current_cat_name, [])
                         if suggestions:
                             # Filter out tags already selected
                             filtered_sugg = [s for s in suggestions if s not in selected_tags]
                             if filtered_sugg:
-                                # Display inline as small buttons
-                                sugg_cols = st.columns([0.2] * min(len(filtered_sugg), 5) + [1.0])
-                                for i, s in enumerate(filtered_sugg[:5]):
-                                    if sugg_cols[i].button(f"+{s}", key=f"sugg_{group_id}_{s}{key_suffix}", type="secondary", help=f"Ajouter {s}"):
-                                        if 'pending_tag_additions' not in st.session_state:
-                                             st.session_state['pending_tag_additions'] = {}
-                                        if group_id not in st.session_state['pending_tag_additions']:
-                                             st.session_state['pending_tag_additions'][group_id] = []
-                                        st.session_state['pending_tag_additions'][group_id].append(s)
-                                        st.rerun()
+                                # Use st.pills for better UX (requires streamlit >= 1.40, fallback to markdown if needed but pills is preferred)
+                                # Since we want an Action (Add), we use selection combined with state check or callback simulation.
+                                # Actually st.pills maintains selection. We want "click to add".
+                                # If we use selection_mode="single", clicking selects it. We detect change and add it.
+                                pill_key = f"pills_{group_id}{key_suffix}"
+                                
+                                # Hack: We want to detect a click. If st.pills returns a value that wasn't there, we add it.
+                                # But st.pills persists state. We want it to reset?
+                                # Alternative: Just use st.pills and if a value is selected, we consume it and rerun.
+                                selected_pill = st.pills("Suggestions", filtered_sugg, selection_mode="single", key=pill_key, label_visibility="collapsed")
+                                
+                                if selected_pill:
+                                    if 'pending_tag_additions' not in st.session_state:
+                                        st.session_state['pending_tag_additions'] = {}
+                                    if group_id not in st.session_state['pending_tag_additions']:
+                                        st.session_state['pending_tag_additions'][group_id] = []
+                                    
+                                    # Add and reset
+                                    st.session_state['pending_tag_additions'][group_id].append(selected_pill)
+                                    # We can't easily clear the pill selection inside the run without a callback or key trick.
+                                    # But rerun will rebuild the filtered_sugg list, removing the selected tag!
+                                    # So the pill list changes, and selection might be lost or reset. Perfect.
+                                    st.rerun()
                                          
                         final_tags_str = ", ".join(selected_tags)
                         
