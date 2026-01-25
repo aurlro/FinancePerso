@@ -32,26 +32,39 @@ def detect_recurring_payments(df):
             
         # Check amounts consistency
         # Subscriptions usually have exact same amount
-        # Utilities might vary slightly
+        # Utilities might vary slightly (Electricity, Water, etc.)
         amounts = group['amount'].tolist()
         amounts_std = group['amount'].std()
         avg_amount = group['amount'].mean()
         
-        # If std is low relative to average (e.g. < 5%), we consider it consistent amount
-        is_consistent_amount = (amounts_std / abs(avg_amount)) < 0.05 if avg_amount != 0 else (amounts_std == 0)
+        # Determine variability
+        # Higher tolerance for utilities/energy (usually negative amounts between -30 and -300)
+        # We'll use 15% for utilities and 5% for others
+        is_energy = any(k in label.upper() for k in ["EDF", "ENGIE", "TOTAL", "EAU", "SUEZ", "VEOLIA", "OHM", "MINT", "VATTEN"])
+        tolerance = 0.15 if is_energy else 0.05
+        
+        is_consistent_amount = (amounts_std / abs(avg_amount)) < tolerance if avg_amount != 0 else (amounts_std == 0)
         
         # Check Periodicity
         dates = group['date'].sort_values()
         diffs = dates.diff().dropna()
         avg_diff_days = diffs.dt.days.mean()
         
-        # We look for monthly (approx 28-31 days) or multiples
-        is_monthly = 25 <= avg_diff_days <= 35
+        # Look for frequencies: Monthly (~30d), Quarterly (~90d), Annual (~365d)
+        is_recurring = False
+        freq_label = ""
         
-        # Frequency score (how many months present vs distinct months in dataset)
-        # Not strictly needed for MVP, simplified logic:
+        if 25 <= avg_diff_days <= 35:
+            is_recurring = True
+            freq_label = "Mensuel"
+        elif 80 <= avg_diff_days <= 100:
+            is_recurring = True
+            freq_label = "Trimestriel"
+        elif 350 <= avg_diff_days <= 380:
+            is_recurring = True
+            freq_label = "Annuel"
         
-        if is_consistent_amount and is_monthly:
+        if is_consistent_amount and is_recurring:
             # It's a candidate
             # Determine category if known
             current_cat = group.iloc[0]['category_validated']
@@ -60,14 +73,16 @@ def detect_recurring_payments(df):
                 "label": label,
                 "avg_amount": round(avg_amount, 2),
                 "frequency_days": round(avg_diff_days, 1),
+                "frequency_label": freq_label,
                 "count": len(group),
                 "last_date": group['date'].max().date(),
                 "category": current_cat,
-                "is_subscription_candidate": True
+                "is_subscription_candidate": True,
+                "variability": "Variable" if (amounts_std / abs(avg_amount)) > 0.05 else "Fixe"
             })
             
     if not recurring_items:
-        return pd.DataFrame(columns=["label", "avg_amount", "frequency_days", "count", "last_date", "category", "is_subscription_candidate"])
+        return pd.DataFrame(columns=["label", "avg_amount", "frequency_days", "frequency_label", "count", "last_date", "category", "is_subscription_candidate", "variability"])
         
     return pd.DataFrame(recurring_items).sort_values(by='avg_amount')
 
@@ -110,10 +125,10 @@ def detect_financial_profile(df):
         
         # Keywords map
         KEYWORD_MAP = {
-            "Logement": ["LOYER", "IMMO"],
+            "Logement": ["LOYER", "IMMO", "PROPRIETAIRE", "QUITTANCE", "BAIL", "CAUTION"],
             "Emprunt immobilier": ["PRET", "CREDIT", "ECHEANCE"],
-            "Assurances": ["ASSURANCE", "MACIF", "MAIF", "AXA", "ALLIANZ"],
-            "Abonnements": ["EDF", "ENGIE", "TOTALENERGIE", "EAU", "SUEZ", "VEOLIA", "ORANGE", "SFR", "BOUYGUES", "FREE", "NETFLIX", "SPOTIFY", "AMAZON PRIME"]
+            "Assurances": ["ASSURANCE", "MACIF", "MAIF", "AXA", "ALLIANZ", "MUTUELLE", "PREVOYANCE", "GENERALI", "SWISSLIFE", "MGEN", "MALAKOFF", "ALAN"],
+            "Abonnements": ["EDF", "ENGIE", "TOTALENERGIE", "EAU", "SUEZ", "VEOLIA", "ORANGE", "SFR", "BOUYGUES", "FREE", "NETFLIX", "SPOTIFY", "AMAZON PRIME", "ENI", "VATTENFALL", "OHM", "MINT"]
         }
         
         for _, row in grouped.iterrows():

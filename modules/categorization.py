@@ -111,15 +111,26 @@ def predict_category_ai(label, amount, date):
 def categorize_transaction(label, amount, date):
     """
     Main entry point for categorization.
-    1. Try Rules
-    2. Try AI if no rule matches
+    1. Try Rules (User & Hardcoded)
+    2. Try Business Logic (Internal Transfers)
+    3. Try AI if no rule matches
     """
+    label_upper = label.upper()
+    
     # 1. Rules
     cat, conf = apply_rules(label)
     if cat:
         return cat, "rule", conf
+    
+    # 2. Heuristic: Internal Transfers Detection
+    # If the label contains common internal transfer keywords AND mentions known household members/accounts
+    TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
+    INTERNAL_TARGETS = ["AURELIEN", "DUO", "JOINT", "EPARGNE", "LDDS", "LIVRET", "ELISE"]
+    
+    if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(t in label_upper for t in INTERNAL_TARGETS):
+        return "Virement Interne", "rule", 1.0
         
-    # 2. AI
+    # 3. AI
     cat, conf = predict_category_ai(label, amount, date)
     return cat, "ai", conf
 

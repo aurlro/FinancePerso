@@ -1,7 +1,7 @@
 import streamlit as st
 from modules.categorization import predict_category_ai
 
-from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_unique_members, update_transaction_member, init_db, get_categories, get_categories_with_emojis, bulk_update_transaction_status, get_all_tags, get_all_account_labels, mark_transaction_as_ungrouped
+from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_members, update_transaction_member, init_db, get_categories, get_categories_with_emojis, bulk_update_transaction_status, get_all_tags, get_all_account_labels, mark_transaction_as_ungrouped, get_categories_suggested_tags
 from modules.ui import load_css
 from modules.utils import clean_label
 import re
@@ -133,6 +133,7 @@ else:
     # Display list
     # Optimize: pagination or limit if too many
     cat_emoji_map = get_categories_with_emojis()
+    cat_suggested_tags = get_categories_suggested_tags()
     available_categories = sorted(list(cat_emoji_map.keys()))
     
     # Unified list for "Who paid" and "For whom"
@@ -152,7 +153,7 @@ else:
         st.session_state['pending_tag_additions'] = {}
 
     @st.fragment
-    def show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps):
+    def show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix=""):
         # Local grouping logic inside fragment to respond to isolation
         def get_smart_group(row):
             # Check DB flag (if exists in DF) OR Session state
@@ -218,7 +219,7 @@ else:
             display_title = clean_label(row['label'])
             
             # 2. Category State
-            cat_key = f"cat_{row['id']}"
+            cat_key = f"cat_{row['id']}{key_suffix}"
             if cat_key not in st.session_state:
                 current_cat = row.get('category_validated') if row.get('category_validated') != 'Inconnu' else (row['original_category'] or "Inconnu")
                 st.session_state[cat_key] = current_cat if current_cat in available_categories else "Inconnu"
@@ -229,7 +230,13 @@ else:
             if suffix and suffix in active_card_maps:
                 current_member = active_card_maps[suffix]
             if not current_member or current_member == 'Inconnu':
-                current_member = ""
+                acc_label = str(row.get('account_label', '')).lower()
+                if 'joint' in acc_label:
+                    current_member = "Duo"
+                elif 'aurélien' in acc_label or 'aurelien' in acc_label:
+                    current_member = "Aurélien"
+                else:
+                    current_member = ""
             
             current_benef = row.get('beneficiary', 'Famille') # Default
             if not current_benef: current_benef = ""
@@ -237,6 +244,10 @@ else:
             # 4. Tags State
             current_tags_str = row.get('tags', '') if row.get('tags') else ""
             current_tags = [t.strip() for t in current_tags_str.split(',') if t.strip()]
+            
+            # AUTOMATION: Remboursement for positive "Avoir"
+            if group_total > 0 and "AVOIR" in str(row['label']).upper() and "Remboursement" not in current_tags:
+                current_tags.append("Remboursement")
             
             # Add pending tags for this group (for auto-select after creation)
             if group_id in st.session_state.get('pending_tag_additions', {}):
@@ -267,7 +278,7 @@ else:
             with c_btn:
                 # Spacer to align with expander header roughly
                 st.markdown("<div style='height: 0.2rem;'></div>", unsafe_allow_html=True)
-                btn_key_ext = f"btn_ext_{group_id}"
+                btn_key_ext = f"btn_ext_{group_id}{key_suffix}"
                 # Use Icon Only Button
                 if st.button("✅", key=btn_key_ext, help="Valider sans ouvrir", type="primary", use_container_width=True):
                     # Use defaults/current state
@@ -281,24 +292,24 @@ else:
                     # Logic: Use st.session_state if key exists (user modified before closed?), else default from row.
                     
                     # Payeur
-                    mem_key = f"mem_sel_{group_id}"
-                    mem_input_key = f"mem_input_{group_id}"
+                    mem_key = f"mem_sel_{group_id}{key_suffix}"
+                    mem_input_key = f"mem_input_{group_id}{key_suffix}"
                     val_mem = st.session_state.get(mem_key, current_member)
                     if val_mem == "✍️ Saisie...": val_mem = st.session_state.get(mem_input_key, "")
                     
                     # Benef
-                    ben_key = f"benef_sel_{group_id}"
-                    ben_input_key = f"benef_input_{group_id}"
+                    ben_key = f"benef_sel_{group_id}{key_suffix}"
+                    ben_input_key = f"benef_input_{group_id}{key_suffix}"
                     val_ben = st.session_state.get(ben_key, current_benef)
                     if val_ben == "✍️ Saisie...": val_ben = st.session_state.get(ben_input_key, "")
                     
                     # Tags
-                    tag_key = f"tag_sel_{group_id}"
+                    tag_key = f"tag_sel_{group_id}{key_suffix}"
                     val_tags = st.session_state.get(tag_key, current_tags)
                     val_tags_str = ", ".join(val_tags) if isinstance(val_tags, list) else ""
                     
                     # Memory
-                    mem_check_key = f"mem_check_{group_id}"
+                    mem_check_key = f"mem_check_{group_id}{key_suffix}"
                     val_mem_check = st.session_state.get(mem_check_key, True)
                     
                     validate_with_memory(group_ids, row['label'], st.session_state[cat_key], val_mem_check, val_mem, tags=val_tags_str, beneficiary=val_ben)
@@ -336,12 +347,12 @@ else:
                         def format_cat(cat_name): return f"{cat_emoji_map.get(cat_name, '🏷️')} {cat_name}"
                         try: c_idx = options.index(st.session_state[cat_key])
                         except: c_idx = 0
-                        st.selectbox("Catégorie", options, index=c_idx, key=cat_key, format_func=format_cat)
+                        st.selectbox("📂 Catégorie", options, index=c_idx, key=cat_key, format_func=format_cat)
                         
                     with ci_pay:
                         # Payeur
-                        member_sel_key = f"mem_sel_{group_id}"
-                        member_input_key = f"mem_input_{group_id}"
+                        member_sel_key = f"mem_sel_{group_id}{key_suffix}"
+                        member_input_key = f"mem_input_{group_id}{key_suffix}"
                         
                         pay_opts = sorted(list(set(all_members + ["Maison", "Famille"])))
                         if current_member and current_member not in pay_opts: pay_opts.append(current_member)
@@ -367,8 +378,8 @@ else:
                     
                     with ci_ben:
                         # Benef
-                        beneficiary_key = f"benef_sel_{group_id}"
-                        beneficiary_input_key = f"benef_input_{group_id}"
+                        beneficiary_key = f"benef_sel_{group_id}{key_suffix}"
+                        beneficiary_input_key = f"benef_input_{group_id}{key_suffix}"
                         ben_opts = sorted(list(set(full_member_list + ["Maison", "Famille"])))
                         if current_benef and current_benef not in ben_opts: ben_opts.append(current_benef)
                         ben_opts.insert(0, "")
@@ -388,7 +399,7 @@ else:
                             beneficiary_val = sel_b
                             
                     with ci_tags:
-                        tag_key = f"tag_sel_{group_id}"
+                        tag_key = f"tag_sel_{group_id}{key_suffix}"
                         # Split: Multiselect + Add Button
                         t_col1, t_col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
                         
@@ -401,8 +412,8 @@ else:
                         
                         with t_col2:
                              with st.popover("➕", use_container_width=True):
-                                 new_tag_in = st.text_input("Nouveau tag", key=f"new_tag_{group_id}")
-                                 if st.button("Ajouter", key=f"add_tag_btn_{group_id}"):
+                                 new_tag_in = st.text_input("Nouveau tag", key=f"new_tag_{group_id}{key_suffix}")
+                                 if st.button("Ajouter", key=f"add_tag_btn_{group_id}{key_suffix}"):
                                      if new_tag_in and new_tag_in not in all_tag_opts:
                                          st.session_state['temp_custom_tags'].append(new_tag_in)
                                          # Mark for auto-select on next rerun
@@ -411,12 +422,30 @@ else:
                                          st.session_state['pending_tag_additions'][group_id] = [new_tag_in]
                                          st.toast(f"Tag '{new_tag_in}' ajouté et sélectionné !", icon="🏷️")
                                          st.rerun()
+                                          
+                        # Show suggested tags for the category
+                        current_cat_name = st.session_state[cat_key]
+                        suggestions = cat_suggested_tags.get(current_cat_name, [])
+                        if suggestions:
+                            # Filter out tags already selected
+                            filtered_sugg = [s for s in suggestions if s not in selected_tags]
+                            if filtered_sugg:
+                                # Display inline as small buttons
+                                sugg_cols = st.columns([0.2] * min(len(filtered_sugg), 5) + [1.0])
+                                for i, s in enumerate(filtered_sugg[:5]):
+                                    if sugg_cols[i].button(f"+{s}", key=f"sugg_{group_id}_{s}{key_suffix}", type="secondary", help=f"Ajouter {s}"):
+                                        if 'pending_tag_additions' not in st.session_state:
+                                             st.session_state['pending_tag_additions'] = {}
+                                        if group_id not in st.session_state['pending_tag_additions']:
+                                             st.session_state['pending_tag_additions'][group_id] = []
+                                        st.session_state['pending_tag_additions'][group_id].append(s)
+                                        st.rerun()
                                          
                         final_tags_str = ", ".join(selected_tags)
                         
                     with ci_act:
-                        remember = st.toggle("Mém.", key=f"mem_check_{group_id}", value=True)
-                        if st.button("Valider", key=f"btn_in_{group_id}", type="primary", use_container_width=True):
+                        remember = st.toggle("Mém.", key=f"mem_check_{group_id}{key_suffix}", value=True)
+                        if st.button("Valider", key=f"btn_in_{group_id}{key_suffix}", type="primary", use_container_width=True):
                              validate_with_memory(group_ids, row['label'], st.session_state[cat_key], remember, member_val, tags=final_tags_str, beneficiary=beneficiary_val)
                              st.toast("✅ Modification validée !", icon="👍")
                              st.rerun()
@@ -435,7 +464,7 @@ else:
                          d_c2.markdown(f":{color_sub}[**{sub_row['amount']:.2f} €**]")
                          
                          # Col 3: Ungroup Button
-                         if d_c3.button("❌", key=f"iso_{sub_row['id']}", help="Exclure cette opération du groupe"):
+                         if d_c3.button("❌", key=f"iso_{sub_row['id']}{key_suffix}", help="Exclure cette opération du groupe"):
                              # Persist to DB
                              mark_transaction_as_ungrouped(int(sub_row['id']))
                              # Update Session for immediate feedback
@@ -447,5 +476,25 @@ else:
             st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; opacity: 0.3;'>", unsafe_allow_html=True)
             
 
-    # Call the fragment
-    show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps)
+    # --- TABS FOR VALIDATION ---
+    tab_all, tab_unknown = st.tabs(["📋 Toutes les opérations", "🔍 À identifier (Inconnu)"])
+
+    with tab_all:
+        show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix="_all")
+
+    with tab_unknown:
+        # Filter for anything 'Inconnu'
+        # 1. Category is Inconnu (or empty/None)
+        # 2. Member is Inconnu (or empty/None)
+        # 3. Beneficiary is Inconnu (or empty/None)
+        unknown_mask = (
+            (filtered_df['category_validated'].fillna('Inconnu') == 'Inconnu') |
+            (filtered_df['member'].fillna('Inconnu').isin(['Inconnu', 'Anonyme', ''])) |
+            (filtered_df['beneficiary'].fillna('Inconnu').isin(['Inconnu', 'Anonyme', '']))
+        )
+        unknown_df = filtered_df[unknown_mask]
+        
+        if unknown_df.empty:
+            st.success("Toutes les opérations ont été identifiées ! ✨")
+        else:
+            show_validation_list(unknown_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix="_unknown")

@@ -285,16 +285,16 @@ with tab_sub:
             st.subheader("Détails des récurrences")
             
             # Formating for display
-            display_rec = recurring[['label', 'avg_amount', 'frequency_days', 'category', 'last_date']].copy()
+            display_rec = recurring[['label', 'avg_amount', 'frequency_label', 'variability', 'category', 'last_date']].copy()
             display_rec['avg_amount'] = display_rec['avg_amount'].apply(lambda x: f"{x:.2f} €")
-            display_rec['frequency_days'] = display_rec['frequency_days'].apply(lambda x: f"~{x:.0f} jours")
             
             st.dataframe(
                 display_rec,
                 column_config={
                     "label": "Libellé",
                     "avg_amount": "Montant Moyen",
-                    "frequency_days": "Fréquence",
+                    "frequency_label": "Fréquence",
+                    "variability": "Type",
                     "category": "Catégorie",
                     "last_date": "Dernière transaction"
                 },

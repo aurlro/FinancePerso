@@ -6,23 +6,35 @@ def generate_tx_hash(df):
     """
     Generate a unique hash for each transaction.
     To handle identical transactions on same day, we add an occurrence index.
+    This index is GLOBAL (checks DB) to avoid duplicates across different imports.
     """
     if df.empty:
         return df
         
-    # Sort to ensure stable index
+    from modules.data_manager import get_transaction_count
+    
+    # Sort to ensure stable local index
     df = df.sort_values(by=['date', 'label', 'amount'])
     
-    # Create a helper for duplicate count (occurrence index)
-    # This ensures that if I buy 2 tickets of 2€ same day, they have different hashes.
-    df['_occ'] = df.groupby(['date', 'label', 'amount']).cumcount()
+    # 1. Calculate local occurrence index (within the file)
+    df['_local_occ'] = df.groupby(['date', 'label', 'amount']).cumcount()
     
     def calculate_hash(row):
-        base = f"{row['date']}|{row['label']}|{row['amount']}|{row['account_label']}|{row['_occ']}"
+        # 2. Get global occurrence index (already in DB)
+        db_count = get_transaction_count(row['date'], row['label'], row['amount'])
+        
+        # 3. Final occurrence is DB count + local index
+        global_occ = db_count + row['_local_occ']
+        
+        # We exclude account_label to recognize same tx regardless of import source
+        # We normalize label to avoid trivial diffs (spaces, case)
+        norm_label = str(row['label']).strip().upper()
+        
+        base = f"{row['date']}|{norm_label}|{row['amount']}|{global_occ}"
         return hashlib.sha256(base.encode()).hexdigest()[:16]
         
     df['tx_hash'] = df.apply(calculate_hash, axis=1)
-    return df.drop(columns=['_occ'])
+    return df.drop(columns=['_local_occ'])
 
 def parse_bourso_csv(file):
     """
