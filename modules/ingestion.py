@@ -129,6 +129,13 @@ def parse_generic_csv(file, config):
         # Conversions
         # Date: Try to detect format or standard parser
         df_clean['date'] = pd.to_datetime(df_clean['date'], dayfirst=True, errors='coerce').dt.date
+        
+        # Log dropped rows
+        invalid_dates = df_clean[df_clean['date'].isna()]
+        if not invalid_dates.empty:
+            dropped_count = len(invalid_dates)
+            print(f"⚠️ [Ingestion] Dropped {dropped_count} rows with invalid dates. Sample: {invalid_dates.head(3).to_dict()}")
+            
         df_clean = df_clean.dropna(subset=['date']) # Drop invalid dates
         
         # Amount: Clean symbols if still object

@@ -9,7 +9,6 @@ import re
 load_dotenv()
 
 # Rules have been migrated to database (see modules/data_manager.py)
-RULES = []
 
 PROMPT_TEMPLATE = """
 Tu es un expert en catégorisation financière. Analyse la transaction suivante et détermine la catégorie la plus appropriée.
@@ -72,10 +71,8 @@ def apply_rules(label):
     except Exception as e:
         logger.error(f"Rule Error: {e}")
 
-    # 2. Hardcoded Rules
-    for pattern, category in RULES:
-        if re.search(pattern, label_upper):
-            return category, 1.0 
+    # 2. Hardcoded Rules (Empty as migrated to DB)
+    # for pattern, category in RULES: ...
     return None, 0.0
 
 def predict_category_ai(label, amount, date):
@@ -132,6 +129,11 @@ def categorize_transaction(label, amount, date):
         
     # 3. AI
     cat, conf = predict_category_ai(label, amount, date)
+    
+    # 4. Global Constraint: Negative amounts cannot be "Revenus"
+    if cat == "Revenus" and amount < 0:
+        return "Inconnu", "rule_constraint", 0.0
+        
     return cat, "ai", conf
 
 def generate_financial_report(stats_json):
