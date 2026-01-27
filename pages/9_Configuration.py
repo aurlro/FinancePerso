@@ -1,6 +1,6 @@
 import streamlit as st
 from modules.ui import load_css
-from modules.data_manager import init_db
+from modules.db.migrations import init_db
 from modules.ui.config.api_settings import render_api_settings
 from modules.ui.config.member_management import render_member_management
 from modules.ui.config.category_management import render_category_management
@@ -54,5 +54,5 @@ with tabs[6]:
 with tabs[7]:
     render_log_viewer()
 
-from modules.ui import render_app_info
+from modules.ui.layout import render_app_info
 render_app_info()

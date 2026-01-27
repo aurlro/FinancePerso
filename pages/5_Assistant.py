@@ -142,9 +142,11 @@ with tab_audit:
                     with col_act1:
                         if item.get('suggested_category'):
                             if st.button("✅ Accepter", key=f"fix_{i}", help=f"Appliquer : {item['suggested_category']}"):
-                                for tx_id in item['rows']['id']:
+                                ids_to_update = [int(uid) for uid in item['rows']['id'].tolist()]
+                                for tx_id in ids_to_update:
                                     update_transaction_category(tx_id, item['suggested_category'])
-                                st.success("Correction appliquée !")
+                                st.cache_data.clear()
+                                st.success(f"Correction appliquée sur {len(ids_to_update)} transactions !")
                                 st.session_state['audit_results'].pop(i)
                                 st.rerun()
 
@@ -163,9 +165,11 @@ with tab_audit:
                         manual_cat = st.selectbox("Autre correction", options, key=f"manual_{i}", index=idx, label_visibility="collapsed")
                         
                         if st.button("Appliquer", key=f"apply_manual_{i}"):
-                             for tx_id in item['rows']['id']:
+                             ids_to_update = [int(uid) for uid in item['rows']['id'].tolist()]
+                             for tx_id in ids_to_update:
                                     update_transaction_category(tx_id, manual_cat)
-                             st.success("Correction manuelle appliquée !")
+                             st.cache_data.clear()
+                             st.success(f"Correction manuelle appliquée sur {len(ids_to_update)} transactions !")
                              st.session_state['audit_results'].pop(i)
                              st.rerun()
 
@@ -258,6 +262,11 @@ with tab_setup:
                     del st.session_state['setup_candidates']  
                     # Rerurn to refresh rules in background? 
                     # st.rerun() is inside button logic, might need sleep or direct message.
+    
+    st.divider()
+    # --- NEW: MANUAL PROFILE SETUP FORM ---
+    from modules.ui.components.profile_form import render_profile_setup_form
+    render_profile_setup_form(key_prefix="assistant")
 
 with tab_sub:
     st.header("Détection des Abonnements")

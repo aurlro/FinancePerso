@@ -264,20 +264,20 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         
         # Update transactions (validated category)
         cursor.execute(
-            "UPDATE transactions SET category_validated = ? WHERE category_validated = ?",
+            "UPDATE transactions SET category_validated = ? WHERE category_validated = ? COLLATE NOCASE",
             (target_category, source_category)
         )
         tx_count = cursor.rowcount
         
         # Update transactions (original category)
         cursor.execute(
-            "UPDATE transactions SET original_category = ? WHERE original_category = ?",
+            "UPDATE transactions SET original_category = ? WHERE original_category = ? COLLATE NOCASE",
             (target_category, source_category)
         )
         
         # Update learning rules
         cursor.execute(
-            "UPDATE learning_rules SET category = ? WHERE category = ?",
+            "UPDATE learning_rules SET category = ? WHERE category = ? COLLATE NOCASE",
             (target_category, source_category)
         )
         rule_count = cursor.rowcount

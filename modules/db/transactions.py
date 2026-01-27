@@ -161,11 +161,44 @@ def get_duplicates_report() -> pd.DataFrame:
         return pd.read_sql(query, conn)
 
 
-def get_transactions_by_criteria(date: str, label: str, amount: float) -> pd.DataFrame:
-    """Retrieve all transactions matching specific criteria."""
+def get_transactions_by_criteria(
+    date: str = None, 
+    label: str = None, 
+    amount: float = None,
+    period: str = None,
+    label_contains: str = None
+) -> pd.DataFrame:
+    """
+    Retrieve transactions matching specific criteria (exact or partial).
+    
+    Args:
+        date: Exact date match (YYYY-MM-DD)
+        label: Exact label match
+        amount: Exact amount match
+        period: Month period match (YYYY-MM)
+        label_contains: Partial label match (LIKE %value%)
+    """
     with get_db_connection() as conn:
-        query = "SELECT * FROM transactions WHERE date = ? AND label = ? AND amount = ?"
-        return pd.read_sql(query, conn, params=(str(date), label, amount))
+        query = "SELECT * FROM transactions WHERE 1=1"
+        params = []
+        
+        if date:
+            query += " AND date = ?"
+            params.append(str(date))
+        if label:
+            query += " AND label = ?"
+            params.append(label)
+        if amount is not None:
+            query += " AND amount = ?"
+            params.append(amount)
+        if period:
+             query += " AND strftime('%Y-%m', date) = ?"
+             params.append(period)
+        if label_contains:
+             query += " AND label LIKE ?"
+             params.append(f"%{label_contains}%")
+             
+        return pd.read_sql(query, conn, params=params)
 
 
 def delete_transaction_by_id(tx_id: int) -> int:

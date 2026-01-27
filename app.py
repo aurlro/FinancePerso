@@ -57,6 +57,11 @@ if not is_app_initialized():
         - **Nettoyage Intelligent** : Détection de doublons.
         - **Budgets** : Définissez vos limites par catégorie.
         """)
+        
+        # --- NEW: PROFILE SETUP FORM ---
+        st.divider()
+        from modules.ui.components.profile_form import render_profile_setup_form
+        render_profile_setup_form(key_prefix="onboarding")
 
     if st.session_state.get('onboarding_complete'):
         st.success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
