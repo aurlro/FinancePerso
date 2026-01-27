@@ -83,3 +83,6 @@ else:
                         c4.caption("Dernière occurrence")
 
             st.info("💡 Cette analyse se base sur la similarité des libellés et la régularité des dates. Assurez-vous que vos transactions sont bien catégorisées pour une meilleure précision.")
+
+from modules.ui.layout import render_app_info
+render_app_info()

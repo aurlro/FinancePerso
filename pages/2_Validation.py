@@ -1,9 +1,18 @@
 import streamlit as st
 from modules.categorization import predict_category_ai
 
-from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_members, update_transaction_member, init_db, get_categories, get_categories_with_emojis, bulk_update_transaction_status, get_all_tags, get_all_account_labels, mark_transaction_as_ungrouped, get_categories_suggested_tags
+from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_members, update_transaction_member, init_db, get_categories, get_categories_with_emojis, bulk_update_transaction_status, get_all_tags, get_all_account_labels, mark_transaction_as_ungrouped, get_categories_suggested_tags, get_member_mappings
 from modules.ui import load_css
 from modules.utils import clean_label
+
+# New modular components
+from modules.ui.components.filters import render_transaction_filters
+from modules.ui.components.progress_tracker import render_progress_tracker
+from modules.ui.components.tag_manager import render_tag_selector
+from modules.ui.components.member_selector import render_member_selector
+from modules.ui.validation.grouping import get_smart_groups, calculate_group_stats, get_group_transactions
+from modules.ui.validation.sorting import sort_groups, get_sort_options
+
 import re
 import pandas as pd
 
@@ -69,33 +78,11 @@ if df.empty:
 else:
     # Filters in Sidebar
     with st.sidebar:
-        st.header("🔍 Filtres")
-        filtered_df = df.copy()
-        
-        if 'account_label' in df.columns:
-            accounts = sorted(df['account_label'].unique().tolist())
-            sel_acc = st.multiselect("Par Compte", accounts)
-            if sel_acc:
-                filtered_df = filtered_df[filtered_df['account_label'].isin(sel_acc)]
-                
-        if 'member' in df.columns:
-            members = sorted([m for m in df['member'].unique() if m])
-            sel_mem = st.multiselect("Par Membre", members)
-            if sel_mem:
-                filtered_df = filtered_df[filtered_df['member'].isin(sel_mem)]
-                
-        st.divider()
-        st.caption("💡 Astuce : Le regroupement intelligent fusionne les opérations identiques pour une validation plus rapide.")
+        filtered_df = render_transaction_filters(df, show_account=True, show_member=True)
 
     col_sort1, col_sort2, col_sort3 = st.columns([2, 1, 1])
     with col_sort1:
-        sort_options = {
-            "Gros groupes (Défaut)": "count",
-            "Plus récentes": "date_recent",
-            "Plus anciennes": "date_old",
-            "Montant (Décroissant)": "amount_desc",
-            "Montant (Croissant)": "amount_asc"
-        }
+        sort_options = get_sort_options()
         sort_choice = st.selectbox("Trier par", list(sort_options.keys()), label_visibility="visible")
         sort_key = sort_options[sort_choice]
 
@@ -125,15 +112,7 @@ else:
                 """)
     
     # --- PROGRESS BAR GAMIFICATION ---
-    total_pending = len(filtered_df)
-    if 'initial_pending_count' not in st.session_state or total_pending > st.session_state['initial_pending_count']:
-        st.session_state['initial_pending_count'] = total_pending
-    
-    init_count = st.session_state['initial_pending_count']
-    if init_count > 0:
-        progress = 1.0 - (total_pending / init_count)
-        done_count = init_count - total_pending
-        st.progress(progress, text=f"Progression : {done_count} traitées sur {init_count} 💪")
+    render_progress_tracker(len(filtered_df), session_key="validation_progress")
     
     st.divider()
 
@@ -155,7 +134,6 @@ else:
     full_member_list = sorted(list(set(base_options + all_members)))
 
     all_acc_labels = get_all_account_labels()
-    from modules.data_manager import get_member_mappings
     active_card_maps = get_member_mappings()
     
     # Store temporary tags created during session
@@ -202,56 +180,19 @@ else:
 
     @st.fragment
     def show_validation_list(filtered_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix=""):
-        # Local grouping logic inside fragment to respond to isolation
-        def get_smart_group(row):
-            # Check DB flag (if exists in DF) OR Session state
-            is_ungrouped_db = row.get('is_manually_ungrouped', 0) == 1
-            if is_ungrouped_db or row['id'] in st.session_state['excluded_tx_ids']:
-                return f"single_{row['id']}"
-            
-            lbl = str(row['label']).upper()
-            
-            # Detect Cheque keywords (CHQ, CHEQUE, REMISE CHEQUE/CHQ)
-            # We want to group by [Cleaned Label + Amount] to separate different cheques
-            if re.search(r'\b(CHQ|CHEQUE|REMISE\s+CHEQUE|REMISE\s+CHQ)\b', lbl):
-                 return f"{clean_label(row['label'])} | {row['amount']:.2f} €"
-                
-            return clean_label(row['label'])
+        # Use modular grouping logic
+        local_df = get_smart_groups(filtered_df, excluded_ids=st.session_state['excluded_tx_ids'])
+        
+        # Calculate group statistics
+        group_stats = calculate_group_stats(local_df)
+        
+        # Sort and limit groups
+        display_groups = sort_groups(group_stats, sort_key=sort_key, max_groups=40)
+        
+        if len(group_stats) > 40:
+            st.info(f"Affichage des 40 premiers groupes (sur {len(group_stats)}). Validez-les pour voir la suite.")
 
-        local_df = filtered_df.copy()
-        # Force ID to int for consistency
-        local_df['id'] = local_df['id'].astype(int)
-        local_df['clean_group'] = local_df.apply(get_smart_group, axis=1)
-        
-        # Calculate group stats for sorting
-        group_stats = local_df.groupby('clean_group').agg({
-            'id': 'size',
-            'date': 'max',
-            'amount': lambda x: x.abs().max()
-        }).reset_index()
-        group_stats.columns = ['clean_group', 'count', 'max_date', 'max_amount']
-        
-        group_stats['is_single'] = group_stats['clean_group'].apply(lambda x: 1 if str(x).startswith("single_") else 0)
-        
-        # Apply sorting
-        if sort_key == "count":
-            sorted_groups = group_stats.sort_values(by=['is_single', 'count'], ascending=[False, False])
-        elif sort_key == "date_recent":
-            sorted_groups = group_stats.sort_values(by=['is_single', 'max_date'], ascending=[False, False])
-        elif sort_key == "date_old":
-            sorted_groups = group_stats.sort_values(by=['is_single', 'max_date'], ascending=[False, True])
-        elif sort_key == "amount_desc":
-            sorted_groups = group_stats.sort_values(by=['is_single', 'max_amount'], ascending=[False, False])
-        elif sort_key == "amount_asc":
-            sorted_groups = group_stats.sort_values(by=['is_single', 'max_amount'], ascending=[False, True])
-        
-        MAX_GROUPS = 40
-        display_groups = sorted_groups['clean_group'].tolist()[:MAX_GROUPS]
-        
-        if len(sorted_groups) > MAX_GROUPS:
-            st.info(f"Affichage des {MAX_GROUPS} premiers groupes (sur {len(sorted_groups)}). Validez-les pour voir la suite.")
-
-        for group_name in display_groups:
+        for i, group_name in enumerate(display_groups):
             group_df = local_df[local_df['clean_group'] == group_name]
             # Representative row (first one)
             row = group_df.iloc[0]
@@ -407,105 +348,64 @@ else:
                         try: c_idx = options.index(st.session_state[cat_key])
                         except: c_idx = 0
                         st.selectbox("📂 Catégorie", options, index=c_idx, key=cat_key, format_func=format_cat)
-                        
+                    
                     with ci_pay:
-                        # Payeur
-                        member_sel_key = f"mem_sel_{group_id}{key_suffix}"
-                        member_input_key = f"mem_input_{group_id}{key_suffix}"
+                        # Payeur selector using component
+                        mem_key = f"mem_sel_{group_id}{key_suffix}"
+                        mem_input_key = f"mem_input_{group_id}{key_suffix}"
                         
-                        pay_opts = sorted(list(set(all_members + ["Maison", "Famille"])))
-                        if current_member and current_member not in pay_opts: pay_opts.append(current_member)
-                        pay_opts.append("✍️ Saisie...")
-                        try: p_idx = pay_opts.index(current_member) if current_member in pay_opts else 0
-                        except: p_idx = 0
+                        selected_member = render_member_selector(
+                            label="👤 Qui a payé ?",
+                            current_value=current_member,
+                            all_members=all_members,
+                            member_type_map=member_type_map,
+                            key=mem_key,
+                            allow_custom=True,
+                            extra_options=["Famille", "Maison"]
+                        )
                         
-                        def format_mem(name):
-                            if name == "✍️ Saisie...": return "✍️ Saisie..."
-                            if not name: return ""
-                            m_type = member_type_map.get(name, 'HOUSEHOLD')
-                            prefix = "🏘️" if m_type == 'HOUSEHOLD' else "💼"
-                            if name in ["Maison", "Famille"]: prefix = "🏘️"
-                            return f"{prefix} {name}"
-
-                        pay_l = "👤 Bénéficiaire" if group_total > 0 else "👤 Payeur"
-                        sel_p = st.selectbox(pay_l, pay_opts, index=p_idx, key=member_sel_key, format_func=format_mem)
-
-                        if sel_p == "✍️ Saisie...":
-                            member_val = st.text_input("Nom", key=member_input_key, label_visibility="collapsed")
+                        # Handle custom input
+                        if selected_member == "✍️ Saisie...":
+                            member_val = st.text_input("Nom", key=mem_input_key, label_visibility="collapsed")
                         else:
-                            member_val = sel_p
+                            member_val = selected_member
                     
                     with ci_ben:
-                        # Benef
+                        # Beneficiary selector using component
                         beneficiary_key = f"benef_sel_{group_id}{key_suffix}"
                         beneficiary_input_key = f"benef_input_{group_id}{key_suffix}"
-                        ben_opts = sorted(list(set(full_member_list + ["Maison", "Famille"])))
-                        if current_benef and current_benef not in ben_opts: ben_opts.append(current_benef)
-                        ben_opts.insert(0, "")
-                        ben_opts.append("✍️ Saisie...")
                         
-                        try:
-                            if current_benef in ben_opts: b_idx = ben_opts.index(current_benef)
-                            else: b_idx = ben_opts.index("Famille") if "Famille" in ben_opts else 0
-                        except: b_idx = 0
+                        ben_label = "💰 Source" if group_total > 0 else "🎯 Pour qui ?"
                         
-                        ben_l = "💰 Source" if group_total > 0 else "🎯 Pour qui ?"
-                        sel_b = st.selectbox(ben_l, ben_opts, index=b_idx, key=beneficiary_key, format_func=format_mem)
-
-                        if sel_b == "✍️ Saisie...":
+                        selected_benef = render_member_selector(
+                            label=ben_label,
+                            current_value=current_benef,
+                            all_members=all_members,
+                            member_type_map=member_type_map,
+                            key=beneficiary_key,
+                            allow_custom=True,
+                            extra_options=["Famille", "Maison"]
+                        )
+                        
+                        # Handle custom input
+                        if selected_benef == "✍️ Saisie...":
                             beneficiary_val = st.text_input("Nom", key=beneficiary_input_key, label_visibility="collapsed")
                         else:
-                            beneficiary_val = sel_b
+                            beneficiary_val = selected_benef
                             
                     with ci_tags:
+                        # Tag selector using component
                         tag_key = f"tag_sel_{group_id}{key_suffix}"
-                        # Split: Multiselect + Add Button
-                        t_col1, t_col2 = st.columns([0.85, 0.15], vertical_alignment="bottom")
-                        
-                        existing_tags = get_all_tags()
                         current_cat_name = st.session_state[cat_key]
-                        allowed_tags = cat_suggested_tags.get(current_cat_name, [])
                         
-                        # Strict Mode Logic:
-                        # If the category has specific rules (allowed_tags is not empty), we favor them.
-                        # We always include:
-                        # 1. Tags already on the transaction (current_tags)
-                        # 2. Tags just created in this session (st.session_state['temp_custom_tags'])
-                        # 3. Tags explicitly allowed/suggested for this category.
-                        # If allowed_tags is empty, we fallback to showing ALL tags (permissive).
-                        
-                        if allowed_tags:
-                            # Strict/Focused List
-                            display_tags = sorted(list(set(allowed_tags + current_tags + st.session_state['temp_custom_tags'])))
-                        else:
-                            # Permissive List
-                            display_tags = sorted(list(set(existing_tags + st.session_state['temp_custom_tags'] + current_tags)))
-                        
-                        with t_col1:
-                             # We use display_tags as options. 
-                             # Warning: if current_tags contains something not in display_tags (shouldn't happen due to set union), it crashes.
-                             selected_tags = st.multiselect("🏷️ Tags", display_tags, default=current_tags, key=tag_key)
-                        
-                        with t_col2:
-                             with st.popover("➕", use_container_width=True):
-                                 new_tag_in = st.text_input("Nouveau tag", key=f"new_tag_{group_id}{key_suffix}")
-                                 if st.button("Ajouter", key=f"add_tag_btn_{group_id}{key_suffix}"):
-                                     if new_tag_in:
-                                         # 1. Add to session state for immediate availability
-                                         if new_tag_in not in st.session_state['temp_custom_tags']:
-                                             st.session_state['temp_custom_tags'].append(new_tag_in)
-                                         
-                                         # 2. Persist strict association: Add this tag to the Category's allowed list
-                                         from modules.data_manager import add_tag_to_category
-                                         add_tag_to_category(current_cat_name, new_tag_in)
-                                         
-                                         # 3. Auto-select for this transaction
-                                         if 'pending_tag_additions' not in st.session_state:
-                                             st.session_state['pending_tag_additions'] = {}
-                                         st.session_state['pending_tag_additions'][group_id] = [new_tag_in]
-                                         
-                                         st.toast(f"Tag '{new_tag_in}' créé et associé à '{current_cat_name}' !", icon="🔗")
-                                         st.rerun()
+                        selected_tags = render_tag_selector(
+                            transaction_id=group_id,
+                            current_tags=current_tags,
+                            category=current_cat_name,
+                            key_suffix=key_suffix,
+                            allow_create=True,
+                            strict_mode=True
+                        )
                                           
                         # Show suggested tags for the category (Modern Layout with Pills)
                         current_cat_name = st.session_state[cat_key]
@@ -516,7 +416,8 @@ else:
                             if filtered_sugg:
                                 # MODERN TILE LAYOUT (Pills)
                                 # Row 2 Column 1 is wide enough (5/8 of width).
-                                pill_key = f"pills_{group_id}{key_suffix}"
+                                # Use group_name for uniqueness since group_id can repeat across tabs, and index to be absolutely sure
+                                pill_key = f"pills_{i}_{group_name}{key_suffix}"
                                 
                                 # Use st.pills
                                 selected_pill = st.pills("Suggestions", filtered_sugg, selection_mode="single", key=pill_key, label_visibility="collapsed")
@@ -588,3 +489,6 @@ else:
             st.success("Toutes les opérations ont été identifiées ! ✨")
         else:
             show_validation_list(unknown_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix="_unknown")
+
+from modules.ui.layout import render_app_info
+render_app_info()

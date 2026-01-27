@@ -115,4 +115,8 @@ else:
         st.info("Vous pouvez définir des règles automatiques pour classer vos dépenses récurrentes directement depuis la page 'Validation'.")
         
     st.sidebar.success("✅ Application Initialisée")
+    
+    # Show App Info in Sidebar
+    from modules.ui.layout import render_app_info
+    render_app_info()
 

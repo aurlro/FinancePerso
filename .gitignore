@@ -20,3 +20,5 @@ venv/
 Data/
 !Data/.gitkeep
 Data/backups/
+.DS_Store
+.env

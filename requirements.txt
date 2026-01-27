@@ -1,8 +1,7 @@
-streamlit
-pandas
-google-generativeai
-python-dotenv
-matplotlib
-plotly
-requests
-pytest
+streamlit==1.47.0
+pandas==2.3.1
+google-generativeai==0.8.6
+python-dotenv==1.1.1
+plotly==6.2.0
+requests==2.32.5
+pytest==8.4.2

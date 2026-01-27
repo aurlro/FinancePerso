@@ -22,17 +22,17 @@ class TestCleanLabel:
     def test_removes_dates(self):
         result = clean_label("30/12/25 AMAZON PRIME")
         assert "30/12" not in result
-        assert "AMAZON" in result
+        assert "Amazon" in result
         
     def test_removes_bank_prefixes(self):
         result = clean_label("PRLV SEPA EDF COMMERCE")
         assert "PRLV" not in result
         assert "SEPA" not in result
-        assert "EDF" in result
+        assert "Edf" in result
         
     def test_trims_whitespace(self):
         result = clean_label("   CARREFOUR   ")
-        assert result == "CARREFOUR"
+        assert result == "Carrefour"
         
     def test_handles_empty_string(self):
         result = clean_label("")

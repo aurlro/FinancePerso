@@ -302,3 +302,6 @@ with tab_sub:
             )
             
             st.markdown("*> Note : Cette liste est basée sur la régularité des paiements (intervalle ~30 jours) et la constance du montant.*")
+
+from modules.ui.layout import render_app_info
+render_app_info()

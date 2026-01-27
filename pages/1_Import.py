@@ -250,3 +250,6 @@ if uploaded_file is not None:
 
 st.divider()
 st.caption("💡 Les transactions seront analysées par notre IA pour proposer des catégories.")
+
+from modules.ui.layout import render_app_info
+render_app_info()

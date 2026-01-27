@@ -86,3 +86,6 @@ with st.form("budget_form"):
         st.rerun()
 
 st.divider()
+
+from modules.ui.layout import render_app_info
+render_app_info()
