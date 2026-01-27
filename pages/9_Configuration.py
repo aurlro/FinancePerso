@@ -29,7 +29,7 @@ init_db() # Ensure tables exist
 st.title("⚙️ Configuration")
 
 # TABS
-tab_api, tab_members, tab_cats, tab_tags_rules, tab_audit, tab_data, tab_backup = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "🧠 Tags & Règles", "🧹 Audit & Nettoyage", "💾 Données & Danger", "💾 Sauvegardes"])
+tab_api, tab_members, tab_cats, tab_tags_rules, tab_audit, tab_data, tab_backup, tab_logs = st.tabs(["🔑 API & Services", "🏠 Foyer & Membres", "🏷️ Catégories", "🧠 Tags & Règles", "🧹 Audit & Nettoyage", "💾 Données & Danger", "💾 Sauvegardes", "📑 Logs"])
 
 # --- TAB 1: API ---
 with tab_api:
@@ -744,3 +744,32 @@ with tab_data:
             
             if len(backups) > 10:
                 st.caption("Affichage des 10 dernières sauvegardes.")
+
+    with tab_logs:
+        st.header("📑 Journaux Système (Logs)")
+        st.markdown("Consultez l'activité de l'application et diagnostiquez les éventuels problèmes.")
+        
+        LOG_FILE = "app.log"
+        
+        if not os.path.exists(LOG_FILE):
+            st.info("Aucun fichier de log trouvé.")
+        else:
+            with open(LOG_FILE, "r") as f:
+                logs = f.readlines()
+            
+            # Show last 100 lines by default
+            num_lines = st.slider("Nombre de lignes à afficher", 10, 500, 100)
+            
+            # Search filter
+            search = st.text_input("Filtrer par mot-clé", placeholder="Error, DB, Ingestion...")
+            
+            filtered_logs = [l for l in logs if not search or search.lower() in l.lower()]
+            
+            st.text_area("Rendu brut", value="".join(filtered_logs[-num_lines:]), height=500)
+            
+            if st.button("Effacer les logs 🗑️", help="Vider le fichier log actuel"):
+                with open(LOG_FILE, "w") as f:
+                    f.write("")
+                st.success("Logs effacés !")
+                st.rerun()
+

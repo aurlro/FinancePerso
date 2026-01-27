@@ -103,12 +103,26 @@ else:
         st.markdown(f"<p style='margin-top:28px; font-weight:600; color:#64748B;'>{len(filtered_df)} en attente</p>", unsafe_allow_html=True)
     
     with col_sort3:
-        with st.popover("❓ Aide", use_container_width=True):
-            st.info("""
-            **Virement Interne** (🔄) : Pour les transferts entre vos comptes suivis. Exclu des graphiques de dépenses.
-            
-            **Dégrouper** : Si une opération dans un groupe est différente, utilisez le bouton dans 'Détails' pour l'isoler.
-            """)
+        # Undo button and help side-by-side
+        h_c1, h_c2 = st.columns([1, 2])
+        with h_c1:
+            with st.popover("🔙", help="Annuler la dernière action"):
+                st.write("Voulez-vous annuler la dernière validation ?")
+                if st.button("Confirmer l'annulation", type="primary", use_container_width=True):
+                    from modules.data_manager import undo_last_action
+                    success, msg = undo_last_action()
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.warning(msg)
+        with h_c2:
+            with st.popover("❓ Aide", use_container_width=True):
+                st.info("""
+                **Virement Interne** (🔄) : Pour les transferts entre vos comptes suivis. Exclu des graphiques de dépenses.
+                
+                **Dégrouper** : Si une opération dans un groupe est différente, utilisez le bouton dans 'Détails' pour l'isoler.
+                """)
     
     # --- PROGRESS BAR GAMIFICATION ---
     total_pending = len(filtered_df)
@@ -500,15 +514,11 @@ else:
                             # Filter out tags already selected
                             filtered_sugg = [s for s in suggestions if s not in selected_tags]
                             if filtered_sugg:
-                                # Use st.pills for better UX (requires streamlit >= 1.40, fallback to markdown if needed but pills is preferred)
-                                # Since we want an Action (Add), we use selection combined with state check or callback simulation.
-                                # Actually st.pills maintains selection. We want "click to add".
-                                # If we use selection_mode="single", clicking selects it. We detect change and add it.
+                                # MODERN TILE LAYOUT (Pills)
+                                # Row 2 Column 1 is wide enough (5/8 of width).
                                 pill_key = f"pills_{group_id}{key_suffix}"
                                 
-                                # Hack: We want to detect a click. If st.pills returns a value that wasn't there, we add it.
-                                # But st.pills persists state. We want it to reset?
-                                # Alternative: Just use st.pills and if a value is selected, we consume it and rerun.
+                                # Use st.pills
                                 selected_pill = st.pills("Suggestions", filtered_sugg, selection_mode="single", key=pill_key, label_visibility="collapsed")
                                 
                                 if selected_pill:
@@ -519,9 +529,6 @@ else:
                                     
                                     # Add and reset
                                     st.session_state['pending_tag_additions'][group_id].append(selected_pill)
-                                    # We can't easily clear the pill selection inside the run without a callback or key trick.
-                                    # But rerun will rebuild the filtered_sugg list, removing the selected tag!
-                                    # So the pill list changes, and selection might be lost or reset. Perfect.
                                     st.rerun()
                                          
                         final_tags_str = ", ".join(selected_tags)

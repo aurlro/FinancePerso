@@ -12,7 +12,9 @@ import streamlit as st
 import os
 from modules.backup_manager import auto_backup_daily
 
-DB_PATH = "Data/finance.db"
+# Get absolute path to the project root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(PROJECT_ROOT, "Data", "finance.db")
 
 @contextmanager
 def get_db_connection():
@@ -66,6 +68,21 @@ def init_db():
             c.execute("ALTER TABLE transactions ADD COLUMN card_suffix TEXT")
         if 'is_manually_ungrouped' not in columns:
             c.execute("ALTER TABLE transactions ADD COLUMN is_manually_ungrouped INTEGER DEFAULT 0")
+        
+        # New History Table for Undo
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS transaction_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                action_group_id TEXT,
+                tx_ids TEXT,
+                prev_status TEXT,
+                prev_category TEXT,
+                prev_member TEXT,
+                prev_tags TEXT,
+                prev_beneficiary TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         # Performance Indexes
         c.execute("CREATE INDEX IF NOT EXISTS idx_status ON transactions(status)")
@@ -810,14 +827,29 @@ def update_transaction_category(tx_id, new_category, tags=None, beneficiary=None
     bulk_update_transaction_status([tx_id], new_category, tags, beneficiary)
 
 def bulk_update_transaction_status(tx_ids, new_category, tags=None, beneficiary=None):
-    """Update multiple transactions at once."""
+    """Update multiple transactions at once and log for undo."""
     if not tx_ids:
         return
     
+    import uuid
+    import json
+    action_id = str(uuid.uuid4())[:8]
+
     with get_db_connection() as conn:
         c = conn.cursor()
-        # Using placeholders for the IN clause
+        
+        # 1. Capture Previous State for Undo
         placeholders = ', '.join(['?'] * len(tx_ids))
+        c.execute(f"SELECT id, status, category_validated, member, tags, beneficiary FROM transactions WHERE id IN ({placeholders})", list(tx_ids))
+        rows = c.fetchall()
+        
+        for r in rows:
+            c.execute("""
+                INSERT INTO transaction_history (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5]))
+            
+        # 2. Apply Update
         query = f"""
             UPDATE transactions 
             SET category_validated = ?, 
@@ -829,7 +861,39 @@ def bulk_update_transaction_status(tx_ids, new_category, tags=None, beneficiary=
         params = [new_category, tags, beneficiary] + list(tx_ids)
         c.execute(query, params)
         conn.commit()
-        st.cache_data.clear() # Invalidate cache on validation
+        st.cache_data.clear()
+
+def undo_last_action():
+    """Reverts the last validation action group."""
+    with get_db_connection() as conn:
+        c = conn.cursor()
+        
+        # Get last action ID
+        c.execute("SELECT action_group_id FROM transaction_history ORDER BY id DESC LIMIT 1")
+        row = c.fetchone()
+        if not row:
+            return False, "Aucune action à annuler."
+            
+        action_id = row[0]
+        
+        # Get all entries for this action
+        c.execute("SELECT * FROM transaction_history WHERE action_group_id = ?", (action_id,))
+        entries = c.fetchall()
+        
+        for e in entries:
+            # e: (id, group_id, tx_id_str, status, cat, mem, tags, benef, ts)
+            tx_id = int(e[2])
+            c.execute("""
+                UPDATE transactions 
+                SET status = ?, category_validated = ?, member = ?, tags = ?, beneficiary = ?
+                WHERE id = ?
+            """, (e[3], e[4], e[5], e[6], e[7], tx_id))
+            
+        # Delete history for this action
+        c.execute("DELETE FROM transaction_history WHERE action_group_id = ?", (action_id,))
+        conn.commit()
+        st.cache_data.clear()
+        return True, f"Action {action_id} annulée ({len(entries)} transactions rétablies)."
 
 def mark_transaction_as_ungrouped(tx_id):
     """Marks a transaction to be permanently excluded from smart grouping."""
