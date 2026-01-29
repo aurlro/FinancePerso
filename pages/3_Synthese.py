@@ -173,6 +173,46 @@ else:
     df_exp = prepare_expense_dataframe(df_current, cat_emoji_map)
     render_budget_tracker(df_exp, cat_emoji_map)
     
+    # === NEW: BUDGET PREDICTIONS ===
+    st.subheader("📈 Alertes Budgétaires")
+    budgets = get_budgets()
+    if not budgets.empty:
+        from modules.ai import predict_budget_overruns, get_budget_alerts_summary
+        import datetime
+        
+        # Get current month data
+        today = datetime.date.today()
+        current_month = today.strftime('%Y-%m')
+        df['date_dt'] = pd.to_datetime(df['date'])
+        df_month = df[df['date_dt'].dt.strftime('%Y-%m') == current_month]
+        
+        predictions = predict_budget_overruns(df_month, budgets)
+        
+        if predictions:
+            summary = get_budget_alerts_summary(predictions)
+            
+            col_alert1, col_alert2, col_alert3 = st.columns(3)
+            with col_alert1:
+                st.metric("🟢 OK", summary['ok_count'])
+            with col_alert2:
+                st.metric("🟠 Attention", summary['warning_count'])
+            with col_alert3:
+                st.metric("🔴 Dépassement", summary['overrun_count'])
+            
+            # Show predictions
+            for pred in predictions:
+                if pred['status'] != 'ok':  # Only show warnings and overruns
+                    with st.expander(f"{pred['alert_level']} {pred['category']} - {pred['usage_percent']:.0f}% du budget"):
+                        col_p1, col_p2 = st.columns(2)
+                        with col_p1:
+                            st.metric("Dépensé", f"{pred['current_spent']:.0f}€")
+                            st.metric("Budget", f"{pred['budget']:.0f}€")
+                        with col_p2:
+                            st.metric("Projection fin de mois", f"{pred['projected_spent']:.0f}€")
+                            st.metric("Moyenne journalière", f"{pred['daily_avg']:.0f}€/jour")
+    else:
+        st.info("Définissez des budgets pour activer les alertes prédictives.")
+    
     st.divider()
 
     # === FORECASTING ===

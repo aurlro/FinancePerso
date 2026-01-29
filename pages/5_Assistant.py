@@ -98,7 +98,14 @@ def ai_audit_batch(df):
         return []
 
 
-tab_audit, tab_sub, tab_setup = st.tabs(["🔎 Audit & Qualité", "💸 Abonnements & Récurrents", "🏗️ Configuration Assistée"])
+tab_audit, tab_anomalies, tab_trends, tab_chat, tab_sub, tab_setup = st.tabs([
+    "🔎 Audit & Qualité", 
+    "🎯 Anomalies", 
+    "📊 Tendances",
+    "💬 Chat IA",
+    "💸 Abonnements & Récurrents", 
+    "🏗️ Configuration Assistée"
+])
 
 with tab_audit:
     # --- EXISTING AUDIT LOGIC ---
@@ -172,6 +179,107 @@ with tab_audit:
                              st.success(f"Correction manuelle appliquée sur {len(ids_to_update)} transactions !")
                              st.session_state['audit_results'].pop(i)
                              st.rerun()
+
+# --- NEW: ANOMALIES TAB ---
+with tab_anomalies:
+    st.header("🎯 Détection d'Anomalies de Montant")
+    st.markdown("Identifie les transactions avec des montants inhabituels par rapport à l'historique.")
+    
+    if st.button("Analyser les anomalies 🔍", type="primary"):
+        from modules.ai import detect_amount_anomalies
+        
+        with st.spinner("Analyse statistique des montants..."):
+            df = get_all_transactions()
+            anomalies = detect_amount_anomalies(df)
+            st.session_state['anomaly_results'] = anomalies
+            st.rerun()
+    
+    if 'anomaly_results' in st.session_state:
+        anomalies = st.session_state['anomaly_results']
+        
+        if not anomalies:
+            st.success("✅ Aucune anomalie de montant détectée !")
+        else:
+            st.warning(f"⚠️ {len(anomalies)} anomalies détectées")
+            
+            for i, anom in enumerate(anomalies):
+                severity_color = "🔴" if anom.get('severity') == 'high' else "🟠"
+                with st.expander(f"{severity_color} {anom['label']} - {anom['details']}"):
+                    st.dataframe(
+                        anom['rows'][['date', 'label', 'amount', 'category_validated']],
+                        use_container_width=True
+                    )
+                    
+                    if st.button("Marquer comme normal", key=f"dismiss_anom_{i}"):
+                        st.session_state['anomaly_results'].pop(i)
+                        st.rerun()
+
+# --- NEW: TRENDS TAB ---
+with tab_trends:
+    st.header("📊 Analyse de Tendances")
+    st.markdown("Identifie les changements significatifs dans vos habitudes de dépenses.")
+    
+    if st.button("Analyser les tendances 📈", type="primary"):
+        from modules.ai import analyze_spending_trends
+        import datetime
+        
+        with st.spinner("Comparaison des périodes..."):
+            df = get_all_transactions()
+            df['date_dt'] = pd.to_datetime(df['date'])
+            
+            # Current month
+            today = datetime.date.today()
+            current_month = today.strftime('%Y-%m')
+            df_current = df[df['date_dt'].dt.strftime('%Y-%m') == current_month]
+            
+            # Previous month
+            prev_month_date = today.replace(day=1) - datetime.timedelta(days=1)
+            prev_month = prev_month_date.strftime('%Y-%m')
+            df_prev = df[df['date_dt'].dt.strftime('%Y-%m') == prev_month]
+            
+            trends = analyze_spending_trends(df_current, df_prev)
+            st.session_state['trend_insights'] = trends
+            st.rerun()
+    
+    if 'trend_insights' in st.session_state:
+        insights = st.session_state['trend_insights']
+        
+        st.subheader("Insights Détectés")
+        for insight in insights:
+            st.markdown(f"- {insight}")
+
+# --- NEW: CHAT IA TAB ---
+with tab_chat:
+    st.header("💬 Assistant Conversationnel")
+    st.markdown("Posez vos questions sur vos finances en langage naturel.")
+    
+    # Initialize chat history
+    if 'chat_history' not in st.session_state:
+        st.session_state['chat_history'] = []
+    
+    # Display chat history
+    for msg in st.session_state['chat_history']:
+        with st.chat_message(msg['role']):
+            st.markdown(msg['content'])
+    
+    # Chat input
+    if user_input := st.chat_input("Posez votre question..."):
+        # Add user message
+        st.session_state['chat_history'].append({'role': 'user', 'content': user_input})
+        
+        # Get AI response
+        from modules.ai import chat_with_assistant
+        with st.spinner("L'assistant réfléchit..."):
+            response = chat_with_assistant(user_input, st.session_state['chat_history'])
+        
+        # Add assistant response
+        st.session_state['chat_history'].append({'role': 'assistant', 'content': response})
+        st.rerun()
+    
+    # Clear chat button
+    if st.button("Effacer la conversation"):
+        st.session_state['chat_history'] = []
+        st.rerun()
 
 with tab_setup:
     st.header("🏗️ Configuration Assistée")

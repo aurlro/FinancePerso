@@ -179,12 +179,65 @@ Toujours créer un `implementation_plan.md` avant de coder :
 
 ## 🚀 Features futures (Roadmap IA)
 
-Voir la liste des 10 idées proposées dans la conversation (Chatbot, Forecasting, Détection anomalies, etc.). Pour implémenter une nouvelle feature IA :
+### ✅ Implémenté (v2.0.0)
 
-1. **Créer un module dédié** : `modules/ai_<feature>.py`
-2. **Abstraction provider** : Utiliser le pattern de `categorization.py`
-3. **UI séparée** : Nouvelle page ou section dans Assistant
-4. **Configuration** : Paramètres dans Config si nécessaire
+#### `modules/ai/` - Suite IA Complète
+**Architecture** : 5 modules spécialisés avec exports centralisés dans `__init__.py`
+
+1. **`anomaly_detector.py`** - Détection d'Anomalies de Montant
+   - Fonction : `detect_amount_anomalies(df, threshold_sigma=2.0)`
+   - Analyse statistique (moyenne + écart-type par libellé)
+   - Classification par sévérité (high/medium)
+   - Retourne : Liste de dicts avec `type`, `label`, `details`, `rows`, `severity`
+
+2. **`smart_tagger.py`** - Suggestions de Tags Intelligentes
+   - Fonction : `suggest_tags_for_transaction(tx_row)`
+   - Fonction batch : `suggest_tags_batch(df, limit=20)`
+   - Analyse contextuelle via IA (libellé, montant, catégorie, date)
+   - Tags disponibles : Remboursement, Professionnel, Cadeau, Urgent, Récurrent, etc.
+
+3. **`budget_predictor.py`** - Prédictions Budgétaires
+   - Fonction : `predict_budget_overruns(df_month, budgets)`
+   - Fonction : `get_budget_alerts_summary(predictions)`
+   - Projection linéaire jusqu'à fin de mois
+   - Alertes : 🟢 OK (<80%), 🟠 Attention (80-100%), 🔴 Dépassement (>100%)
+
+4. **`trend_analyzer.py`** - Analyse de Tendances
+   - Fonction : `analyze_spending_trends(df_current, df_previous, threshold_pct=30.0)`
+   - Fonction : `get_top_categories_comparison(df_current, df_previous, top_n=5)`
+   - Comparaison période actuelle vs précédente
+   - Génération d'insights narratifs
+
+5. **`conversational_assistant.py`** - Assistant Conversationnel
+   - Fonction : `chat_with_assistant(user_message, conversation_history)`
+   - Fonctions outils : `get_expenses_by_category()`, `get_budget_status()`, `get_top_expenses()`
+   - Chat IA pour interroger finances en langage naturel
+
+**Intégrations UI** :
+- `pages/5_Assistant.py` : 3 nouveaux onglets (🎯 Anomalies, 📊 Tendances, 💬 Chat IA)
+- `pages/3_Synthese.py` : Widget "📈 Alertes Budgétaires"
+
+**Guidelines d'utilisation** :
+```python
+from modules.ai import detect_amount_anomalies, predict_budget_overruns, chat_with_assistant
+
+# Détection d'anomalies
+anomalies = detect_amount_anomalies(df)
+
+# Prédictions budgétaires
+predictions = predict_budget_overruns(df_month, budgets)
+
+# Chat IA
+response = chat_with_assistant("Combien j'ai dépensé en alimentation ?")
+```
+
+### 🔮 Futures améliorations possibles
+
+- Function calling avancé pour le Chat IA
+- Smart Tagger UI dans page Validation
+- Anomaly Learning (marquer comme "normal")
+- Trend Visualization avec graphiques
+- Notifications push/email pour alertes budgétaires
 
 ## 🔧 Debugging
 
@@ -251,5 +304,6 @@ Avant de finaliser une feature :
 
 ---
 
-**Dernière mise à jour** : 2026-01-17
+**Dernière mise à jour** : 2026-01-28
 **Développé par** : Aurélien (avec l'aide de Gemini)
+

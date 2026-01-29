@@ -17,6 +17,14 @@ FinancePerso est une application web complète de gestion de finances personnell
 - **💾 Sauvegardes automatiques** : Protection de vos données avec historique de versions
 - **🧠 Apprentissage** : Mémorisation des règles de catégorisation pour amélioration continue
 
+### 🚀 Nouvelles Fonctionnalités IA (v2.0)
+
+- **🎯 Détection d'Anomalies** : Identification automatique des montants inhabituels
+- **💡 Tags Intelligents** : Suggestions contextuelles de tags par IA
+- **📊 Analyse de Tendances** : Comparaison automatique des périodes et insights narratifs
+- **💬 Chat IA** : Assistant conversationnel pour interroger vos finances en langage naturel
+- **📈 Prédictions Budgétaires** : Alertes de dépassement de budget en temps réel
+
 ## 🚀 Installation
 
 ### Prérequis
@@ -70,6 +78,12 @@ FinancePerso/
 │   ├── 5_Assistant.py        # Assistant IA conversationnel
 │   └── 9_Configuration.py    # Paramètres système
 ├── modules/
+│   ├── ai/                   # 🆕 Suite IA complète (v2.0)
+│   │   ├── anomaly_detector.py
+│   │   ├── smart_tagger.py
+│   │   ├── budget_predictor.py
+│   │   ├── trend_analyzer.py
+│   │   └── conversational_assistant.py
 │   ├── categorization.py     # Logique IA de catégorisation
 │   ├── data_manager.py       # Gestion base de données SQLite
 │   ├── backup_manager.py     # Gestion des sauvegardes
@@ -85,6 +99,7 @@ FinancePerso/
 │   └── config.toml           # Configuration Streamlit
 ├── .env                      # Variables d'environnement (API keys)
 ├── requirements.txt          # Dépendances Python
+├── CHANGELOG.md              # 🆕 Historique des versions
 └── README.md                 # Ce fichier
 ```
 
