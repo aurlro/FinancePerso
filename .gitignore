@@ -22,3 +22,6 @@ Data/
 Data/backups/
 .DS_Store
 .env
+
+# AI
+.claude

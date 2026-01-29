@@ -33,7 +33,8 @@ else:
                         date_obj = datetime.strptime(v['date'], "%Y-%m-%d")
                         formatted_date = date_obj.strftime("%d %B %Y")
                         st.caption(formatted_date)
-                    except:
+                    except (ValueError, TypeError) as e:
+                        # Fallback to raw date string if parsing fails
                         st.caption(v['date'])
                 
                 # Extract main category or subtitle if possible from content

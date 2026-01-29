@@ -108,7 +108,8 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                     "created_at": rule['created_at'],
                     "message": f"La règle '{pat}' a été créée il y a plus de 6 mois ({rule['created_at']}). Est-elle toujours d'actualité ?"
                 })
-        except:
+        except (ValueError, TypeError, KeyError) as e:
+            # Skip rules with invalid or missing dates
             pass
             
     # --- CALCULATE HEALTH SCORE ---

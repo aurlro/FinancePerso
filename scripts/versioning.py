@@ -23,9 +23,13 @@ def get_commits_since_last_version(current_version):
         # Get commits since that hash
         commits = subprocess.check_output(["git", "log", f"{last_log_commit}..HEAD", "--oneline"]).decode().strip().split("\n")
         return [c for c in commits if c]
-    except:
-        # Fallback to last 10 commits if something fails
-        return subprocess.check_output(["git", "log", "-n", "10", "--oneline"]).decode().strip().split("\n")
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
+        # Fallback to last 10 commits if something fails (e.g., no git history, no CHANGELOG.md)
+        try:
+            return subprocess.check_output(["git", "log", "-n", "10", "--oneline"]).decode().strip().split("\n")
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            # No git available or not a git repo
+            return []
 
 def determine_new_version(current_version, commits):
     """

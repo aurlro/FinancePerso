@@ -97,12 +97,12 @@ class OllamaProvider(AIProvider):
 
     def list_models(self):
         try:
-            resp = requests.get(f"{self.base_url}/api/tags")
+            resp = requests.get(f"{self.base_url}/api/tags", timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 return [m['name'] for m in data['models']]
-        except:
-            pass
+        except (requests.RequestException, KeyError, ValueError) as e:
+            logger.warning(f"Failed to fetch Ollama models: {e}")
         return ["llama3", "mistral", "gemma"]   
 
 # --- 3. OpenAI Compatible (ChatGPT, DeepSeek, etc) ---

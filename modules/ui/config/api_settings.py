@@ -1,16 +1,61 @@
 import streamlit as st
 import os
+import stat
+from dotenv import load_dotenv, set_key, find_dotenv
 
 def load_env_vars():
-    """Helper to read .env file"""
+    """
+    Securely load environment variables from .env file using python-dotenv.
+    Returns a dictionary of all variables found in .env file.
+    """
+    env_file = find_dotenv()
+    if not env_file:
+        env_file = ".env"
+
+    # Load .env into os.environ
+    load_dotenv(env_file)
+
+    # Return dictionary of vars from .env file
     vars = {}
-    if os.path.exists(".env"):
-        with open(".env", "r") as f:
-            for line in f:
-                if "=" in line:
-                    k, v = line.strip().split("=", 1)
-                    vars[k] = v
+    if os.path.exists(env_file):
+        try:
+            with open(env_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        vars[k.strip()] = v.strip()
+        except Exception as e:
+            st.error(f"Erreur lors de la lecture du fichier .env: {e}")
+
     return vars
+
+def validate_api_key(key: str, provider: str) -> bool:
+    """
+    Validate API key format for different providers.
+    """
+    if not key or not key.strip():
+        return False
+
+    # Basic validation rules
+    if provider == "Gemini":
+        return key.startswith("AIzaSy") and len(key) > 30
+    elif provider == "OpenAI":
+        return key.startswith("sk-") and len(key) > 20
+    elif provider == "DeepSeek":
+        return len(key) > 20  # DeepSeek format varies
+
+    return True  # For Ollama URL, etc.
+
+def set_secure_env_permissions(env_file: str):
+    """
+    Set secure file permissions (0600) on .env file to prevent unauthorized access.
+    Only the owner can read/write.
+    """
+    try:
+        os.chmod(env_file, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+    except Exception as e:
+        st.warning(f"Impossible de définir les permissions sécurisées: {e}")
 
 def render_api_settings():
     """
@@ -68,14 +113,36 @@ def render_api_settings():
         new_env["AI_MODEL_NAME"] = model_val
 
         if st.form_submit_button("Sauvegarder et Appliquer", type="primary"):
-            # Write .env
-            with open(".env", "w") as f:
-                for k, v in new_env.items():
-                    if v: # Write valid values
-                        f.write(f"{k}={v}\n")
-            
-            # Update OS environ for immediate effect (for current session)
-            for k, v in new_env.items():
-                os.environ[k] = v
-                
-            st.success(f"Configuration IA mise à jour ! Mode : {selected_provider}")
+            # Validate API key if applicable
+            validation_error = None
+            if selected_provider == "Gemini" and new_env.get("GEMINI_API_KEY"):
+                if not validate_api_key(new_env["GEMINI_API_KEY"], "Gemini"):
+                    validation_error = "La clé API Gemini semble invalide (doit commencer par 'AIzaSy')"
+            elif selected_provider == "OpenAI" and new_env.get("OPENAI_API_KEY"):
+                if not validate_api_key(new_env["OPENAI_API_KEY"], "OpenAI"):
+                    validation_error = "La clé API OpenAI semble invalide (doit commencer par 'sk-')"
+
+            if validation_error:
+                st.error(validation_error)
+            else:
+                try:
+                    env_file = ".env"
+
+                    # Write .env securely using set_key from python-dotenv
+                    for k, v in new_env.items():
+                        if v and v.strip():  # Only write non-empty values
+                            set_key(env_file, k, v)
+
+                    # Set secure file permissions (0600)
+                    set_secure_env_permissions(env_file)
+
+                    # Update OS environ for immediate effect (for current session)
+                    for k, v in new_env.items():
+                        if v:
+                            os.environ[k] = v
+
+                    st.success(f"✅ Configuration IA mise à jour ! Mode : {selected_provider}")
+                    st.info("🔒 Permissions sécurisées appliquées au fichier .env")
+
+                except Exception as e:
+                    st.error(f"❌ Erreur lors de la sauvegarde : {e}")

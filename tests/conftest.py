@@ -175,7 +175,8 @@ def temp_db():
     
     try:
         os.unlink(db_path)
-    except:
+    except (FileNotFoundError, PermissionError, OSError) as e:
+        # Ignore cleanup errors in tests
         pass
 
 @pytest.fixture
