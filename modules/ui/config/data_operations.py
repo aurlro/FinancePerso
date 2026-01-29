@@ -74,3 +74,21 @@ def render_data_operations():
                         delete_transaction_by_id(row['id'])
                         st.toast("✅ Transaction supprimée", icon="🗑️")
                         st.rerun()
+
+    # --- VERSIONING ---
+    st.divider()
+    st.subheader("🚀 Mise à jour de Version")
+    st.markdown("Analyse les derniers commits Git pour mettre à jour la version de l'application et générer le Changelog.")
+    
+    if st.button("🔄 Lancer la mise à jour (Git commits)", use_container_width=True):
+        import subprocess
+        try:
+            # Run the versioning script
+            result = subprocess.run(["python3", "scripts/versioning.py"], capture_output=True, text=True)
+            if result.returncode == 0:
+                st.success(f"**Mise à jour réussie :**\n\n{result.stdout}")
+                st.toast("✅ Version mise à jour", icon="🚀")
+            else:
+                st.error(f"**Erreur lors de la mise à jour :**\n\n{result.stderr}")
+        except Exception as e:
+            st.error(f"Impossible de lancer le script de versioning : {str(e)}")

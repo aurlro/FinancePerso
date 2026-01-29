@@ -6,6 +6,27 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [2.6.0] - 2026-01-29
+
+### Ajouté
+- Implement `st.toast` for user feedback, refactor tag suggestion UI, and enhance rules auditor with stale rule detection and health scoring.
+
+---
+
+## [2.5.0] - 2026-01-29
+
+### Ajouté
+- Implement `st.toast` for user feedback, refactor tag suggestion UI, and enhance rules auditor with stale rule detection and health scoring.
+
+---
+
+## [2.4.0] - 2026-01-29
+
+### Ajouté
+- Implement `st.toast` for user feedback, refactor tag suggestion UI, and enhance rules auditor with stale rule detection and health scoring.
+
+---
+
 ## [2.2.0] - 2026-01-29
 
 ### 🕵️ Audit et Qualité des Données

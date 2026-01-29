@@ -1,56 +1,51 @@
 import streamlit as st
+import os
+import re
+from datetime import datetime
 from modules.ui import load_css
 from modules.ui.layout import render_app_info
+from modules.ui.changelog_parser import parse_changelog
 
 st.set_page_config(page_title="Nouveautés", page_icon="🎁", layout="wide")
 load_css()
 
 st.title("🎁 Nouveautés & Mises à jour")
 
-# Layout timeline
+# Path to changelog
+CHANGELOG_PATH = os.path.join(os.getcwd(), "CHANGELOG.md")
+
+# Parse changelog
+versions = parse_changelog(CHANGELOG_PATH)
+
 st.markdown("### Historique des versions")
 
-with st.container(border=True):
-    col_ver, col_date = st.columns([1, 4])
-    with col_ver:
-        st.markdown("### `v2.3.0`")
-        st.caption("29 Janvier 2026")
-        st.caption("🧠 AI & Intelligence")
-    with col_date:
-        st.markdown("""
-        **Intelligence Artificielle & Audit :**
-        - **Assistant Conversationnel** : Dialogue intelligent capable de lancer des outils d'analyse et de correction.
-        - **Audit de Qualité** : Analyseur de règles IA pour détecter conflits et doublons.
-        - **Anomalies Persistantes** : Possibilité de marquer des montants comme normaux (mémorisation durable par tag).
+if not versions:
+    st.info("Aucun historique disponible dans CHANGELOG.md")
+else:
+    for v in versions:
+        with st.container(border=True):
+            col_ver, col_content = st.columns([1, 4])
+            with col_ver:
+                st.markdown(f"### `v{v['version']}`")
+                if v['date']:
+                    # Try to format date nicely if possible
+                    try:
+                        date_obj = datetime.strptime(v['date'], "%Y-%m-%d")
+                        formatted_date = date_obj.strftime("%d %B %Y")
+                        st.caption(formatted_date)
+                    except:
+                        st.caption(v['date'])
+                
+                # Extract main category or subtitle if possible from content
+                # (Look for first ### header)
+                first_header = re.search(r'### (.*)', v['content'])
+                if first_header:
+                    st.caption(f"✨ {first_header.group(1)}")
+                    
+            with col_content:
+                st.markdown(v['content'])
         
-        **Analyses & UX :**
-        - **Drill-down Interactif** : Exploration et modification en masse des transactions directement depuis les tendances.
-        - **Apprentissage Actif** : Création automatique de règles de catégorisation à partir de vos corrections.
-        - **Virements Internes** : Détection automatique et option d'exclusion pour des analyses plus précises.
-        
-        **Stabilité :**
-        - Suite de tests étendue (tests AI) et correction d'encodage UTF-8.
-        """)
-
-st.markdown("---")
-
-with st.container(border=True):
-    col_ver, col_date = st.columns([1, 4])
-    with col_ver:
-        st.markdown("### `v0.2.0`")
-        st.caption("27 Janvier 2026")
-        st.caption("✨ Validation & UX")
-    with col_date:
-        st.markdown("""
-        **Améliorations Majeures :**
-        - **Validation Intelligente** : Nouvelle interface de validation par "piles" (Pills) pour les tags suggérés.
-        - **Sélection Unique** : Correction du bug de duplication des boutons dans la liste de validation.
-        - **Configuration** : Correction des crashs liés aux DataFrames vides dans la gestion des règles.
-        
-        **Autres :**
-        - Ajout de cette page de suivi des mises à jour.
-        - Affichage de la version en bas de la barre latérale.
-        """)
+        st.markdown(" ") # Spacer
 
 st.divider()
 
