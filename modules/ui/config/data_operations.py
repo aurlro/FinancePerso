@@ -43,7 +43,7 @@ def render_data_operations():
                         st.rerun()
                     else:
                         count = delete_transactions_by_period(selected_month)
-                        st.success(f"✅ {count} transactions supprimées pour {selected_month}.")
+                        st.toast(f"✅ {count} tx supprimées ({selected_month})", icon="🗑️")
                         st.session_state['confirm_delete_month'] = False
                         st.rerun()
     
@@ -72,5 +72,5 @@ def render_data_operations():
                     c1.markdown(f"**{row['date']}** • {row['label']} • **{row['amount']:.2f}€** • {row['category']}")
                     if c2.button("🗑️", key=f"del_tx_{row['id']}"):
                         delete_transaction_by_id(row['id'])
-                        st.success("Transaction supprimée !")
+                        st.toast("✅ Transaction supprimée", icon="🗑️")
                         st.rerun()

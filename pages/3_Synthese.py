@@ -55,7 +55,9 @@ if orphans and not df.empty:
         st.warning(f"🧹 **Nettoyage requis** : {len(orphans)} libellés incohérents détectés (ex: {', '.join(orphans[:2])}).")
         if st.button("Aller au nettoyage 🧼", use_container_width=True):
             st.switch_page("pages/9_Configuration.py")
-    st.info(f"💡 Certains membres ou bénéficiaires semblent mal orthographiés (doublons avec/sans accents). [Régler le problème ici](9_Configuration)")
+    st.info(f"💡 Certains membres ou bénéficiaires semblent mal orthographiés (doublons avec/sans accents).")
+    if st.button("Régler le problème 🛠️", key="fix_ortho_link"):
+        st.switch_page("pages/9_Configuration.py")
 
 if df.empty:
     st.info("Aucune donnée disponible. Commencez par importer des relevés.")

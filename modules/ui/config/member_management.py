@@ -40,6 +40,7 @@ def render_member_management():
                             if st.button("✅", key=f"sv_{member_id}"):
                                 rename_member(member_name, st.session_state[f"edit_in_{member_id}"])
                                 st.session_state['editing_member_id'] = None
+                                st.toast("✅ Membre renommé", icon="👤")
                                 st.rerun()
                         with c3:
                             if st.button("❌", key=f"cl_{member_id}"):
@@ -50,12 +51,14 @@ def render_member_management():
                         c1.write(f"👤 **{member_name}**")
                         if c2.button("➡️ Tiers", key=f"to_ext_{member_id}", help="Déplacer vers Tiers"):
                             update_member_type(member_id, 'EXTERNAL')
+                            st.toast("✅ Type mis à jour", icon="💼")
                             st.rerun()
                         if c3.button("✏️", key=f"ed_{member_id}"):
                             st.session_state['editing_member_id'] = member_id
                             st.rerun()
                         if c4.button("🗑️", key=f"del_{member_id}"):
                             delete_member(member_id)
+                            st.toast("🗑️ Membre supprimé", icon="🗑️")
                             st.rerun()
             
             # --- EXTERNAL GROUP ---
@@ -73,6 +76,7 @@ def render_member_management():
                             if st.button("✅", key=f"sv_{member_id}"):
                                 rename_member(member_name, st.session_state[f"edit_in_{member_id}"])
                                 st.session_state['editing_member_id'] = None
+                                st.toast("✅ Membre renommé", icon="👤")
                                 st.rerun()
                         with c3:
                             if st.button("❌", key=f"cl_{member_id}"):
@@ -83,12 +87,14 @@ def render_member_management():
                         c1.write(f"💼 **{member_name}**")
                         if c2.button("⬅️ Foyer", key=f"to_hh_{member_id}", help="Déplacer vers Foyer"):
                             update_member_type(member_id, 'HOUSEHOLD')
+                            st.toast("✅ Membre déplacé vers le foyer", icon="🏘️")
                             st.rerun()
                         if c3.button("✏️", key=f"ed_{member_id}"):
                             st.session_state['editing_member_id'] = member_id
                             st.rerun()
                         if c4.button("🗑️", key=f"del_{member_id}"):
                             delete_member(member_id)
+                            st.toast("🗑️ Membre supprimé", icon="🗑️")
                             st.rerun()
     
     with col_add:
@@ -99,7 +105,7 @@ def render_member_management():
             if st.form_submit_button("Ajouter"):
                 if new_name:
                     if add_member(new_name, new_type):
-                        st.success(f"Membre '{new_name}' ajouté !")
+                        st.toast(f"✅ '{new_name}' ajouté !", icon="👤")
                         st.rerun()
                     else:
                         st.error("Ce membre existe déjà.")
@@ -127,6 +133,7 @@ def render_member_management():
                 cm1.write(f"💳 **{row['card_suffix']}** ➔ {row['member_name']}")
                 if cm2.button("🗑️", key=f"del_map_{row['id']}"):
                     delete_member_mapping(row['id'])
+                    st.toast("🗑️ Correspondance supprimée", icon="🗑️")
                     st.rerun()
     
     with col_m2:
@@ -136,5 +143,5 @@ def render_member_management():
             if st.form_submit_button("Ajouter la carte"):
                 if suffix and m_name:
                     add_member_mapping(suffix, m_name)
-                    st.success("Mise à jour effectuée !")
+                    st.toast("✅ Carte associée !", icon="💳")
                     st.rerun()

@@ -24,7 +24,7 @@ def render_tags_rules():
                     c1.write(f"🔹 **{tag}**")
                     if c2.button("🗑️", key=f"del_tag_{tag}", help=f"Supprimer le tag '{tag}' de toutes les transactions"):
                         count = remove_tag_from_all_transactions(tag)
-                        st.success(f"Tag supprimer de {count} transactions.")
+                        st.toast(f"✅ Tag supprimé de {count} tx", icon="🏷️")
                         st.rerun()
 
     # --- LEARNING RULES ---
@@ -43,5 +43,5 @@ def render_tags_rules():
                     c2.markdown(f"➔ {r['category']}")
                     if c3.button("🗑️", key=f"del_rule_{r['id']}"):
                         delete_learning_rule(r['id'])
-                        st.success("Règle supprimée.")
+                        st.toast("✅ Règle supprimée", icon="🗑️")
                         st.rerun()

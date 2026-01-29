@@ -99,7 +99,7 @@ else:
                     from modules.data_manager import undo_last_action
                     success, msg = undo_last_action()
                     if success:
-                        st.success(msg)
+                        st.toast(f"✅ {msg}", icon="🔙")
                         st.rerun()
                     else:
                         st.warning(msg)
@@ -407,30 +407,8 @@ else:
                             strict_mode=True
                         )
                                           
-                        # Show suggested tags for the category (Modern Layout with Pills)
-                        current_cat_name = st.session_state[cat_key]
-                        suggestions = cat_suggested_tags.get(current_cat_name, [])
-                        if suggestions:
-                            # Filter out tags already selected
-                            filtered_sugg = [s for s in suggestions if s not in selected_tags]
-                            if filtered_sugg:
-                                # MODERN TILE LAYOUT (Pills)
-                                # Row 2 Column 1 is wide enough (5/8 of width).
-                                # Use group_name for uniqueness since group_id can repeat across tabs, and index to be absolutely sure
-                                pill_key = f"pills_{i}_{group_name}{key_suffix}"
-                                
-                                # Use st.pills
-                                selected_pill = st.pills("Suggestions", filtered_sugg, selection_mode="single", key=pill_key, label_visibility="collapsed")
-                                
-                                if selected_pill:
-                                    if 'pending_tag_additions' not in st.session_state:
-                                        st.session_state['pending_tag_additions'] = {}
-                                    if group_id not in st.session_state['pending_tag_additions']:
-                                        st.session_state['pending_tag_additions'][group_id] = []
-                                    
-                                    # Add and reset
-                                    st.session_state['pending_tag_additions'][group_id].append(selected_pill)
-                                    st.rerun()
+                        # Suggested tags are now handled directly inside render_tag_selector
+                        # to avoid redundant logic and potential infinite loops.
                                          
                         final_tags_str = ", ".join(selected_tags)
                         

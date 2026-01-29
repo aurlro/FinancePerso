@@ -153,7 +153,7 @@ with tab_audit:
                                 for tx_id in ids_to_update:
                                     update_transaction_category(tx_id, item['suggested_category'])
                                 st.cache_data.clear()
-                                st.success(f"Correction appliquée sur {len(ids_to_update)} transactions !")
+                                st.toast(f"✅ Correction appliquée !", icon="👍")
                                 st.session_state['audit_results'].pop(i)
                                 st.rerun()
 
@@ -176,7 +176,7 @@ with tab_audit:
                              for tx_id in ids_to_update:
                                     update_transaction_category(tx_id, manual_cat)
                              st.cache_data.clear()
-                             st.success(f"Correction manuelle appliquée sur {len(ids_to_update)} transactions !")
+                             st.toast(f"✅ Correction appliquée !", icon="👍")
                              st.session_state['audit_results'].pop(i)
                              st.rerun()
 
@@ -262,6 +262,7 @@ with tab_trends:
             
             result = analyze_spending_trends(df_current, df_prev)
             st.session_state['trend_results'] = result
+            st.session_state['show_trends'] = False
             st.rerun()
     
     if 'trend_results' in st.session_state:

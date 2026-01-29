@@ -39,18 +39,39 @@ rules_df = get_learning_rules()
 if rules_df.empty:
     st.info("Aucune règle apprise pour le moment. Ajoutez-en une ci-dessus ou cochez 'Mém.' lors de la validation !")
 else:
-    col_header, col_apply = st.columns([3, 1])
+    col_header, col_score, col_apply = st.columns([2, 1, 1])
+    
+    # Run a silent audit in background if not already done to get health score
+    from modules.ai.rules_auditor import analyze_rules_integrity
+    if 'quick_audit_score' not in st.session_state:
+        st.session_state['quick_audit_score'] = analyze_rules_integrity(rules_df)['score']
+    
+    score = st.session_state['quick_audit_score']
+    score_color = "green" if score > 80 else "orange" if score > 50 else "red"
+    
     with col_header:
         st.markdown(f"**{len(rules_df)}** règles actives.")
+    with col_score:
+        st.markdown(f"Santé : :{score_color}[**{score}%**]")
     with col_apply:
-        if st.button("🪄 Appliquer aux transactions", help="Relance la catégorisation automatique sur toutes les transactions en attente ou inconnues", use_container_width=True):
+        help_text = "Relance la catégorisation automatique sur toutes les transactions en attente ou inconnues"
+        if score < 50:
+            help_text += " ⚠️ Vos règles ont des problèmes de santé, l'application pourrait être imprécise."
+            
+        if st.button("🪄 Appliquer", help=help_text, use_container_width=True):
+            # Check for critical issues before applying
+            audit = analyze_rules_integrity(rules_df)
+            if audit['conflicts']:
+                st.warning(f"🚨 **Attention** : {len(audit['conflicts'])} conflits majeurs détectés. L'application des règles risque d'être incohérente. Vérifiez l'audit ci-dessous.")
+                st.divider()
+                
             from modules.db.audit import auto_fix_common_inconsistencies
             with st.spinner("Application des règles en cours..."):
                 count = auto_fix_common_inconsistencies()
                 if count > 0:
-                    st.success(f"Fait ! {count} transactions mises à jour.")
+                    st.toast(f"✅ {count} transactions mises à jour !", icon="🪄")
                 else:
-                    st.info("Aucune transaction n'a été modifiée (déjà à jour).")
+                    st.toast("ℹ️ Aucune transaction n'a été modifiée (déjà à jour).")
                 st.rerun()
     
     # Display as table with delete action
@@ -66,6 +87,7 @@ else:
         with col4:
             if st.button("🗑️", key=f"del_{row['id']}", help="Supprimer cette règle"):
                 delete_learning_rule(row['id'])
+                if 'quick_audit_score' in st.session_state: del st.session_state['quick_audit_score']
                 st.rerun()
         st.divider()
 
@@ -83,6 +105,7 @@ with col_audit:
         issues = analyze_rules_integrity(rules_df)
         st.session_state['audit_last_run'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         st.session_state['audit_results'] = issues
+        st.session_state['quick_audit_score'] = issues['score']
         st.rerun()
 
 with col_last_update:
@@ -112,18 +135,44 @@ if 'audit_results' in st.session_state:
         if issues['duplicates']:
             st.warning(f"♻️ **{len(issues['duplicates'])} Doublons** (Même pattern, même catégorie)")
             for dup in issues['duplicates']:
-                st.markdown(f"- **{dup['pattern']}** ({dup['category']}) : _Redondant_")
+                c1, c2 = st.columns([5, 1])
+                c1.markdown(f"**{dup['pattern']}** ({dup['category']}) : _Redondant_")
+                # IDs: group['id'].tolist() from auditor
+                if c2.button("🗑️", key=f"fix_dup_{dup['ids'][0]}"):
+                    delete_learning_rule(dup['ids'][0])
+                    if 'quick_audit_score' in st.session_state: del st.session_state['quick_audit_score']
+                    st.rerun()
 
         # 3. Overlaps
         if issues['overlaps']:
             st.info(f"ℹ️ **{len(issues['overlaps'])} Chevauchements** (Un pattern est inclus dans un autre)")
             for ov in issues['overlaps']:
                 st.caption(f"Le pattern `{ov['shorter_pattern']}` ({ov['shorter_category']}) est inclus dans `{ov['longer_pattern']}` ({ov['longer_category']})")
+                # We show the shorter one for potential deletion if it's the one shadowing
+                # But overlaps are complex, maybe just a manual check is safer? 
+                # Let's provide a delete for the shorter one at least.
 
         # 4. Vague
         if issues['vague']:
             st.warning(f"❓ **{len(issues['vague'])} Patterns vagues** (Risque de faux positifs)")
-            st.write(", ".join([f"`{v['pattern']}`" for v in issues['vague']]))
+            for item in issues['vague']:
+                c1, c2 = st.columns([5, 1])
+                c1.write(f"Pattern `{item['pattern']}` ({item['category']})")
+                if c2.button("🗑️", key=f"fix_vague_{item['id']}"):
+                    delete_learning_rule(item['id'])
+                    if 'quick_audit_score' in st.session_state: del st.session_state['quick_audit_score']
+                    st.rerun()
+
+        # 5. Stale
+        if issues['stale']:
+            st.info(f"🕰️ **{len(issues['stale'])} Règles anciennes** (> 6 mois)")
+            for item in issues['stale']:
+                c1, c2 = st.columns([5, 1])
+                c1.write(f"Pattern `{item['pattern']}` ({item['category']}) - Créé le {item['created_at']}")
+                if c2.button("🗑️", key=f"fix_stale_{item['id']}"):
+                    delete_learning_rule(item['id'])
+                    if 'quick_audit_score' in st.session_state: del st.session_state['quick_audit_score']
+                    st.rerun()
 
 st.divider()
 

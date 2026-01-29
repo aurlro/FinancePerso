@@ -54,7 +54,7 @@ def render_backup_restore():
         if st.button("💾 Créer une sauvegarde maintenant", type="primary", use_container_width=True):
             path = create_backup(label="manual")
             if path:
-                st.success(f"Sauvegarde créée : {os.path.basename(path)}")
+                st.toast(f"✅ Sauvegarde {os.path.basename(path)} créée !", icon="💾")
                 st.rerun()
             else:
                 st.error("Erreur lors de la création de la sauvegarde.")

@@ -27,8 +27,14 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
         "conflicts": [],
         "overlaps": [],
         "vague": [],
-        "duplicates": []
+        "duplicates": [],
+        "stale": [],
+        "score": 100
     }
+    
+    from datetime import datetime, timedelta
+    now = datetime.now()
+    six_months_ago = now - timedelta(days=180)
     
     # Check for conflicts (Same pattern, different category)
     # Actually, the DB constraint usually prevents this, but let's check logical conflicts
@@ -82,11 +88,38 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
     # 3. Vague patterns
     for _, rule in rules_df.iterrows():
         pat = rule['pattern']
+        # Vague
         if len(pat) < 3 and pat.isalpha():
             issues['vague'].append({
                 "pattern": pat,
                 "category": rule['category'],
+                "id": rule['id'],
                 "message": f"Le pattern '{pat}' est très court et risque de capturer trop de transactions."
             })
             
+        # 4. Stale (Older than 6 months)
+        try:
+            created_at = pd.to_datetime(rule['created_at'])
+            if created_at < six_months_ago:
+                issues['stale'].append({
+                    "pattern": pat,
+                    "category": rule['category'],
+                    "id": rule['id'],
+                    "created_at": rule['created_at'],
+                    "message": f"La règle '{pat}' a été créée il y a plus de 6 mois ({rule['created_at']}). Est-elle toujours d'actualité ?"
+                })
+        except:
+            pass
+            
+    # --- CALCULATE HEALTH SCORE ---
+    # Penalty-based calculation
+    score = 100
+    score -= len(issues['conflicts']) * 15
+    score -= len(issues['duplicates']) * 5
+    score -= len(issues['overlaps']) * 8
+    score -= len(issues['vague']) * 10
+    score -= len(issues['stale']) * 2
+    
+    issues['score'] = max(0, score)
+    
     return issues

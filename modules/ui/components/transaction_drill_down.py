@@ -302,7 +302,7 @@ def render_transaction_drill_down(category: str, transaction_ids: list,
                 if rules_created > 0:
                     msg += f" \n🧠 {rules_created} règles d'apprentissage créées."
                 
-                st.success(msg)
+                st.toast(msg, icon="✅")
                 st.rerun()
     
     if df_validated.empty and df_pending.empty:

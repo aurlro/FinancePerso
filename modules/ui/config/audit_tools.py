@@ -39,9 +39,9 @@ def render_audit_tools():
             count_learned = learn_tags_from_history()
             
             if count > 0 or count_learned > 0:
-                st.success(f"Fait ! {count} corrections + {count_learned} tags appris.")
+                st.toast(f"✅ Fait ! {count} corrections + {count_learned} tags appris.", icon="🪄")
             else:
-                st.info("Tout semble déjà propre ! ✨")
+                st.toast("Tout semble déjà propre ! ✨")
             st.rerun()
 
     # --- MEMBER CLEANUP (Orphans) ---
@@ -67,19 +67,19 @@ def render_audit_tools():
             with c3:
                 if st.button("🔀 Fusion", key=f"btn_orphan_{i}", help="Fusionner avec un membre officiel"):
                     count = rename_member(orphan, target)
-                    st.success(f"'{orphan}' ➔ '{target}' ({count} transactions)")
+                    st.toast(f"✅ '{orphan}' ➔ '{target}' ({count} tx)", icon="🔀")
                     st.rerun()
             
             with c4:
                 if st.button("👥 Tiers", key=f"btn_tiers_{i}", help="Enregistrer comme nouveau Tiers officiel"):
                     add_member(orphan, 'EXTERNAL')
-                    st.success(f"'{orphan}' ajouté aux Tiers !")
+                    st.toast(f"✅ '{orphan}' ajouté aux Tiers !", icon="👥")
                     st.rerun()
             
             with c5:
                 if st.button("🗑️", key=f"btn_del_{i}", help="Supprimer partout et remplacer par 'Inconnu'"):
                     count = delete_and_replace_label(orphan, "Inconnu")
-                    st.success(f"'{orphan}' supprimé ({count} transactions nettoyées)")
+                    st.toast(f"✅ '{orphan}' supprimé ({count} tx)", icon="🗑️")
                     st.rerun()
 
     # --- CATEGORY MERGE SECTION ---
@@ -114,7 +114,7 @@ def render_audit_tools():
         if st.button("Fusionner", key="btn_merge_cat_audit", use_container_width=True, type="primary"):
             if source_cat and target_cat and source_cat != target_cat:
                 result = merge_categories(source_cat, target_cat)
-                st.success(f"✅ {result['transactions']} transactions transférées !")
+                st.toast(f"✅ {result['transactions']} transactions transférées !", icon="🔀")
                 st.rerun()
             else:
                 st.warning("Veuillez sélectionner deux catégories différentes.")
@@ -142,7 +142,7 @@ def render_audit_tools():
                 # Option A: Create it
                 if c2.button("Créer ✅", key=f"create_ghost_{g_name}", help="Ajouter aux catégories officielles"):
                     add_category(g_name)
-                    st.success(f"Catégorie '{g_name}' officialisée !")
+                    st.toast(f"✅ Catégorie '{g_name}' officialisée !", icon="🛡️")
                     st.rerun()
                 
                 # Option B: Migrate it
@@ -152,7 +152,7 @@ def render_audit_tools():
                 if c4_action.button("Fusionner 🔀", key=f"mig_ghost_{g_name}"):
                     if target:
                         res = merge_categories(g_name, target)
-                        st.success(f"Transféré ! {res['transactions']} transactions déplacées.")
+                        st.toast(f"✅ Transféré ! {res['transactions']} tx déplacées.", icon="🔀")
                         st.rerun()
                     else:
                         st.warning("Choisissez une cible.")
@@ -188,7 +188,7 @@ def render_audit_tools():
                     deleted_count = 0
                     for tid in to_delete:
                         deleted_count += delete_transaction_by_id(tid)
-                    st.success(f"{deleted_count} doublons supprimés.")
+                    st.toast(f"✅ {deleted_count} doublons supprimés.", icon="🪄")
                     st.rerun()
 
     # --- TRANSFER AUDIT ---
@@ -255,7 +255,7 @@ def render_audit_tools():
                         if c3.button(f"Tout corriger", key=f"bulk_fix_{safe_key}"):
                             tx_ids = group['id'].tolist()
                             bulk_update_transaction_status(tx_ids, target_cat)
-                            st.success(f"Corrigé ! {len(tx_ids)} tx en '{target_cat}'")
+                            st.toast(f"✅ Corrigé ! {len(tx_ids)} tx en '{target_cat}'", icon="🔄")
                             st.rerun()
                         
                         # Show individual transactions if user wants
@@ -289,5 +289,5 @@ def render_audit_tools():
                 
                 if c3.button("Associer", key=f"btn_sugg_{row['card_suffix']}", use_container_width=True):
                     add_member_mapping(row['card_suffix'], target_m)
-                    st.success(f"Carte {row['card_suffix']} associée à {target_m} !")
+                    st.toast(f"✅ Carte {row['card_suffix']} associée à {target_m} !", icon="💳")
                     st.rerun()

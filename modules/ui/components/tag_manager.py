@@ -119,26 +119,22 @@ def render_tag_selector(
                         st.toast(f"Tag '{new_tag_input}' créé et associé à '{category}' !", icon="🔗")
                         st.rerun()
     
-    # Show suggested tags as pills (if any remain unselected)
+    # Show suggested tags as small buttons (avoid st.pills infinite rerun loop)
     suggestions = cat_suggested_tags.get(category, [])
     if suggestions:
         filtered_sugg = [s for s in suggestions if s not in selected_tags]
         if filtered_sugg:
-            pill_key = f"pills_{transaction_id}{key_suffix}"
-            selected_pill = st.pills(
-                "Suggestions", 
-                filtered_sugg, 
-                selection_mode="single", 
-                key=pill_key,
-                label_visibility="collapsed"
-            )
-            
-            if selected_pill:
-                # Auto-add the selected pill
-                if transaction_id not in st.session_state['pending_tag_additions']:
-                    st.session_state['pending_tag_additions'][transaction_id] = []
-                st.session_state['pending_tag_additions'][transaction_id].append(selected_pill)
-                st.rerun()
+            st.caption("Suggestions :")
+            # Use small buttons instead of pills to avoid infinite rerun loops
+            cols = st.columns(len(filtered_sugg) + 1)
+            for j, sugg in enumerate(filtered_sugg):
+                with cols[min(j, len(cols)-1)]:
+                    if st.button(f"#{sugg}", key=f"sugg_btn_{transaction_id}_{sugg}{key_suffix}", small=True):
+                        # Auto-add the selected tag
+                        if transaction_id not in st.session_state['pending_tag_additions']:
+                            st.session_state['pending_tag_additions'][transaction_id] = []
+                        st.session_state['pending_tag_additions'][transaction_id].append(sugg)
+                        st.rerun()
     
     return selected_tags
 

@@ -30,5 +30,5 @@ def render_log_viewer():
         if st.button("Effacer les logs 🗑️", help="Vider le fichier log actuel"):
             with open(LOG_FILE, "w") as f:
                 f.write("")
-            st.success("Logs effacés !")
+            st.toast("Logs effacés !", icon="🗑️")
             st.rerun()

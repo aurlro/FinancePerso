@@ -36,10 +36,12 @@ def render_category_management():
                         update_category_emoji(row['id'], new_emoji)
                         update_category_fixed(row['id'], int(is_fixed))
                         update_category_suggested_tags(row['id'], new_suggested_tags)
+                        st.toast(f"✅ {row['name']} mis à jour !", icon="💾")
                         st.rerun()
                     
                     if c2.button("🗑️ Supprimer", key=f"del_cat_{row['id']}"):
                         delete_category(row['id'])
+                        st.toast(f"🗑️ Catégorie supprimée", icon="🗑️")
                         st.rerun()
 
     with col_add_cat:
@@ -53,7 +55,7 @@ def render_category_management():
             if st.form_submit_button("Ajouter"):
                 if new_cat_name:
                     if add_category(new_cat_name, new_cat_emoji, int(new_is_fixed)):
-                        st.success(f"Catégorie '{new_cat_name}' ajoutée !")
+                        st.toast(f"✅ Catégorie '{new_cat_name}' ajoutée !", icon="🏷️")
                         st.rerun()
                     else:
                         st.error("Cette catégorie existe déjà.")
