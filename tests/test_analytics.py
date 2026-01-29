@@ -5,7 +5,9 @@ import pytest
 import pandas as pd
 from modules.analytics import (
     detect_financial_profile,
-    get_monthly_savings_trend
+    get_monthly_savings_trend,
+    detect_internal_transfers,
+    exclude_internal_transfers
 )
 
 class TestFinancialProfileDetection:
@@ -152,3 +154,19 @@ class TestRecurringTransactionDetection:
         # Should detect utility bill pattern
         # Implementation-dependent check
         assert isinstance(suggestions, list)
+
+class TestInternalTransfers:
+    """Tests for internal transfer detection."""
+    
+    def test_exclude_internal_transfers(self, temp_db):
+        """Test exclusion of internal transfers."""
+        df = pd.DataFrame([
+            {'id': 1, 'date': '2024-01-01', 'label': 'VIR SEPA AURELIEN', 'amount': -100.0, 'category_validated': 'Autre'},
+            {'id': 2, 'date': '2024-01-02', 'label': 'CARREFOUR', 'amount': -50.0, 'category_validated': 'Alimentation'},
+        ])
+        
+        df_clean = exclude_internal_transfers(df)
+        # Should remove VIR SEPA PERSO
+        assert len(df_clean) == 1
+        assert df_clean.iloc[0]['label'] == 'CARREFOUR'
+

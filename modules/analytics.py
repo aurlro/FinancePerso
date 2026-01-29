@@ -196,3 +196,79 @@ def get_monthly_savings_trend(months=12):
         df['Taux'] = df.apply(lambda row: (row['Epargne'] / row['Revenus'] * 100) if row['Revenus'] > 0 else 0, axis=1)
         
         return df[['month', 'Revenus', 'Dépenses', 'Epargne', 'Taux']]
+
+
+def detect_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:
+    """
+    Detect internal transfers between accounts based on patterns and heuristics.
+    
+    Args:
+        df: DataFrame with transactions
+        patterns: List of label patterns to detect (default: common patterns)
+        
+    Returns:
+        DataFrame with only detected internal transfers
+        
+    Example:
+        internal = detect_internal_transfers(df)
+        df_clean = df[~df['id'].isin(internal['id'])]
+    """
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Default patterns for internal transfers
+    if patterns is None:
+        patterns = [
+            "VIR SEPA AURELIEN",
+            "ALIMENTATION COMPTE JOINT",
+            "VIR SEPA",
+            "VIREMENT",
+            "VIR ",
+            "ALIMENTATION",
+            "TRANSFERT"
+        ]
+    
+    # Method 1: Pattern matching on labels
+    df_transfers = df.copy()
+    df_transfers['label_upper'] = df_transfers['label'].str.upper()
+    
+    pattern_mask = df_transfers['label_upper'].str.contains('|'.join(patterns), na=False, regex=True)
+    
+    # Method 2: Already categorized as "Virement Interne"
+    category_mask = df_transfers['category_validated'] == 'Virement Interne'
+    
+    # Method 3: Heuristic - same amount on same day or next day between different accounts
+    # (More complex, skip for MVP but document)
+    
+    # Combine masks
+    combined_mask = pattern_mask | category_mask
+    
+    detected = df_transfers[combined_mask].copy()
+    
+    return detected
+
+
+def exclude_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:
+    """
+    Return a DataFrame with internal transfers excluded.
+    
+    Args:
+        df: DataFrame with transactions
+        patterns: List of label patterns to detect (default: common patterns)
+        
+    Returns:
+        DataFrame without internal transfers
+        
+    Example:
+        df_clean = exclude_internal_transfers(df)
+    """
+    if df.empty:
+        return df
+    
+    internal = detect_internal_transfers(df, patterns)
+    
+    if internal.empty:
+        return df
+    
+    return df[~df['id'].isin(internal['id'])].copy()
+

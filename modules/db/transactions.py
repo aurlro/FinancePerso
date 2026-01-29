@@ -216,6 +216,49 @@ def delete_transaction_by_id(tx_id: int) -> int:
         return cursor.rowcount
 
 
+def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
+    """
+    Add a tag to existing tags for multiple transactions without overwriting.
+    
+    Args:
+        tx_ids: List of transaction IDs
+        tag: Tag to add
+        
+    Returns:
+        Number of transactions updated
+    """
+    if not tx_ids:
+        return 0
+        
+    updated = 0
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Get current tags
+        placeholders = ', '.join(['?'] * len(tx_ids))
+        cursor.execute(f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})", list(tx_ids))
+        rows = cursor.fetchall()
+        
+        for tx_id, current_tags in rows:
+            new_tags = tag
+            if current_tags:
+                if tag in current_tags.split(','):
+                    continue # Already tagged
+                new_tags = f"{current_tags},{tag}"
+            
+            cursor.execute(
+                "UPDATE transactions SET tags = ? WHERE id = ?",
+                (new_tags, tx_id)
+            )
+            updated += 1
+            
+        conn.commit()
+    
+    st.cache_data.clear()
+    return updated
+
+
+
 def get_pending_transactions() -> pd.DataFrame:
     """
     Get all pending (unvalidated) transactions.
@@ -308,15 +351,27 @@ def bulk_update_transaction_status(
             )
         
         # 2. Apply Update
+        set_clauses = [
+            "category_validated = ?", 
+            "status = 'validated'"
+        ]
+        params = [new_category]
+        
+        if tags is not None:
+            set_clauses.append("tags = ?")
+            params.append(tags)
+            
+        if beneficiary is not None:
+            set_clauses.append("beneficiary = ?")
+            params.append(beneficiary)
+            
         query = f"""
             UPDATE transactions 
-            SET category_validated = ?, 
-                tags = ?, 
-                beneficiary = ?, 
-                status = 'validated' 
+            SET {', '.join(set_clauses)} 
             WHERE id IN ({placeholders})
         """
-        params = [new_category, tags, beneficiary] + list(tx_ids)
+        params.extend(list(tx_ids))
+        
         cursor.execute(query, params)
         conn.commit()
         st.cache_data.clear()

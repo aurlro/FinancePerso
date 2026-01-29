@@ -202,6 +202,16 @@ Toujours créer un `implementation_plan.md` avant de coder :
    - Projection linéaire jusqu'à fin de mois
    - Alertes : 🟢 OK (<80%), 🟠 Attention (80-100%), 🔴 Dépassement (>100%)
 
+### Modules AI
+- `anomaly_detector.py`: Détection statistique des montants abérrants. Désormais persistant via le tag `ignore_anomaly`.
+- `rules_auditor.py`: Audit de l'intégrité des règles d'apprentissage.
+- `conversational_assistant.py`: Moteur de chat ReAct avec appels d'outils.
+
+### Tests & Qualité
+Les outils de test sont intégrés dans `pages/98_Tests.py` et couvrent désormais les modules d'IA (audit, assistant) en plus de la base de données et de l'UI.
+- Total : ~195 tests.
+- Couverture : ~78%.
+
 4. **`trend_analyzer.py`** - Analyse de Tendances
    - Fonction : `analyze_spending_trends(df_current, df_previous, threshold_pct=30.0)`
    - Fonction : `get_top_categories_comparison(df_current, df_previous, top_n=5)`
@@ -217,6 +227,13 @@ Toujours créer un `implementation_plan.md` avant de coder :
 - `pages/5_Assistant.py` : 3 nouveaux onglets (🎯 Anomalies, 📊 Tendances, 💬 Chat IA)
 - `pages/3_Synthese.py` : Widget "📈 Alertes Budgétaires"
 
+**Drill-Down Interactif** (v2.1) :
+- Composant : `modules/ui/components/transaction_drill_down.py`
+- Permet de cliquer sur un insight de tendance pour voir les transactions
+- **Édition en masse** : Modifier les catégories de transactions validées
+- Sélecteur individuel par transaction + bouton "💾 Sauvegarder"
+- Fonctionne aussi pour les transactions en attente avec "✅ Valider Tout"
+
 **Guidelines d'utilisation** :
 ```python
 from modules.ai import detect_amount_anomalies, predict_budget_overruns, chat_with_assistant
@@ -229,7 +246,17 @@ predictions = predict_budget_overruns(df_month, budgets)
 
 # Chat IA
 response = chat_with_assistant("Combien j'ai dépensé en alimentation ?")
+
+# Drill-down interactif
+from modules.ui.components.transaction_drill_down import render_category_drill_down_expander
+render_category_drill_down_expander(insight, period_start, period_end, key_prefix="trend_0")
 ```
+
+**Détection des Virements Internes** (v2.1) :
+- Module : `modules/analytics.py`
+- Fonctions : `detect_internal_transfers()`, `exclude_internal_transfers()`
+- Patterns détectés : "VIR SEPA AURELIEN", "ALIMENTATION COMPTE JOINT", "VIREMENT", etc.
+- Toggle dans l'onglet Tendances pour exclure/inclure les virements
 
 ### 🔮 Futures améliorations possibles
 
@@ -238,6 +265,7 @@ response = chat_with_assistant("Combien j'ai dépensé en alimentation ?")
 - Anomaly Learning (marquer comme "normal")
 - Trend Visualization avec graphiques
 - Notifications push/email pour alertes budgétaires
+- Drill-down dans la page Synthèse (graphiques)
 
 ## 🔧 Debugging
 

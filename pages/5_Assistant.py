@@ -185,11 +185,12 @@ with tab_anomalies:
     st.header("🎯 Détection d'Anomalies de Montant")
     st.markdown("Identifie les transactions avec des montants inhabituels par rapport à l'historique.")
     
-    if st.button("Analyser les anomalies 🔍", type="primary"):
+    if st.button("Analyser les anomalies 🔍", type="primary", key="btn_anoms"):
         from modules.ai import detect_amount_anomalies
         
         with st.spinner("Analyse statistique des montants..."):
             df = get_all_transactions()
+            # Anomaly detector now excludes 'ignore_anomaly' tags
             anomalies = detect_amount_anomalies(df)
             st.session_state['anomaly_results'] = anomalies
             st.rerun()
@@ -201,30 +202,52 @@ with tab_anomalies:
             st.success("✅ Aucune anomalie de montant détectée !")
         else:
             st.warning(f"⚠️ {len(anomalies)} anomalies détectées")
+            from modules.ui.components.transaction_drill_down import render_transaction_drill_down
+            from modules.db.transactions import add_tag_to_transactions
             
             for i, anom in enumerate(anomalies):
                 severity_color = "🔴" if anom.get('severity') == 'high' else "🟠"
                 with st.expander(f"{severity_color} {anom['label']} - {anom['details']}"):
-                    st.dataframe(
-                        anom['rows'][['date', 'label', 'amount', 'category_validated']],
-                        use_container_width=True
-                    )
+                    # Use drill-down for editing
+                    tx_ids = anom['rows']['id'].tolist()
                     
-                    if st.button("Marquer comme normal", key=f"dismiss_anom_{i}"):
-                        st.session_state['anomaly_results'].pop(i)
-                        st.rerun()
+                    render_transaction_drill_down(
+                        category=anom['label'],
+                        transaction_ids=tx_ids,
+                        key_prefix=f"anom_drill_{i}",
+                        show_anomaly_management=True
+                    )
+
+
 
 # --- NEW: TRENDS TAB ---
 with tab_trends:
     st.header("📊 Analyse de Tendances")
     st.markdown("Identifie les changements significatifs dans vos habitudes de dépenses.")
     
+    # Toggle for internal transfers
+    exclude_transfers = st.checkbox(
+        "🔄 Exclure les virements internes",
+        value=True,
+        help="Exclut les virements entre vos comptes pour une analyse plus précise des vraies dépenses"
+    )
+    
     if st.button("Analyser les tendances 📈", type="primary"):
+        st.session_state['show_trends'] = True
+        
+    if st.session_state.get('show_trends', False):
         from modules.ai import analyze_spending_trends
+        from modules.analytics import exclude_internal_transfers
         import datetime
         
         with st.spinner("Comparaison des périodes..."):
             df = get_all_transactions()
+            
+            # Exclude internal transfers if requested
+
+            if exclude_transfers:
+                df = exclude_internal_transfers(df)
+            
             df['date_dt'] = pd.to_datetime(df['date'])
             
             # Current month
@@ -237,16 +260,40 @@ with tab_trends:
             prev_month = prev_month_date.strftime('%Y-%m')
             df_prev = df[df['date_dt'].dt.strftime('%Y-%m') == prev_month]
             
-            trends = analyze_spending_trends(df_current, df_prev)
-            st.session_state['trend_insights'] = trends
+            result = analyze_spending_trends(df_current, df_prev)
+            st.session_state['trend_results'] = result
             st.rerun()
     
-    if 'trend_insights' in st.session_state:
-        insights = st.session_state['trend_insights']
+    if 'trend_results' in st.session_state:
+        result = st.session_state['trend_results']
+        insights = result.get('insights', [])
+        period_current = result.get('period_current')
+        period_previous = result.get('period_previous')
         
+        # Display period comparison header
+        if period_current and period_previous:
+            st.info(
+                f"📅 **Comparaison** : {period_current['start']} → {period_current['end']} "
+                f"({period_current['days']} jours) vs "
+                f"{period_previous['start']} → {period_previous['end']} "
+                f"({period_previous['days']} jours)"
+            )
+        
+        st.divider()
         st.subheader("Insights Détectés")
-        for insight in insights:
-            st.markdown(f"- {insight}")
+        
+        # Render interactive insights with drill-down
+        from modules.ui.components.transaction_drill_down import render_category_drill_down_expander
+        
+        for i, insight in enumerate(insights):
+            period_start = period_current['start'] if period_current else None
+            period_end = period_current['end'] if period_current else None
+            render_category_drill_down_expander(
+                insight, 
+                period_start, 
+                period_end, 
+                key_prefix=f"trend_{i}"
+            )
 
 # --- NEW: CHAT IA TAB ---
 with tab_chat:

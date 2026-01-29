@@ -39,7 +39,19 @@ rules_df = get_learning_rules()
 if rules_df.empty:
     st.info("Aucune règle apprise pour le moment. Ajoutez-en une ci-dessus ou cochez 'Mém.' lors de la validation !")
 else:
-    st.markdown(f"**{len(rules_df)}** règles actives.")
+    col_header, col_apply = st.columns([3, 1])
+    with col_header:
+        st.markdown(f"**{len(rules_df)}** règles actives.")
+    with col_apply:
+        if st.button("🪄 Appliquer aux transactions", help="Relance la catégorisation automatique sur toutes les transactions en attente ou inconnues", use_container_width=True):
+            from modules.db.audit import auto_fix_common_inconsistencies
+            with st.spinner("Application des règles en cours..."):
+                count = auto_fix_common_inconsistencies()
+                if count > 0:
+                    st.success(f"Fait ! {count} transactions mises à jour.")
+                else:
+                    st.info("Aucune transaction n'a été modifiée (déjà à jour).")
+                st.rerun()
     
     # Display as table with delete action
     for index, row in rules_df.iterrows():
@@ -56,7 +68,65 @@ else:
                 delete_learning_rule(row['id'])
                 st.rerun()
         st.divider()
-        st.divider()
+
+# --- RULE AUDIT SECTION ---
+st.header("🕵️ Audit & Optimisation")
+st.markdown("L'IA analyse vos règles pour détecter incohérences et doublons.")
+
+col_audit, col_last_update = st.columns([1, 3])
+with col_audit:
+    if st.button("Lancer l'audit IA", type="primary", use_container_width=True):
+        from modules.ai.rules_auditor import analyze_rules_integrity
+        from datetime import datetime
+        
+        # Analyze
+        issues = analyze_rules_integrity(rules_df)
+        st.session_state['audit_last_run'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        st.session_state['audit_results'] = issues
+        st.rerun()
+
+with col_last_update:
+    if 'audit_last_run' in st.session_state:
+        st.markdown(f"**Dernière mise à jour :** {st.session_state['audit_last_run']}")
+    else:
+        st.caption("Aucune analyse récente.")
+
+# Display Results
+if 'audit_results' in st.session_state:
+    issues = st.session_state['audit_results']
+    has_issues = any(issues.values())
+    
+    if not has_issues:
+        st.success("✅ Aucune incohérence détectée ! Vos règles sont propres.")
+    else:
+        # 1. Conflicts
+        if issues['conflicts']:
+            st.error(f"⚠️ **{len(issues['conflicts'])} Conflits majeurs** (Même pattern, catégories différentes)")
+            for conflict in issues['conflicts']:
+                with st.expander(f"❌ '{conflict['pattern']}' → {', '.join(conflict['categories'])}"):
+                    st.write(conflict['message'])
+                    st.warning("Il est recommandé de supprimer ces règles et d'en recréer une unique.")
+                    # We could add specific fix buttons here later
+        
+        # 2. Duplicates
+        if issues['duplicates']:
+            st.warning(f"♻️ **{len(issues['duplicates'])} Doublons** (Même pattern, même catégorie)")
+            for dup in issues['duplicates']:
+                st.markdown(f"- **{dup['pattern']}** ({dup['category']}) : _Redondant_")
+
+        # 3. Overlaps
+        if issues['overlaps']:
+            st.info(f"ℹ️ **{len(issues['overlaps'])} Chevauchements** (Un pattern est inclus dans un autre)")
+            for ov in issues['overlaps']:
+                st.caption(f"Le pattern `{ov['shorter_pattern']}` ({ov['shorter_category']}) est inclus dans `{ov['longer_pattern']}` ({ov['longer_category']})")
+
+        # 4. Vague
+        if issues['vague']:
+            st.warning(f"❓ **{len(issues['vague'])} Patterns vagues** (Risque de faux positifs)")
+            st.write(", ".join([f"`{v['pattern']}`" for v in issues['vague']]))
+
+st.divider()
+
 
 st.header("🎯 Budgets Mensuels")
 st.markdown("Définissez vos objectifs de dépenses mensuelles par catégorie.")

@@ -32,11 +32,12 @@ with tab1:
         test_category = st.radio(
             "Sélectionnez les tests à lancer :",
             [
-                "🌟 Tous les tests (189 tests)",
+                "🌟 Tous les tests (197 tests)",
                 "💾 Tests DB (108 tests)",
+                "🧠 Tests AI (8 tests)",
                 "🎨 Tests UI Components (54 tests)",
                 "🔄 Tests Integration (9 tests)",
-                "⚙️ Tests Logic (28 tests)"
+                "⚙️ Tests Logic (18 tests)"
             ],
             help="Choisissez quelle catégorie de tests vous souhaitez exécuter"
         )
@@ -70,8 +71,10 @@ with tab1:
                 cmd.append("ui/")
             elif "Integration" in test_category:
                 cmd.append("test_integration.py")
+            elif "AI" in test_category:
+                cmd.append("ai/")
             elif "Logic" in test_category:
-                cmd.extend(["test_grouping.py", "test_sorting.py"])
+                cmd.extend(["test_utils.py", "test_analytics.py"])
             
             # Options
             if verbose:
@@ -214,8 +217,8 @@ with tab2:
         stats_col1, stats_col2, stats_col3 = st.columns(3)
         
         with stats_col1:
-            st.metric("Tests Disponibles", "189")
-            st.caption("108 DB + 54 UI + 27 Logic + 9 Integration")
+            st.metric("Tests Disponibles", "197")
+            st.caption("108 DB + 8 AI + 54 UI + 18 Logic + 9 Integration")
         
         with stats_col2:
             st.metric("Coverage Estimée", "~75%")
@@ -308,4 +311,4 @@ with tab3:
 
 # Footer
 st.divider()
-st.caption("🧪 Test Suite - 189 tests | ~75% coverage | Production Ready")
+st.caption("🧪 Test Suite - 197 tests | ~78% coverage | Production Ready")

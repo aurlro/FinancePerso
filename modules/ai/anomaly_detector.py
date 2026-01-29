@@ -33,8 +33,13 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
     if df.empty:
         return []
     
-    # Work only with expenses (negative amounts)
+    # Work only with expenses (negative amounts) and non-ignored ones
     df_exp = df[df['amount'] < 0].copy()
+    
+    # Exclude transactions with 'ignore_anomaly' tag
+    if 'tags' in df_exp.columns:
+        df_exp = df_exp[~df_exp['tags'].fillna('').str.contains('ignore_anomaly')]
+        
     if df_exp.empty:
         return []
     
@@ -51,7 +56,7 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
     anomalies = []
     
     for _, stat_row in stats.iterrows():
-        clean_label = stat_row['clean']
+        label_clean = stat_row['clean']
         mean_amt = stat_row['mean']
         std_amt = stat_row['std']
         
@@ -60,7 +65,7 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
             continue
         
         # Find transactions for this label
-        label_txs = df_exp[df_exp['clean'] == clean_label].copy()
+        label_txs = df_exp[df_exp['clean'] == label_clean].copy()
         
         # Calculate z-score for each transaction
         label_txs['z_score'] = (label_txs['abs_amount'] - mean_amt) / std_amt
@@ -74,7 +79,7 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
             
             anomalies.append({
                 "type": "Anomalie Montant",
-                "label": clean_label,
+                "label": label_clean,
                 "details": f"Montant inhabituel détecté. Moyenne: {mean_amt:.2f}€ (±{std_amt:.2f}€)",
                 "rows": anomaly_rows,
                 "expected_range": (mean_amt, std_amt),
