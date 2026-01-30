@@ -1,0 +1,799 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/aurelien/Documents/Projets/FinancePerso
+configfile: pytest.ini
+plugins: langsmith-0.4.6, anyio-4.9.0, cov-7.0.0
+collecting ... collected 177 items
+
+ai/test_anomaly_detector.py::TestAnomalyDetector::test_detect_anomaly_and_ignore PASSED [  0%]
+ai/test_anomaly_detector.py::TestAnomalyDetector::test_exclude_ignore_from_stats PASSED [  1%]
+ai/test_conversational_assistant.py::TestConversationalAssistant::test_chat_tool_call PASSED [  1%]
+ai/test_rules_auditor.py::TestRulesAuditor::test_analyze_empty_rules PASSED [  2%]
+ai/test_rules_auditor.py::TestRulesAuditor::test_detect_conflicts PASSED [  2%]
+ai/test_rules_auditor.py::TestRulesAuditor::test_detect_duplicates PASSED [  3%]
+ai/test_rules_auditor.py::TestRulesAuditor::test_detect_overlaps PASSED  [  3%]
+ai/test_rules_auditor.py::TestRulesAuditor::test_detect_vague PASSED     [  4%]
+db/test_audit.py::TestOrphanLabels::test_get_orphan_labels_none PASSED   [  5%]
+db/test_audit.py::TestOrphanLabels::test_get_orphan_labels_detected PASSED [  5%]
+db/test_audit.py::TestSuggestedMappings::test_get_suggested_mappings_none PASSED [  6%]
+db/test_audit.py::TestSuggestedMappings::test_get_suggested_mappings_detected PASSED [  6%]
+db/test_audit.py::TestTransferInconsistencies::test_get_transfer_inconsistencies_none PASSED [  7%]
+db/test_audit.py::TestTransferInconsistencies::test_get_transfer_inconsistencies_missing_category PASSED [  7%]
+db/test_audit.py::TestTransferInconsistencies::test_get_transfer_inconsistencies_wrong_category PASSED [  8%]
+db/test_budgets.py::TestGetBudgets::test_get_budgets_empty PASSED        [  9%]
+db/test_budgets.py::TestGetBudgets::test_get_budgets_with_data PASSED    [  9%]
+db/test_budgets.py::TestSetBudget::test_add_new_budget PASSED            [ 10%]
+db/test_budgets.py::TestSetBudget::test_update_existing_budget PASSED    [ 10%]
+db/test_budgets.py::TestSetBudget::test_set_budget_zero_amount PASSED    [ 11%]
+db/test_budgets.py::TestDeleteBudget::test_delete_budget PASSED          [ 11%]
+db/test_budgets.py::TestDeleteBudget::test_delete_nonexistent_budget PASSED [ 12%]
+db/test_categories.py::TestGetCategories::test_get_categories_defaults PASSED [ 12%]
+db/test_categories.py::TestGetCategories::test_get_categories_df PASSED  [ 13%]
+db/test_categories.py::TestGetCategories::test_get_categories_with_emojis PASSED [ 14%]
+db/test_categories.py::TestGetCategories::test_get_categories_suggested_tags PASSED [ 14%]
+db/test_categories.py::TestAddCategory::test_add_category_basic PASSED   [ 15%]
+db/test_categories.py::TestAddCategory::test_add_category_with_emoji PASSED [ 15%]
+db/test_categories.py::TestAddCategory::test_add_category_with_fixed_flag PASSED [ 16%]
+db/test_categories.py::TestAddCategory::test_add_category_with_suggested_tags PASSED [ 16%]
+db/test_categories.py::TestAddCategory::test_add_duplicate_category PASSED [ 17%]
+db/test_categories.py::TestUpdateCategory::test_update_category_emoji PASSED [ 18%]
+db/test_categories.py::TestUpdateCategory::test_update_category_fixed_flag PASSED [ 18%]
+db/test_categories.py::TestUpdateCategory::test_update_category_suggested_tags PASSED [ 19%]
+db/test_categories.py::TestDeleteCategory::test_delete_category PASSED   [ 19%]
+db/test_categories.py::TestDeleteCategory::test_delete_nonexistent_category PASSED [ 20%]
+db/test_categories.py::TestMergeCategories::test_merge_categories PASSED [ 20%]
+db/test_categories.py::TestGhostCategories::test_get_all_categories_including_ghosts PASSED [ 21%]
+db/test_members.py::TestGetMembers::test_get_members_defaults PASSED     [ 22%]
+db/test_members.py::TestGetMembers::test_get_unique_members PASSED       [ 22%]
+db/test_members.py::TestAddMember::test_add_household_member FAILED      [ 23%]
+db/test_members.py::TestAddMember::test_add_external_member FAILED       [ 23%]
+db/test_members.py::TestAddMember::test_add_member_default_type FAILED   [ 24%]
+db/test_members.py::TestAddMember::test_add_duplicate_member FAILED      [ 24%]
+db/test_members.py::TestUpdateMember::test_update_member_type FAILED     [ 25%]
+db/test_members.py::TestUpdateMember::test_update_member_name FAILED     [ 25%]
+db/test_members.py::TestDeleteMember::test_delete_member FAILED          [ 26%]
+db/test_members.py::TestDeleteMember::test_delete_nonexistent_member FAILED [ 27%]
+db/test_members.py::TestRenameMember::test_rename_member_updates_transactions FAILED [ 27%]
+db/test_members.py::TestMemberMappings::test_get_member_mappings_empty PASSED [ 28%]
+db/test_members.py::TestMemberMappings::test_add_member_mapping FAILED   [ 28%]
+db/test_members.py::TestMemberMappings::test_delete_member_mapping FAILED [ 29%]
+db/test_migrations.py::TestMigrations::test_init_db_fresh_db PASSED      [ 29%]
+db/test_migrations.py::TestMigrations::test_idempotent_init_db PASSED    [ 30%]
+db/test_migrations.py::TestMigrations::test_migration_adds_columns PASSED [ 31%]
+db/test_rules.py::TestGetRules::test_get_learning_rules_empty PASSED     [ 31%]
+db/test_rules.py::TestGetRules::test_get_learning_rules_with_data PASSED [ 32%]
+db/test_rules.py::TestCompiledRules::test_get_compiled_learning_rules_empty PASSED [ 32%]
+db/test_rules.py::TestCompiledRules::test_get_compiled_learning_rules_with_data PASSED [ 33%]
+db/test_rules.py::TestCompiledRules::test_compiled_rules_sorted_by_priority PASSED [ 33%]
+db/test_rules.py::TestCompiledRules::test_compiled_pattern_matching PASSED [ 34%]
+db/test_rules.py::TestCompiledRules::test_invalid_regex_handling PASSED  [ 35%]
+db/test_rules.py::TestAddRule::test_add_learning_rule PASSED             [ 35%]
+db/test_rules.py::TestAddRule::test_add_rule_with_special_characters PASSED [ 36%]
+db/test_rules.py::TestDeleteRule::test_delete_learning_rule PASSED       [ 36%]
+db/test_rules.py::TestDeleteRule::test_delete_nonexistent_rule PASSED    [ 37%]
+db/test_rules.py::TestApplyRules::test_apply_rules_to_pending_simple_match FAILED [ 37%]
+db/test_rules.py::TestApplyRules::test_apply_rules_multiple_transactions FAILED [ 38%]
+db/test_rules.py::TestApplyRules::test_apply_rules_no_match FAILED       [ 38%]
+db/test_rules.py::TestApplyRules::test_apply_rules_case_insensitive FAILED [ 39%]
+db/test_stats.py::TestGlobalStats::test_get_global_stats_empty PASSED    [ 40%]
+db/test_stats.py::TestGlobalStats::test_get_global_stats_with_data FAILED [ 40%]
+db/test_stats.py::TestAvailableMonths::test_get_available_months FAILED  [ 41%]
+db/test_tags.py::TestGetTags::test_get_all_tags_empty PASSED             [ 41%]
+db/test_tags.py::TestGetTags::test_get_all_tags_with_data FAILED         [ 42%]
+db/test_tags.py::TestTagOperations::test_add_tag_via_update FAILED       [ 42%]
+db/test_tags.py::TestTagOperations::test_remove_tag_from_all_transactions FAILED [ 43%]
+db/test_tags.py::TestNormalizeTags::test_normalize_tags PASSED           [ 44%]
+db/test_transactions.py::TestGetTransactions::test_get_all_transactions_empty PASSED [ 44%]
+db/test_transactions.py::TestGetTransactions::test_get_all_transactions_with_data FAILED [ 45%]
+db/test_transactions.py::TestGetTransactions::test_get_pending_transactions FAILED [ 45%]
+db/test_transactions.py::TestSaveTransaction::test_insert_valid_transaction FAILED [ 46%]
+db/test_transactions.py::TestUpdateTransaction::test_update_transaction_category FAILED [ 46%]
+db/test_transactions.py::TestUpdateTransaction::test_bulk_update_transaction_status FAILED [ 47%]
+db/test_transactions.py::TestDeleteTransaction::test_delete_transaction_by_id FAILED [ 48%]
+db/test_transactions.py::TestDeleteTransaction::test_delete_transactions_by_period FAILED [ 48%]
+test_analytics.py::TestFinancialProfileDetection::test_detect_financial_profile_empty PASSED [ 49%]
+test_analytics.py::TestFinancialProfileDetection::test_detect_salary_pattern PASSED [ 49%]
+test_analytics.py::TestFinancialProfileDetection::test_detect_rent_pattern PASSED [ 50%]
+test_analytics.py::TestFinancialProfileDetection::test_detect_subscription_pattern PASSED [ 50%]
+test_analytics.py::TestMonthlySavingsTrendAnalytics::test_get_monthly_savings_trend_structure PASSED [ 51%]
+test_analytics.py::TestMonthlySavingsTrendAnalytics::test_get_monthly_savings_trend_calculation PASSED [ 51%]
+test_analytics.py::TestRecurringTransactionDetection::test_detect_recurring_expenses PASSED [ 52%]
+test_analytics.py::TestInternalTransfers::test_exclude_internal_transfers PASSED [ 53%]
+test_integration.py::TestImportToCategorization::test_import_and_auto_categorize FAILED [ 53%]
+test_integration.py::TestImportToCategorization::test_import_with_member_attribution FAILED [ 54%]
+test_integration.py::TestValidationWorkflow::test_validate_creates_learning_rule FAILED [ 54%]
+test_integration.py::TestValidationWorkflow::test_bulk_validation_with_tags FAILED [ 55%]
+test_integration.py::TestBudgetTracking::test_budget_vs_actual_flow FAILED [ 55%]
+test_integration.py::TestAuditWorkflows::test_orphan_detection_and_cleanup FAILED [ 56%]
+test_integration.py::TestAuditWorkflows::test_duplicate_detection_flow PASSED [ 57%]
+test_utils.py::TestCleanLabel::test_removes_card_info PASSED             [ 57%]
+test_utils.py::TestCleanLabel::test_removes_dates PASSED                 [ 58%]
+test_utils.py::TestCleanLabel::test_removes_bank_prefixes PASSED         [ 58%]
+test_utils.py::TestCleanLabel::test_trims_whitespace PASSED              [ 59%]
+test_utils.py::TestCleanLabel::test_handles_empty_string PASSED          [ 59%]
+test_utils.py::TestExtractCardMember::test_extracts_known_card PASSED    [ 60%]
+test_utils.py::TestExtractCardMember::test_extracts_unknown_card PASSED  [ 61%]
+test_utils.py::TestExtractCardMember::test_no_card_returns_empty PASSED  [ 61%]
+test_utils.py::TestValidateCsvFile::test_rejects_none PASSED             [ 62%]
+ui/test_category_charts.py::TestPrepareExpenseDataframe::test_prepare_expense_dataframe_basic PASSED [ 62%]
+ui/test_category_charts.py::TestPrepareExpenseDataframe::test_prepare_expense_dataframe_uses_validated_category PASSED [ 63%]
+ui/test_category_charts.py::TestPrepareExpenseDataframe::test_prepare_expense_dataframe_fallback_to_original PASSED [ 63%]
+ui/test_category_charts.py::TestPrepareExpenseDataframe::test_prepare_expense_dataframe_emoji_missing PASSED [ 64%]
+ui/test_category_charts.py::TestCategoryAggregation::test_aggregation_by_category PASSED [ 64%]
+ui/test_filters.py::TestDateRangeFiltering::test_filter_by_single_month PASSED [ 65%]
+ui/test_filters.py::TestDateRangeFiltering::test_filter_by_year PASSED   [ 66%]
+ui/test_filters.py::TestDateRangeFiltering::test_filter_by_date_range PASSED [ 66%]
+ui/test_filters.py::TestCategoryFiltering::test_filter_by_single_category PASSED [ 67%]
+ui/test_filters.py::TestCategoryFiltering::test_filter_by_multiple_categories PASSED [ 67%]
+ui/test_filters.py::TestAmountFiltering::test_filter_expenses_only PASSED [ 68%]
+ui/test_filters.py::TestAmountFiltering::test_filter_income_only PASSED  [ 68%]
+ui/test_filters.py::TestAmountFiltering::test_filter_by_amount_threshold PASSED [ 69%]
+ui/test_filters.py::TestCombinedFilters::test_combined_date_and_category PASSED [ 70%]
+ui/test_kpi_cards.py::TestCalculateTrends::test_calculate_trends_basic PASSED [ 70%]
+ui/test_kpi_cards.py::TestCalculateTrends::test_calculate_trends_with_improvement PASSED [ 71%]
+ui/test_kpi_cards.py::TestCalculateTrends::test_calculate_trends_with_deterioration PASSED [ 71%]
+ui/test_kpi_cards.py::TestCalculateTrends::test_calculate_trends_empty_previous PASSED [ 72%]
+ui/test_kpi_cards.py::TestComputePreviousPeriod::test_compute_previous_period_single_month PASSED [ 72%]
+ui/test_kpi_cards.py::TestComputePreviousPeriod::test_compute_previous_period_multi_month PASSED [ 73%]
+ui/test_member_selector.py::TestMemberFiltering::test_filter_household_members PASSED [ 74%]
+ui/test_member_selector.py::TestMemberFiltering::test_filter_external_members PASSED [ 74%]
+ui/test_member_selector.py::TestMemberTypeCategorization::test_categorize_member_by_amount PASSED [ 75%]
+ui/test_member_selector.py::TestMemberTypeCategorization::test_categorize_member_by_frequency PASSED [ 75%]
+ui/test_member_selector.py::TestMemberSelectionValidation::test_validate_member_selected PASSED [ 76%]
+ui/test_member_selector.py::TestMemberSelectionValidation::test_validate_no_member_selected PASSED [ 76%]
+ui/test_member_selector.py::TestMemberSelectionValidation::test_validate_member_in_list PASSED [ 77%]
+ui/test_member_selector.py::TestMemberIconLogic::test_icon_for_household PASSED [ 77%]
+ui/test_member_selector.py::TestMemberIconLogic::test_icon_for_external PASSED [ 78%]
+ui/test_progress_tracker.py::TestProgressCalculation::test_calculate_progress_percentage PASSED [ 79%]
+ui/test_progress_tracker.py::TestProgressCalculation::test_calculate_progress_all_validated PASSED [ 79%]
+ui/test_progress_tracker.py::TestProgressCalculation::test_calculate_progress_none_validated PASSED [ 80%]
+ui/test_progress_tracker.py::TestProgressCalculation::test_calculate_progress_empty_dataset PASSED [ 80%]
+ui/test_progress_tracker.py::TestThresholdLogic::test_threshold_excellent PASSED [ 81%]
+ui/test_progress_tracker.py::TestThresholdLogic::test_threshold_good PASSED [ 81%]
+ui/test_progress_tracker.py::TestThresholdLogic::test_threshold_needs_work PASSED [ 82%]
+ui/test_tag_manager.py::TestTagNormalization::test_normalize_tag_lowercase PASSED [ 83%]
+ui/test_tag_manager.py::TestTagNormalization::test_normalize_tag_strip_whitespace PASSED [ 83%]
+ui/test_tag_manager.py::TestTagNormalization::test_normalize_tag_list PASSED [ 84%]
+ui/test_tag_manager.py::TestTagDeduplication::test_deduplicate_tags PASSED [ 84%]
+ui/test_tag_manager.py::TestTagDeduplication::test_deduplicate_case_insensitive PASSED [ 85%]
+ui/test_tag_manager.py::TestTagDeduplication::test_deduplicate_empty_list PASSED [ 85%]
+ui/test_tag_manager.py::TestTagValidation::test_validate_tag_not_empty PASSED [ 86%]
+ui/test_tag_manager.py::TestTagValidation::test_validate_tag_not_whitespace PASSED [ 87%]
+ui/test_tag_manager.py::TestTagValidation::test_validate_tag_valid PASSED [ 87%]
+ui/test_tag_manager.py::TestTagValidation::test_validate_tag_length PASSED [ 88%]
+ui/validation/test_grouping.py::TestGetSmartGroups::test_basic_grouping PASSED [ 88%]
+ui/validation/test_grouping.py::TestGetSmartGroups::test_cheque_grouping_by_amount PASSED [ 89%]
+ui/validation/test_grouping.py::TestGetSmartGroups::test_manually_ungrouped_transactions PASSED [ 89%]
+ui/validation/test_grouping.py::TestGetSmartGroups::test_excluded_ids_parameter PASSED [ 90%]
+ui/validation/test_grouping.py::TestCalculateGroupStats::test_group_stats_calculation PASSED [ 90%]
+ui/validation/test_grouping.py::TestCalculateGroupStats::test_max_amount_uses_absolute_values PASSED [ 91%]
+ui/validation/test_grouping.py::TestGetGroupTransactions::test_get_group_transactions PASSED [ 92%]
+ui/validation/test_grouping.py::TestGetGroupTransactions::test_get_nonexistent_group PASSED [ 92%]
+ui/validation/test_sorting.py::TestSortGroups::test_sort_by_count_descending PASSED [ 93%]
+ui/validation/test_sorting.py::TestSortGroups::test_sort_by_date_recent PASSED [ 93%]
+ui/validation/test_sorting.py::TestSortGroups::test_sort_by_date_old PASSED [ 94%]
+ui/validation/test_sorting.py::TestSortGroups::test_sort_by_amount_descending PASSED [ 94%]
+ui/validation/test_sorting.py::TestSortGroups::test_sort_by_amount_ascending PASSED [ 95%]
+ui/validation/test_sorting.py::TestSortGroups::test_max_groups_limit PASSED [ 96%]
+ui/validation/test_sorting.py::TestSortGroups::test_singles_always_after_groups PASSED [ 96%]
+ui/validation/test_sorting.py::TestSortGroups::test_invalid_sort_key_defaults_to_count PASSED [ 97%]
+ui/validation/test_sorting.py::TestGetSortOptions::test_get_sort_options_returns_dict PASSED [ 97%]
+ui/validation/test_sorting.py::TestGetSortOptions::test_sort_options_keys_are_user_friendly PASSED [ 98%]
+ui/validation/test_sorting.py::TestGetSortOptions::test_sort_options_values_are_strategies PASSED [ 98%]
+ui/validation/test_sorting.py::TestSortStrategy::test_strategy_constants_exist PASSED [ 99%]
+ui/validation/test_sorting.py::TestSortStrategy::test_strategy_constants_are_strings PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________ TestAddMember.test_add_household_member ____________________
+db/test_members.py:43: in test_add_household_member
+    member_id = add_member('Alice', 'HOUSEHOLD')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.373 No runtime found, using MemoryCacheStorageManager
+____________________ TestAddMember.test_add_external_member ____________________
+db/test_members.py:53: in test_add_external_member
+    member_id = add_member('Amazon', 'EXTERNAL')
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.384 No runtime found, using MemoryCacheStorageManager
+__________________ TestAddMember.test_add_member_default_type __________________
+db/test_members.py:63: in test_add_member_default_type
+    member_id = add_member('Bob')
+                ^^^^^^^^^^^^^^^^^
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.396 No runtime found, using MemoryCacheStorageManager
+___________________ TestAddMember.test_add_duplicate_member ____________________
+db/test_members.py:74: in test_add_duplicate_member
+    add_member('Duplicate')
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.430 No runtime found, using MemoryCacheStorageManager
+___________________ TestUpdateMember.test_update_member_type ___________________
+db/test_members.py:84: in test_update_member_type
+    add_member('Charlie', 'HOUSEHOLD')
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.438 No runtime found, using MemoryCacheStorageManager
+___________________ TestUpdateMember.test_update_member_name ___________________
+db/test_members.py:99: in test_update_member_name
+    add_member('OldName')
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.447 No runtime found, using MemoryCacheStorageManager
+_____________________ TestDeleteMember.test_delete_member ______________________
+db/test_members.py:111: in test_delete_member
+    add_member('ToDelete')
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.456 No runtime found, using MemoryCacheStorageManager
+_______________ TestDeleteMember.test_delete_nonexistent_member ________________
+db/test_members.py:125: in test_delete_nonexistent_member
+    delete_member(99999)
+../modules/db/members.py:63: in delete_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.466 No runtime found, using MemoryCacheStorageManager
+___________ TestRenameMember.test_rename_member_updates_transactions ___________
+db/test_members.py:146: in test_rename_member_updates_transactions
+    count = rename_member('OldMember', 'NewMember')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../modules/db/members.py:113: in rename_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.474 No runtime found, using MemoryCacheStorageManager
+__________________ TestMemberMappings.test_add_member_mapping __________________
+db/test_members.py:174: in test_add_member_mapping
+    add_member_mapping('1234', 'Alice')
+../modules/db/members.py:214: in add_member_mapping
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.489 No runtime found, using MemoryCacheStorageManager
+________________ TestMemberMappings.test_delete_member_mapping _________________
+db/test_members.py:183: in test_delete_member_mapping
+    add_member_mapping('5678', 'Bob')
+../modules/db/members.py:214: in add_member_mapping
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.497 No runtime found, using MemoryCacheStorageManager
+___________ TestApplyRules.test_apply_rules_to_pending_simple_match ____________
+db/test_rules.py:185: in test_apply_rules_to_pending_simple_match
+    tx_id = self._add_tx('2024-01-15', 'CARREFOUR MARKET', -50.00)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+db/test_rules.py:174: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.593 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,596 - FinancePerso - INFO - Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+2026-01-30 10:22:45.597 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.597 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:rules.py:36 Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+____________ TestApplyRules.test_apply_rules_multiple_transactions _____________
+db/test_rules.py:204: in test_apply_rules_multiple_transactions
+    self._add_tx('2024-01-15', 'CARREFOUR MARKET', -50.00)
+db/test_rules.py:174: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.606 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,610 - FinancePerso - INFO - Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+2026-01-30 10:22:45,610 - FinancePerso - INFO - Learning rule added: 'TOTAL' → Transport (priority=1)
+2026-01-30 10:22:45.611 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.611 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:rules.py:36 Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+INFO     FinancePerso:rules.py:36 Learning rule added: 'TOTAL' → Transport (priority=1)
+___________________ TestApplyRules.test_apply_rules_no_match ___________________
+db/test_rules.py:225: in test_apply_rules_no_match
+    self._add_tx('2024-01-15', 'NO MATCH HERE', -50.00)
+db/test_rules.py:174: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.619 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,623 - FinancePerso - INFO - Learning rule added: 'SPECIFIC_PATTERN' → Test (priority=1)
+2026-01-30 10:22:45.624 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.624 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.624 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.624 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.624 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.625 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.625 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.625 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:rules.py:36 Learning rule added: 'SPECIFIC_PATTERN' → Test (priority=1)
+_______________ TestApplyRules.test_apply_rules_case_insensitive _______________
+db/test_rules.py:238: in test_apply_rules_case_insensitive
+    tx_id = self._add_tx('2024-01-15', 'AMAZON.FR PURCHASE', -50.00)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+db/test_rules.py:174: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.633 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,637 - FinancePerso - INFO - Learning rule added: 'amazon' → Shopping (priority=1)
+2026-01-30 10:22:45.638 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.638 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:rules.py:36 Learning rule added: 'amazon' → Shopping (priority=1)
+_______________ TestGlobalStats.test_get_global_stats_with_data ________________
+db/test_stats.py:34: in test_get_global_stats_with_data
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.651 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.655 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.655 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+________________ TestAvailableMonths.test_get_available_months _________________
+db/test_stats.py:52: in test_get_available_months
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.662 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.665 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.665 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.665 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.665 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.665 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.666 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.666 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.666 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+___________________ TestGetTags.test_get_all_tags_with_data ____________________
+db/test_tags.py:32: in test_get_all_tags_with_data
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.676 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.680 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.680 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+__________________ TestTagOperations.test_add_tag_via_update ___________________
+db/test_tags.py:53: in test_add_tag_via_update
+    tx_id = self._add_tx()
+            ^^^^^^^^^^^^^^
+db/test_tags.py:46: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.687 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.690 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.691 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+___________ TestTagOperations.test_remove_tag_from_all_transactions ____________
+db/test_tags.py:64: in test_remove_tag_from_all_transactions
+    self._add_tx(tags='delete_me,keep', label='TX1')
+db/test_tags.py:46: in _add_tx
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.698 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.701 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.701 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.701 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.702 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.702 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.702 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.702 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.702 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+___________ TestGetTransactions.test_get_all_transactions_with_data ____________
+db/test_transactions.py:30: in test_get_all_transactions_with_data
+    save_transactions(df_sample)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.717 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.721 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.721 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.721 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.721 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.721 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.722 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.722 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.722 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+______________ TestGetTransactions.test_get_pending_transactions _______________
+db/test_transactions.py:40: in test_get_pending_transactions
+    save_transactions(df_sample) # status default?
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.729 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.732 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.732 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.732 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.732 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.733 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.733 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.733 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.733 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+______________ TestSaveTransaction.test_insert_valid_transaction _______________
+db/test_transactions.py:61: in test_insert_valid_transaction
+    new, skipped = save_transactions(df)
+                   ^^^^^^^^^^^^^^^^^^^^^
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.739 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.743 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.743 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.743 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.743 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.743 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.744 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.744 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.744 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+____________ TestUpdateTransaction.test_update_transaction_category ____________
+db/test_transactions.py:82: in test_update_transaction_category
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.750 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.754 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.754 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+__________ TestUpdateTransaction.test_bulk_update_transaction_status ___________
+db/test_transactions.py:96: in test_bulk_update_transaction_status
+    save_transactions(df_sample)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.761 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.765 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.765 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+_____________ TestDeleteTransaction.test_delete_transaction_by_id ______________
+db/test_transactions.py:119: in test_delete_transaction_by_id
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.813 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.818 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.818 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.818 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.818 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.818 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.819 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.819 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.819 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+___________ TestDeleteTransaction.test_delete_transactions_by_period ___________
+db/test_transactions.py:133: in test_delete_transactions_by_period
+    save_transactions(df_sample)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.826 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.832 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.832 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+__________ TestImportToCategorization.test_import_and_auto_categorize __________
+test_integration.py:53: in test_import_and_auto_categorize
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.895 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,900 - FinancePerso - INFO - Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+2026-01-30 10:22:45.901 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.901 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:rules.py:36 Learning rule added: 'CARREFOUR' → Alimentation (priority=1)
+________ TestImportToCategorization.test_import_with_member_attribution ________
+test_integration.py:71: in test_import_with_member_attribution
+    add_member('Alice', 'HOUSEHOLD')
+../modules/db/members.py:35: in add_member
+    invalidate_member_caches()
+../modules/cache_manager.py:79: in invalidate_member_caches
+    from modules.db.members import get_all_members
+E   ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.909 No runtime found, using MemoryCacheStorageManager
+__________ TestValidationWorkflow.test_validate_creates_learning_rule __________
+test_integration.py:97: in test_validate_creates_learning_rule
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.917 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.923 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.924 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+____________ TestValidationWorkflow.test_bulk_validation_with_tags _____________
+test_integration.py:135: in test_bulk_validation_with_tags
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.931 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.937 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.937 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.937 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.937 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.937 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.938 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.938 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.938 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+________________ TestBudgetTracking.test_budget_vs_actual_flow _________________
+test_integration.py:165: in test_budget_vs_actual_flow
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.945 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45,950 - FinancePerso - INFO - Budget set for Alimentation: 500.0
+2026-01-30 10:22:45.950 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.950 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.950 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.950 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.950 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.951 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.951 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.951 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+------------------------------ Captured log call -------------------------------
+INFO     FinancePerso:budgets.py:28 Budget set for Alimentation: 500.0
+_____________ TestAuditWorkflows.test_orphan_detection_and_cleanup _____________
+test_integration.py:197: in test_orphan_detection_and_cleanup
+    save_transactions(df)
+../modules/db/transactions.py:141: in save_transactions
+    invalidate_transaction_caches()
+../modules/cache_manager.py:15: in invalidate_transaction_caches
+    from modules.db.transactions import (
+E   ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+---------------------------- Captured stderr setup -----------------------------
+2026-01-30 10:22:45.958 No runtime found, using MemoryCacheStorageManager
+----------------------------- Captured stderr call -----------------------------
+2026-01-30 10:22:45.961 No runtime found, using MemoryCacheStorageManager
+2026-01-30 10:22:45.961 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.961 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.962 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.962 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.962 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.962 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-01-30 10:22:45.962 Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+=============================== warnings summary ===============================
+../modules/ai_manager.py:6
+  /Users/aurelien/Documents/Projets/FinancePerso/modules/ai_manager.py:6: FutureWarning: 
+  
+  All support for the `google.generativeai` package has ended. It will no longer be receiving 
+  updates or bug fixes. Please switch to the `google.genai` package as soon as possible.
+  See README for more details:
+  
+  https://github.com/google-gemini/deprecated-generative-ai-python/blob/main/README.md
+  
+    import google.generativeai as genai
+
+../modules/categorization.py:4
+  /Users/aurelien/Documents/Projets/FinancePerso/modules/categorization.py:4: DeprecationWarning: modules.data_manager is deprecated. Please update imports to use modules.db.*
+    from modules.data_manager import get_categories
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED db/test_members.py::TestAddMember::test_add_household_member - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestAddMember::test_add_external_member - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestAddMember::test_add_member_default_type - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestAddMember::test_add_duplicate_member - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestUpdateMember::test_update_member_type - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestUpdateMember::test_update_member_name - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestDeleteMember::test_delete_member - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestDeleteMember::test_delete_nonexistent_member - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestRenameMember::test_rename_member_updates_transactions - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestMemberMappings::test_add_member_mapping - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_members.py::TestMemberMappings::test_delete_member_mapping - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED db/test_rules.py::TestApplyRules::test_apply_rules_to_pending_simple_match - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_rules.py::TestApplyRules::test_apply_rules_multiple_transactions - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_rules.py::TestApplyRules::test_apply_rules_no_match - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_rules.py::TestApplyRules::test_apply_rules_case_insensitive - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_stats.py::TestGlobalStats::test_get_global_stats_with_data - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_stats.py::TestAvailableMonths::test_get_available_months - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_tags.py::TestGetTags::test_get_all_tags_with_data - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_tags.py::TestTagOperations::test_add_tag_via_update - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_tags.py::TestTagOperations::test_remove_tag_from_all_transactions - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestGetTransactions::test_get_all_transactions_with_data - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestGetTransactions::test_get_pending_transactions - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestSaveTransaction::test_insert_valid_transaction - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestUpdateTransaction::test_update_transaction_category - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestUpdateTransaction::test_bulk_update_transaction_status - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestDeleteTransaction::test_delete_transaction_by_id - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED db/test_transactions.py::TestDeleteTransaction::test_delete_transactions_by_period - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED test_integration.py::TestImportToCategorization::test_import_and_auto_categorize - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED test_integration.py::TestImportToCategorization::test_import_with_member_attribution - ImportError: cannot import name 'get_all_members' from 'modules.db.members' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/members.py)
+FAILED test_integration.py::TestValidationWorkflow::test_validate_creates_learning_rule - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED test_integration.py::TestValidationWorkflow::test_bulk_validation_with_tags - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED test_integration.py::TestBudgetTracking::test_budget_vs_actual_flow - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+FAILED test_integration.py::TestAuditWorkflows::test_orphan_detection_and_cleanup - ImportError: cannot import name 'get_validated_transactions' from 'modules.db.transactions' (/Users/aurelien/Documents/Projets/FinancePerso/modules/db/transactions.py)
+================== 33 failed, 144 passed, 2 warnings in 1.81s ==================

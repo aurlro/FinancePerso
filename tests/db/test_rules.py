@@ -2,13 +2,15 @@
 Tests for rules.py module.
 """
 import pytest
+import re
 from modules.db.rules import (
     get_learning_rules,
+    get_compiled_learning_rules,
     add_learning_rule,
     delete_learning_rule
 )
 from modules.db.transactions import (
-    get_pending_transactions, 
+    get_pending_transactions,
     update_transaction_category,
     save_transactions
 )
@@ -32,22 +34,92 @@ def apply_rules_to_pending():
 
 class TestGetRules:
     """Tests for fetching learning rules."""
-    
+
     def test_get_learning_rules_empty(self, temp_db):
         """Test getting rules when none exist."""
         df = get_learning_rules()
         assert df.empty
-    
+
     def test_get_learning_rules_with_data(self, temp_db, db_connection):
         """Test getting rules."""
         # Use add_learning_rule instead of direct insert to be safe
         add_learning_rule('CARREFOUR', 'Alimentation')
         add_learning_rule('TOTAL', 'Transport')
-        
+
         df = get_learning_rules()
         assert len(df) == 2
         assert 'pattern' in df.columns
         assert 'category' in df.columns
+
+
+class TestCompiledRules:
+    """Tests for pre-compiled regex rules (performance optimization)."""
+
+    def test_get_compiled_learning_rules_empty(self, temp_db):
+        """Test getting compiled rules when none exist."""
+        compiled_rules = get_compiled_learning_rules()
+        assert compiled_rules == []
+
+    def test_get_compiled_learning_rules_with_data(self, temp_db):
+        """Test that rules are compiled into re.Pattern objects."""
+        # Add rules
+        add_learning_rule('CARREFOUR', 'Alimentation', priority=5)
+        add_learning_rule('TOTAL', 'Transport', priority=3)
+
+        compiled_rules = get_compiled_learning_rules()
+
+        # Verify we got 2 rules
+        assert len(compiled_rules) == 2
+
+        # Verify structure: (compiled_pattern, category, priority, original_pattern)
+        for pattern_compiled, category, priority, pattern_str in compiled_rules:
+            assert isinstance(pattern_compiled, re.Pattern), "Pattern should be compiled"
+            assert isinstance(category, str), "Category should be string"
+            assert isinstance(priority, (int, float)), "Priority should be numeric"
+            assert isinstance(pattern_str, str), "Original pattern should be string"
+
+    def test_compiled_rules_sorted_by_priority(self, temp_db):
+        """Test that compiled rules are sorted by priority (highest first)."""
+        # Add rules with different priorities
+        add_learning_rule('LOW', 'Cat1', priority=1)
+        add_learning_rule('HIGH', 'Cat2', priority=10)
+        add_learning_rule('MID', 'Cat3', priority=5)
+
+        compiled_rules = get_compiled_learning_rules()
+
+        # Extract priorities
+        priorities = [priority for _, _, priority, _ in compiled_rules]
+
+        # Verify sorted descending
+        assert priorities == sorted(priorities, reverse=True), "Rules should be sorted by priority (highest first)"
+
+    def test_compiled_pattern_matching(self, temp_db):
+        """Test that compiled patterns correctly match labels."""
+        # Add rule
+        add_learning_rule('AMAZON', 'Shopping', priority=5)
+
+        compiled_rules = get_compiled_learning_rules()
+        pattern_compiled, category, _, _ = compiled_rules[0]
+
+        # Test matching
+        assert pattern_compiled.search('AMAZON.FR PURCHASE')
+        assert pattern_compiled.search('amazon prime')  # Case insensitive
+        assert not pattern_compiled.search('TOTALLY DIFFERENT')
+
+    def test_invalid_regex_handling(self, temp_db):
+        """Test that invalid regex patterns are handled gracefully."""
+        # Add an invalid regex pattern (unbalanced brackets)
+        add_learning_rule('[INVALID(', 'TestCat', priority=5)
+
+        compiled_rules = get_compiled_learning_rules()
+
+        # Should have 1 rule, but with None as compiled pattern
+        assert len(compiled_rules) == 1
+        pattern_compiled, category, priority, pattern_str = compiled_rules[0]
+
+        assert pattern_compiled is None, "Invalid regex should result in None"
+        assert category == 'TestCat'
+        assert pattern_str == '[INVALID('
 
 class TestAddRule:
     """Tests for adding learning rules."""

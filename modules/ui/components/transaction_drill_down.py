@@ -62,9 +62,10 @@ def _display_summary_metrics(df: pd.DataFrame):
 
 
 def _render_transaction_row(row: pd.Series, categories: list, key_prefix: str,
-                            session_key: str, current_category: str):
+                            session_key: str, current_category: str, show_tags: bool = True,
+                            show_notes: bool = True):
     """
-    Render a single transaction row with category selector.
+    Render a single transaction row with category selector, tags, and notes.
 
     Args:
         row: Transaction row data
@@ -72,16 +73,27 @@ def _render_transaction_row(row: pd.Series, categories: list, key_prefix: str,
         key_prefix: Unique key prefix for widgets
         session_key: Session state key for storing edits
         current_category: Current category value
+        show_tags: Whether to show tags column
+        show_notes: Whether to show notes column
     """
+    from modules.db.tags import get_all_tags
+    from modules.ui.components.tag_manager import render_tag_selector
+
     tx_id = row['id']
 
-    col_tx1, col_tx2, col_tx3, col_tx4 = st.columns([2, 2, 1.5, 1.5])
+    # Adjust columns based on what we show
+    if show_tags and show_notes:
+        col_tx1, col_tx2, col_tx3, col_tx4, col_tx5, col_tx6 = st.columns([1.5, 2, 1, 1.5, 2, 2])
+    elif show_tags:
+        col_tx1, col_tx2, col_tx3, col_tx4, col_tx5 = st.columns([2, 2, 1.5, 1.5, 2])
+    else:
+        col_tx1, col_tx2, col_tx3, col_tx4 = st.columns([2, 2, 1.5, 1.5])
 
     with col_tx1:
         st.text(row['date'])
 
     with col_tx2:
-        label_display = row['label'][:40] + "..." if len(row['label']) > 40 else row['label']
+        label_display = row['label'][:35] + "..." if len(row['label']) > 35 else row['label']
         st.text(label_display)
 
     with col_tx3:
@@ -105,7 +117,47 @@ def _render_transaction_row(row: pd.Series, categories: list, key_prefix: str,
         # Store the selection in session state
         if session_key not in st.session_state:
             st.session_state[session_key] = {}
-        st.session_state[session_key][tx_id] = selected_cat
+
+        # Store as dict with all fields
+        if tx_id not in st.session_state[session_key]:
+            st.session_state[session_key][tx_id] = {}
+        st.session_state[session_key][tx_id]['category'] = selected_cat
+
+    if show_tags:
+        with col_tx5:
+            # Get current tags
+            current_tags_str = row.get('tags', '') if row.get('tags') else ""
+            current_tags = [t.strip() for t in current_tags_str.split(',') if t.strip()]
+
+            # Use tag selector component
+            selected_tags = render_tag_selector(
+                transaction_id=tx_id,
+                current_tags=current_tags,
+                category=current_category,
+                key_suffix=f"{key_prefix}_tagsel_{tx_id}",
+                allow_create=True,
+                strict_mode=False
+            )
+
+            # Store tags in session state
+            st.session_state[session_key][tx_id]['tags'] = selected_tags
+
+    if show_notes:
+        with col_tx6:
+            # Notes field (using session state for persistence)
+            notes_key = f"{key_prefix}_notes_{tx_id}"
+            current_notes = row.get('notes', '') if pd.notna(row.get('notes')) else ""
+
+            notes_value = st.text_input(
+                "Notes",
+                value=current_notes,
+                key=notes_key,
+                label_visibility="collapsed",
+                placeholder="Contexte, remarques..."
+            )
+
+            # Store notes in session state
+            st.session_state[session_key][tx_id]['notes'] = notes_value
 
 
 def _handle_validated_transactions(df_validated: pd.DataFrame, key_prefix: str,

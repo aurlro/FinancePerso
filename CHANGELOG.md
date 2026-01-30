@@ -6,6 +6,38 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [3.0.1] - 2026-01-30
+
+### 🔄 Améliorations Techniques
+
+**Phase 3 - Function extraction and type safety**
+- ## Refactorisation Majeure
+- Reduce render_transaction_drill_down() from 341 to ~40 lines
+- Extract 5 helper functions for better separation of concerns:
+- * _fetch_and_filter_transactions() - Data fetching (16 lines)
+- * _display_summary_metrics() - Metrics display (15 lines)
+- * _render_transaction_row() - Single row rendering (31 lines)
+- * _handle_validated_transactions() - Validated section (81 lines)
+- * _handle_pending_transactions() - Pending section (67 lines)
+- Replace st.cache_data.clear() with selective invalidation
+- ## Extraction de Fonction Analytics
+- Extract detect_frequency() from detect_recurring_payments()
+
+*Fichiers modifiés* : `- Reduce cyclomatic complexity in analytics.py`, `modules/analytics.py`, `modules/ingestion.py` (+1 autres)
+
+**Phase 2 - Code cleanup and optimization**
+- ## Extraction et Réutilisabilité
+
+
+### ⚡ Performances
+
+**Critical business logic optimizations (90-95% faster)**
+- Implemented two major performance optimizations based on comprehensive analysis:
+- 1. Rule Caching with Pre-compiled Regex (90-95% gain)
+
+
+---
+
 ## [3.0.0] - 2026-01-30
 
 ### ✨ Nouvelles Fonctionnalités
