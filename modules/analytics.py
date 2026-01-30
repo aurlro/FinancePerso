@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple
 from modules.categorization import clean_label
 from modules.data_manager import get_learning_rules
 from modules.analytics_constants import (
@@ -23,6 +24,33 @@ from modules.analytics_constants import (
     DEFAULT_MONTHS_TREND,
     INTERNAL_TRANSFER_PATTERNS
 )
+
+
+def detect_frequency(avg_diff_days: float) -> Tuple[bool, str]:
+    """
+    Detect recurring frequency pattern from average days between transactions.
+
+    Args:
+        avg_diff_days: Average number of days between transactions
+
+    Returns:
+        Tuple of (is_recurring, frequency_label)
+        - is_recurring: True if matches a known frequency pattern
+        - frequency_label: Human-readable label (e.g., "Mensuel", "Trimestriel", "Annuel")
+
+    Example:
+        is_recurring, freq_label = detect_frequency(30.5)
+        # Returns: (True, "Mensuel")
+    """
+    if FREQUENCY_MONTHLY_MIN <= avg_diff_days <= FREQUENCY_MONTHLY_MAX:
+        return True, FREQUENCY_MONTHLY_LABEL
+    elif FREQUENCY_QUARTERLY_MIN <= avg_diff_days <= FREQUENCY_QUARTERLY_MAX:
+        return True, FREQUENCY_QUARTERLY_LABEL
+    elif FREQUENCY_ANNUAL_MIN <= avg_diff_days <= FREQUENCY_ANNUAL_MAX:
+        return True, FREQUENCY_ANNUAL_LABEL
+
+    return False, ""
+
 
 def detect_recurring_payments(df):
     """
@@ -71,19 +99,8 @@ def detect_recurring_payments(df):
         diffs = dates.diff().dropna()
         avg_diff_days = diffs.dt.days.mean()
 
-        # Look for frequencies: Monthly (~30d), Quarterly (~90d), Annual (~365d)
-        is_recurring = False
-        freq_label = ""
-
-        if FREQUENCY_MONTHLY_MIN <= avg_diff_days <= FREQUENCY_MONTHLY_MAX:
-            is_recurring = True
-            freq_label = FREQUENCY_MONTHLY_LABEL
-        elif FREQUENCY_QUARTERLY_MIN <= avg_diff_days <= FREQUENCY_QUARTERLY_MAX:
-            is_recurring = True
-            freq_label = FREQUENCY_QUARTERLY_LABEL
-        elif FREQUENCY_ANNUAL_MIN <= avg_diff_days <= FREQUENCY_ANNUAL_MAX:
-            is_recurring = True
-            freq_label = FREQUENCY_ANNUAL_LABEL
+        # Detect frequency pattern
+        is_recurring, freq_label = detect_frequency(avg_diff_days)
 
         if is_consistent_amount and is_recurring:
             # It's a candidate

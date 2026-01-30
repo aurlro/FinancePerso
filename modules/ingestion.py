@@ -1,12 +1,20 @@
 import pandas as pd
 import hashlib
 import re
+from typing import Optional, Dict, Tuple, Union
 
-def generate_tx_hash(df):
+
+def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
     """
     Generate a unique hash for each transaction.
     To handle identical transactions on same day, we add an occurrence index.
     This index is GLOBAL (checks DB) to avoid duplicates across different imports.
+
+    Args:
+        df: DataFrame containing transaction data
+
+    Returns:
+        DataFrame with added 'tx_hash' column
     """
     if df.empty:
         return df
@@ -32,9 +40,15 @@ def generate_tx_hash(df):
     df['tx_hash'] = df.apply(calculate_hash, axis=1)
     return df.drop(columns=['_local_occ'])
 
-def parse_bourso_csv(file):
+def parse_bourso_csv(file) -> Optional[pd.DataFrame]:
     """
     Legacy parser for BoursoBank specific format.
+
+    Args:
+        file: Uploaded file object from Streamlit
+
+    Returns:
+        DataFrame with parsed transactions, or None if parsing fails
     """
     # ... (code logic matches original but wrapped to reuse if needed, 
     # but efficient to just treat it as a specific config if possible? 
@@ -88,15 +102,31 @@ def parse_bourso_csv(file):
     except Exception as e:
         return None, f"Erreur Bourso: {str(e)}"
 
-def parse_generic_csv(file, config):
+def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optional[pd.DataFrame]:
     """
     Parse a CSV based on dynamic config.
-    config = {
-        'sep': ';',
-        'decimal': ',',
-        'skiprows': 0,
-        'mapping': {'date': 'ColA', 'amount': 'ColB', 'label': 'ColC'}
-    }
+
+    Args:
+        file: Uploaded file object from Streamlit
+        config: Configuration dictionary with keys:
+            - sep: Column separator (default: ';')
+            - decimal: Decimal separator (default: ',')
+            - skiprows: Number of rows to skip (default: 0)
+            - thousands: Thousands separator (default: None)
+            - mapping: Dict mapping internal names to CSV column names
+                      {'date': 'ColA', 'amount': 'ColB', 'label': 'ColC'}
+
+    Returns:
+        DataFrame with parsed transactions, or None if parsing fails
+
+    Example:
+        config = {
+            'sep': ';',
+            'decimal': ',',
+            'skiprows': 0,
+            'mapping': {'date': 'Date', 'amount': 'Montant', 'label': 'Libellé'}
+        }
+        df = parse_generic_csv(file, config)
     """
     try:
         # Load
@@ -172,13 +202,28 @@ def parse_generic_csv(file, config):
     except Exception as e:
         return None, f"Erreur Générique: {str(e)}"
 
-def load_transaction_file(uploaded_file, mode="auto", config=None):
+def load_transaction_file(uploaded_file, mode: str = "auto",
+                         config: Optional[Dict[str, Union[str, int, Dict]]] = None) -> Optional[pd.DataFrame]:
+    """
+    Load and parse a transaction file based on specified mode.
+
+    Args:
+        uploaded_file: Uploaded file object from Streamlit
+        mode: Parsing mode - "auto", "bourso_preset", or "custom"
+        config: Configuration dict for custom mode (see parse_generic_csv)
+
+    Returns:
+        DataFrame with parsed transactions, or None if file is None or parsing fails
+
+    Example:
+        df = load_transaction_file(uploaded_file, mode="bourso_preset")
+    """
     if uploaded_file is None:
         return None
-        
+
     # Reset file pointer if it was read for preview
     uploaded_file.seek(0)
-    
+
     if mode == "bourso_preset":
         return parse_bourso_csv(uploaded_file)
     elif mode == "custom" and config:
