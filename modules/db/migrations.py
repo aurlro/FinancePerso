@@ -216,6 +216,30 @@ def init_db() -> None:
             default_mappings
         )
 
+        # Settings table for user configuration
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT,
+                description TEXT,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Initialize default settings with internal transfer targets
+        # Store as comma-separated list for simplicity
+        default_settings = [
+            (
+                "internal_transfer_targets",
+                "AURELIEN,DUO,JOINT,EPARGNE,LDDS,LIVRET,ELISE",
+                "Mots-clés pour détecter les virements internes (séparés par des virgules)"
+            ),
+        ]
+        cursor.executemany(
+            "INSERT OR IGNORE INTO settings (key, value, description) VALUES (?, ?, ?)",
+            default_settings
+        )
+
         conn.commit()
         logger.info("Database initialized successfully")
 

@@ -121,9 +121,11 @@ def categorize_transaction(label, amount, date):
     
     # 2. Heuristic: Internal Transfers Detection
     # If the label contains common internal transfer keywords AND mentions known household members/accounts
+    from modules.db.settings import get_internal_transfer_targets
+
     TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
-    INTERNAL_TARGETS = ["AURELIEN", "DUO", "JOINT", "EPARGNE", "LDDS", "LIVRET", "ELISE"]
-    
+    INTERNAL_TARGETS = get_internal_transfer_targets()
+
     if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(t in label_upper for t in INTERNAL_TARGETS):
         return "Virement Interne", "rule", 1.0
         
