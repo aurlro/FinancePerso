@@ -54,10 +54,45 @@ Ce document contient les instructions de développement pour les futures session
 
 **Fonctions clés** :
 - `clean_label()` : Nettoyage des libellés bancaires (regex)
+- `escape_html()` : Échappe les caractères HTML pour prévenir XSS
+- `safe_html_template()` : Interpolation sécurisée dans templates HTML
+- `validate_csv_file()` : Validation de fichiers CSV uploadés
 
 **Guidelines** :
 - Fonctions pures sans effets de bord
 - Bien commenter les regex complexes
+- **TOUJOURS** utiliser `escape_html()` avant d'insérer du contenu utilisateur dans du HTML
+
+#### `modules/exceptions.py` ⚡ NOUVEAU (v2.8.0)
+**Rôle** : Classes d'exceptions personnalisées pour meilleure gestion d'erreurs.
+
+**Classes disponibles** :
+- `FinancePersoException` : Exception de base
+- `DatabaseError` : Erreurs de base de données
+- `ValidationError` : Erreurs de validation d'entrées
+- `ImportError` : Erreurs d'import CSV/fichiers
+- `AIProviderError` : Erreurs d'API IA
+- `ConfigurationError` : Erreurs de configuration
+- `CategorizationError` : Erreurs de catégorisation
+- `RuleError` : Erreurs de règles d'apprentissage
+
+**Guidelines** :
+- Utiliser ces exceptions spécifiques plutôt que `Exception` générique
+- **JAMAIS** de clause `except:` nue - toujours spécifier le type d'exception
+
+#### `modules/db/settings.py` ⚡ NOUVEAU (v2.8.0)
+**Rôle** : Gestion des paramètres utilisateur en base de données.
+
+**Fonctions clés** :
+- `get_setting(key, default)` : Récupérer une valeur
+- `set_setting(key, value, description)` : Définir une valeur
+- `get_internal_transfer_targets()` : Récupérer mots-clés de virements internes
+- `set_internal_transfer_targets(targets)` : Définir mots-clés de virements internes
+
+**Guidelines** :
+- Utiliser pour toute configuration utilisateur (éviter hardcoding)
+- Fournir toujours des valeurs par défaut
+- Documenter les settings avec `description`
 
 #### `modules/ui.py`
 **Rôle** : Composants UI et styles réutilisables.
@@ -130,6 +165,100 @@ Toujours créer un `implementation_plan.md` avant de coder :
 - Préfixer les classes custom par `fp-` (ex: `fp-card`)
 - Utiliser `data-testid` pour ciblage robuste
 - Inline styles en dernier recours seulement
+
+## 🔒 Sécurité et Bonnes Pratiques (v2.8.0)
+
+### Gestion des secrets
+- **JAMAIS** hardcoder de clés API ou données personnelles dans le code
+- Utiliser `python-dotenv` pour charger les variables d'environnement
+- Le fichier `.env` doit avoir les permissions 0600 (lecture/écriture propriétaire uniquement)
+- Valider le format des clés API avant de les sauvegarder
+
+**Exemple** :
+```python
+from modules.ui.config.api_settings import validate_api_key
+
+if validate_api_key(api_key, "Gemini"):
+    # Clé valide
+    set_key(".env", "GEMINI_API_KEY", api_key)
+    set_secure_env_permissions(".env")
+```
+
+### Validation des entrées
+- **TOUJOURS** valider les entrées utilisateur avant traitement
+- Patterns regex : vérifier avec `re.compile()` et tester sur échantillons
+- Détecter les patterns dangereux (catastrophic backtracking)
+- CSV : valider le mapping et échantillonner les données
+
+**Exemple** :
+```python
+def validate_regex_pattern(pattern: str) -> tuple[bool, str]:
+    try:
+        compiled = re.compile(pattern, re.IGNORECASE)
+        # Test sur échantillons
+        for test in ["TEST", "test 123", ""]:
+            compiled.search(test)
+        return True, ""
+    except re.error as e:
+        return False, f"Pattern invalide: {e}"
+```
+
+### Gestion d'erreurs
+- **JAMAIS** utiliser `except:` nu - toujours spécifier le type
+- Utiliser les classes d'exceptions de `modules/exceptions.py`
+- Logger les erreurs avec contexte via `modules/logger.py`
+- Fournir des messages d'erreur clairs et actionnables
+
+**Anti-pattern** ❌ :
+```python
+try:
+    risky_operation()
+except:  # Attrape TOUT, y compris KeyboardInterrupt !
+    pass
+```
+
+**Bon pattern** ✅ :
+```python
+try:
+    risky_operation()
+except (ValueError, TypeError) as e:
+    logger.error(f"Operation failed: {e}")
+    raise ValidationError(f"Invalid input: {e}")
+```
+
+### Protection XSS
+- Utiliser `escape_html()` pour tout contenu utilisateur dans HTML
+- Préférer `safe_html_template()` pour interpolation complexe
+- Auditer tous les usages de `unsafe_allow_html=True`
+
+**Exemple** :
+```python
+from modules.utils import safe_html_template
+
+safe_html = safe_html_template(
+    "<div class='item'><h3>{title}</h3><p>{description}</p></div>",
+    title=user_title,  # Automatiquement échappé
+    description=user_description
+)
+st.markdown(safe_html, unsafe_allow_html=True)
+```
+
+### Configuration utilisateur
+- Stocker la config sensible en base de données (table `settings`)
+- Ne jamais hardcoder de noms, emails, ou identifiants personnels
+- Fournir une UI pour modifier la configuration
+- Assurer la rétrocompatibilité avec des valeurs par défaut
+
+**Exemple** :
+```python
+from modules.db.settings import get_setting, set_setting
+
+# Récupérer avec fallback
+api_url = get_setting("api_url", default="http://localhost:8000")
+
+# Sauvegarder
+set_setting("api_url", new_url, "URL de l'API backend")
+```
 
 ## 🐛 Patterns à éviter
 

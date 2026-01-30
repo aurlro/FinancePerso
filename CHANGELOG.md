@@ -6,6 +6,62 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [2.8.0] - 2026-01-30
+
+### 🔒 Sécurité et Validation Renforcées
+
+**Gestion sécurisée des secrets**
+- Implémentation de `python-dotenv` pour la gestion du fichier `.env`
+- Permissions sécurisées automatiques (0600) sur le fichier de configuration
+- Validation des formats de clés API (Gemini, OpenAI, DeepSeek)
+- Messages d'erreur clairs et informatifs pour la configuration
+
+**Validation des entrées utilisateur**
+- Validation complète des patterns regex pour les règles d'apprentissage
+- Détection des patterns dangereux (catastrophic backtracking)
+- Validation du mapping CSV avec vérification des données échantillons
+- Vérification de la cohérence des colonnes sélectionnées
+
+**Gestion d'erreurs améliorée**
+- Remplacement de toutes les clauses `except:` nues (6 occurrences)
+- Gestion spécifique des exceptions (subprocess, réseau, parsing dates)
+- Nouvelles classes d'exceptions personnalisées (`modules/exceptions.py`)
+- Logging amélioré dans l'AI manager et l'auditeur de règles
+
+### ✨ Nouvelles Fonctionnalités
+
+**Configuration des virements internes**
+- Table `settings` créée pour stocker la configuration utilisateur
+- Module de gestion des paramètres (`modules/db/settings.py`)
+- Interface utilisateur complète dans Configuration → Tags & Règles
+- Migration des données personnelles hardcodées vers la base de données
+- Possibilité d'ajouter/supprimer des mots-clés de détection
+
+**Utilitaires de sécurité**
+- `escape_html()` - Protection contre les attaques XSS
+- `safe_html_template()` - Interpolation sécurisée dans les templates HTML
+- Documentation complète avec exemples d'utilisation
+
+### 🔄 Améliorations Techniques
+
+- Centralisation de la configuration (plus de données personnelles dans le code)
+- Amélioration de la modularité avec les nouvelles classes d'exceptions
+- Retro-compatibilité assurée avec valeurs par défaut automatiques
+- Feedback utilisateur amélioré avec validation temps réel
+
+### ⚠️ Notes de Migration
+
+**BREAKING CHANGE** : La détection des virements internes utilise maintenant la configuration en base de données. Les installations existantes recevront automatiquement les valeurs par défaut lors de la première exécution.
+
+---
+
+## [2.7.0] - 2026-01-30
+
+### Ajouté
+- Add comprehensive input validation and security utilities
+
+---
+
 ## [2.6.0] - 2026-01-29
 
 ### Ajouté
