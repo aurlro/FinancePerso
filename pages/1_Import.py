@@ -82,6 +82,53 @@ if uploaded_file is not None:
                 'label': col_label,
                 'member': col_member if col_member != "-- Ignorer --" else None
             }
+
+            # Validate column mapping
+            validation_errors = []
+
+            # Check for duplicate mappings
+            mapped_cols = [col_date, col_amt, col_label]
+            if col_member != "-- Ignorer --":
+                mapped_cols.append(col_member)
+
+            if len(mapped_cols) != len(set(mapped_cols)):
+                validation_errors.append("❌ Plusieurs champs pointent vers la même colonne")
+
+            # Validate sample data from each column
+            try:
+                if col_date in preview_df.columns:
+                    # Try parsing a date from the first non-null value
+                    date_sample = preview_df[col_date].dropna().iloc[0] if not preview_df[col_date].empty else None
+                    if date_sample is None:
+                        validation_errors.append(f"⚠️ Colonne '{col_date}' (Date) est vide")
+
+                if col_amt in preview_df.columns:
+                    # Check if amount column contains numeric-like values
+                    amt_sample = preview_df[col_amt].dropna().iloc[0] if not preview_df[col_amt].empty else None
+                    if amt_sample is None:
+                        validation_errors.append(f"⚠️ Colonne '{col_amt}' (Montant) est vide")
+                    else:
+                        # Try converting to float
+                        try:
+                            str_amt = str(amt_sample).replace(',', '.').replace(' ', '')
+                            float(str_amt)
+                        except ValueError:
+                            validation_errors.append(f"⚠️ Colonne '{col_amt}' ne semble pas contenir de montants (échantillon: '{amt_sample}')")
+
+                if col_label in preview_df.columns:
+                    label_sample = preview_df[col_label].dropna().iloc[0] if not preview_df[col_label].empty else None
+                    if label_sample is None:
+                        validation_errors.append(f"⚠️ Colonne '{col_label}' (Libellé) est vide")
+
+            except Exception as e:
+                validation_errors.append(f"Erreur lors de la validation: {e}")
+
+            if validation_errors:
+                st.warning("⚠️ Problèmes détectés avec le mapping :")
+                for err in validation_errors:
+                    st.markdown(f"- {err}")
+                st.info("💡 Vous pouvez continuer mais vérifiez que les colonnes sont correctement mappées.")
+
             ready_to_import = True
         except Exception as e:
             st.error(f"Impossible de lire l'en-tête du fichier : {e}")

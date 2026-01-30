@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 from modules.data_manager import get_learning_rules, delete_learning_rule, add_learning_rule, set_budget, get_budgets, get_categories, init_db
 from modules.ui import load_css
 
@@ -9,6 +10,49 @@ init_db()  # Ensure migrations are applied
 
 st.title("🧠 Mémoire de l'assistant")
 st.markdown("Gérez ici les règles de catégorisation automatique.")
+
+def validate_regex_pattern(pattern: str) -> tuple[bool, str]:
+    """
+    Validate a regex pattern for safety and correctness.
+    Returns (is_valid, error_message)
+    """
+    if not pattern or not pattern.strip():
+        return False, "Le pattern ne peut pas être vide"
+
+    # Check length
+    if len(pattern) > 200:
+        return False, "Le pattern est trop long (max 200 caractères)"
+
+    # Try to compile as regex
+    try:
+        compiled = re.compile(pattern, re.IGNORECASE)
+
+        # Test for catastrophic backtracking patterns
+        # These are simplified checks - not exhaustive
+        dangerous_patterns = [
+            r'\(.*\*.*\)\+',  # (.*)*+ pattern
+            r'\(.*\+.*\)\*',  # (.+)* pattern
+            r'(\(\?\:.*){5,}',  # Too many nested groups
+        ]
+
+        for dangerous in dangerous_patterns:
+            if re.search(dangerous, pattern):
+                return False, "Ce pattern pourrait causer des problèmes de performance (backtracking excessif)"
+
+        # Test the pattern on sample strings
+        test_strings = ["TEST", "test 123", "ABC-DEF", ""]
+        for test_str in test_strings:
+            try:
+                compiled.search(test_str)
+            except Exception as e:
+                return False, f"Erreur lors du test du pattern: {e}"
+
+        return True, ""
+
+    except re.error as e:
+        return False, f"Pattern regex invalide: {e}"
+    except Exception as e:
+        return False, f"Erreur inattendue: {e}"
 
 # --- ADD RULE SECTION ---
 with st.expander("➕ Ajouter une nouvelle règle", expanded=False):
@@ -23,11 +67,17 @@ with st.expander("➕ Ajouter une nouvelle règle", expanded=False):
         submitted = st.form_submit_button("Ajouter la règle")
         if submitted:
             if new_pattern and new_category:
-                if add_learning_rule(new_pattern, new_category):
-                    st.success(f"Règle '{new_pattern}' -> '{new_category}' ajoutée !")
-                    st.rerun()
+                # Validate regex pattern
+                is_valid, error_msg = validate_regex_pattern(new_pattern)
+                if not is_valid:
+                    st.error(f"❌ Pattern invalide: {error_msg}")
+                    st.info("💡 Le pattern peut être un simple mot-clé (ex: UBER) ou une expression régulière (ex: ^UBER.*TRIP)")
                 else:
-                    st.error("Erreur lors de l'ajout (peut-être que ce pattern existe déjà ?)")
+                    if add_learning_rule(new_pattern, new_category):
+                        st.success(f"✅ Règle '{new_pattern}' → '{new_category}' ajoutée !")
+                        st.rerun()
+                    else:
+                        st.error("Erreur lors de l'ajout (peut-être que ce pattern existe déjà ?)")
             else:
                 st.warning("Veuillez remplir le pattern.")
 

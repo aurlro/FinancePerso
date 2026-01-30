@@ -3,6 +3,7 @@ Utility functions shared across modules.
 Centralizes common operations to avoid code duplication.
 """
 import re
+import html
 
 def clean_label(label):
     """
@@ -71,3 +72,40 @@ def format_currency(amount, symbol="€"):
     if amount >= 0:
         return f"+{amount:,.2f} {symbol}"
     return f"{amount:,.2f} {symbol}"
+
+def escape_html(text: str) -> str:
+    """
+    Escape HTML special characters to prevent XSS attacks.
+    Use this function before inserting user-provided text into HTML strings.
+
+    Args:
+        text: The text to escape
+
+    Returns:
+        HTML-safe string with special characters escaped
+    """
+    if text is None:
+        return ""
+    return html.escape(str(text), quote=True)
+
+def safe_html_template(template: str, **kwargs) -> str:
+    """
+    Safely interpolate values into HTML template by escaping all arguments.
+
+    Example:
+        safe_html = safe_html_template(
+            "<div class='item'><h3>{title}</h3><p>{description}</p></div>",
+            title=user_title,
+            description=user_description
+        )
+
+    Args:
+        template: HTML template string with {placeholders}
+        **kwargs: Values to interpolate (will be HTML-escaped)
+
+    Returns:
+        Safe HTML string with escaped values
+    """
+    # Escape all kwargs
+    safe_kwargs = {key: escape_html(value) for key, value in kwargs.items()}
+    return template.format(**safe_kwargs)
