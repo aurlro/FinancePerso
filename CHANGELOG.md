@@ -6,6 +6,48 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [3.0.0] - 2026-01-30
+
+### ✨ Nouvelles Fonctionnalités
+
+**Improve versioning script to generate detailed changelog entries**
+- Parse full commit bodies and extract detailed bullet points
+- Add emoji-based sections (🔒 Security, ✨ Features, 🐛 Fixes, etc.)
+- Include file modification information
+- Generate rich, narrative changelog entries like v2.0-2.2 format
+- Add breaking changes section with detailed explanations
+- Support multiple commit types (security, perf, refactor, etc.)
+- The new script generates comprehensive changelogs automatically from git
+- commits with proper formatting, sections, and context, matching the detailed
+- style of historical changelog entries.
+
+*Fichiers modifiés* : `scripts/versioning.py`
+
+
+### ⚡ Performances
+
+**Add database pagination, composite indexes, and selective cache invalidation**
+- **Database Query Pagination**
+
+*Fichiers modifiés* : `- Add pagination support to get_all_transactions() with limit/offset parameters`, `*Fichiers modifiés* : `modules/db/transactions.py`, `modules/db/migrations.py`, `modules/cache_manager.py` (nouveau)`, `modules/cache_manager.py` (+2 autres)
+
+
+### ⚠️ Breaking Changes
+
+**Improve versioning script to generate detailed changelog entries**
+
+- - Add breaking changes section with detailed explanations
+- - Parse full commit bodies and extract detailed bullet points
+- - Add emoji-based sections (🔒 Security, ✨ Features, 🐛 Fixes, etc.)
+- - Include file modification information
+- - Generate rich, narrative changelog entries like v2.0-2.2 format
+- - Support multiple commit types (security, perf, refactor, etc.)
+- The new script generates comprehensive changelogs automatically from git
+- commits with proper formatting, sections, and context, matching the detailed
+- style of historical changelog entries.
+
+---
+
 ## [2.8.0] - 2026-01-30
 
 ### 🔒 Sécurité et Validation Renforcées

@@ -49,12 +49,14 @@ def update_member_type(member_id: int, member_type: str) -> None:
 
 def delete_member(member_id: int) -> None:
     """Delete a member by ID."""
+    from modules.cache_manager import invalidate_member_caches
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM members WHERE id = ?", (member_id,))
-        cursor.execute("DELETE FROM members WHERE id = ?", (member_id,))
         conn.commit()
-        st.cache_data.clear()
+
+    invalidate_member_caches()
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
