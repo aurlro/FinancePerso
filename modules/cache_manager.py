@@ -45,10 +45,15 @@ def invalidate_rule_caches():
     Invalidate rule-related caches.
     Call this after adding/deleting learning rules.
     """
-    from modules.db.rules import get_learning_rules
+    from modules.db.rules import get_learning_rules, get_compiled_learning_rules
 
     try:
         get_learning_rules.clear()
+    except AttributeError:
+        pass
+
+    try:
+        get_compiled_learning_rules.clear()
     except AttributeError:
         pass
 
