@@ -15,7 +15,6 @@ def invalidate_transaction_caches():
     from modules.db.transactions import (
         get_all_transactions,
         get_pending_transactions,
-        get_validated_transactions,
         get_transactions_count
     )
 
@@ -26,11 +25,6 @@ def invalidate_transaction_caches():
 
     try:
         get_pending_transactions.clear()
-    except AttributeError:
-        pass
-
-    try:
-        get_validated_transactions.clear()
     except AttributeError:
         pass
 
@@ -76,10 +70,10 @@ def invalidate_member_caches():
     Invalidate member-related caches.
     Call this after member modifications.
     """
-    from modules.db.members import get_all_members
+    from modules.db.members import get_members
 
     try:
-        get_all_members.clear()
+        get_members.clear()
     except AttributeError:
         pass
 
@@ -88,11 +82,20 @@ def invalidate_tag_caches():
     """
     Invalidate tag-related caches.
     Call this after tag modifications.
+
+    Note: Tags are stored in the transactions table, so we must also
+    invalidate transaction caches to reflect tag changes.
     """
     from modules.db.tags import get_all_tags
+    from modules.db.transactions import get_all_transactions
 
     try:
         get_all_tags.clear()
+    except AttributeError:
+        pass
+
+    try:
+        get_all_transactions.clear()
     except AttributeError:
         pass
 
