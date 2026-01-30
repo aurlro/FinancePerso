@@ -34,7 +34,8 @@ def add_category(name: str, emoji: str = '🏷️', is_fixed: int = 0) -> bool:
             conn.commit()
             logger.info(f"Category added: {emoji} {name}")
             # Invalidate cache for category-related functions
-            st.cache_data.clear()
+            from modules.cache_manager import invalidate_category_caches
+            invalidate_category_caches()
             return True
         except sqlite3.IntegrityError:
             logger.warning(f"Category '{name}' already exists")
@@ -48,7 +49,8 @@ def update_category_emoji(cat_id: int, new_emoji: str) -> None:
         cursor.execute("UPDATE categories SET emoji = ? WHERE id = ?", (new_emoji, cat_id))
         conn.commit()
         # Invalidate cache for category-related functions
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_category_caches
+        invalidate_category_caches()
 
 
 def update_category_fixed(cat_id: int, is_fixed: int) -> None:
@@ -58,7 +60,8 @@ def update_category_fixed(cat_id: int, is_fixed: int) -> None:
         cursor.execute("UPDATE categories SET is_fixed = ? WHERE id = ?", (is_fixed, cat_id))
         conn.commit()
         # Invalidate cache for category-related functions
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_category_caches
+        invalidate_category_caches()
 
 
 def update_category_suggested_tags(cat_id: int, tags_list_str: str) -> None:
@@ -77,7 +80,8 @@ def update_category_suggested_tags(cat_id: int, tags_list_str: str) -> None:
         )
         conn.commit()
         # Invalidate cache for category-related functions
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_category_caches
+        invalidate_category_caches()
 
 
 def delete_category(cat_id: int) -> None:
@@ -93,7 +97,8 @@ def delete_category(cat_id: int) -> None:
         conn.commit()
         logger.info(f"Category {cat_id} deleted")
         # Invalidate cache for category-related functions
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_category_caches
+        invalidate_category_caches()
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
@@ -283,7 +288,8 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         rule_count = cursor.rowcount
         
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_category_caches
+        invalidate_category_caches()
         
         logger.info(f"Merged '{source_category}' → '{target_category}': {tx_count} transactions, {rule_count} rules")
         

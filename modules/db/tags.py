@@ -71,9 +71,12 @@ def remove_tag_from_all_transactions(tag_to_remove: str) -> int:
                 updated_count += 1
         
         conn.commit()
-        st.cache_data.clear()
-        logger.info(f"Removed tag '{tag_to_remove}' from {updated_count} transactions")
-        return updated_count
+
+    from modules.cache_manager import invalidate_tag_caches
+    invalidate_tag_caches()
+
+    logger.info(f"Removed tag '{tag_to_remove}' from {updated_count} transactions")
+    return updated_count
 
 
 def learn_tags_from_history() -> int:

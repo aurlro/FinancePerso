@@ -79,6 +79,29 @@ def invalidate_member_caches():
         pass
 
 
+def invalidate_tag_caches():
+    """
+    Invalidate tag-related caches.
+    Call this after tag modifications.
+    """
+    from modules.db.tags import get_all_tags
+
+    try:
+        get_all_tags.clear()
+    except AttributeError:
+        pass
+
+
+def invalidate_audit_caches():
+    """
+    Invalidate audit-related caches.
+    Call this after audit log modifications.
+    """
+    # Audit operations typically don't have heavy caching
+    # but this provides consistency in the API
+    pass
+
+
 def invalidate_all_caches():
     """
     Nuclear option: clear all Streamlit caches.

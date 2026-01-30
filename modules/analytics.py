@@ -1,6 +1,28 @@
 import pandas as pd
 from modules.categorization import clean_label
 from modules.data_manager import get_learning_rules
+from modules.analytics_constants import (
+    MIN_OCCURRENCES_FOR_RECURRING,
+    AMOUNT_TOLERANCE_ENERGY,
+    AMOUNT_TOLERANCE_STANDARD,
+    AMOUNT_TOLERANCE_FIXED_THRESHOLD,
+    FREQUENCY_MONTHLY_MIN,
+    FREQUENCY_MONTHLY_MAX,
+    FREQUENCY_MONTHLY_LABEL,
+    FREQUENCY_QUARTERLY_MIN,
+    FREQUENCY_QUARTERLY_MAX,
+    FREQUENCY_QUARTERLY_LABEL,
+    FREQUENCY_ANNUAL_MIN,
+    FREQUENCY_ANNUAL_MAX,
+    FREQUENCY_ANNUAL_LABEL,
+    ENERGY_KEYWORDS,
+    SALARY_MIN_AMOUNT,
+    HIGH_CONFIDENCE_MIN_COUNT,
+    RENT_LOAN_MIN_AMOUNT,
+    CATEGORY_KEYWORDS,
+    DEFAULT_MONTHS_TREND,
+    INTERNAL_TRANSFER_PATTERNS
+)
 
 def detect_recurring_payments(df):
     """
@@ -27,48 +49,47 @@ def detect_recurring_payments(df):
     grouped = data.groupby('clean_label_strict')
     
     for label, group in grouped:
-        if len(group) < 2:
+        if len(group) < MIN_OCCURRENCES_FOR_RECURRING:
             continue
-            
+
         # Check amounts consistency
         # Subscriptions usually have exact same amount
         # Utilities might vary slightly (Electricity, Water, etc.)
         amounts = group['amount'].tolist()
         amounts_std = group['amount'].std()
         avg_amount = group['amount'].mean()
-        
+
         # Determine variability
         # Higher tolerance for utilities/energy (usually negative amounts between -30 and -300)
-        # We'll use 15% for utilities and 5% for others
-        is_energy = any(k in label.upper() for k in ["EDF", "ENGIE", "TOTAL", "EAU", "SUEZ", "VEOLIA", "OHM", "MINT", "VATTEN"])
-        tolerance = 0.15 if is_energy else 0.05
-        
+        is_energy = any(k in label.upper() for k in ENERGY_KEYWORDS)
+        tolerance = AMOUNT_TOLERANCE_ENERGY if is_energy else AMOUNT_TOLERANCE_STANDARD
+
         is_consistent_amount = (amounts_std / abs(avg_amount)) < tolerance if avg_amount != 0 else (amounts_std == 0)
-        
+
         # Check Periodicity
         dates = group['date'].sort_values()
         diffs = dates.diff().dropna()
         avg_diff_days = diffs.dt.days.mean()
-        
+
         # Look for frequencies: Monthly (~30d), Quarterly (~90d), Annual (~365d)
         is_recurring = False
         freq_label = ""
-        
-        if 25 <= avg_diff_days <= 35:
+
+        if FREQUENCY_MONTHLY_MIN <= avg_diff_days <= FREQUENCY_MONTHLY_MAX:
             is_recurring = True
-            freq_label = "Mensuel"
-        elif 80 <= avg_diff_days <= 100:
+            freq_label = FREQUENCY_MONTHLY_LABEL
+        elif FREQUENCY_QUARTERLY_MIN <= avg_diff_days <= FREQUENCY_QUARTERLY_MAX:
             is_recurring = True
-            freq_label = "Trimestriel"
-        elif 350 <= avg_diff_days <= 380:
+            freq_label = FREQUENCY_QUARTERLY_LABEL
+        elif FREQUENCY_ANNUAL_MIN <= avg_diff_days <= FREQUENCY_ANNUAL_MAX:
             is_recurring = True
-            freq_label = "Annuel"
-        
+            freq_label = FREQUENCY_ANNUAL_LABEL
+
         if is_consistent_amount and is_recurring:
             # It's a candidate
             # Determine category if known
             current_cat = group.iloc[0]['category_validated']
-            
+
             recurring_items.append({
                 "label": label,
                 "avg_amount": round(avg_amount, 2),
@@ -78,7 +99,7 @@ def detect_recurring_payments(df):
                 "last_date": group['date'].max().date(),
                 "category": current_cat,
                 "is_subscription_candidate": True,
-                "variability": "Variable" if (amounts_std / abs(avg_amount)) > 0.05 else "Fixe"
+                "variability": "Variable" if (amounts_std / abs(avg_amount)) > AMOUNT_TOLERANCE_FIXED_THRESHOLD else "Fixe"
             })
             
     if not recurring_items:
@@ -102,8 +123,8 @@ def detect_financial_profile(df):
         # Simple exact match check. Could be fuzzier.
         return label_clean not in existing_patterns
     
-    # 1. Salary: Positives > 500
-    incomes = df[df['amount'] > 500].copy()
+    # 1. Salary: Positives > threshold
+    incomes = df[df['amount'] > SALARY_MIN_AMOUNT].copy()
     if not incomes.empty:
         incomes['clean'] = incomes['label'].apply(clean_label)
         grouped = incomes.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
@@ -113,7 +134,7 @@ def detect_financial_profile(df):
                     "type": "Salaire (estimé)",
                     "label": row['clean'],
                     "amount": row['amount'],
-                    "confidence": "Haute" if row['date'] > 1 else "Moyenne",
+                    "confidence": "Haute" if row['date'] > HIGH_CONFIDENCE_MIN_COUNT else "Moyenne",
                     "default_category": "Revenus"
                 })
 
@@ -122,32 +143,24 @@ def detect_financial_profile(df):
     if not expenses.empty:
         expenses['clean'] = expenses['label'].apply(clean_label)
         grouped = expenses.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
-        
-        # Keywords map
-        KEYWORD_MAP = {
-            "Logement": ["LOYER", "IMMO", "PROPRIETAIRE", "QUITTANCE", "BAIL", "CAUTION"],
-            "Emprunt immobilier": ["PRET", "CREDIT", "ECHEANCE"],
-            "Assurances": ["ASSURANCE", "MACIF", "MAIF", "AXA", "ALLIANZ", "MUTUELLE", "PREVOYANCE", "GENERALI", "SWISSLIFE", "MGEN", "MALAKOFF", "ALAN"],
-            "Abonnements": ["EDF", "ENGIE", "TOTALENERGIE", "EAU", "SUEZ", "VEOLIA", "ORANGE", "SFR", "BOUYGUES", "FREE", "NETFLIX", "SPOTIFY", "AMAZON PRIME", "ENI", "VATTENFALL", "OHM", "MINT"]
-        }
-        
+
         for _, row in grouped.iterrows():
             if not is_new(row['clean']):
                 continue
-                
+
             label_upper = row['clean'].upper()
             found_cat = None
-            
+
             # Check keywords
-            for cat, keywords in KEYWORD_MAP.items():
+            for cat, keywords in CATEGORY_KEYWORDS.items():
                 if any(k in label_upper for k in keywords):
                     found_cat = cat
                     break
-            
+
             # Heuristics for Big Amounts (likely Rent/Loan if not matched)
-            if not found_cat and row['amount'] < -600:
+            if not found_cat and row['amount'] < RENT_LOAN_MIN_AMOUNT:
                 found_cat = "Logement"
-            
+
             if found_cat:
                 candidates.append({
                     "type": f"Dépense Récurrente ({found_cat})",
@@ -159,7 +172,7 @@ def detect_financial_profile(df):
     
     return candidates
 
-def get_monthly_savings_trend(months=12):
+def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     """
     Calculate monthly Incoming, Outgoing, and Savings Rate for the last N months.
     Returns DataFrame with columns ['Month', 'Revenus', 'Dépenses', 'Epargne', 'Taux'].
@@ -201,32 +214,24 @@ def get_monthly_savings_trend(months=12):
 def detect_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:
     """
     Detect internal transfers between accounts based on patterns and heuristics.
-    
+
     Args:
         df: DataFrame with transactions
         patterns: List of label patterns to detect (default: common patterns)
-        
+
     Returns:
         DataFrame with only detected internal transfers
-        
+
     Example:
         internal = detect_internal_transfers(df)
         df_clean = df[~df['id'].isin(internal['id'])]
     """
     if df.empty:
         return pd.DataFrame()
-    
+
     # Default patterns for internal transfers
     if patterns is None:
-        patterns = [
-            "VIR SEPA AURELIEN",
-            "ALIMENTATION COMPTE JOINT",
-            "VIR SEPA",
-            "VIREMENT",
-            "VIR ",
-            "ALIMENTATION",
-            "TRANSFERT"
-        ]
+        patterns = INTERNAL_TRANSFER_PATTERNS
     
     # Method 1: Pattern matching on labels
     df_transfers = df.copy()

@@ -103,9 +103,12 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
                     new_count += 1
         
         conn.commit()
-        st.cache_data.clear()  # Invalidate cache
-        logger.info(f"Imported {new_count} new transactions, skipped {skipped_count} duplicates")
-        return new_count, skipped_count
+
+    from modules.cache_manager import invalidate_transaction_caches
+    invalidate_transaction_caches()
+
+    logger.info(f"Imported {new_count} new transactions, skipped {skipped_count} duplicates")
+    return new_count, skipped_count
 
 
 def apply_member_mappings_to_pending() -> int:
@@ -212,7 +215,8 @@ def delete_transaction_by_id(tx_id: int) -> int:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
         return cursor.rowcount
 
 
@@ -251,10 +255,11 @@ def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
                 (new_tags, tx_id)
             )
             updated += 1
-            
+
         conn.commit()
-    
-    st.cache_data.clear()
+
+    from modules.cache_manager import invalidate_transaction_caches
+    invalidate_transaction_caches()
     return updated
 
 
@@ -267,7 +272,7 @@ def get_pending_transactions() -> pd.DataFrame:
         DataFrame with all pending transactions
     """
     with get_db_connection() as conn:
-        return pd.read_sql("SELECT * FROM transactions WHERE status='PENDING'", conn)
+        return pd.read_sql("SELECT * FROM transactions WHERE status='pending'", conn)
 
 
 @st.cache_data
@@ -297,7 +302,7 @@ def get_all_transactions(
         limit: Maximum number of rows to return (None for all)
         offset: Number of rows to skip (for pagination)
         filters: Dictionary of filter conditions {column: value or (operator, value)}
-                 Examples: {"status": "VALIDATED"}, {"amount": (">", 100)}
+                 Examples: {"status": "validated"}, {"amount": (">", 100)}
         order_by: SQL ORDER BY clause (default: "date DESC")
 
     Returns:
@@ -336,17 +341,10 @@ def get_transactions_count(filters: dict = None) -> int:
         Total count of matching transactions
     """
     query = "SELECT COUNT(*) as count FROM transactions WHERE 1=1"
-    params = []
 
-    if filters:
-        for column, condition in filters.items():
-            if isinstance(condition, tuple):
-                operator, value = condition
-                query += f" AND {column} {operator} ?"
-                params.append(value)
-            else:
-                query += f" AND {column} = ?"
-                params.append(condition)
+    # Apply filters using helper function
+    where_clause, params = build_filter_clause(filters)
+    query += where_clause
 
     with get_db_connection() as conn:
         result = pd.read_sql(query, conn, params=params if params else None)
@@ -430,7 +428,8 @@ def bulk_update_transaction_status(
         
         cursor.execute(query, params)
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
 
 
 def undo_last_action() -> tuple[bool, str]:
@@ -470,7 +469,8 @@ def undo_last_action() -> tuple[bool, str]:
         # Delete history for this action
         cursor.execute("DELETE FROM transaction_history WHERE action_group_id = ?", (action_id,))
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
         return True, f"Action {action_id} annulée ({len(entries)} transactions rétablies)."
 
 
@@ -480,7 +480,8 @@ def mark_transaction_as_ungrouped(tx_id: int) -> None:
         cursor = conn.cursor()
         cursor.execute("UPDATE transactions SET is_manually_ungrouped = 1 WHERE id = ?", (tx_id,))
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
 
 
 def delete_transaction(tx_id: int) -> None:
@@ -489,7 +490,8 @@ def delete_transaction(tx_id: int) -> None:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
 
 
 def delete_transactions_by_period(month_str: str) -> int:
@@ -507,6 +509,7 @@ def delete_transactions_by_period(month_str: str) -> int:
         cursor.execute("DELETE FROM transactions WHERE strftime('%Y-%m', date) = ?", (month_str,))
         deleted_count = cursor.rowcount
         conn.commit()
-        st.cache_data.clear()
+        from modules.cache_manager import invalidate_transaction_caches
+        invalidate_transaction_caches()
         logger.info(f"Deleted {deleted_count} transactions for period {month_str}")
         return deleted_count

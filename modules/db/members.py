@@ -14,14 +14,16 @@ from modules.constants import MemberType
 def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
     """
     Add a new member.
-    
+
     Args:
         name: Member name (must be unique)
         member_type: MemberType.HOUSEHOLD or MemberType.EXTERNAL
-        
+
     Returns:
         True if member was added, False if already exists
     """
+    from modules.cache_manager import invalidate_member_caches
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         try:
@@ -30,7 +32,7 @@ def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
                 (name, member_type)
             )
             conn.commit()
-            st.cache_data.clear()
+            invalidate_member_caches()
             logger.info(f"Member added: {name} ({member_type})")
             return True
         except sqlite3.IntegrityError:
@@ -40,11 +42,13 @@ def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
 
 def update_member_type(member_id: int, member_type: str) -> None:
     """Update the type of a member (HOUSEHOLD or EXTERNAL)."""
+    from modules.cache_manager import invalidate_member_caches
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE members SET member_type = ? WHERE id = ?", (member_type, member_id))
         conn.commit()
-        st.cache_data.clear()
+        invalidate_member_caches()
 
 
 def delete_member(member_id: int) -> None:
@@ -101,11 +105,16 @@ def rename_member(old_name: str, new_name: str) -> int:
         
         # Update member mappings
         cursor.execute("UPDATE member_mappings SET member_name = ? WHERE member_name = ?", (new_name, old_name))
-        
+
         conn.commit()
-        st.cache_data.clear()
-        logger.info(f"Renamed member '{old_name}' → '{new_name}': {tx_count} transactions updated")
-        return tx_count
+
+    # Invalidate both member and transaction caches since both are affected
+    from modules.cache_manager import invalidate_member_caches, invalidate_transaction_caches
+    invalidate_member_caches()
+    invalidate_transaction_caches()
+
+    logger.info(f"Renamed member '{old_name}' → '{new_name}': {tx_count} transactions updated")
+    return tx_count
 
 
 def get_orphan_labels() -> list[str]:
@@ -169,11 +178,16 @@ def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu")
         
         # Delete from members table
         cursor.execute("DELETE FROM members WHERE name = ?", (old_label,))
-        
+
         conn.commit()
-        st.cache_data.clear()
-        logger.info(f"Replaced label '{old_label}' → '{replacement_label}': {count} updates")
-        return count
+
+    # Invalidate both member and transaction caches since both are affected
+    from modules.cache_manager import invalidate_member_caches, invalidate_transaction_caches
+    invalidate_member_caches()
+    invalidate_transaction_caches()
+
+    logger.info(f"Replaced label '{old_label}' → '{replacement_label}': {count} updates")
+    return count
 
 
 # --- Member Mapping Functions ---
@@ -181,13 +195,15 @@ def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu")
 def add_member_mapping(card_suffix: str, member_name: str) -> None:
     """
     Map a card suffix to a member name.
-    
+
     Used for automatic member attribution during import based on card numbers.
-    
+
     Args:
         card_suffix: Last 4 digits of card number
         member_name: Member to assign
     """
+    from modules.cache_manager import invalidate_member_caches
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
@@ -195,7 +211,7 @@ def add_member_mapping(card_suffix: str, member_name: str) -> None:
             (card_suffix, member_name)
         )
         conn.commit()
-        st.cache_data.clear()
+        invalidate_member_caches()
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
@@ -216,12 +232,13 @@ def get_member_mappings() -> dict[str, str]:
 
 def delete_member_mapping(mapping_id: int) -> None:
     """Delete a member mapping by ID."""
+    from modules.cache_manager import invalidate_member_caches
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM member_mappings WHERE id = ?", (mapping_id,))
-        cursor.execute("DELETE FROM member_mappings WHERE id = ?", (mapping_id,))
         conn.commit()
-        st.cache_data.clear()
+        invalidate_member_caches()
 
 
 def get_member_mappings_df() -> pd.DataFrame:

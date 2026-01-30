@@ -46,9 +46,9 @@ class TestImportToCategorization:
         
         # Step 2: Import transactions (simulate CSV import)
         df = pd.DataFrame([
-            {'date': '2024-01-15', 'label': 'CARREFOUR MARKET PARIS', 'amount': -85.50, 'status': 'PENDING', 'category_validated': 'Inconnu'},
-            {'date': '2024-01-16', 'label': 'CARREFOUR EXPRESS', 'amount': -42.30, 'status': 'PENDING', 'category_validated': 'Inconnu'},
-            {'date': '2024-01-17', 'label': 'TOTAL STATION', 'amount': -55.00, 'status': 'PENDING', 'category_validated': 'Inconnu'}
+            {'date': '2024-01-15', 'label': 'CARREFOUR MARKET PARIS', 'amount': -85.50, 'status': 'pending', 'category_validated': 'Inconnu'},
+            {'date': '2024-01-16', 'label': 'CARREFOUR EXPRESS', 'amount': -42.30, 'status': 'pending', 'category_validated': 'Inconnu'},
+            {'date': '2024-01-17', 'label': 'TOTAL STATION', 'amount': -55.00, 'status': 'pending', 'category_validated': 'Inconnu'}
         ])
         save_transactions(df)
         
@@ -92,7 +92,7 @@ class TestValidationWorkflow:
         """Test that validation can create learning rules."""
         # Step 1: Import pending transaction
         df = pd.DataFrame([
-            {'date': '2024-01-15', 'label': 'AMAZON.FR ACHAT', 'amount': -79.99, 'status': 'PENDING', 'category_validated': 'Inconnu'}
+            {'date': '2024-01-15', 'label': 'AMAZON.FR ACHAT', 'amount': -79.99, 'status': 'pending', 'category_validated': 'Inconnu'}
         ])
         save_transactions(df)
         df_all = get_all_transactions()
@@ -108,7 +108,7 @@ class TestValidationWorkflow:
         
         # Step 4: Import another similar transaction
         df2 = pd.DataFrame([
-            {'date': '2024-01-20', 'label': 'AMAZON PRIME', 'amount': -5.99, 'status': 'PENDING', 'category_validated': 'Inconnu'}
+            {'date': '2024-01-20', 'label': 'AMAZON PRIME', 'amount': -5.99, 'status': 'pending', 'category_validated': 'Inconnu'}
         ])
         save_transactions(df2)
         
@@ -128,9 +128,9 @@ class TestValidationWorkflow:
         """Test bulk validation with tag assignment."""
         # Step 1: Import multiple similar transactions
         df = pd.DataFrame([
-            {'date': '2024-01-15', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'PENDING'},
-            {'date': '2024-01-16', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'PENDING'},
-            {'date': '2024-01-17', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'PENDING'}
+            {'date': '2024-01-15', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'pending'},
+            {'date': '2024-01-16', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'pending'},
+            {'date': '2024-01-17', 'label': 'REMBOURSEMENT SECU', 'amount': 45.00, 'status': 'pending'}
         ])
         save_transactions(df)
         
@@ -159,17 +159,17 @@ class TestBudgetTracking:
         
         # Step 2: Add transactions
         df = pd.DataFrame([
-            {'date': '2024-01-15', 'label': 'COURSES 1', 'amount': -150.00, 'category_validated': 'Alimentation', 'status': 'VALIDATED'},
-            {'date': '2024-01-20', 'label': 'COURSES 2', 'amount': -200.00, 'category_validated': 'Alimentation', 'status': 'VALIDATED'}
+            {'date': '2024-01-15', 'label': 'COURSES 1', 'amount': -150.00, 'category_validated': 'Alimentation', 'status': 'validated'},
+            {'date': '2024-01-20', 'label': 'COURSES 2', 'amount': -200.00, 'category_validated': 'Alimentation', 'status': 'validated'}
         ])
         save_transactions(df)
         
         # Step 3: Calculate actual spending
         cursor = db_connection.cursor()
         cursor.execute("""
-            SELECT SUM(ABS(amount)) FROM transactions 
-            WHERE category_validated = 'Alimentation' 
-            AND status = 'VALIDATED'
+            SELECT SUM(ABS(amount)) FROM transactions
+            WHERE category_validated = 'Alimentation'
+            AND status = 'validated'
         """)
         actual = cursor.fetchone()[0]
         

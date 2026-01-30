@@ -96,7 +96,7 @@ class TestApplyRules:
     def _add_tx(self, date, label, amount):
         # Helper to add transaction via save_transactions
         df = pd.DataFrame([{
-            'date': date, 'label': label, 'amount': amount, 'status': 'PENDING',
+            'date': date, 'label': label, 'amount': amount, 'status': 'pending',
             'category_validated': 'Inconnu'
         }])
         save_transactions(df)

@@ -3,7 +3,6 @@ Data quality audit and cleanup operations.
 Handles data integrity checks, duplicate detection, and automatic fixes.
 """
 import pandas as pd
-import streamlit as st
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -85,8 +84,10 @@ def auto_fix_common_inconsistencies() -> int:
         logger.error(f"Error re-applying rules in magic fix: {e}")
 
     if total_fixed > 0:
-        st.cache_data.clear()
-    
+        # Magic fix touches multiple domains (members, transactions, tags, categories)
+        from modules.cache_manager import invalidate_all_caches
+        invalidate_all_caches()
+
     logger.info(f"Auto-fix applied {total_fixed} corrections")
     return total_fixed
 

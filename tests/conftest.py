@@ -47,7 +47,7 @@ def temp_db():
             card_suffix TEXT,
             tags TEXT,
             notes TEXT,
-            status TEXT DEFAULT 'PENDING',
+            status TEXT DEFAULT 'pending',
             import_date TEXT,
             dedup_hash TEXT,
             occurrence_index INTEGER DEFAULT 0,
@@ -196,7 +196,7 @@ def sample_transactions():
             'member': 'Maison',
             'beneficiary': 'Carrefour',
             'tags': 'courses,alimentaire',
-            'status': 'VALIDATED'
+            'status': 'validated'
         },
         {
             'date': '2024-01-16',
@@ -208,7 +208,7 @@ def sample_transactions():
             'member': 'Maison',
             'beneficiary': 'Employeur',
             'tags': 'salaire',
-            'status': 'VALIDATED'
+            'status': 'validated'
         },
         {
             'date': '2024-01-17',
@@ -220,7 +220,7 @@ def sample_transactions():
             'member': 'Inconnu',
             'beneficiary': 'Total',
             'tags': '',
-            'status': 'PENDING'
+            'status': 'pending'
         }
     ]
 

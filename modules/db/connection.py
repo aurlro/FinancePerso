@@ -48,7 +48,7 @@ def build_filter_clause(filters: dict) -> tuple[str, list]:
 
     Args:
         filters: Dictionary of filter conditions {column: value or (operator, value)}
-                 Examples: {"status": "VALIDATED"}, {"amount": (">", 100)}
+                 Examples: {"status": "validated"}, {"amount": (">", 100)}
 
     Returns:
         Tuple of (where_clause, params)
@@ -56,10 +56,10 @@ def build_filter_clause(filters: dict) -> tuple[str, list]:
         params: List of parameter values for the placeholders
 
     Example:
-        filters = {"status": "VALIDATED", "amount": (">", 100)}
+        filters = {"status": "validated", "amount": (">", 100)}
         clause, params = build_filter_clause(filters)
         # clause = " AND status = ? AND amount > ?"
-        # params = ["VALIDATED", 100]
+        # params = ["validated", 100]
     """
     if not filters:
         return "", []

@@ -28,8 +28,8 @@ class TestGlobalStats:
         """Test stats calculation."""
         # Add sample transactions
         df = pd.DataFrame([
-            {'date': str(date.today()), 'label': 'INCOME', 'amount': 2000.0, 'status': 'VALIDATED'},
-            {'date': str(date.today()), 'label': 'EXPENSE', 'amount': -500.0, 'status': 'VALIDATED'}
+            {'date': str(date.today()), 'label': 'INCOME', 'amount': 2000.0, 'status': 'validated'},
+            {'date': str(date.today()), 'label': 'EXPENSE', 'amount': -500.0, 'status': 'validated'}
         ])
         save_transactions(df)
         

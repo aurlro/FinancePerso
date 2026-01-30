@@ -200,7 +200,7 @@ def main():
     print("-"*70)
     
     common_queries = [
-        "SELECT * FROM transactions WHERE status = 'PENDING'",
+        "SELECT * FROM transactions WHERE status = 'pending'",
         "SELECT * FROM transactions WHERE category_validated = 'Alimentation'",
         "SELECT * FROM transactions WHERE strftime('%Y-%m', date) = '2024-01'",
         "SELECT category_validated, COUNT(*) FROM transactions GROUP BY category_validated"
