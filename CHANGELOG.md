@@ -6,6 +6,37 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [3.1.0] - 2026-01-30
+
+### ✨ Analyse des Récurrences V2 - Refonte Complète
+
+**🔧 Corrections de Bugs**
+- **Drill-down fonctionnel** : Correction du bug "Aucune transaction trouvée" dans l'historique détaillé
+- Stockage des IDs de transactions pour un affichage fiable
+- Matching précis entre récurrences détectées et transactions réelles
+
+**💰 Détection des Revenus Améliorée**
+- Détection des salaires (patterns : SALAIRE, REMUNERATION, CAPGEMINI...)
+- Détection des allocations chômage (patterns : FRANCE TRAVAIL, POLE EMPLOI, ARE)
+- Détection des pensions (patterns : CNAV, CARSAT, RETRAITE)
+- Tolérance accrue pour les variations de montant sur les revenus
+
+**📂 Nouvelles Vues d'Analyse**
+- **Vue "Par opération"** : Liste détaillée avec filtres (Type, Fréquence, Montant)
+- **Vue "Par catégorie"** : Regroupement et agrégation par catégorie
+- **Vue "Par tag"** : Analyse des récurrences par tags associés
+
+**🎨 Améliorations UX**
+- Cartes de résumé mensuel (charges, revenus, balance)
+- Indicateurs visuels 🟢 Fixe / 🟡 Variable
+- Affichage des variantes de libellés (+N variantes)
+- Filtres interactifs dans la sidebar
+- Expandables avec transactions éditables
+
+*Fichiers modifiés* : `pages/4_Recurrence.py`, `modules/analytics_v2.py` (nouveau)
+
+---
+
 ## [3.0.1] - 2026-01-30
 
 ### 🔄 Améliorations Techniques

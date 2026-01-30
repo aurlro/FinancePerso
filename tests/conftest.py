@@ -65,6 +65,7 @@ def temp_db():
             prev_member TEXT,
             prev_tags TEXT,
             prev_beneficiary TEXT,
+            prev_notes TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
 
@@ -196,6 +197,7 @@ def sample_transactions():
             'member': 'Maison',
             'beneficiary': 'Carrefour',
             'tags': 'courses,alimentaire',
+            'notes': 'Test note',
             'status': 'validated'
         },
         {

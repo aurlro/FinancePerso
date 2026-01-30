@@ -49,6 +49,7 @@ def init_db() -> None:
             ('tx_hash', "ALTER TABLE transactions ADD COLUMN tx_hash TEXT"),
             ('card_suffix', "ALTER TABLE transactions ADD COLUMN card_suffix TEXT"),
             ('is_manually_ungrouped', "ALTER TABLE transactions ADD COLUMN is_manually_ungrouped INTEGER DEFAULT 0"),
+            ('notes', "ALTER TABLE transactions ADD COLUMN notes TEXT"),
         ]
         
         for col, migration_sql in migrations:
@@ -70,9 +71,18 @@ def init_db() -> None:
                 prev_member TEXT,
                 prev_tags TEXT,
                 prev_beneficiary TEXT,
+                prev_notes TEXT,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        
+        # Migration for transaction_history table
+        cursor.execute("PRAGMA table_info(transaction_history)")
+        columns_hist = [info[1] for info in cursor.fetchall()]
+        if 'prev_notes' not in columns_hist:
+            cursor.execute("ALTER TABLE transaction_history ADD COLUMN prev_notes TEXT")
+            logger.info("Added column: prev_notes to transaction_history")
+
         
         # Performance Indexes - Single column
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON transactions(status)")

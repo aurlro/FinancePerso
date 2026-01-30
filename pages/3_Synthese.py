@@ -206,12 +206,22 @@ else:
                 if pred['status'] != 'ok':  # Only show warnings and overruns
                     with st.expander(f"{pred['alert_level']} {pred['category']} - {pred['usage_percent']:.0f}% du budget"):
                         col_p1, col_p2 = st.columns(2)
-                        with col_p1:
-                            st.metric("Dépensé", f"{pred['current_spent']:.0f}€")
-                            st.metric("Budget", f"{pred['budget']:.0f}€")
                         with col_p2:
                             st.metric("Projection fin de mois", f"{pred['projected_spent']:.0f}€")
                             st.metric("Moyenne journalière", f"{pred['daily_avg']:.0f}€/jour")
+                        
+                        # Add drill-down to see transactions causing the alert
+                        st.divider()
+                        st.caption(f"Transactions pour {pred['category']}")
+                        from modules.ui.components.transaction_drill_down import render_transaction_drill_down
+                        
+                        # We need to find the IDs for this category in the current month
+                        tx_ids = df_month[df_month['category_validated'] == pred['category']]['id'].tolist()
+                        render_transaction_drill_down(
+                            category=pred['category'],
+                            transaction_ids=tx_ids,
+                            key_prefix=f"budget_alert_{pred['category']}"
+                        )
     else:
         st.info("Définissez des budgets pour activer les alertes prédictives.")
     

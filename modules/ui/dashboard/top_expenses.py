@@ -34,8 +34,13 @@ def render_top_expenses(df_current: pd.DataFrame, cat_emoji_map: dict, limit: in
     # Get top N
     top_expenses = df_exp.sort_values('amount', ascending=False).head(limit)
     
-    # Clean for display
-    display_top = top_expenses[['date', 'label', 'Catégorie', 'amount']].copy()
-    display_top.columns = ['Date', 'Libellé', 'Catégorie', 'Montant (€)']
+    # Use drill-down instead of static dataframe
+    from modules.ui.components.transaction_drill_down import render_transaction_drill_down
     
-    st.dataframe(display_top, use_container_width=True, hide_index=True)
+    # We pass 'Top 10' as a generic category name, but the component now handles 
+    # heterogeneous categories using the transaction's own category as default.
+    render_transaction_drill_down(
+        category="Top Expenses",
+        transaction_ids=top_expenses['id'].tolist(),
+        key_prefix="top_exp_drill"
+    )

@@ -384,20 +384,21 @@ def get_transactions_count(filters: dict = None) -> int:
         return result['count'].iloc[0]
 
 
-def update_transaction_category(tx_id: int, new_category: str, tags: str = None, beneficiary: str = None) -> None:
+def update_transaction_category(tx_id: int, new_category: str, tags: str = None, beneficiary: str = None, notes: str = None) -> None:
     """
     Update a single transaction's category.
     
     Delegates to bulk_update_transaction_status for consistency.
     """
-    bulk_update_transaction_status([tx_id], new_category, tags, beneficiary)
+    bulk_update_transaction_status([tx_id], new_category, tags, beneficiary, notes)
 
 
 def bulk_update_transaction_status(
     tx_ids: list[int], 
     new_category: str, 
     tags: str = None, 
-    beneficiary: str = None
+    beneficiary: str = None,
+    notes: str = None
 ) -> None:
     """
     Update multiple transactions at once and log for undo.
@@ -421,7 +422,7 @@ def bulk_update_transaction_status(
         # 1. Capture Previous State for Undo
         placeholders = ', '.join(['?'] * len(tx_ids))
         cursor.execute(
-            f"SELECT id, status, category_validated, member, tags, beneficiary "
+            f"SELECT id, status, category_validated, member, tags, beneficiary, notes "
             f"FROM transactions WHERE id IN ({placeholders})",
             list(tx_ids)
         )
@@ -431,10 +432,10 @@ def bulk_update_transaction_status(
             cursor.execute(
                 """
                 INSERT INTO transaction_history 
-                (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary, prev_notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5])
+                (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6])
             )
         
         # 2. Apply Update
@@ -451,6 +452,10 @@ def bulk_update_transaction_status(
         if beneficiary is not None:
             set_clauses.append("beneficiary = ?")
             params.append(beneficiary)
+            
+        if notes is not None:
+            set_clauses.append("notes = ?")
+            params.append(notes)
             
         query = f"""
             UPDATE transactions 

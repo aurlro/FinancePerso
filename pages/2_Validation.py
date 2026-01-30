@@ -8,7 +8,7 @@ from modules.utils import clean_label
 # New modular components
 from modules.ui.components.filters import render_transaction_filters
 from modules.ui.components.progress_tracker import render_progress_tracker
-from modules.ui.components.tag_manager import render_tag_selector
+from modules.ui.components.tag_manager import render_smart_tag_selector, render_pill_tags
 from modules.ui.components.member_selector import render_member_selector
 from modules.ui.validation.grouping import get_smart_groups, calculate_group_stats, get_group_transactions
 from modules.ui.validation.sorting import sort_groups, get_sort_options
@@ -61,6 +61,25 @@ div[data-testid="stHorizontalBlock"]:has(div[data-testid="column"]:first-child d
 """, unsafe_allow_html=True)
 
 st.title("✅ Validation des dépenses")
+
+# Info box about features
+st.info("""
+**📝 Nouvelle interface de validation :**
+- **📂 Catégorie** : Sélectionnez la catégorie appropriée
+- **👤 Qui a payé** : Indiquez le membre qui a effectué la dépense
+- **🎯 Pour qui** : Indiquez le bénéficiaire (Famille, Maison, ou un membre)
+- **🏷️ Tags** : Ajoutez des balises en un clic sur les boutons rapides
+- **🧾 Chèques** : Un champ "Nature" apparaît automatiquement pour les chèques
+
+💡 *Les tags vous permettent de suivre des dépenses spécifiques à travers différentes catégories*
+""")
+
+# Helper function to detect cheques
+def _is_cheque_transaction(label: str) -> bool:
+    """Check if a transaction is a cheque based on label."""
+    cheque_keywords = ['chq.', 'chèque', 'cheque', 'chq ', 'cheq ']
+    label_lower = label.lower()
+    return any(keyword in label_lower for keyword in cheque_keywords)
 
 # Load data
 df = get_pending_transactions()
@@ -285,10 +304,6 @@ else:
                     # Note: Inputs (SelectBox) might not be rendered yet if expander closed!
                     # So we use the PRE-COMPUTED/SessionState values.
                     
-                    # For Payeur/Benef/Tags, if widget not rendered, use defaults from row or previous state if exists?
-                    # Streamlit session state persists even if not rendered IF it was rendered before.
-                    # If never rendered, we need valid defaults.
-                    
                     # Logic: Use st.session_state if key exists (user modified before closed?), else default from row.
                     
                     # Payeur
@@ -313,6 +328,12 @@ else:
                     val_mem_check = st.session_state.get(mem_check_key, True)
                     
                     validate_with_memory(group_ids, row['label'], st.session_state[cat_key], val_mem_check, val_mem, tags=val_tags_str, beneficiary=val_ben)
+                    
+                    # Enhanced feedback
+                    st.session_state[f'validation_success_{group_id}'] = {
+                        'count': len(group_ids),
+                        'category': st.session_state[cat_key]
+                    }
                     st.toast(f"✅ Lot validé ({group_count} ops) !", icon="🚀")
                     if len(display_groups) == 1: st.balloons()
                     st.rerun()
@@ -394,21 +415,22 @@ else:
                             beneficiary_val = selected_benef
                             
                     with ci_tags:
-                        # Tag selector using component
-                        tag_key = f"tag_sel_{group_id}{key_suffix}"
+                        # Smart tag selector with pill display and propagation
                         current_cat_name = st.session_state[cat_key]
                         
-                        selected_tags = render_tag_selector(
+                        # Display current tags as pills
+                        if current_tags:
+                            render_pill_tags(current_tags, size="small")
+                        
+                        selected_tags = render_smart_tag_selector(
                             transaction_id=group_id,
                             current_tags=current_tags,
                             category=current_cat_name,
+                            label=row['label'],
                             key_suffix=key_suffix,
-                            allow_create=True,
-                            strict_mode=True
+                            max_quick_tags=4,
+                            enable_propagation=True
                         )
-                                          
-                        # Suggested tags are now handled directly inside render_tag_selector
-                        # to avoid redundant logic and potential infinite loops.
                                          
                         final_tags_str = ", ".join(selected_tags)
                         
@@ -416,30 +438,63 @@ else:
                         remember = st.toggle("Mém.", key=f"mem_check_{group_id}{key_suffix}", value=True)
                         if st.button("Valider", key=f"btn_in_{group_id}{key_suffix}", type="primary", use_container_width=True):
                              validate_with_memory(group_ids, row['label'], st.session_state[cat_key], remember, member_val, tags=final_tags_str, beneficiary=beneficiary_val)
-                             st.toast("✅ Modification validée !", icon="👍")
-                             st.rerun()
+                             
+                             # Show enhanced confirmation
+                             st.session_state[f'validation_success_{group_id}'] = {
+                                 'count': len(group_ids),
+                                 'category': st.session_state[cat_key]
+                             }
+                             st.toast(f"✅ {len(group_ids)} opération(s) validée(s) !", icon="🚀")
+                             
+                             # Check if we should auto-close or keep open
+                             if not st.session_state.get(f'keep_open_{group_id}', False):
+                                 st.rerun()
+                             else:
+                                 st.success(f"✅ Validé ! {len(group_ids)} opération(s) dans la catégorie '{st.session_state[cat_key]}'")
+                    
+                    # --- CHEQUE NATURE FIELD ---
+                    if _is_cheque_transaction(row['label']):
+                        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+                        cheque_cols = st.columns([0.5, 3, 1])
+                        with cheque_cols[1]:
+                            st.markdown("📝 **Nature du chèque**")
+                            nature_cols = st.columns([2, 1])
+                            with nature_cols[0]:
+                                cheque_nature = st.text_input(
+                                    "Nature",
+                                    key=f"cheque_nature_{group_id}{key_suffix}",
+                                    placeholder="Décrivez l'usage de ce chèque...",
+                                    label_visibility="collapsed"
+                                )
+                            with nature_cols[1]:
+                                nature_quick = st.selectbox(
+                                    "Rapide",
+                                    options=["", "Santé", "Voiture", "Loyer", "Facture", "Cadeau", "Professionnel", "Vacances", "Divers"],
+                                    key=f"cheque_nature_quick_{group_id}{key_suffix}",
+                                    label_visibility="collapsed"
+                                )
+                                if nature_quick and not cheque_nature:
+                                    cheque_nature = nature_quick
+                            
+                            if cheque_nature:
+                                st.caption(f"Sera tagué comme : 🏷️ chèque-{cheque_nature.lower().replace(' ', '-')}")
+                                # Add to tags
+                                nature_tag = f"chèque-{cheque_nature.lower().replace(' ', '-')}"
+                                if nature_tag not in selected_tags:
+                                    selected_tags.append(nature_tag)
+                                    final_tags_str = ", ".join(selected_tags)
 
-                    # --- DETAILS LIST ---
+                    # --- DETAILS LIST via Drill-Down ---
                     st.divider()
-                    st.caption(f"Détails des {group_count} opérations")
-                    for _, sub_row in group_df.iterrows():
-                         d_c1, d_c2, d_c3 = st.columns([3, 1, 0.5], vertical_alignment="center")
-                         
-                         # Col 1: Label + Date (small gray)
-                         d_c1.markdown(f"**{sub_row['label']}**  \n:grey[{sub_row['date']}]")
-                         
-                         # Col 2: Amount (Colored)
-                         color_sub = "red" if sub_row['amount'] < 0 else "green"
-                         d_c2.markdown(f":{color_sub}[**{sub_row['amount']:.2f} €**]")
-                         
-                         # Col 3: Ungroup Button
-                         if d_c3.button("❌", key=f"iso_{sub_row['id']}{key_suffix}", help="Exclure cette opération du groupe"):
-                             # Persist to DB
-                             mark_transaction_as_ungrouped(int(sub_row['id']))
-                             # Update Session for immediate feedback
-                             st.session_state['excluded_tx_ids'].add(int(sub_row['id']))
-                             st.toast("✂️ Opération exclue définitivement", icon="❌")
-                             st.rerun()
+                    st.caption(f"Ajustement des {group_count} opérations avant validation")
+                    
+                    from modules.ui.components.transaction_drill_down import render_transaction_drill_down
+                    render_transaction_drill_down(
+                        category=st.session_state[cat_key],
+                        transaction_ids=group_ids,
+                        key_prefix=f"val_drill_{group_id}{key_suffix}",
+                        show_anomaly_management=False
+                    )
             
             # Separator between groups
             st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; opacity: 0.3;'>", unsafe_allow_html=True)

@@ -7,9 +7,21 @@ import streamlit as st
 
 # Load CSS helper (copied from ui.py for backward compatibility)
 def load_css():
-    """Load custom CSS from assets/style.css"""
+    """Load custom CSS from assets/style.css and global styles"""
+    # Load main CSS
     with open("assets/style.css") as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+        main_css = f.read()
+        st.markdown(f'<style>{main_css}</style>', unsafe_allow_html=True)
+    
+    # Load global component styles
+    try:
+        import os
+        global_css_path = os.path.join(os.path.dirname(__file__), "styles", "global.css")
+        with open(global_css_path) as f:
+            global_css = f.read()
+            st.markdown(f'<style>{global_css}</style>', unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass  # Global CSS is optional
 
 def card_kpi(title, value, trend=None, trend_color="positive"):
     """

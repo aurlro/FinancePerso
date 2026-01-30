@@ -108,77 +108,188 @@ tab_audit, tab_anomalies, tab_trends, tab_chat, tab_sub, tab_setup = st.tabs([
 ])
 
 with tab_audit:
+    # Initialize corrected anomalies tracking
+    if 'audit_corrected' not in st.session_state:
+        st.session_state['audit_corrected'] = []
+    if 'audit_hidden' not in st.session_state:
+        st.session_state['audit_hidden'] = []
+    
     # --- EXISTING AUDIT LOGIC ---
-    if st.button("Lancer l'analyse 🔎", type="primary"):
-        with st.spinner("Analyse des incohérences et vérification IA..."):
-            df = get_all_transactions()
-            
-            if df.empty:
-                st.warning("Pas de transactions à analyser.")
-            else:
-                inconsistencies = detect_inconsistencies(df)
-                ai_suggestions = ai_audit_batch(df)
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        if st.button("🔎 Lancer l'analyse complète", type="primary"):
+            with st.spinner("Analyse des incohérences et vérification IA..."):
+                df = get_all_transactions()
                 
-                st.session_state['audit_results'] = inconsistencies + ai_suggestions
+                if df.empty:
+                    st.warning("Pas de transactions à analyser.")
+                else:
+                    inconsistencies = detect_inconsistencies(df)
+                    ai_suggestions = ai_audit_batch(df)
+                    
+                    st.session_state['audit_results'] = inconsistencies + ai_suggestions
+                    st.session_state['audit_corrected'] = []
+                    st.rerun()
+    
+    with col2:
+        # Filter options
+        if 'audit_results' in st.session_state and st.session_state['audit_results']:
+            show_corrected = st.checkbox("Afficher corrigées", value=True, key="show_corrected")
+            show_hidden = st.checkbox("Afficher ignorées", value=False, key="show_hidden")
+    
+    # Bulk action bar
+    if 'audit_results' in st.session_state and st.session_state['audit_results']:
+        st.divider()
+        st.markdown("**Actions en masse**")
+        bulk_cols = st.columns([2, 2, 2, 3])
+        
+        with bulk_cols[0]:
+            if st.button("📋 Sélectionner tout", use_container_width=True):
+                st.session_state['audit_bulk_selection'] = list(range(len(st.session_state['audit_results'])))
                 st.rerun()
-
+        
+        with bulk_cols[1]:
+            if st.button("❌ Désélectionner tout", use_container_width=True):
+                st.session_state['audit_bulk_selection'] = []
+                st.rerun()
+        
+        with bulk_cols[2]:
+            if st.button("🗑️ Ignorer sélection", use_container_width=True):
+                selected = st.session_state.get('audit_bulk_selection', [])
+                for idx in sorted(selected, reverse=True):
+                    if idx not in st.session_state['audit_hidden']:
+                        st.session_state['audit_hidden'].append(idx)
+                st.session_state['audit_bulk_selection'] = []
+                st.rerun()
+        
+        with bulk_cols[3]:
+            if st.button("🧠 Créer règles pour la sélection", use_container_width=True, type="primary"):
+                # Bulk learning rule creation
+                selected = st.session_state.get('audit_bulk_selection', [])
+                rules_count = 0
+                for idx in selected:
+                    if idx < len(st.session_state['audit_results']):
+                        item = st.session_state['audit_results'][idx]
+                        suggested = item.get('suggested_category')
+                        if suggested:
+                            pattern = clean_label(item['label'])
+                            if add_learning_rule(pattern, suggested, priority=5):
+                                rules_count += 1
+                if rules_count > 0:
+                    st.success(f"✅ {rules_count} règles créées !")
+                    st.toast(f"🧠 {rules_count} règles mémorisées", icon="🧠")
+    
     if 'audit_results' in st.session_state:
         results = st.session_state['audit_results']
         
         if not results:
             st.success("Aucune anomalie détectée ! Tout semble propre. ✨")
         else:
-            st.info(f"{len(results)} anomalies potentielles trouvées.")
+            # Count visible anomalies
+            visible_count = 0
+            for i, item in enumerate(results):
+                is_corrected = i in st.session_state.get('audit_corrected', [])
+                is_hidden = i in st.session_state.get('audit_hidden', [])
+                
+                if is_hidden and not show_hidden:
+                    continue
+                if is_corrected and not show_corrected:
+                    continue
+                visible_count += 1
+            
+            st.info(f"📊 {visible_count}/{len(results)} anomalies visibles | ✅ {len(st.session_state.get('audit_corrected', []))} corrigées | 🗑️ {len(st.session_state.get('audit_hidden', []))} ignorées")
+            
+            # Initialize bulk selection if needed
+            if 'audit_bulk_selection' not in st.session_state:
+                st.session_state['audit_bulk_selection'] = []
             
             for i, item in enumerate(results):
-                with st.expander(f"{item['type']} : {item['label']}"):
-                    st.write(f"**Détails :** {item['details']}")
-                    st.dataframe(
-                        item['rows'][['date', 'label', 'amount', 'category_validated']],
-                        column_config={
-                            "date": "Date",
-                            "label": "Libellé",
-                            "amount": "Montant",
-                            "category_validated": "Catégorie"
-                        },
-                        use_container_width=True
+                is_corrected = i in st.session_state.get('audit_corrected', [])
+                is_hidden = i in st.session_state.get('audit_hidden', [])
+                
+                # Skip based on filters
+                if is_hidden and not show_hidden:
+                    continue
+                if is_corrected and not show_corrected:
+                    continue
+                
+                # Determine expander title and state
+                status_icon = "✅" if is_corrected else ("🗑️" if is_hidden else "⚠️")
+                expander_title = f"{status_icon} {item['type']} : {item['label']}"
+                
+                with st.expander(expander_title, expanded=(not is_corrected and not is_hidden)):
+                    # Bulk selection checkbox
+                    col_bulk, col_info = st.columns([0.1, 0.9])
+                    with col_bulk:
+                        is_selected = st.checkbox(
+                            "",
+                            value=(i in st.session_state['audit_bulk_selection']),
+                            key=f"bulk_select_{i}",
+                            label_visibility="collapsed"
+                        )
+                        if is_selected and i not in st.session_state['audit_bulk_selection']:
+                            st.session_state['audit_bulk_selection'].append(i)
+                        elif not is_selected and i in st.session_state['audit_bulk_selection']:
+                            st.session_state['audit_bulk_selection'].remove(i)
+                    
+                    with col_info:
+                        st.write(f"**Détails :** {item['details']}")
+                        if is_corrected:
+                            st.success("✅ Cette anomalie a été corrigée. Vous pouvez la modifier davantage ou la fermer.")
+                    
+                    # Transaction editor
+                    tx_ids = item['rows']['id'].tolist()
+                    from modules.ui.components.transaction_drill_down import render_transaction_drill_down
+                    
+                    render_transaction_drill_down(
+                        category=item.get('suggested_category') or item['rows'].iloc[0]['category_validated'],
+                        transaction_ids=tx_ids,
+                        key_prefix=f"audit_drill_{i}",
+                        show_anomaly_management=False,
+                        anomaly_index=i,
+                        anomaly_list_key='audit'
                     )
                     
-                    col_act1, col_act2, col_act3 = st.columns([1, 1, 2])
+                    # Action buttons
+                    col_actions = st.columns([1, 1, 1])
                     
-                    with col_act1:
-                        if item.get('suggested_category'):
-                            if st.button("✅ Accepter", key=f"fix_{i}", help=f"Appliquer : {item['suggested_category']}"):
-                                ids_to_update = [int(uid) for uid in item['rows']['id'].tolist()]
-                                for tx_id in ids_to_update:
-                                    update_transaction_category(tx_id, item['suggested_category'])
-                                st.cache_data.clear()
-                                st.toast(f"✅ Correction appliquée !", icon="👍")
-                                st.session_state['audit_results'].pop(i)
+                    with col_actions[0]:
+                        if not is_corrected:
+                            if st.button("✅ Marquer comme corrigée", key=f"mark_fixed_{i}", use_container_width=True):
+                                st.session_state['audit_corrected'].append(i)
+                                st.toast("Anomalie marquée comme corrigée", icon="✅")
                                 st.rerun()
-
-                    with col_act2:
-                        if st.button("❌ Ignorer", key=f"ignore_{i}", help="Ne pas corriger"):
-                            st.session_state['audit_results'].pop(i)
-                            st.rerun()
-                            
-                    with col_act3:
-                        # Manual correction
-                        options = get_categories()
-                        # Pre-select current if in list, else first
-                        current_cat = item['rows'].iloc[0]['category_validated']
-                        idx = options.index(current_cat) if current_cat in options else 0
-                        
-                        manual_cat = st.selectbox("Autre correction", options, key=f"manual_{i}", index=idx, label_visibility="collapsed")
-                        
-                        if st.button("Appliquer", key=f"apply_manual_{i}"):
-                             ids_to_update = [int(uid) for uid in item['rows']['id'].tolist()]
-                             for tx_id in ids_to_update:
-                                    update_transaction_category(tx_id, manual_cat)
-                             st.cache_data.clear()
-                             st.toast(f"✅ Correction appliquée !", icon="👍")
-                             st.session_state['audit_results'].pop(i)
-                             st.rerun()
+                        else:
+                            if st.button("↩️ Rouvrir", key=f"reopen_{i}", use_container_width=True):
+                                st.session_state['audit_corrected'].remove(i)
+                                st.rerun()
+                    
+                    with col_actions[1]:
+                        if not is_hidden:
+                            if st.button("🗑️ Ignorer", key=f"ignore_{i}", use_container_width=True):
+                                st.session_state['audit_hidden'].append(i)
+                                st.toast("Anomalie ignorée", icon="🗑️")
+                                st.rerun()
+                        else:
+                            if st.button("🔄 Restaurer", key=f"restore_{i}", use_container_width=True):
+                                st.session_state['audit_hidden'].remove(i)
+                                st.rerun()
+                    
+                    with col_actions[2]:
+                        suggested = item.get('suggested_category')
+                        if suggested and not is_corrected:
+                            if st.button(f"🧠 Appliquer '{suggested}'", key=f"apply_sugg_{i}", use_container_width=True, type="primary"):
+                                # Apply suggested category to all transactions
+                                for tx_id in tx_ids:
+                                    update_transaction_category(tx_id, suggested)
+                                    add_learning_rule(clean_label(item['label']), suggested, priority=5)
+                                st.session_state['audit_corrected'].append(i)
+                                from modules.cache_manager import invalidate_transaction_caches, invalidate_rule_caches
+                                invalidate_transaction_caches()
+                                invalidate_rule_caches()
+                                st.success(f"✅ Catégorie '{suggested}' appliquée à {len(tx_ids)} transactions !")
+                                st.toast("Catégorie corrigée et mémorisée", icon="🧠")
+                                st.rerun()
 
 # --- NEW: ANOMALIES TAB ---
 with tab_anomalies:
