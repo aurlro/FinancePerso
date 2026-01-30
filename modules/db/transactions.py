@@ -5,7 +5,7 @@ Handles CRUD operations for transactions, the core entity of the application.
 import uuid
 import pandas as pd
 import streamlit as st
-from modules.db.connection import get_db_connection
+from modules.db.connection import get_db_connection, build_filter_clause
 from modules.db.members import get_member_mappings
 from modules.logger import logger
 
@@ -304,18 +304,10 @@ def get_all_transactions(
         DataFrame with transactions matching the criteria
     """
     query = "SELECT * FROM transactions WHERE 1=1"
-    params = []
 
-    # Apply filters
-    if filters:
-        for column, condition in filters.items():
-            if isinstance(condition, tuple):
-                operator, value = condition
-                query += f" AND {column} {operator} ?"
-                params.append(value)
-            else:
-                query += f" AND {column} = ?"
-                params.append(condition)
+    # Apply filters using helper function
+    where_clause, params = build_filter_clause(filters)
+    query += where_clause
 
     # Add ordering
     if order_by:

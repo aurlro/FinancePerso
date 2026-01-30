@@ -17,12 +17,12 @@ DB_PATH = os.path.join(PROJECT_ROOT, "Data", "finance.db")
 def get_db_connection():
     """
     Context manager for database connections.
-    
+
     Ensures proper connection handling with automatic cleanup.
-    
+
     Yields:
         sqlite3.Connection: Database connection object
-        
+
     Example:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -40,3 +40,40 @@ def get_db_connection():
     finally:
         if conn:
             conn.close()
+
+
+def build_filter_clause(filters: dict) -> tuple[str, list]:
+    """
+    Build WHERE clause and parameters from filter dictionary.
+
+    Args:
+        filters: Dictionary of filter conditions {column: value or (operator, value)}
+                 Examples: {"status": "VALIDATED"}, {"amount": (">", 100)}
+
+    Returns:
+        Tuple of (where_clause, params)
+        where_clause: SQL fragment to append to query (e.g., " AND status = ? AND amount > ?")
+        params: List of parameter values for the placeholders
+
+    Example:
+        filters = {"status": "VALIDATED", "amount": (">", 100)}
+        clause, params = build_filter_clause(filters)
+        # clause = " AND status = ? AND amount > ?"
+        # params = ["VALIDATED", 100]
+    """
+    if not filters:
+        return "", []
+
+    where_clause = ""
+    params = []
+
+    for column, condition in filters.items():
+        if isinstance(condition, tuple):
+            operator, value = condition
+            where_clause += f" AND {column} {operator} ?"
+            params.append(value)
+        else:
+            where_clause += f" AND {column} = ?"
+            params.append(condition)
+
+    return where_clause, params
