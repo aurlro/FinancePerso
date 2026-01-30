@@ -74,11 +74,19 @@ def init_db() -> None:
             )
         ''')
         
-        # Performance Indexes
+        # Performance Indexes - Single column
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_status ON transactions(status)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_date ON transactions(date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_category ON transactions(category_validated)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_member ON transactions(member)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_label ON transactions(label)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_amount ON transactions(amount)")
+
+        # Composite Indexes for common query patterns
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_date_category ON transactions(date, category_validated)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_status_date ON transactions(status, date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_date_member ON transactions(date, member)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_category_amount ON transactions(category_validated, amount)")
         
         # Categories table
         cursor.execute('''

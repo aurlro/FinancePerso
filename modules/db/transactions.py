@@ -284,17 +284,81 @@ def get_all_hashes() -> set[str]:
 
 
 @st.cache_data(show_spinner="Chargement des données...")
-def get_all_transactions() -> pd.DataFrame:
+def get_all_transactions(
+    limit: int = None,
+    offset: int = 0,
+    filters: dict = None,
+    order_by: str = "date DESC"
+) -> pd.DataFrame:
     """
-    Get all transactions.
-    
-    WARNING: Loads entire table into memory. Consider pagination for large datasets.
-    
+    Get transactions with optional pagination and filtering.
+
+    Args:
+        limit: Maximum number of rows to return (None for all)
+        offset: Number of rows to skip (for pagination)
+        filters: Dictionary of filter conditions {column: value or (operator, value)}
+                 Examples: {"status": "VALIDATED"}, {"amount": (">", 100)}
+        order_by: SQL ORDER BY clause (default: "date DESC")
+
     Returns:
-        DataFrame with all transactions
+        DataFrame with transactions matching the criteria
     """
+    query = "SELECT * FROM transactions WHERE 1=1"
+    params = []
+
+    # Apply filters
+    if filters:
+        for column, condition in filters.items():
+            if isinstance(condition, tuple):
+                operator, value = condition
+                query += f" AND {column} {operator} ?"
+                params.append(value)
+            else:
+                query += f" AND {column} = ?"
+                params.append(condition)
+
+    # Add ordering
+    if order_by:
+        query += f" ORDER BY {order_by}"
+
+    # Add pagination
+    if limit is not None:
+        query += f" LIMIT {limit}"
+        if offset > 0:
+            query += f" OFFSET {offset}"
+
     with get_db_connection() as conn:
-        return pd.read_sql("SELECT * FROM transactions", conn)
+        return pd.read_sql(query, conn, params=params if params else None)
+
+
+@st.cache_data(show_spinner="Chargement des données...")
+def get_transactions_count(filters: dict = None) -> int:
+    """
+    Get total count of transactions matching filters.
+    Useful for pagination controls.
+
+    Args:
+        filters: Dictionary of filter conditions
+
+    Returns:
+        Total count of matching transactions
+    """
+    query = "SELECT COUNT(*) as count FROM transactions WHERE 1=1"
+    params = []
+
+    if filters:
+        for column, condition in filters.items():
+            if isinstance(condition, tuple):
+                operator, value = condition
+                query += f" AND {column} {operator} ?"
+                params.append(value)
+            else:
+                query += f" AND {column} = ?"
+                params.append(condition)
+
+    with get_db_connection() as conn:
+        result = pd.read_sql(query, conn, params=params if params else None)
+        return result['count'].iloc[0]
 
 
 def update_transaction_category(tx_id: int, new_category: str, tags: str = None, beneficiary: str = None) -> None:
