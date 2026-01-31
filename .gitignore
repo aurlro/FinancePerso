@@ -25,3 +25,6 @@ Data/backups/
 
 # AI
 .claude
+
+# Backup files
+*.backup

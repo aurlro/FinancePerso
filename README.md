@@ -25,6 +25,22 @@ FinancePerso est une application web complète de gestion de finances personnell
 - **💬 Chat IA** : Assistant conversationnel pour interroger vos finances en langage naturel
 - **📈 Prédictions Budgétaires** : Alertes de dépassement de budget en temps réel
 
+### 🤖 Machine Learning Local (v3.6)
+
+Alternative **100% offline** à l'IA cloud pour la catégorisation des transactions :
+
+- **🔒 Confidentialité totale** : Aucune donnée ne quitte votre ordinateur
+- **⚡ Latence nulle** : Prédictions instantanées
+- **📈 Auto-amélioration** : S'entraîne sur vos transactions validées
+- **💰 Gratuit** : Aucun coût API
+
+**Installation :**
+```bash
+pip install -r requirements-ml.txt
+```
+
+Puis dans **Configuration > IA & Services**, choisissez le mode "ML Local".
+
 ## 🚀 Installation
 
 ### Prérequis
@@ -50,14 +66,20 @@ streamlit run Accueil.py
 
 ### Configuration de l'IA
 
-1. Accédez à l'onglet **Configuration > API & Services**
-2. Choisissez votre fournisseur d'IA :
+1. Accédez à l'onglet **Configuration > IA & Services**
+2. Choisissez votre mode de catégorisation :
+   - **🤖 Auto** : Local si disponible, sinon Cloud
+   - **🏠 ML Local** : 100% offline (nécessite `pip install scikit-learn`)
+   - **☁️ IA Cloud** : Meilleure précision via API externe
+   - **📋 Règles uniquement** : Pas de ML, uniquement les règles définies
+
+3. Pour l'IA Cloud, choisissez votre fournisseur :
    - **Gemini** (recommandé) : Rapide et gratuit
    - **Ollama** : 100% local et privé
    - **DeepSeek** : Excellent rapport qualité/prix
    - **OpenAI** : Standard de l'industrie
 
-3. Entrez votre clé API (ou URL pour Ollama)
+4. Entrez votre clé API (ou URL pour Ollama)
 
 ### Configuration des membres
 

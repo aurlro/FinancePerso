@@ -1,0 +1,6 @@
+# Machine Learning Local - Optional
+# Install for offline ML categorization feature
+# pip install -r requirements-ml.txt
+
+scikit-learn>=1.3.0
+numpy>=1.24.0
