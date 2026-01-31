@@ -4,6 +4,7 @@ from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
 from modules.db.members import add_member
 from modules.ui.components.onboarding_modal import should_show_onboarding, render_onboarding_modal
+from modules.ui.components.quick_actions import render_quick_actions_grid
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -118,21 +119,8 @@ else:
     c_left, c_right = st.columns([2, 1])
     
     with c_left:
-        st.subheader("📌 Actions Rapides")
-        col_a, col_b = st.columns(2)
-        with col_a:
-            with st.container(border=True):
-                st.markdown("#### 🧠 Validation IA")
-                st.caption("Vérifiez les catégories proposées par l'assistant.")
-                if st.button("Valider les transactions"):
-                    st.switch_page("pages/2_Validation.py")
-        
-        with col_b:
-            with st.container(border=True):
-                st.markdown("#### ⚙️ Configuration")
-                st.caption("Gérez les règles, les membres et les préférences.")
-                if st.button("Paramètres"):
-                    st.switch_page("pages/9_Configuration.py")
+        # Nouvelles actions rapides avec popups
+        render_quick_actions_grid()
 
     with c_right:
         st.subheader("💡 Le saviez-vous ?")

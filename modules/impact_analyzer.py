@@ -2,6 +2,7 @@
 Impact Analyzer - Preview the impact of configuration changes.
 Shows how many transactions will be affected by a change before applying it.
 """
+import streamlit as st
 import pandas as pd
 from modules.db.transactions import get_all_transactions
 from modules.db.rules import get_learning_rules
