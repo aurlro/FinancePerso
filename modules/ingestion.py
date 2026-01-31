@@ -2,6 +2,7 @@ import pandas as pd
 import hashlib
 import re
 from typing import Optional, Dict, Tuple, Union
+from modules.logger import logger
 
 
 def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
@@ -32,9 +33,12 @@ def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
         # Deduplication against DB happens in data_manager.save_transactions by checking counts.
         norm_label = str(row['label']).strip().upper()
         
-        # New hash = SHA(date|label|amount|local_occ)
-        # This hash represents "The Nth occurrence of this transaction in THIS file".
-        base = f"{row['date']}|{norm_label}|{row['amount']}|{row['_local_occ']}"
+        # Include account_label in hash to avoid detecting same transaction on different accounts as duplicate
+        account = str(row.get('account_label', '')).strip().upper()
+        
+        # New hash = SHA(date|label|amount|account|local_occ)
+        # This hash represents "The Nth occurrence of this transaction in THIS file for THIS account".
+        base = f"{row['date']}|{norm_label}|{row['amount']}|{account}|{row['_local_occ']}"
         return hashlib.sha256(base.encode()).hexdigest()[:16]
         
     df['tx_hash'] = df.apply(calculate_hash, axis=1)
@@ -160,7 +164,7 @@ def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optiona
         invalid_dates = df_clean[df_clean['date'].isna()]
         if not invalid_dates.empty:
             dropped_count = len(invalid_dates)
-            print(f"⚠️ [Ingestion] Dropped {dropped_count} rows with invalid dates. Sample: {invalid_dates.head(3).to_dict()}")
+            logger.warning(f"[Ingestion] Dropped {dropped_count} rows with invalid dates. Sample: {invalid_dates.head(3).to_dict()}")
             
         df_clean = df_clean.dropna(subset=['date']) # Drop invalid dates
         

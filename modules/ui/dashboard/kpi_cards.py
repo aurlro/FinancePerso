@@ -2,6 +2,14 @@ import streamlit as st
 import pandas as pd
 from modules.ui import card_kpi
 
+
+def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:
+    """S'assure que la colonne date_dt existe (idempotent)."""
+    if 'date_dt' not in df.columns and 'date' in df.columns:
+        df = df.copy()
+        df['date_dt'] = pd.to_datetime(df['date'])
+    return df
+
 def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
     """
     Calculate KPI trends between current and previous periods.
@@ -68,8 +76,8 @@ def compute_previous_period(df: pd.DataFrame, df_current: pd.DataFrame,
     Calculate the previous period dataframe for trend comparison.
     
     Args:
-        df: Full transaction dataset
-        df_current: Current period filtered transactions
+        df: Full transaction dataset (avec date_dt déjà converti)
+        df_current: Current period filtered transactions (avec date_dt)
         show_internal: Whether to show internal transfers
         show_hors_budget: Whether to show off-budget items
         
@@ -79,7 +87,7 @@ def compute_previous_period(df: pd.DataFrame, df_current: pd.DataFrame,
     if df_current.empty:
         return pd.DataFrame()
     
-    df_current['date_dt'] = pd.to_datetime(df_current['date'])
+    # date_dt est déjà présent grâce au cache dans la page principale
     min_date = df_current['date_dt'].min()
     max_date = df_current['date_dt'].max()
     duration = max_date - min_date
@@ -92,7 +100,7 @@ def compute_previous_period(df: pd.DataFrame, df_current: pd.DataFrame,
         prev_start = min_date - (duration + pd.Timedelta(days=1))
         prev_end = min_date - pd.Timedelta(days=1)
     
-    df['date_dt'] = pd.to_datetime(df['date'])
+    # df a déjà date_dt depuis la page principale
     df_prev = df[(df['date_dt'] >= prev_start) & (df['date_dt'] <= prev_end)].copy()
     
     # Apply the same exclusions to prev period

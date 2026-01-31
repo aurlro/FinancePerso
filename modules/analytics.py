@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import Tuple
 from modules.categorization import clean_label
-from modules.data_manager import get_learning_rules
+from modules.db.rules import get_learning_rules
 from modules.analytics_constants import (
     MIN_OCCURRENCES_FOR_RECURRING,
     AMOUNT_TOLERANCE_ENERGY,
@@ -194,7 +194,7 @@ def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     Calculate monthly Incoming, Outgoing, and Savings Rate for the last N months.
     Returns DataFrame with columns ['Month', 'Revenus', 'Dépenses', 'Epargne', 'Taux'].
     """
-    from modules.data_manager import get_db_connection
+    from modules.db.connection import get_db_connection
     import datetime
     
     with get_db_connection() as conn:

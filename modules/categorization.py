@@ -1,11 +1,25 @@
 from dotenv import load_dotenv
 from modules.logger import logger
 from modules.utils import clean_label
-from modules.data_manager import get_categories
+from modules.db.categories import get_categories
 from modules.ai_manager import get_ai_provider, get_active_model_name
+import streamlit as st
 import json
 
 load_dotenv()
+
+
+@st.cache_data(ttl=300)
+def _get_cached_categories():
+    """Cache categories to avoid DB calls on every categorization."""
+    return get_categories()
+
+
+@st.cache_data(ttl=300)
+def _get_cached_transfer_targets():
+    """Cache internal transfer targets."""
+    from modules.db.settings import get_internal_transfer_targets
+    return get_internal_transfer_targets()
 
 # Rules have been migrated to database (see modules/data_manager.py)
 
@@ -74,8 +88,8 @@ def predict_category_ai(label, amount, date):
     
     try:
         provider = get_ai_provider()
-        # Get dynamic categories
-        categories_list = get_categories()
+        # Get dynamic categories (cached)
+        categories_list = _get_cached_categories()
         categories_str = ", ".join(categories_list)
         
         # We pass both original and cleaned, just in case context helps, but emphasize cleaned.
@@ -114,7 +128,7 @@ def categorize_transaction(label, amount, date):
     from modules.db.settings import get_internal_transfer_targets
 
     TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
-    INTERNAL_TARGETS = get_internal_transfer_targets()
+    INTERNAL_TARGETS = _get_cached_transfer_targets()
 
     if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(t in label_upper for t in INTERNAL_TARGETS):
         return "Virement Interne", "rule", 1.0

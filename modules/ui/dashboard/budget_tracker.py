@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from modules.data_manager import get_budgets
+from modules.db.budgets import get_budgets
 
 def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict):
     """

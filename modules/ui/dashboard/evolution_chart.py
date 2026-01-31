@@ -1,7 +1,37 @@
+"""
+Module de graphiques d'évolution avec caching.
+"""
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+
+
+@st.cache_data(ttl=300)
+def _compute_monthly_evolution(df_current: pd.DataFrame) -> pd.DataFrame:
+    """Cache les calculs mensuels pour l'évolution."""
+    if df_current.empty:
+        return pd.DataFrame()
+    
+    df_evol = df_current.copy()
+    df_evol['Mois'] = df_evol['date_dt'].dt.strftime('%Y-%m')
+    
+    # Complete the date range to avoid gaps
+    all_months = pd.date_range(
+        start=df_evol['date_dt'].min(),
+        end=df_evol['date_dt'].max(),
+        freq='MS'
+    ).strftime('%Y-%m').tolist()
+    
+    monthly_data = []
+    for m in all_months:
+        g = df_evol[df_evol['Mois'] == m]
+        inc = g[g['amount'] > 0]['amount'].sum()
+        exp = abs(g[g['amount'] < 0]['amount'].sum())
+        monthly_data.append({"Mois": m, "Revenus": inc, "Dépenses": exp})
+    
+    return pd.DataFrame(monthly_data)
+
 
 def render_evolution_chart(df_current: pd.DataFrame):
     """
@@ -13,32 +43,10 @@ def render_evolution_chart(df_current: pd.DataFrame):
     """
     st.subheader("📉 Évolution des Flux")
     
-    if df_current.empty:
-        st.info("Aucune donnée disponible.")
-        return
-    
-    # Group by month
-    df_evol = df_current.copy()
-    df_evol['Mois'] = df_evol['date_dt'].dt.strftime('%Y-%m')
-    
-    # Complete the date range to avoid gaps
-    all_months = pd.date_range(
-start=df_evol['date_dt'].min(), 
-        end=df_evol['date_dt'].max(), 
-        freq='MS'
-    ).strftime('%Y-%m').tolist()
-    
-    monthly_data = []
-    for m in all_months:
-        g = df_evol[df_evol['Mois'] == m]
-        inc = g[g['amount'] > 0]['amount'].sum()
-        exp = abs(g[g['amount'] < 0]['amount'].sum())
-        monthly_data.append({"Mois": m, "Revenus": inc, "Dépenses": exp})
-    
-    df_plot = pd.DataFrame(monthly_data)
+    df_plot = _compute_monthly_evolution(df_current)
     
     if df_plot.empty:
-        st.info("Sélectionnez une période avec des données pour voir l'évolution.")
+        st.info("Aucune donnée disponible.")
         return
     
     # Create figure
@@ -113,6 +121,7 @@ start=df_evol['date_dt'].min(),
     )
     
     st.plotly_chart(fig_evol, use_container_width=True)
+
 
 def render_savings_trend_chart():
     """

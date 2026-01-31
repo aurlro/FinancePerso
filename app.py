@@ -1,6 +1,9 @@
 import streamlit as st
 from modules.ui import load_css, card_kpi
-from modules.data_manager import init_db, is_app_initialized, get_global_stats, add_member
+from modules.db.migrations import init_db
+from modules.db.stats import is_app_initialized, get_global_stats
+from modules.db.members import add_member
+from modules.ui.components.onboarding_modal import should_show_onboarding, render_onboarding_modal
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -13,10 +16,17 @@ st.set_page_config(
 load_css()
 init_db()
 
+# Afficher les messages flash en attente
+display_flash_messages()
+
+# --- ONBOARDING MODAL ---
+if should_show_onboarding():
+    render_onboarding_modal()
+
 # --- MAIN LOGIC ---
 
 if not is_app_initialized():
-    # === ONBOARDING MODE ===
+    # === ONBOARDING MODE (Fallback if modal was dismissed) ===
     st.title("👋 Bienvenue sur MyFinance Companion")
     st.markdown("### Votre assistant personnel pour une gestion financière sereine.")
     
@@ -47,6 +57,7 @@ if not is_app_initialized():
                 # but we can store it in session state to pre-fill the import page.
                 st.session_state['default_account_name'] = account_name
                 st.session_state['onboarding_complete'] = True
+                toast_success(f"Bienvenue {user_name} ! Configuration initiale créée.", icon="👋")
                 st.rerun()
 
     with col_r:
@@ -62,10 +73,18 @@ if not is_app_initialized():
         st.divider()
         from modules.ui.components.profile_form import render_profile_setup_form
         render_profile_setup_form(key_prefix="onboarding")
+        
+        # Button to reopen onboarding modal
+        st.divider()
+        if st.button("🎯 Guide de démarrage", use_container_width=True, type="secondary"):
+            st.session_state['onboarding_dismissed'] = False
+            st.session_state['onboarding_step'] = 1
+            st.rerun()
 
     if st.session_state.get('onboarding_complete'):
-        st.success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
-        if st.button("Aller à l'import 📥"):
+        show_success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
+        if st.button("Aller à l'import 📥", type="primary"):
+            toast_success("Redirection vers l'import...", icon="📥")
             st.switch_page("pages/1_Import.py")
 
 else:
@@ -87,7 +106,7 @@ else:
         color = "positive" if sav >= 0 else "negative"
         card_kpi("Épargne du Mois", f"{sav:+,.0f} €", trend=f"{stats.get('current_month_rate', 0):.1f}%", trend_color=color)
     with c4:
-        st.write("") # Placeholder or shortcut
+        st.write("")  # Placeholder or shortcut
         if st.button("📥 Nouvel Import", use_container_width=True, type="primary"):
             st.switch_page("pages/1_Import.py")
         if st.button("📊 Voir la Synthèse", use_container_width=True):
@@ -119,9 +138,15 @@ else:
         st.subheader("💡 Le saviez-vous ?")
         st.info("Vous pouvez définir des règles automatiques pour classer vos dépenses récurrentes directement depuis la page 'Validation'.")
         
+        # Quick access to onboarding
+        st.divider()
+        if st.button("🎯 Revoir le guide", use_container_width=True):
+            st.session_state['onboarding_dismissed'] = False
+            st.session_state['onboarding_step'] = 1
+            st.rerun()
+    
     st.sidebar.success("✅ Application Initialisée")
     
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
     render_app_info()
-

@@ -1,8 +1,13 @@
 import streamlit as st
-from modules.data_manager import (
+from modules.db.categories import (
     get_categories_df, add_category, delete_category,
     update_category_emoji, update_category_fixed,
-    update_category_suggested_tags
+    update_category_suggested_tags, merge_categories, get_categories
+)
+from modules.impact_analyzer import analyze_category_merge_impact, render_impact_preview
+from modules.ui.feedback import (
+    toast_success, toast_error, save_feedback, delete_feedback,
+    show_success, show_warning
 )
 
 def render_category_management():
@@ -33,16 +38,22 @@ def render_category_management():
                     new_suggested_tags = c1.text_input("Tags suggérés (séparés par des virgules)", value=suggested_tags_val, key=f"tags_val_{row['id']}")
                     
                     if c1.button("Mettre à jour", key=f"upd_cat_{row['id']}"):
-                        update_category_emoji(row['id'], new_emoji)
-                        update_category_fixed(row['id'], int(is_fixed))
-                        update_category_suggested_tags(row['id'], new_suggested_tags)
-                        st.toast(f"✅ {row['name']} mis à jour !", icon="💾")
-                        st.rerun()
+                        try:
+                            update_category_emoji(row['id'], new_emoji)
+                            update_category_fixed(row['id'], int(is_fixed))
+                            update_category_suggested_tags(row['id'], new_suggested_tags)
+                            save_feedback(f"Catégorie '{row['name']}'", created=False)
+                            st.rerun()
+                        except Exception as e:
+                            toast_error(f"Erreur mise à jour : {e}", icon="❌")
                     
                     if c2.button("🗑️ Supprimer", key=f"del_cat_{row['id']}"):
-                        delete_category(row['id'])
-                        st.toast(f"🗑️ Catégorie supprimée", icon="🗑️")
-                        st.rerun()
+                        try:
+                            delete_category(row['id'])
+                            delete_feedback(f"Catégorie '{row['name']}'")
+                            st.rerun()
+                        except Exception as e:
+                            toast_error(f"Impossible de supprimer : {e}", icon="❌")
 
     with col_add_cat:
         st.subheader("Ajouter une catégorie")
@@ -55,9 +66,58 @@ def render_category_management():
             if st.form_submit_button("Ajouter"):
                 if new_cat_name:
                     if add_category(new_cat_name, new_cat_emoji, int(new_is_fixed)):
-                        st.toast(f"✅ Catégorie '{new_cat_name}' ajoutée !", icon="🏷️")
+                        type_label = "fixe" if new_is_fixed else "variable"
+                        save_feedback(f"Catégorie '{new_cat_name}' ({type_label})", created=True)
                         st.rerun()
                     else:
-                        st.error("Cette catégorie existe déjà.")
+                        show_warning(f"La catégorie '{new_cat_name}' existe déjà", icon="⚠️")
+                        toast_error("Cette catégorie existe déjà", icon="❌")
                 else:
-                    st.warning("Veuillez entrer un nom.")
+                    toast_warning("Veuillez entrer un nom", icon="⚠️")
+    
+    # --- CATEGORY MERGE SECTION ---
+    st.divider()
+    st.subheader("🔀 Fusionner des catégories")
+    st.info("Transférez toutes les transactions d'une catégorie vers une autre.")
+    
+    all_cats = get_categories()
+    if len(all_cats) >= 2:
+        col_m1, col_m2, col_m3 = st.columns([2, 2, 1])
+        
+        with col_m1:
+            source_cat = st.selectbox(
+                "Catégorie à absorber",
+                all_cats,
+                key="merge_source",
+                help="Cette catégorie sera supprimée après la fusion"
+            )
+        
+        with col_m2:
+            target_options = [c for c in all_cats if c != source_cat]
+            target_cat = st.selectbox(
+                "Catégorie cible",
+                target_options,
+                key="merge_target",
+                help="Cette catégorie recevra toutes les transactions"
+            )
+        
+        # Preview impact
+        if source_cat and target_cat:
+            impact = analyze_category_merge_impact(source_cat, target_cat)
+            render_impact_preview('category_merge', impact)
+        
+        with col_m3:
+            st.markdown("<div style='height: 0.1rem;'></div>", unsafe_allow_html=True)
+            if st.button("Fusionner", type="primary", use_container_width=True):
+                if source_cat and target_cat and source_cat != target_cat:
+                    try:
+                        result = merge_categories(source_cat, target_cat)
+                        count = result.get('transactions', 0)
+                        toast_success(f"✅ {count} transactions transférées !", icon="🔀")
+                        show_success(f"Catégorie '{source_cat}' fusionnée avec '{target_cat}' ({count} transactions)")
+                        st.rerun()
+                    except Exception as e:
+                        toast_error(f"Erreur de fusion : {e}", icon="❌")
+                else:
+                    show_warning("Veuillez sélectionner deux catégories différentes", icon="⚠️")
+                    toast_warning("Sélection invalide", icon="⚠️")

@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 import json
-from modules.data_manager import get_all_transactions, update_transaction_category, add_learning_rule, get_learning_rules, init_db, get_categories
+from modules.db.transactions import get_all_transactions, update_transaction_category
+from modules.db.rules import add_learning_rule, get_learning_rules
+from modules.db.migrations import init_db
+from modules.db.categories import get_categories
 from modules.categorization import clean_label, predict_category_ai
 from modules.ui import load_css, card_kpi
 from modules.ai_manager import get_ai_provider, get_active_model_name

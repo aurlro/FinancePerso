@@ -101,24 +101,18 @@ def render_category_pie_chart(df_current: pd.DataFrame, cat_emoji_map: dict,
     
     st.plotly_chart(fig_pie, use_container_width=True)
 
-def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
-    """
-    Render stacked bar chart of monthly expenses by category.
+@st.cache_data(ttl=300)
+def _prepare_monthly_stacked_data(df: pd.DataFrame, cat_emoji_map: dict) -> pd.DataFrame:
+    """Prépare les données pour le graphique empilé (avec cache)."""
+    if df.empty:
+        return pd.DataFrame()
     
-    Args:
-        df: Full transaction dataset
-        cat_emoji_map: Category to emoji mapping
-    """
-    st.subheader("Évolution Mensuelle par Catégorie")
-    
-    # Prepare data
-    df['date'] = pd.to_datetime(df['date'])
+    # date_dt est déjà présent depuis la page principale
     exclude_cats = ['Revenus', 'Virement Interne', 'Hors Budget']
     df_monthly = df[(df['amount'] < 0) & (~df['category_validated'].isin(exclude_cats))].copy()
     
     if df_monthly.empty:
-        st.info("Aucune donnée disponible.")
-        return
+        return pd.DataFrame()
     
     df_monthly['amount'] = df_monthly['amount'].abs()
     
@@ -126,16 +120,36 @@ def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
     df_monthly['display_category'] = df_monthly.apply(
         lambda x: (
             lambda v: f"{cat_emoji_map.get(v, '🏷️')} {v}"
-        )(x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu")), 
+        )(x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu")),
         axis=1
     )
     
     # Extract Month-Year for grouping
-    df_monthly['month_year'] = df_monthly['date'].dt.strftime('%Y-%m')
+    df_monthly['month_year'] = df_monthly['date_dt'].dt.strftime('%Y-%m')
     
     # Group and aggregate
     df_stacked = df_monthly.groupby(['month_year', 'display_category'])['amount'].sum().reset_index()
     df_stacked.columns = ['Mois', 'Catégorie', 'Montant']
+    
+    return df_stacked
+
+
+def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
+    """
+    Render stacked bar chart of monthly expenses by category.
+    
+    Args:
+        df: Full transaction dataset (avec date_dt déjà présent)
+        cat_emoji_map: Category to emoji mapping
+    """
+    st.subheader("Évolution Mensuelle par Catégorie")
+    
+    # Utiliser les données en cache
+    df_stacked = _prepare_monthly_stacked_data(df, cat_emoji_map)
+    
+    if df_stacked.empty:
+        st.info("Aucune donnée disponible.")
+        return
     
     # Create stacked bar chart
     fig_stacked = px.bar(

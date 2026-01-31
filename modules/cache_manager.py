@@ -14,7 +14,7 @@ def invalidate_transaction_caches():
     # Clear specific cached functions
     from modules.db.transactions import (
         get_all_transactions,
-        get_pending_transactions,
+        get_all_hashes,
         get_transactions_count
     )
 
@@ -24,7 +24,7 @@ def invalidate_transaction_caches():
         pass
 
     try:
-        get_pending_transactions.clear()
+        get_all_hashes.clear()
     except AttributeError:
         pass
 
@@ -32,6 +32,9 @@ def invalidate_transaction_caches():
         get_transactions_count.clear()
     except AttributeError:
         pass
+
+    # Note: get_pending_transactions is NOT cached (real-time data)
+    # so no need to clear it
 
 
 def invalidate_rule_caches():
@@ -57,10 +60,15 @@ def invalidate_category_caches():
     Invalidate category-related caches.
     Call this after category modifications.
     """
-    from modules.db.categories import get_categories
+    from modules.db.categories import get_categories, get_categories_with_emojis
 
     try:
         get_categories.clear()
+    except AttributeError:
+        pass
+    
+    try:
+        get_categories_with_emojis.clear()
     except AttributeError:
         pass
 
@@ -86,14 +94,9 @@ def invalidate_tag_caches():
     Note: Tags are stored in the transactions table, so we must also
     invalidate transaction caches to reflect tag changes.
     """
-    from modules.db.tags import get_all_tags
     from modules.db.transactions import get_all_transactions
 
-    try:
-        get_all_tags.clear()
-    except AttributeError:
-        pass
-
+    # Tags are computed from transactions, so invalidate transaction cache
     try:
         get_all_transactions.clear()
     except AttributeError:

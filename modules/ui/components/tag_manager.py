@@ -10,7 +10,7 @@ import pandas as pd
 from typing import List, Dict, Tuple
 from modules.db.tags import get_all_tags
 from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
-from modules.data_manager import get_all_transactions
+from modules.db.transactions import get_all_transactions
 from modules.categorization import clean_label
 
 
@@ -229,10 +229,11 @@ def render_smart_tag_selector(
     transaction_id: int,
     current_tags: List[str],
     category: str,
-    label: str,
+    label: str = "",
     key_suffix: str = "",
     max_quick_tags: int = 3,
-    enable_propagation: bool = True
+    enable_propagation: bool = True,
+    df_context: pd.DataFrame = None
 ) -> List[str]:
     """
     Render a smart tag selector with pill display and propagation suggestions.
@@ -245,6 +246,7 @@ def render_smart_tag_selector(
         key_suffix: Key suffix
         max_quick_tags: Number of quick tag buttons
         enable_propagation: Whether to show propagation suggestions
+        df_context: DataFrame context for finding similar transactions
         
     Returns:
         List of selected tags
@@ -342,64 +344,64 @@ def render_smart_tag_selector(
             new_tags = [t for t in selected if t not in current_tags]
             
             if new_tags:
-                with st.container(border=True):
-                    st.markdown("🤖 **Propagation intelligente**")
+                st.markdown("---")
+                st.markdown("🤖 **Propagation intelligente**")
+                
+                # Find similar transactions
+                similar_df = find_similar_transactions(transaction_id, df=df_context)
+                
+                if not similar_df.empty:
+                    st.markdown(f"*{len(similar_df)} transactions similaires trouvées*")
                     
-                    # Find similar transactions
-                    similar_df = find_similar_transactions(transaction_id)
+                    # Show similar transactions that don't have these tags
+                    missing_tags_tx = []
+                    for _, tx in similar_df.iterrows():
+                        tx_tags = [t.strip() for t in str(tx.get('tags', '')).split(',') if t.strip()]
+                        missing = [t for t in new_tags if t not in tx_tags]
+                        if missing:
+                            missing_tags_tx.append({
+                                'id': tx['id'],
+                                'label': tx['label'][:40] + "..." if len(tx['label']) > 40 else tx['label'],
+                                'date': tx['date'],
+                                'amount': tx['amount'],
+                                'missing_tags': missing,
+                                'similarity': tx['similarity']
+                            })
                     
-                    if not similar_df.empty:
-                        st.markdown(f"*{len(similar_df)} transactions similaires trouvées*")
+                    if missing_tags_tx:
+                        st.caption("Transactions qui n'ont pas encore ces tags :")
                         
-                        # Show similar transactions that don't have these tags
-                        missing_tags_tx = []
-                        for _, tx in similar_df.iterrows():
-                            tx_tags = [t.strip() for t in str(tx.get('tags', '')).split(',') if t.strip()]
-                            missing = [t for t in new_tags if t not in tx_tags]
-                            if missing:
-                                missing_tags_tx.append({
-                                    'id': tx['id'],
-                                    'label': tx['label'][:40] + "..." if len(tx['label']) > 40 else tx['label'],
-                                    'date': tx['date'],
-                                    'amount': tx['amount'],
-                                    'missing_tags': missing,
-                                    'similarity': tx['similarity']
-                                })
+                        for tx_info in missing_tags_tx[:5]:  # Show top 5
+                            tx_col1, tx_col2, tx_col3 = st.columns([3, 1, 1])
+                            
+                            with tx_col1:
+                                st.text(f"{tx_info['label']}")
+                            with tx_col2:
+                                st.text(f"{tx_info['amount']:.2f}€")
+                            with tx_col3:
+                                # Propagate button
+                                prop_key = f"prop_{tx_info['id']}_{'_'.join(new_tags)}"
+                                if st.button("🏷️ Taguer", key=prop_key, use_container_width=True):
+                                    # Add tags to this transaction
+                                    if tx_info['id'] not in st.session_state.get('pending_tag_additions', {}):
+                                        st.session_state['pending_tag_additions'][tx_info['id']] = []
+                                    st.session_state['pending_tag_additions'][tx_info['id']].extend(new_tags)
+                                    st.toast(f"✅ Tags ajoutés à la transaction !", icon="🏷️")
                         
-                        if missing_tags_tx:
-                            st.caption("Transactions qui n'ont pas encore ces tags :")
-                            
-                            for tx_info in missing_tags_tx[:5]:  # Show top 5
-                                tx_col1, tx_col2, tx_col3 = st.columns([3, 1, 1])
-                                
-                                with tx_col1:
-                                    st.text(f"{tx_info['label']}")
-                                with tx_col2:
-                                    st.text(f"{tx_info['amount']:.2f}€")
-                                with tx_col3:
-                                    # Propagate button
-                                    prop_key = f"prop_{tx_info['id']}_{'_'.join(new_tags)}"
-                                    if st.button("🏷️ Taguer", key=prop_key, use_container_width=True):
-                                        # Add tags to this transaction
-                                        if tx_info['id'] not in st.session_state.get('pending_tag_additions', {}):
-                                            st.session_state['pending_tag_additions'][tx_info['id']] = []
-                                        st.session_state['pending_tag_additions'][tx_info['id']].extend(new_tags)
-                                        st.toast(f"✅ Tags ajoutés à la transaction !", icon="🏷️")
-                            
-                            # Batch propagate button
-                            if len(missing_tags_tx) > 1:
-                                if st.button(f"🏷️ Taguer toutes les {len(missing_tags_tx)} transactions", 
-                                           type="primary", use_container_width=True):
-                                    for tx_info in missing_tags_tx:
-                                        if tx_info['id'] not in st.session_state.get('pending_tag_additions', {}):
-                                            st.session_state['pending_tag_additions'][tx_info['id']] = []
-                                        st.session_state['pending_tag_additions'][tx_info['id']].extend(new_tags)
-                                    st.toast(f"✅ Tags propagés à {len(missing_tags_tx)} transactions !", icon="🚀")
-                                    st.rerun()
-                        else:
-                            st.success("✅ Toutes les transactions similaires ont déjà ces tags !")
+                        # Batch propagate button
+                        if len(missing_tags_tx) > 1:
+                            if st.button(f"🏷️ Taguer toutes les {len(missing_tags_tx)} transactions", 
+                                       type="primary", use_container_width=True):
+                                for tx_info in missing_tags_tx:
+                                    if tx_info['id'] not in st.session_state.get('pending_tag_additions', {}):
+                                        st.session_state['pending_tag_additions'][tx_info['id']] = []
+                                    st.session_state['pending_tag_additions'][tx_info['id']].extend(new_tags)
+                                st.toast(f"✅ Tags propagés à {len(missing_tags_tx)} transactions !", icon="🚀")
+                                st.rerun()
                     else:
-                        st.info("Aucune transaction similaire trouvée pour propagation.")
+                        st.success("✅ Toutes les transactions similaires ont déjà ces tags !")
+                else:
+                    st.info("Aucune transaction similaire trouvée pour propagation.")
     
     return selected
 

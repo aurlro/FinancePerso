@@ -1,7 +1,13 @@
 import streamlit as st
 from modules.categorization import predict_category_ai
 
-from modules.data_manager import add_learning_rule, get_pending_transactions, update_transaction_category, get_members, update_transaction_member, init_db, get_categories, get_categories_with_emojis, bulk_update_transaction_status, get_all_tags, get_all_account_labels, mark_transaction_as_ungrouped, get_categories_suggested_tags, get_member_mappings
+from modules.db.rules import add_learning_rule
+from modules.db.transactions import get_pending_transactions, update_transaction_category, bulk_update_transaction_status, mark_transaction_as_ungrouped
+from modules.db.members import get_members, update_transaction_member, get_member_mappings
+from modules.db.migrations import init_db
+from modules.db.categories import get_categories, get_categories_with_emojis, get_categories_suggested_tags
+from modules.db.tags import get_all_tags
+from modules.db.stats import get_all_account_labels
 from modules.ui import load_css
 from modules.utils import clean_label
 
@@ -118,10 +124,10 @@ else:
                     from modules.data_manager import undo_last_action
                     success, msg = undo_last_action()
                     if success:
-                        st.toast(f"✅ {msg}", icon="🔙")
+                        toast_success(msg, icon="🔙")
                         st.rerun()
                     else:
-                        st.warning(msg)
+                        toast_warning(msg, icon="⚠️")
         with h_c2:
             with st.popover("❓ Aide", use_container_width=True):
                 st.info("""
@@ -334,8 +340,9 @@ else:
                         'count': len(group_ids),
                         'category': st.session_state[cat_key]
                     }
-                    st.toast(f"✅ Lot validé ({group_count} ops) !", icon="🚀")
-                    if len(display_groups) == 1: st.balloons()
+                    validation_feedback(len(group_ids), "opération")
+                    if len(display_groups) == 1:
+                        celebrate_all_done()
                     st.rerun()
 
             # --- EXPANDER CONTENT ---
@@ -444,13 +451,13 @@ else:
                                  'count': len(group_ids),
                                  'category': st.session_state[cat_key]
                              }
-                             st.toast(f"✅ {len(group_ids)} opération(s) validée(s) !", icon="🚀")
+                             validation_feedback(len(group_ids), "opération")
                              
                              # Check if we should auto-close or keep open
                              if not st.session_state.get(f'keep_open_{group_id}', False):
                                  st.rerun()
                              else:
-                                 st.success(f"✅ Validé ! {len(group_ids)} opération(s) dans la catégorie '{st.session_state[cat_key]}'")
+                                 show_success(f"Validé ! {len(group_ids)} opération(s) dans '{st.session_state[cat_key]}'")
                     
                     # --- CHEQUE NATURE FIELD ---
                     if _is_cheque_transaction(row['label']):

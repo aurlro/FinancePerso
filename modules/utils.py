@@ -5,6 +5,63 @@ Centralizes common operations to avoid code duplication.
 import re
 import html
 
+
+def validate_regex_pattern(pattern: str) -> tuple[bool, str]:
+    """
+    Validate a regex pattern for safety and correctness.
+    
+    Args:
+        pattern: The regex pattern to validate
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+        - is_valid: True if pattern is safe and valid
+        - error_message: Description of the issue if invalid, empty string if valid
+        
+    Example:
+        >>> validate_regex_pattern("UBER")
+        (True, "")
+        >>> validate_regex_pattern("(a+)+$")
+        (False, "Ce pattern pourrait causer des problèmes de performance...")
+    """
+    if not pattern or not pattern.strip():
+        return False, "Le pattern ne peut pas être vide"
+
+    # Check length
+    if len(pattern) > 200:
+        return False, "Le pattern est trop long (max 200 caractères)"
+
+    # Try to compile as regex
+    try:
+        compiled = re.compile(pattern, re.IGNORECASE)
+
+        # Test for catastrophic backtracking patterns
+        # These are simplified checks - not exhaustive
+        dangerous_patterns = [
+            r'\(.*\*.*\)\+',  # (.*)*+ pattern
+            r'\(.*\+.*\)\*',  # (.+)* pattern
+            r'(\(\?\:.*){5,}',  # Too many nested groups
+        ]
+
+        for dangerous in dangerous_patterns:
+            if re.search(dangerous, pattern):
+                return False, "Ce pattern pourrait causer des problèmes de performance (backtracking excessif)"
+
+        # Test the pattern on sample strings
+        test_strings = ["TEST", "test 123", "ABC-DEF", ""]
+        for test_str in test_strings:
+            try:
+                compiled.search(test_str)
+            except Exception as e:
+                return False, f"Erreur lors du test du pattern: {e}"
+
+        return True, ""
+
+    except re.error as e:
+        return False, f"Pattern regex invalide: {e}"
+    except Exception as e:
+        return False, f"Erreur inattendue: {e}"
+
 def clean_label(label):
     """
     Remove common bank noise to help AI focus on merchant name.

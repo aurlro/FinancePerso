@@ -1,9 +1,17 @@
 import streamlit as st
 from modules.ingestion import load_transaction_file
-from modules.data_manager import save_transactions, init_db, get_all_transactions, get_recent_imports, get_all_hashes, get_all_account_labels
+from modules.db.transactions import save_transactions, get_all_transactions, get_all_hashes
+from modules.db.migrations import init_db
+from modules.db.stats import get_recent_imports, get_all_account_labels
 from modules.categorization import categorize_transaction
 from modules.ui import load_css
+from modules.ui.feedback import (
+    toast_success, toast_error, toast_warning, toast_info,
+    show_success, show_error, show_warning, import_feedback,
+    celebrate_completion
+)
 from modules.utils import validate_csv_file
+from modules.ai_manager import is_ai_available
 import pandas as pd
 import datetime
 
@@ -202,6 +210,7 @@ if uploaded_file is not None:
                 
                 # --- DUPLICATE DETECTION ---
                 existing_hashes = get_all_hashes()
+                force_import = False
                 
                 if existing_hashes:
                     duplicates_mask = df['tx_hash'].isin(existing_hashes)
@@ -209,24 +218,48 @@ if uploaded_file is not None:
                     num_new = len(df) - num_duplicates
                     
                     if num_duplicates > 0:
-                        st.warning(f"⚠️ **{num_duplicates} doublons détectés** (déjà importés). Ils seront ignorés.")
+                        st.warning(f"⚠️ **{num_duplicates} doublon(s) détecté(s)** - même date, libellé et montant.")
+                        
                         with st.expander(f"Voir les {num_duplicates} doublons"):
                             df_dup_preview = df[duplicates_mask][['date', 'label', 'amount']].copy()
                             df_dup_preview.columns = ['Date', 'Libellé', 'Montant'] # Clean display
                             st.dataframe(df_dup_preview.head(20))
+                            st.caption("💡 Ces transactions ont la même date, le même libellé et le même montant que des transactions déjà importées.")
+                            toast_warning(f"{num_duplicates} doublon(s) détecté(s)", icon="⚠️")
+                        
+                        # Option to force import
+                        col_dup1, col_dup2 = st.columns([2, 1])
+                        with col_dup1:
+                            force_import = st.checkbox(
+                                "Forcer l'import (ignorer les doublons)", 
+                                value=False,
+                                help="Cochez cette case si vous savez que ce ne sont pas de vrais doublons (ex: deux achats identiques le même jour)"
+                            )
+                        with col_dup2:
+                            if force_import:
+                                st.info("⚠️ Les 'doublons' seront importés quand même")
                     
-                    if num_new == 0:
+                    if num_new == 0 and not force_import:
                         st.error("❌ Toutes les transactions sont déjà importées !")
                         st.stop()
                     
-                    st.success(f"✅ **{num_new} nouvelles transactions** prêtes à l'import.")
+                    if force_import:
+                        st.success(f"✅ **{len(df)} transactions** prêtes à l'import (doublons ignorés).")
+                    else:
+                        st.success(f"✅ **{num_new} nouvelles transactions** prêtes à l'import.")
                 else:
                     num_new = len(df)
                     st.success(f"✅ {num_new} nouvelles transactions prêtes à l'import.")
                 
+                # Apply duplicate filtering unless force_import is True
+                if existing_hashes and not force_import:
+                    df_import = df[~duplicates_mask].copy()
+                else:
+                    df_import = df.copy()
+                
                 # Preview new transactions
-                st.subheader("Aperçu des nouvelles transactions")
-                df_new_preview = df[~duplicates_mask].head(10).copy() if existing_hashes else df.head(10).copy()
+                st.subheader("Aperçu des transactions à importer")
+                df_new_preview = df_import.head(10).copy()
                 # Rename for display
                 df_new_display = df_new_preview[['date', 'label', 'amount']].copy()
                 df_new_display.columns = ['Date', 'Libellé', 'Montant']
@@ -236,7 +269,23 @@ if uploaded_file is not None:
                 st.divider()
                 st.header("4️⃣ Import")
                 
-                auto_cat = st.checkbox("Lancer la catégorisation automatique (Règles + IA)", value=True)
+                # Check AI availability
+                ai_available = is_ai_available()
+                
+                if not ai_available:
+                    st.info("""
+                    🌐 **Mode hors ligne activé**
+                    
+                    Aucune clé API IA détectée. L'import utilisera uniquement les règles de catégorisation manuelles.
+                    Les transactions seront marquées comme "à valider" pour que vous puissiez les catégoriser manuellement.
+                    
+                    Pour activer l'IA : Configurez votre clé API dans la page **⚙️ Configuration** → **🔑 API & Services**.
+                    """)
+                
+                auto_cat = st.checkbox(
+                    "Lancer la catégorisation automatique (Règles + IA)" if ai_available else "Lancer la catégorisation par règles uniquement", 
+                    value=True
+                )
                 
                 if st.button("🚀 Valider et Importer", type="primary"):
                     status_container = st.empty()
@@ -247,11 +296,11 @@ if uploaded_file is not None:
                         if auto_cat:
                             st.write("Analyse et catégorisation des transactions...")
                             all_results = []
-                            total = len(df)
+                            total = len(df_import)
                             rules_count = 0
                             ai_count = 0
                             
-                            for i, (idx, row) in enumerate(df.iterrows()):
+                            for i, (idx, row) in enumerate(df_import.iterrows()):
                                 # Update feedback every few records to avoid flickering
                                 progress_bar.progress((i + 1) / total)
                                 if (i + 1) % 5 == 0 or (i + 1) == total:
@@ -266,37 +315,68 @@ if uploaded_file is not None:
                                 else:
                                     ai_count += 1
                             
-                            df['category_validated'] = [r[0] if r[0] else 'Inconnu' for r in all_results]
-                            df['ai_confidence'] = [r[2] for r in all_results]
-                            df['status'] = ['validated' if r[1] == 'rule' else 'pending' for r in all_results]
+                            df_import['category_validated'] = [r[0] if r[0] else 'Inconnu' for r in all_results]
+                            df_import['ai_confidence'] = [r[2] for r in all_results]
+                            df_import['status'] = ['validated' if r[1] == 'rule' else 'pending' for r in all_results]
                             
-                            st.write(f"✅ Analyse terminée : {rules_count} par règles, {ai_count} par IA.")
+                            if ai_available:
+                                st.write(f"✅ Analyse terminée : {rules_count} par règles, {ai_count} par IA.")
+                            else:
+                                st.write(f"✅ Analyse terminée : {rules_count} par règles (mode hors ligne).")
                         
                         # Assign account
-                        df['account_label'] = account_name
+                        df_import['account_label'] = account_name
                         
                         # Save
                         st.write("Sauvegarde dans la base de données...")
-                        count, skipped = save_transactions(df)
+                        count, skipped = save_transactions(df_import)
                         status.update(label="Importation terminée !", state="complete", expanded=False)
                     
                     # Clean up feedback widgets
                     progress_bar.empty()
                         
+                    # Feedback visuel amélioré
+                    import_feedback(count, skipped, account_name)
+                    
                     if count > 0:
-                        st.success(f"🎉 Nous venons d'importer {count} lignes sur le compte **{account_name}**.")
+                        show_success(f"🎉 {count} transactions importées sur **{account_name}**")
                         st.session_state.hide_import_summary = False
-                        st.balloons()
-                    if skipped > 0:
-                        st.info(f"{skipped} doublons ignorés.")
-                    if count == 0:
-                        st.info("Aucune nouvelle transaction à importer.")
+                        celebrate_completion(min_items=10, actual_items=count)
+                    elif skipped > 0 and count == 0:
+                        show_warning(f"Toutes les transactions existent déjà ({skipped} doublons)")
+                    else:
+                        show_info("Aucune nouvelle transaction à importer")
+                        
+                    # Afficher un résumé détaillé
+                    if count > 0:
+                        with st.expander("📊 Résumé détaillé de l'import", expanded=False):
+                            col_r1, col_r2, col_r3 = st.columns(3)
+                            with col_r1:
+                                st.metric("Importées", count)
+                            with col_r2:
+                                st.metric("Ignorées", skipped)
+                            with col_r3:
+                                st.metric("Total fichier", count + skipped)
+                            
+                            if auto_cat:
+                                st.info(f"📌 {rules_count} catégorisées par règles | {ai_count} par IA")
                         
         except Exception as e:
-            st.error(f"Une erreur est survenue : {e}")
+            error_msg = str(e)
+            toast_error(f"Erreur lors de l'import : {error_msg[:50]}...")
+            show_error(f"Une erreur est survenue : {error_msg}")
+            
+            # Suggestions d'aide selon l'erreur
+            if "encoding" in error_msg.lower():
+                st.info("💡 **Conseil** : Essayez de convertir votre fichier en UTF-8 avant l'import.")
+            elif "delimiter" in error_msg.lower() or "separateur" in error_msg.lower():
+                st.info("💡 **Conseil** : Vérifiez le séparateur choisi (point-virgule vs virgule).")
 
 st.divider()
-st.caption("💡 Les transactions seront analysées par notre IA pour proposer des catégories.")
+if is_ai_available():
+    st.caption("💡 Les transactions seront analysées par notre IA pour proposer des catégories.")
+else:
+    st.caption("💡 Mode hors ligne : seules les règles manuelles seront appliquées. Configurez une clé API pour activer l'IA.")
 
 from modules.ui.layout import render_app_info
 render_app_info()

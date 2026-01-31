@@ -3,17 +3,24 @@ import pandas as pd
 import difflib
 import hashlib
 from modules.utils import clean_label
-from modules.data_manager import (
+from modules.db.audit import (
     auto_fix_common_inconsistencies, learn_tags_from_history,
-    get_orphan_labels, get_members, rename_member, add_member,
-    delete_and_replace_label, get_categories, merge_categories,
-    get_all_categories_including_ghosts, add_category,
-    get_duplicates_report, get_transactions_by_criteria,
-    delete_transaction_by_id, get_transfer_inconsistencies,
-    update_transaction_category, bulk_update_transaction_status,
-    get_suggested_mappings, add_member_mapping
+    get_orphan_labels, delete_and_replace_label,
+    get_all_categories_including_ghosts,
+    get_duplicates_report, get_transfer_inconsistencies,
+    get_suggested_mappings
+)
+from modules.db.members import get_members, rename_member, add_member, add_member_mapping
+from modules.db.categories import get_categories, merge_categories, add_category
+from modules.db.transactions import (
+    get_transactions_by_criteria, delete_transaction_by_id,
+    update_transaction_category, bulk_update_transaction_status
 )
 from modules.backup_manager import create_backup
+from modules.ui.feedback import (
+    toast_success, toast_error, toast_warning, toast_info,
+    show_success, show_warning, show_info, celebrate_completion
+)
 
 def render_audit_tools():
     """
@@ -34,14 +41,22 @@ def render_audit_tools():
             - 🧠 Ré-applique vos règles aux transactions en attente.
         """)
         if st.button("Lancer les corrections magiques ✨", type="primary"):
-            create_backup(label="pre_magic_fix")
-            count = auto_fix_common_inconsistencies()
-            count_learned = learn_tags_from_history()
+            with st.spinner("Analyse et correction des données..."):
+                # Créer une sauvegarde avant
+                backup_path = create_backup(label="pre_magic_fix")
+                if backup_path:
+                    toast_info("Sauvegarde de sécurité créée", icon="💾")
+                
+                count = auto_fix_common_inconsistencies()
+                count_learned = learn_tags_from_history()
             
             if count > 0 or count_learned > 0:
-                st.toast(f"✅ Fait ! {count} corrections + {count_learned} tags appris.", icon="🪄")
+                toast_success(f"Fait ! {count} corrections + {count_learned} tags appris", icon="🪄")
+                show_success(f"✅ {count} corrections appliquées | {count_learned} tags appris")
+                celebrate_completion(min_items=5, actual_items=count + count_learned)
             else:
-                st.toast("Tout semble déjà propre ! ✨")
+                toast_info("Tout semble déjà propre !", icon="✨")
+                show_info("Aucune correction nécessaire - vos données sont impeccables !")
             st.rerun()
 
     # --- MEMBER CLEANUP (Orphans) ---
@@ -152,10 +167,11 @@ def render_audit_tools():
                 if c4_action.button("Fusionner 🔀", key=f"mig_ghost_{g_name}"):
                     if target:
                         res = merge_categories(g_name, target)
-                        st.toast(f"✅ Transféré ! {res['transactions']} tx déplacées.", icon="🔀")
+                        count = res.get('transactions', 0)
+                        toast_success(f"Transféré ! {count} tx déplacées", icon="🔀")
                         st.rerun()
                     else:
-                        st.warning("Choisissez une cible.")
+                        toast_warning("Choisissez une cible", icon="⚠️")
 
     # --- DUPLICATE FINDER ---
     st.divider()
@@ -180,7 +196,7 @@ def render_audit_tools():
                     c2.write(f":grey[{d_row['import_date']}]")
                     if c3.button("🗑️", key=f"del_dup_{d_row['id']}"):
                         delete_transaction_by_id(d_row['id'])
-                        st.toast("Transaction supprimée")
+                        toast_success("Transaction supprimée", icon="🗑️")
                         st.rerun()
                 
                 if st.button("🪄 Garder un seul (Auto)", key=f"clean_grp_{i}"):
@@ -188,7 +204,7 @@ def render_audit_tools():
                     deleted_count = 0
                     for tid in to_delete:
                         deleted_count += delete_transaction_by_id(tid)
-                    st.toast(f"✅ {deleted_count} doublons supprimés.", icon="🪄")
+                    toast_success(f"{deleted_count} doublons supprimés", icon="🪄")
                     st.rerun()
 
     # --- TRANSFER AUDIT ---
@@ -255,7 +271,7 @@ def render_audit_tools():
                         if c3.button(f"Tout corriger", key=f"bulk_fix_{safe_key}"):
                             tx_ids = group['id'].tolist()
                             bulk_update_transaction_status(tx_ids, target_cat)
-                            st.toast(f"✅ Corrigé ! {len(tx_ids)} tx en '{target_cat}'", icon="🔄")
+                            toast_success(f"Corrigé ! {len(tx_ids)} tx en '{target_cat}'", icon="🔄")
                             st.rerun()
                         
                         # Show individual transactions if user wants
@@ -289,5 +305,5 @@ def render_audit_tools():
                 
                 if c3.button("Associer", key=f"btn_sugg_{row['card_suffix']}", use_container_width=True):
                     add_member_mapping(row['card_suffix'], target_m)
-                    st.toast(f"✅ Carte {row['card_suffix']} associée à {target_m} !", icon="💳")
+                    toast_success(f"Carte ...{row['card_suffix']} associée à {target_m} !", icon="💳")
                     st.rerun()

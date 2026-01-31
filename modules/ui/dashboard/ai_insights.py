@@ -27,7 +27,7 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
     days_in_month = calendar.monthrange(today.year, today.month)[1]
     days_passed = today.day
     
-    df['date_dt'] = pd.to_datetime(df['date'])
+    # date_dt est déjà présent depuis la page principale (cache)
     df_month = df[(df['date_dt'].dt.year == today.year) & (df['date_dt'].dt.month == today.month)].copy()
     
     if df_month.empty:
@@ -108,7 +108,7 @@ def render_ai_financial_report(df_current: pd.DataFrame, df_prev: pd.DataFrame,
     
     # 3. YTD context (all data for the latest year in selection)
     latest_year = max(selected_years) if selected_years else datetime.date.today().year
-    df['date_dt'] = pd.to_datetime(df['date'])
+    # date_dt est déjà présent depuis la page principale (cache)
     df_ytd = df[df['date_dt'].dt.year == latest_year]
     ytd_inc = df_ytd[df_ytd['amount'] > 0]['amount'].sum()
     ytd_exp = abs(df_ytd[df_ytd['amount'] < 0]['amount'].sum())

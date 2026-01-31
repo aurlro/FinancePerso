@@ -1,12 +1,46 @@
 import os
 import json
 import requests
+import time
 from abc import ABC, abstractmethod
+from functools import wraps
 from modules.logger import logger
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# --- Rate Limiting ---
+_last_call_time = 0
+_min_interval = 0.5  # Minimum 500ms between API calls
+
+def rate_limited(func):
+    """Decorator to ensure minimum interval between API calls."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        global _last_call_time
+        elapsed = time.time() - _last_call_time
+        if elapsed < _min_interval:
+            time.sleep(_min_interval - elapsed)
+        _last_call_time = time.time()
+        return func(*args, **kwargs)
+    return wrapper
+
+# Try new API first, fallback to old if not available
+try:
+    from google import genai
+    from google.genai import types
+    USE_NEW_GENAI = True
+    logger.info("Using new google.genai API")
+except ImportError:
+    try:
+        import google.generativeai as genai
+        USE_NEW_GENAI = False
+        logger.warning("Using deprecated google.generativeai API - please upgrade: pip install google-genai")
+    except ImportError:
+        logger.error("No Google AI library found. Install with: pip install google-genai")
+        genai = None
+        USE_NEW_GENAI = False
+
 
 # --- Abstract Base Class ---
 class AIProvider(ABC):
@@ -29,29 +63,58 @@ class AIProvider(ABC):
 class GeminiProvider(AIProvider):
     def __init__(self, api_key):
         self.api_key = api_key
-        if api_key:
-            genai.configure(api_key=api_key)
+        self.client = None
+        if api_key and genai:
+            if USE_NEW_GENAI:
+                # New API: use Client
+                self.client = genai.Client(api_key=api_key)
+            else:
+                # Old API: configure globally
+                genai.configure(api_key=api_key)
 
+    @rate_limited
     def generate_json(self, prompt, model_name="gemini-2.0-flash"):
-        if not self.api_key: return {}
+        if not self.api_key or not genai:
+            return {}
         try:
-            model = genai.GenerativeModel(model_name)
-            # Response validation prompt injection could happen here if needed, 
-            # but usually the prompt itself enforces JSON.
-            # Gemini 1.5+ supports response_mime_type="application/json" but kept simple for now
-            response = model.generate_content(prompt)
-            text = response.text.replace("```json", "").replace("```", "").strip()
+            if USE_NEW_GENAI and self.client:
+                # New API
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(response_mime_type="application/json")
+                )
+                text = response.text
+            else:
+                # Old API fallback
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                text = response.text
+            
+            # Clean up markdown code blocks if present
+            text = text.replace("```json", "").replace("```", "").strip()
             return json.loads(text)
         except Exception as e:
             logger.error(f"Gemini JSON Error: {e}")
             return {}
 
+    @rate_limited
     def generate_text(self, prompt, model_name="gemini-2.0-flash"):
-        if not self.api_key: return "API Key missing"
+        if not self.api_key or not genai:
+            return "API Key missing or library not installed"
         try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
-            return response.text
+            if USE_NEW_GENAI and self.client:
+                # New API
+                response = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt
+                )
+                return response.text
+            else:
+                # Old API fallback
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                return response.text
         except Exception as e:
             logger.error(f"Gemini Text Error: {e}")
             return f"Error: {e}"
@@ -71,9 +134,9 @@ class OllamaProvider(AIProvider):
                 "model": model_name,
                 "prompt": prompt,
                 "stream": False,
-                "format": "json" # Enforce JSON mode
+                "format": "json"  # Enforce JSON mode
             }
-            resp = requests.post(f"{self.base_url}/api/generate", json=payload)
+            resp = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=30)
             resp.raise_for_status()
             data = resp.json()
             return json.loads(data['response'])
@@ -88,7 +151,7 @@ class OllamaProvider(AIProvider):
                 "prompt": prompt,
                 "stream": False
             }
-            resp = requests.post(f"{self.base_url}/api/generate", json=payload)
+            resp = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=30)
             resp.raise_for_status()
             return resp.json()['response']
         except Exception as e:
@@ -120,7 +183,7 @@ class OpenAICompatibleProvider(AIProvider):
             "response_format": {"type": "json_object"}
         }
         try:
-            resp = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload)
+            resp = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=30)
             resp.raise_for_status()
             content = resp.json()['choices'][0]['message']['content']
             return json.loads(content)
@@ -135,7 +198,7 @@ class OpenAICompatibleProvider(AIProvider):
             "messages": [{"role": "user", "content": prompt}],
         }
         try:
-            resp = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload)
+            resp = requests.post(f"{self.base_url}/chat/completions", headers=headers, json=payload, timeout=30)
             resp.raise_for_status()
             return resp.json()['choices'][0]['message']['content']
         except Exception as e:
@@ -143,7 +206,78 @@ class OpenAICompatibleProvider(AIProvider):
              return f"Error: {e}"
 
     def list_models(self):
-        return ["gpt-3.5-turbo", "gpt-4-turbo", "deepseek-chat"] # Placeholder
+        return ["gpt-3.5-turbo", "gpt-4-turbo", "deepseek-chat"]  # Placeholder
+
+# --- 4. KIMI (Moonshot AI) ---
+class KimiProvider(AIProvider):
+    """
+    KIMI AI Provider (Moonshot AI)
+    Documentation: https://platform.moonshot.cn/
+    """
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://api.moonshot.cn/v1"
+
+    def generate_json(self, prompt, model_name="moonshot-v1-8k"):
+        if not self.api_key:
+            return {}
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"}
+        }
+        try:
+            resp = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            resp.raise_for_status()
+            content = resp.json()['choices'][0]['message']['content']
+            # Clean up markdown if present
+            content = content.replace("```json", "").replace("```", "").strip()
+            return json.loads(content)
+        except Exception as e:
+            logger.error(f"KIMI JSON Error: {e}")
+            return {}
+
+    def generate_text(self, prompt, model_name="moonshot-v1-8k"):
+        if not self.api_key:
+            return "API Key missing"
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        try:
+            resp = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30
+            )
+            resp.raise_for_status()
+            return resp.json()['choices'][0]['message']['content']
+        except Exception as e:
+            logger.error(f"KIMI Text Error: {e}")
+            return f"Error: {e}"
+
+    def list_models(self):
+        return [
+            "moonshot-v1-8k",      # 8k context
+            "moonshot-v1-32k",     # 32k context
+            "moonshot-v1-128k"     # 128k context
+        ]
 
 # --- Factory ---
 def get_ai_provider():
@@ -178,3 +312,20 @@ def get_ai_provider():
 
 def get_active_model_name():
     return os.getenv("AI_MODEL_NAME", "gemini-2.0-flash")
+
+def is_ai_available():
+    """Check if AI provider is properly configured and available."""
+    provider = get_ai_provider()
+    
+    if isinstance(provider, GeminiProvider):
+        return bool(provider.api_key and genai)
+    elif isinstance(provider, OllamaProvider):
+        try:
+            requests.get(f"{provider.base_url}/api/tags", timeout=2)
+            return True
+        except:
+            return False
+    elif isinstance(provider, OpenAICompatibleProvider):
+        return bool(provider.api_key)
+    
+    return False

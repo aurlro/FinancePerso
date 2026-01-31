@@ -8,7 +8,8 @@ Features:
 """
 import streamlit as st
 import pandas as pd
-from modules.data_manager import get_all_transactions, get_categories_with_emojis
+from modules.db.transactions import get_all_transactions
+from modules.db.categories import get_categories_with_emojis
 from modules.analytics_v2 import (
     detect_recurring_payments_v2, 
     group_by_category, 

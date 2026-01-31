@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import stat
 from dotenv import load_dotenv, set_key, find_dotenv
+from modules.ui.feedback import toast_success, toast_error, api_config_feedback, show_success, show_error
 
 def load_env_vars():
     """
@@ -141,8 +142,19 @@ def render_api_settings():
                         if v:
                             os.environ[k] = v
 
-                    st.success(f"✅ Configuration IA mise à jour ! Mode : {selected_provider}")
+                    # Feedback visuel amélioré
+                    api_config_feedback(selected_provider, success=True)
+                    show_success(f"Configuration IA mise à jour ! Mode : {selected_provider}")
                     st.info("🔒 Permissions sécurisées appliquées au fichier .env")
+                    
+                    # Afficher un récapitulatif
+                    with st.expander("📋 Récapitulatif de la configuration", expanded=False):
+                        st.write(f"**Fournisseur** : {selected_provider}")
+                        st.write(f"**Fichier** : {env_file}")
+                        if model_val:
+                            st.write(f"**Modèle personnalisé** : {model_val}")
+                        st.success("✅ Les changements sont immédiatement actifs")
 
                 except Exception as e:
-                    st.error(f"❌ Erreur lors de la sauvegarde : {e}")
+                    api_config_feedback(selected_provider, success=False)
+                    show_error(f"Erreur lors de la sauvegarde : {e}")
