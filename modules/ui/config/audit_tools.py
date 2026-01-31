@@ -3,18 +3,21 @@ import pandas as pd
 import difflib
 import hashlib
 from modules.utils import clean_label
-from modules.db.audit import (
-    auto_fix_common_inconsistencies, learn_tags_from_history,
-    get_orphan_labels, delete_and_replace_label,
-    get_all_categories_including_ghosts,
-    get_duplicates_report, get_transfer_inconsistencies,
-    get_suggested_mappings
+from modules.db.audit import get_transfer_inconsistencies, get_suggested_mappings
+from modules.db.tags import learn_tags_from_history
+from modules.data_manager import auto_fix_common_inconsistencies
+from modules.db.members import (
+    get_members, rename_member, add_member, add_member_mapping,
+    get_orphan_labels, delete_and_replace_label
 )
-from modules.db.members import get_members, rename_member, add_member, add_member_mapping
-from modules.db.categories import get_categories, merge_categories, add_category
+from modules.db.categories import (
+    get_categories, merge_categories, add_category,
+    get_all_categories_including_ghosts
+)
 from modules.db.transactions import (
     get_transactions_by_criteria, delete_transaction_by_id,
-    update_transaction_category, bulk_update_transaction_status
+    update_transaction_category, bulk_update_transaction_status,
+    get_duplicates_report
 )
 from modules.backup_manager import create_backup
 from modules.ui.feedback import (

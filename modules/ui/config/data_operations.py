@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from modules.db.transactions import (
-    get_available_months, delete_transactions_by_period,
+    delete_transactions_by_period,
     get_transactions_by_criteria, delete_transaction_by_id,
     get_all_transactions
 )
+from modules.db.stats import get_available_months
 from modules.ui.feedback import toast_success, toast_error, show_success, show_warning, show_info
 
 

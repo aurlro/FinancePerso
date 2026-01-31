@@ -32,7 +32,7 @@ from modules.ui.rules import (
     render_budget_section,
 )
 from modules.ui.feedback import (
-    toast_success, toast_error, toast_warning,
+    toast_success, toast_error, toast_warning, toast_info,
     show_success, show_error, show_warning, show_info
 )
 from modules.db.migrations import init_db
