@@ -142,3 +142,216 @@ div.stVerticalBlock:has(> div > div > .tx-actions) {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0.5rem;
 }
+
+/* ============================================================================
+   MOBILE RESPONSIVE BREAKPOINTS
+   ============================================================================ */
+
+/* Tablette et mobile (max-width: 1024px) */
+@media screen and (max-width: 1024px) {
+    /* Sidebar - collapsible */
+    section[data-testid="stSidebar"] {
+        width: 250px !important;
+    }
+    
+    /* Cards plus compactes */
+    .custom-card {
+        padding: 1rem !important;
+    }
+    
+    /* Typography adaptative */
+    h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    h2 {
+        font-size: 1.25rem !important;
+    }
+    
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Transaction cards */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos) {
+        padding: 0.6rem 0.8rem !important;
+    }
+    
+    /* Grids adaptatifs */
+    .compact-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.4rem;
+    }
+}
+
+/* Mobile (max-width: 768px) */
+@media screen and (max-width: 768px) {
+    /* Sidebar cachée par défaut sur mobile */
+    section[data-testid="stSidebar"] {
+        width: 100% !important;
+        max-width: 300px;
+    }
+    
+    /* Main content prend toute la largeur */
+    .main .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+    }
+    
+    /* Typography mobile */
+    h1 {
+        font-size: 1.35rem !important;
+    }
+    
+    h2 {
+        font-size: 1.15rem !important;
+    }
+    
+    h3 {
+        font-size: 1rem !important;
+    }
+    
+    /* Transaction cards compactes */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos) {
+        padding: 0.5rem 0.6rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .tx-label {
+        font-size: 0.95rem !important;
+    }
+    
+    .tx-amount {
+        font-size: 1.15rem !important;
+    }
+    
+    /* Buttons plus grands pour touch */
+    button[kind="primary"],
+    button[kind="secondary"] {
+        min-height: 44px !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Inputs plus grands pour mobile */
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+        min-height: 44px !important;
+        font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+    
+    /* Compact grid en 1 colonne sur mobile */
+    .compact-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+    
+    /* KPI cards empilés */
+    .fp-kpi-container {
+        flex-direction: column !important;
+    }
+    
+    .fp-kpi-card {
+        width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Scroll to top button plus grand pour touch */
+    .scroll-to-top {
+        width: 56px !important;
+        height: 56px !important;
+        font-size: 24px !important;
+        bottom: 16px !important;
+        right: 16px !important;
+    }
+    
+    /* Tableaux scrollables horizontalement */
+    .stDataFrame {
+        overflow-x: auto !important;
+    }
+    
+    /* Tabs plus accessibles */
+    button[data-baseweb="tab"] {
+        padding: 0.75rem 1rem !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Petit mobile (max-width: 480px) */
+@media screen and (max-width: 480px) {
+    /* Typography encore plus compacte */
+    h1 {
+        font-size: 1.2rem !important;
+    }
+    
+    h2 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Cache les descriptions secondaires */
+    .mobile-hide-sm {
+        display: none !important;
+    }
+    
+    /* Transaction cards ultra-compactes */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-neg),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(.tx-card-marker-pos) {
+        padding: 0.4rem 0.5rem !important;
+    }
+    
+    .tx-label {
+        font-size: 0.9rem !important;
+    }
+    
+    .tx-amount {
+        font-size: 1.05rem !important;
+    }
+    
+    /* Full width buttons */
+    .stButton > button {
+        width: 100% !important;
+    }
+}
+
+/* ============================================================================
+   ACCESSIBILITY & TOUCH IMPROVEMENTS
+   ============================================================================ */
+
+/* Touch targets minimum 44px */
+button,
+input,
+select,
+textarea,
+[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Focus visible pour navigation clavier */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--secondary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+    .scroll-to-top,
+    section[data-testid="stSidebar"],
+    .stButton {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+}
