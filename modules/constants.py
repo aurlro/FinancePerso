@@ -1,5 +1,5 @@
 # Application Version
-APP_VERSION = "3.0.1"
+APP_VERSION = "3.5.0"
 
 
 class SystemCategory:

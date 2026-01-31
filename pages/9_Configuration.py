@@ -14,6 +14,7 @@ from modules.ui.config.data_operations import render_data_operations, render_exp
 from modules.ui.config.backup_restore import render_backup_restore
 from modules.ui.config.log_viewer import render_log_viewer
 from modules.ui.config.notifications import render_notification_settings
+from modules.ui.components.local_ml_manager import render_local_ml_section, render_ml_mode_selector
 from modules.ui.feedback import display_flash_messages, toast_info
 
 # Page Setup
@@ -84,13 +85,25 @@ with tabs[1]:
     st.subheader("Catégories de dépenses", divider="blue")
     render_category_management()
 
-# --- TAB 3: AI & SERVICES (API + Notifications) ---
+# --- TAB 3: AI & SERVICES (API + ML Local + Notifications) ---
 with tabs[2]:
     st.header("🤖 Intelligence Artificielle")
-    st.markdown("Configurez les services externes pour enrichir l'expérience.")
+    st.markdown("Configurez les services de catégorisation et notifications.")
     
-    # API Settings
-    st.subheader("Configuration IA", divider="blue")
+    # ML Mode Selector
+    st.subheader("Mode de catégorisation", divider="blue")
+    ml_mode = render_ml_mode_selector()
+    
+    st.divider()
+    
+    # Local ML Section
+    st.subheader("🧠 Modèle ML Local (Offline)", divider="blue")
+    render_local_ml_section()
+    
+    st.divider()
+    
+    # API Settings (Cloud AI)
+    st.subheader("☁️ IA Cloud (API Externe)", divider="blue")
     render_api_settings()
     
     st.divider()

@@ -3,6 +3,7 @@ from modules.logger import logger
 from modules.utils import clean_label
 from modules.db.categories import get_categories
 from modules.ai_manager import get_ai_provider, get_active_model_name
+from modules.local_ml import get_classifier, is_local_ml_available
 import streamlit as st
 import json
 
@@ -79,6 +80,30 @@ def apply_rules(label):
     # 2. Hardcoded Rules (Empty as migrated to DB)
     return None, 0.0
 
+def predict_category_local(label, amount, date):
+    """
+    Predict category using local ML model (scikit-learn).
+    Falls back to AI if local model not available or not confident.
+    """
+    try:
+        classifier = get_classifier()
+        
+        if not classifier.is_trained:
+            return None, 0.0
+        
+        prediction, confidence = classifier.predict(label, amount, date)
+        
+        # Only return if confidence is good enough
+        if prediction and confidence >= 0.6:
+            return prediction, confidence
+        
+        return None, confidence
+        
+    except Exception as e:
+        logger.error(f"Local ML Error: {e}")
+        return None, 0.0
+
+
 def predict_category_ai(label, amount, date):
     """
     Generic AI API call via Manager.
@@ -109,22 +134,28 @@ def predict_category_ai(label, amount, date):
         logger.error(f"AI Manager Error: {e}")
         return "Inconnu", 0.0
 
-def categorize_transaction(label, amount, date):
+def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
     """
     Main entry point for categorization.
     1. Try Rules (User & Hardcoded)
     2. Try Business Logic (Internal Transfers)
-    3. Try AI if no rule matches
+    3. Try Local ML if available and preferred
+    4. Try AI Cloud if no local ML or low confidence
+    
+    Args:
+        label: Transaction label
+        amount: Transaction amount
+        date: Transaction date
+        prefer_local_ml: If True, try local ML before cloud AI
     """
     label_upper = label.upper()
     
-    # 1. Rules
+    # 1. Rules (highest priority)
     cat, conf = apply_rules(label)
     if cat:
         return cat, "rule", conf
     
     # 2. Heuristic: Internal Transfers Detection
-    # If the label contains common internal transfer keywords AND mentions known household members/accounts
     from modules.db.settings import get_internal_transfer_targets
 
     TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
@@ -132,15 +163,53 @@ def categorize_transaction(label, amount, date):
 
     if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(t in label_upper for t in INTERNAL_TARGETS):
         return "Virement Interne", "rule", 1.0
-        
-    # 3. AI
+    
+    # 3. Local ML (if available and preferred)
+    if prefer_local_ml and is_local_ml_available():
+        cat, conf = predict_category_local(label, amount, date)
+        if cat:
+            return cat, "local_ml", conf
+    
+    # 4. AI Cloud
     cat, conf = predict_category_ai(label, amount, date)
     
-    # 4. Global Constraint: Negative amounts cannot be "Revenus"
+    # 5. Global Constraint: Negative amounts cannot be "Revenus"
     if cat == "Revenus" and amount < 0:
         return "Inconnu", "rule_constraint", 0.0
         
     return cat, "ai", conf
+
+
+def categorize_transaction_batch(labels_amounts_dates: list, prefer_local_ml: bool = False) -> list:
+    """
+    Categorize multiple transactions efficiently.
+    Returns list of (category, source, confidence) tuples.
+    """
+    results = []
+    
+    # Try to use local ML for batch prediction if preferred
+    if prefer_local_ml and is_local_ml_available():
+        classifier = get_classifier()
+        if classifier.is_trained:
+            # Extract just the labels for batch prediction
+            labels = [item[0] for item in labels_amounts_dates]
+            ml_results = classifier.predict_batch(labels)
+            
+            for (label, amount, date), (ml_cat, ml_conf) in zip(labels_amounts_dates, ml_results):
+                if ml_cat and ml_conf >= 0.6:
+                    results.append((ml_cat, "local_ml", ml_conf))
+                else:
+                    # Fall back to regular categorization
+                    cat, source, conf = categorize_transaction(label, amount, date, prefer_local_ml=False)
+                    results.append((cat, source, conf))
+            return results
+    
+    # Regular individual categorization
+    for label, amount, date in labels_amounts_dates:
+        cat, source, conf = categorize_transaction(label, amount, date, prefer_local_ml)
+        results.append((cat, source, conf))
+    
+    return results
 
 def generate_financial_report(stats_json):
     """
