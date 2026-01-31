@@ -13,8 +13,9 @@ from modules.data_manager import (
     get_members, get_categories, add_member, add_category, add_learning_rule
 )
 from modules.ui.feedback import (
-    toast_success, toast_error, toast_warning,
-    validation_feedback, save_feedback, show_info, show_warning
+    toast_success, toast_error, toast_warning, toast_info,
+    validation_feedback, save_feedback, show_info, show_warning,
+    set_flash_message, FeedbackType
 )
 from modules.ingestion import load_transaction_file
 from modules.data_manager import save_transactions

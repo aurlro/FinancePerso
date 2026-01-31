@@ -3,7 +3,8 @@ import os
 import re
 from datetime import datetime
 from modules.ui import load_css
-from modules.ui.layout import render_app_info, render_scroll_to_top
+from modules.ui.layout import render_app_info
+from modules.ui.feedback import render_scroll_to_top
 from modules.ui.changelog_parser import parse_changelog
 from modules.update_manager import get_update_manager, VersionEntry
 
