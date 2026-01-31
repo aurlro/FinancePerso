@@ -73,6 +73,9 @@ def send_email_notification(subject: str, html_body: str, text_body: str = None)
     """
     Send an email notification.
     Requires SMTP configuration in settings.
+    
+    Returns:
+        tuple: (success: bool, error_message: str or None)
     """
     settings = get_notification_settings()
     
@@ -82,9 +85,13 @@ def send_email_notification(subject: str, html_body: str, text_body: str = None)
     smtp_password = settings.get('notif_smtp_password', '')
     to_email = settings.get('notif_email_to', smtp_user)
     
-    if not all([smtp_server, smtp_user, smtp_password]):
-        logger.warning("Email not configured, skipping email notification")
-        return False
+    # Validation des paramètres
+    if not smtp_server:
+        return False, "Serveur SMTP non configuré"
+    if not smtp_user:
+        return False, "Email/Utilisateur SMTP non configuré"
+    if not smtp_password:
+        return False, "Mot de passe SMTP non configuré"
     
     try:
         msg = MIMEMultipart('alternative')
@@ -100,17 +107,30 @@ def send_email_notification(subject: str, html_body: str, text_body: str = None)
         msg.attach(MIMEText(html_body, 'html', 'utf-8'))
         
         # Send email
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
             server.send_message(msg)
         
         logger.info(f"Email notification sent to {to_email}")
-        return True
+        return True, None
         
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = "Authentification échouée - vérifiez votre email et mot de passe (utilisez un App Password pour Gmail)"
+        logger.error(f"Email auth failed: {e}")
+        return False, error_msg
+    except smtplib.SMTPConnectError as e:
+        error_msg = f"Impossible de se connecter au serveur SMTP - vérifiez l'adresse et le port"
+        logger.error(f"SMTP connection error: {e}")
+        return False, error_msg
+    except smtplib.SMTPRecipientsRefused as e:
+        error_msg = f"Destinataire refusé - vérifiez l'adresse email"
+        logger.error(f"SMTP recipient refused: {e}")
+        return False, error_msg
     except Exception as e:
+        error_msg = f"Erreur d'envoi: {str(e)}"
         logger.error(f"Email notification failed: {e}")
-        return False
+        return False, error_msg
 
 
 def check_budget_alerts(force_check: bool = False):
@@ -236,7 +256,9 @@ def _send_budget_alert_notifications(alerts):
         subject = f"🚨 FinancePerso - Alertes budget {datetime.now().strftime('%B %Y')}"
         html_body = _build_budget_alert_email(alerts)
         text_body = _build_budget_alert_text(alerts)
-        send_email_notification(subject, html_body, text_body)
+        success, error = send_email_notification(subject, html_body, text_body)
+        if not success:
+            logger.warning(f"Budget alert email failed: {error}")
 
 
 def _build_budget_alert_email(alerts):
@@ -325,16 +347,17 @@ def test_notification_settings():
             "Vos notifications desktop fonctionnent !"
         )
         if not results['desktop']:
-            results['errors'].append("Desktop notification failed")
+            results['errors'].append("Notification desktop échouée")
     
     # Test email
     if settings.get('notif_email_enabled', 'false').lower() == 'true':
-        results['email'] = send_email_notification(
+        success, error = send_email_notification(
             "Test FinancePerso - Notifications",
             "<h1>Test réussi !</h1><p>Vos notifications email fonctionnent.</p>",
             "Test réussi ! Vos notifications email fonctionnent."
         )
-        if not results['email']:
-            results['errors'].append("Email notification failed - check SMTP settings")
+        results['email'] = success
+        if not success:
+            results['errors'].append(f"❌ Email: {error}")
     
     return results

@@ -9,6 +9,7 @@ from modules.notifications import (
     test_notification_settings,
     check_budget_alerts
 )
+from modules.ui.feedback import toast_success, toast_error, toast_warning, toast_info
 
 
 def render_notification_settings():
@@ -76,6 +77,16 @@ def render_notification_settings():
     )
     
     if preview['notif_email_enabled']:
+        # Check if email is properly configured
+        email_configured = all([
+            preview['notif_smtp_server'],
+            preview['notif_smtp_user'],
+            preview['notif_smtp_password']
+        ])
+        
+        if not email_configured:
+            st.warning("⚠️ Configuration email incomplète - remplissez tous les champs SMTP")
+        
         with st.container(border=True):
             st.markdown("**Configuration SMTP**")
             
@@ -187,10 +198,17 @@ def render_notification_settings():
                 
                 if results['errors']:
                     for error in results['errors']:
-                        st.error(f"❌ {error}")
+                        st.error(f"{error}")
+                        # Show helpful tips for common errors
+                        if "Authentification" in error:
+                            st.info("💡 **Pour Gmail:** Utilisez un 'App Password' généré sur https://myaccount.google.com/apppasswords")
+                        elif "connecter" in error.lower():
+                            st.info("💡 Vérifiez que le serveur SMTP et le port sont corrects (Gmail: smtp.gmail.com:587)")
+                        elif "Destinataire" in error:
+                            st.info("💡 Vérifiez que l'adresse email destinataire est valide")
                 
-                if not results['desktop'] and not results['email']:
-                    st.warning("⚠️ Aucune notification envoyée")
+                if not results['desktop'] and not results['email'] and not results['errors']:
+                    st.warning("⚠️ Aucune notification activée")
     
     with col_test2:
         if st.button("🔔 Vérifier budgets", use_container_width=True):

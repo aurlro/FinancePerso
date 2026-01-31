@@ -1,4 +1,24 @@
 import streamlit as st
+import os
+
+# --- ERROR TRACKING & SECURITY INITIALIZATION ---
+from modules.error_tracking import init_error_tracking
+from modules.encryption import get_encryption
+
+# Initialize Sentry if DSN configured
+if os.getenv('SENTRY_DSN'):
+    init_error_tracking(
+        dsn=os.getenv('SENTRY_DSN'),
+        environment=os.getenv('ENVIRONMENT', 'production')
+    )
+
+# Initialize encryption
+encryption = get_encryption()
+if encryption.is_enabled():
+    print("🔐 Encryption enabled for sensitive fields")
+else:
+    print("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
+
 from modules.ui import load_css, card_kpi, render_scroll_to_top
 from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
