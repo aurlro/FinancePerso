@@ -160,7 +160,7 @@ class TestMergeCategories:
     """Tests for merging categories."""
     
     def test_merge_categories(self, temp_db, db_connection):
-        """Test merging one category into another."""
+        """Test merging one category into another with deletion of source."""
         add_category('Source')
         add_category('Target')
         
@@ -176,12 +176,53 @@ class TestMergeCategories:
         db_connection.commit()
         
         result = merge_categories('Source', 'Target')
-        assert result['transactions'] == 2
         
+        # Check returned values
+        assert result['transactions'] == 2
+        assert result['category_deleted'] is True
+        
+        # Check transactions were moved
         cursor.execute("SELECT COUNT(*) FROM transactions WHERE category_validated = 'Target'")
         assert cursor.fetchone()[0] == 2
         
+        # Check source category no longer has transactions
         cursor.execute("SELECT COUNT(*) FROM transactions WHERE category_validated = 'Source'")
+        assert cursor.fetchone()[0] == 0
+        
+        # Check source category was deleted from categories table
+        cursor.execute("SELECT COUNT(*) FROM categories WHERE name = 'Source'")
+        assert cursor.fetchone()[0] == 0
+    
+    def test_merge_categories_with_budget_transfer(self, temp_db, db_connection):
+        """Test merging categories transfers budget."""
+        from modules.db.budgets import set_budget
+        
+        add_category('Source')
+        add_category('Target')
+        
+        # Set budgets
+        set_budget('Source', 500.0)
+        
+        cursor = db_connection.cursor()
+        cursor.execute("""
+            INSERT INTO transactions (date, label, amount, category_validated)
+            VALUES ('2024-01-15', 'Test TX', -50.00, 'Source')
+        """)
+        db_connection.commit()
+        
+        result = merge_categories('Source', 'Target')
+        
+        # Check budget was transferred
+        assert result['budgets_transferred'] is True
+        
+        # Check target received the budget
+        cursor.execute("SELECT amount FROM budgets WHERE category = 'Target'")
+        target_budget = cursor.fetchone()
+        assert target_budget is not None
+        assert target_budget[0] == 500.0
+        
+        # Check source budget was deleted
+        cursor.execute("SELECT COUNT(*) FROM budgets WHERE category = 'Source'")
         assert cursor.fetchone()[0] == 0
 
 class TestGhostCategories:

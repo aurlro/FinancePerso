@@ -7,7 +7,10 @@ from modules.db.transactions import (
     get_all_transactions
 )
 from modules.db.stats import get_available_months
-from modules.ui.feedback import toast_success, toast_error, show_success, show_warning, show_info
+from modules.ui.feedback import (
+    toast_success, toast_error, toast_warning, toast_info,
+    show_success, show_warning, show_info
+)
 
 
 def render_export_section():
@@ -17,8 +20,11 @@ def render_export_section():
     """
     df_all = get_all_transactions()
     if df_all.empty:
-        st.info("Aucune transaction à exporter.")
+        st.info("📭 Aucune transaction à exporter.")
         return
+    
+    total_tx = len(df_all)
+    st.caption(f"📊 {total_tx} transaction(s) disponible(s)")
     
     col_ex1, col_ex2, col_ex3 = st.columns([2, 1, 1])
     
@@ -29,7 +35,8 @@ def render_export_section():
             "Période à exporter",
             options=["Toutes"] + available_months,
             index=0,
-            key="export_period"
+            key="export_period",
+            help="Sélectionnez une période spécifique ou toutes les transactions"
         )
     
     # Filter data if needed
@@ -39,7 +46,7 @@ def render_export_section():
         df_export = df_all.copy()
     
     with col_ex2:
-        st.markdown(f"<p style='margin-top:28px; font-size:0.9em; color:#666;'>{len(df_export)} transactions</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='margin-top:28px; font-size:0.9em; color:#666;'>📋 {len(df_export)} transaction(s)</p>", unsafe_allow_html=True)
     
     with col_ex3:
         st.markdown("<div style='height: 0.5rem;'></div>", unsafe_allow_html=True)
@@ -50,7 +57,8 @@ def render_export_section():
             data=csv,
             file_name=f"financeperso_export_{export_period.replace(' ', '_')}.csv",
             mime="text/csv",
-            use_container_width=True
+            use_container_width=True,
+            help="Exporter au format CSV (compatible Excel)"
         )
     
     # Excel Export (if openpyxl is available)
@@ -67,7 +75,8 @@ def render_export_section():
                 data=excel_buffer,
                 file_name=f"financeperso_export_{export_period.replace(' ', '_')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                use_container_width=True,
+                help="Exporter au format Excel"
             )
     except ImportError:
         st.caption("💡 Installez `openpyxl` pour l'export Excel : `pip install openpyxl`")
@@ -82,12 +91,15 @@ def render_data_operations():
     
     # --- EXPORT SECTION ---
     st.subheader("📤 Exporter les données")
-    st.markdown("Téléchargez vos transactions au format CSV ou Excel pour une sauvegarde externe ou une analyse dans un tableur.")
+    st.markdown("Téléchargez vos transactions pour une sauvegarde externe ou une analyse dans un tableur.")
     
     render_export_section()
     
     st.divider()
-    st.warning("⚠️ **Zone de Danger**  \nLes opérations ci-dessous sont irréversibles. Assurez-vous d'avoir une sauvegarde avant de supprimer des données.")
+    
+    # Warning zone
+    st.error("⚠️ **Zone de Danger**")
+    st.warning("Les opérations ci-dessous sont **irréversibles**. Assurez-vous d'avoir une sauvegarde avant de supprimer des données.")
     
     # --- DELETE BY PERIOD ---
     st.subheader("🗑️ Supprimer par Période")
@@ -95,7 +107,7 @@ def render_data_operations():
     
     available_months = get_available_months()
     if not available_months:
-        st.info("Aucune transaction dans la base.")
+        st.info("📭 Aucune transaction dans la base.")
     else:
         col_d1, col_d2 = st.columns([2, 1])
         with col_d1:
@@ -103,11 +115,12 @@ def render_data_operations():
                 "Mois à supprimer",
                 available_months,
                 format_func=lambda x: f"{x} ({len(get_transactions_by_criteria(period=x))} tx)",
-                key="month_to_delete"
+                key="month_to_delete",
+                help="Sélectionnez le mois à supprimer"
             )
         
         with col_d2:
-            st.markdown("<div style='height: 0.1rem;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 1.6rem;'></div>", unsafe_allow_html=True)
             if st.button("🗑️ Supprimer", type="primary", use_container_width=True, key="btn_delete_month"):
                 if selected_month:
                     # Confirmation via checkbox
@@ -116,16 +129,29 @@ def render_data_operations():
                     
                     if not st.session_state['confirm_delete_month']:
                         st.session_state['confirm_delete_month'] = True
-                        show_warning(f"⚠️ Confirmer la suppression de **{selected_month}** ? Cliquez à nouveau pour confirmer.", icon="⚠️")
+                        show_warning(
+                            f"⚠️ Confirmer la suppression de **{selected_month}** ? Cliquez à nouveau pour confirmer.",
+                            icon="⚠️"
+                        )
+                        toast_warning(
+                            f"⚠️ Cliquez encore sur Supprimer pour confirmer la suppression de {selected_month}",
+                            icon="⚠️"
+                        )
                         st.rerun()
                     else:
-                        with st.spinner(f"Suppression des transactions de {selected_month}..."):
+                        with st.spinner(f"🔄 Suppression des transactions de {selected_month}..."):
                             count = delete_transactions_by_period(selected_month)
+                        
                         if count > 0:
-                            toast_success(f"✅ {count} transactions supprimées ({selected_month})", icon="🗑️")
-                            show_success(f"{count} transactions de {selected_month} ont été supprimées")
+                            toast_success(
+                                f"🗑️ {count} transaction(s) supprimée(s) pour {selected_month}",
+                                icon="🗑️"
+                            )
+                            show_success(f"✅ {count} transaction(s) de {selected_month} ont été supprimées")
                         else:
-                            show_info("Aucune transaction à supprimer pour cette période")
+                            show_info("ℹ️ Aucune transaction à supprimer pour cette période")
+                            toast_info(f"ℹ️ Aucune transaction trouvée pour {selected_month}", icon="ℹ️")
+                        
                         st.session_state['confirm_delete_month'] = False
                         st.rerun()
     
@@ -139,46 +165,79 @@ def render_data_operations():
     st.subheader("🔍 Rechercher et Supprimer")
     st.markdown("Trouvez et supprimez des transactions spécifiques.")
     
-    search_label = st.text_input("Rechercher par libellé", placeholder="Ex: AMAZON, SNCF...")
+    search_label = st.text_input(
+        "Rechercher par libellé",
+        placeholder="Ex: AMAZON, SNCF, LIDL...",
+        help="Entrez un mot-clé pour chercher dans les libellés"
+    )
     
     if search_label:
-        results = get_transactions_by_criteria(label_contains=search_label)
+        if len(search_label.strip()) < 2:
+            toast_warning("⚠️ Entrez au moins 2 caractères pour la recherche", icon="🔍")
+        
+        results = get_transactions_by_criteria(label_contains=search_label.strip())
         if results.empty:
-            show_info(f"Aucune transaction trouvée pour '{search_label}'", icon="🔍")
+            show_info(f"🔍 Aucune transaction trouvée pour '{search_label}'", icon="🔍")
+            toast_info(f"ℹ️ Aucun résultat pour '{search_label}'", icon="🔍")
         else:
-            show_success(f"**{len(results)}** transaction(s) trouvée(s)", icon="🔍")
+            show_success(f"🔍 **{len(results)}** transaction(s) trouvée(s)", icon="🔍")
+            toast_success(f"✅ {len(results)} transaction(s) trouvée(s)", icon="🔍")
             
             for _, row in results.iterrows():
                 with st.container(border=True):
                     c1, c2 = st.columns([4, 1])
-                    c1.markdown(f"**{row['date']}** • {row['label']} • **{row['amount']:.2f}€** • {row['category']}")
-                    if c2.button("🗑️", key=f"del_tx_{row['id']}"):
+                    amount_color = "red" if row['amount'] < 0 else "green"
+                    c1.markdown(
+                        f"📅 **{row['date']}**  \n"
+                        f"📝 {row['label']}  \n"
+                        f"💰 **{row['amount']:.2f}€** • 🏷️ {row['category']}"
+                    )
+                    if c2.button("🗑️", key=f"del_tx_{row['id']}", help="Supprimer cette transaction"):
                         try:
                             delete_transaction_by_id(row['id'])
-                            toast_success("Transaction supprimée", icon="🗑️")
+                            toast_success(
+                                f"🗑️ Transaction supprimée : {row['label'][:30]} ({row['amount']:.2f}€)",
+                                icon="🗑️"
+                            )
                             st.rerun()
                         except Exception as e:
-                            toast_error(f"Erreur : {e}", icon="❌")
+                            error_msg = str(e)
+                            if "not found" in error_msg.lower():
+                                toast_warning("⚠️ Cette transaction n'existe plus", icon="⚠️")
+                            else:
+                                toast_error(f"❌ Erreur suppression : {error_msg[:50]}", icon="❌")
 
     # --- VERSIONING ---
     st.divider()
     st.subheader("🚀 Mise à jour de Version")
-    st.markdown("Analyse les derniers commits Git pour mettre à jour la version de l'application et générer le Changelog.")
+    st.markdown("Analyse les derniers commits Git pour mettre à jour la version et générer le Changelog.")
     
     if st.button("🔄 Lancer la mise à jour (Git commits)", use_container_width=True):
         import subprocess
-        with st.spinner("Analyse des commits Git..."):
+        with st.spinner("🔄 Analyse des commits Git en cours..."):
             try:
                 # Run the versioning script
-                result = subprocess.run(["python3", "scripts/versioning.py"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["python3", "scripts/versioning.py"],
+                    capture_output=True,
+                    text=True,
+                    timeout=30
+                )
                 if result.returncode == 0:
-                    toast_success("Version mise à jour", icon="🚀")
-                    show_success(f"**Mise à jour réussie**")
+                    toast_success("✅ Version mise à jour avec succès", icon="🚀")
+                    show_success("🚀 **Mise à jour réussie**")
                     with st.expander("📋 Détails des changements", expanded=False):
                         st.code(result.stdout)
                 else:
-                    toast_error("Échec de la mise à jour", icon="❌")
-                    show_error(f"**Erreur :**\n\n{result.stderr}")
+                    error_output = result.stderr if result.stderr else "Erreur inconnue"
+                    toast_error(f"❌ Échec de la mise à jour", icon="❌")
+                    show_error(f"**Erreur :**\n\n{error_output}")
+            except subprocess.TimeoutExpired:
+                toast_error("❌ Timeout : le script a pris trop de temps", icon="⏱️")
+                show_error("Le script de versioning a dépassé le temps imparti")
+            except FileNotFoundError:
+                toast_error("❌ Script introuvable : scripts/versioning.py", icon="❌")
+                show_error("Le script de versioning n'a pas été trouvé")
             except Exception as e:
-                toast_error("Impossible de lancer le script", icon="❌")
+                toast_error(f"❌ Impossible de lancer le script : {str(e)[:50]}", icon="❌")
                 show_error(f"Impossible de lancer le script de versioning : {str(e)}")

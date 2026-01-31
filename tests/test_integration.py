@@ -578,26 +578,39 @@ class TestConfigurationWorkflow:
     """Test configuration features: members, categories, merging."""
 
     def test_category_merge_workflow(self, temp_db, db_connection):
-        """Test merging two categories."""
-        from modules.db.categories import merge_categories
+        """Test merging two categories with deletion of source."""
+        from modules.db.categories import merge_categories, get_categories_df, add_category
 
-        # Step 1: Create transactions with old categories
+        # Step 1: Create categories first (required for deletion to work)
+        add_category('Shopping', '🛒')
+        add_category('Achats', '🛍️')
+        
+        # Step 2: Create transactions with these categories
         df = pd.DataFrame([
             {'date': '2024-01-15', 'label': 'TX 1', 'amount': -50.00, 'category_validated': 'Shopping'},
             {'date': '2024-01-16', 'label': 'TX 2', 'amount': -60.00, 'category_validated': 'Achats'}
         ])
         save_transactions(df)
 
-        # Step 2: Merge 'Achats' into 'Shopping'
-        merge_categories('Achats', 'Shopping')
+        # Step 3: Merge 'Achats' into 'Shopping'
+        result = merge_categories('Achats', 'Shopping')
 
-        # Step 3: Verify all transactions now use 'Shopping'
+        # Step 4: Verify merge result
+        assert result['transactions'] == 1
+        assert result['category_deleted'] is True
+
+        # Step 5: Verify all transactions now use 'Shopping'
         cursor = db_connection.cursor()
         cursor.execute("SELECT category_validated FROM transactions")
         categories = [row[0] for row in cursor.fetchall()]
 
         assert 'Achats' not in categories
         assert all(cat == 'Shopping' for cat in categories)
+        
+        # Step 6: Verify 'Achats' category was deleted from categories table
+        cats_df = get_categories_df()
+        cat_names = cats_df['name'].tolist() if not cats_df.empty else []
+        assert 'Achats' not in cat_names
 
     def test_card_suffix_preservation(self, temp_db, db_connection):
         """Test that card_suffix is preserved during import."""
