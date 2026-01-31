@@ -91,9 +91,9 @@ def temp_db():
     
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS budgets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT UNIQUE NOT NULL,
-            amount REAL NOT NULL
+            category TEXT PRIMARY KEY,
+            amount REAL NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
     

@@ -250,29 +250,43 @@ def merge_categories(source_category: str, target_category: str) -> dict:
     """
     Merge source category into target category.
     
-    Updates all transactions and learning rules that reference source_category
-    to use target_category instead.
+    Transfers all transactions from source_category to target_category,
+    updates learning rules, transfers budgets, and deletes the source category.
     
     Args:
-        source_category: Category to merge from (will be replaced)
+        source_category: Category to merge from (will be deleted)
         target_category: Category to merge into (will remain)
         
     Returns:
-        Dict with counts: {'transactions': int, 'rules': int}
+        Dict with counts: {
+            'transactions': int,
+            'rules': int,
+            'budgets_transferred': bool,
+            'category_deleted': bool
+        }
         
     Example:
         result = merge_categories("Courses", "Alimentation")
         print(f"Merged {result['transactions']} transactions")
+        if result['category_deleted']:
+            print("Source category deleted successfully")
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
+        
+        # Count transactions before update
+        cursor.execute(
+            "SELECT COUNT(*) FROM transactions WHERE category_validated = ? COLLATE NOCASE",
+            (source_category,)
+        )
+        tx_count = cursor.fetchone()[0]
         
         # Update transactions (validated category)
         cursor.execute(
             "UPDATE transactions SET category_validated = ? WHERE category_validated = ? COLLATE NOCASE",
             (target_category, source_category)
         )
-        tx_count = cursor.rowcount
+        tx_updated = cursor.rowcount
         
         # Update transactions (original category)
         cursor.execute(
@@ -287,13 +301,66 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         )
         rule_count = cursor.rowcount
         
+        # Transfer budget if exists
+        budget_transferred = False
+        cursor.execute(
+            "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE",
+            (source_category,)
+        )
+        source_budget = cursor.fetchone()
+        
+        if source_budget:
+            source_amount = source_budget[0]
+            
+            # Check if target has a budget
+            cursor.execute(
+                "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE",
+                (target_category,)
+            )
+            target_budget = cursor.fetchone()
+            
+            if target_budget:
+                # Add to existing budget
+                new_amount = target_budget[0] + source_amount
+                cursor.execute(
+                    "UPDATE budgets SET amount = ? WHERE category = ? COLLATE NOCASE",
+                    (new_amount, target_category)
+                )
+            else:
+                # Create new budget entry for target
+                cursor.execute(
+                    "INSERT INTO budgets (category, amount) VALUES (?, ?)",
+                    (target_category, source_amount)
+                )
+            
+            # Delete source budget
+            cursor.execute(
+                "DELETE FROM budgets WHERE category = ? COLLATE NOCASE",
+                (source_category,)
+            )
+            budget_transferred = True
+        
+        # Delete the source category from categories table
+        cursor.execute(
+            "DELETE FROM categories WHERE name = ? COLLATE NOCASE",
+            (source_category,)
+        )
+        category_deleted = cursor.rowcount > 0
+        
         conn.commit()
         from modules.cache_manager import invalidate_category_caches
         invalidate_category_caches()
         
-        logger.info(f"Merged '{source_category}' → '{target_category}': {tx_count} transactions, {rule_count} rules")
+        logger.info(
+            f"Merged '{source_category}' → '{target_category}': "
+            f"{tx_updated} transactions, {rule_count} rules, "
+            f"budget transferred: {budget_transferred}, "
+            f"category deleted: {category_deleted}"
+        )
         
         return {
-            'transactions': tx_count,
-            'rules': rule_count
+            'transactions': tx_updated,
+            'rules': rule_count,
+            'budgets_transferred': budget_transferred,
+            'category_deleted': category_deleted
         }
