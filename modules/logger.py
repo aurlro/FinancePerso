@@ -1,23 +1,42 @@
 import logging
+import os
+from logging.handlers import RotatingFileHandler
 
-# Create logger with standard configuration
+# Ensure logs directory exists
+LOG_DIR = "logs"
+LOG_FILE = os.path.join(LOG_DIR, "app.log")
+
 def setup_logger(name):
+    """Create logger with console and file handlers."""
     logger = logging.getLogger(name)
     
     if not logger.handlers:
         logger.setLevel(logging.INFO)
         
-        # Create console handler with formatting
-        c_handler = logging.StreamHandler()
-        c_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        c_handler.setFormatter(c_formatter)
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
         
+        # Console handler
+        c_handler = logging.StreamHandler()
+        c_handler.setFormatter(formatter)
         logger.addHandler(c_handler)
         
-        # Optional: File handler
-        # f_handler = logging.FileHandler('finance_perso.log')
-        # f_handler.setFormatter(c_formatter)
-        # logger.addHandler(f_handler)
+        # File handler with rotation (max 5MB, keep 3 backups)
+        try:
+            os.makedirs(LOG_DIR, exist_ok=True)
+            f_handler = RotatingFileHandler(
+                LOG_FILE, 
+                maxBytes=5*1024*1024,  # 5MB
+                backupCount=3,
+                encoding='utf-8'
+            )
+            f_handler.setFormatter(formatter)
+            logger.addHandler(f_handler)
+        except (OSError, IOError) as e:
+            # If file logging fails, at least keep console logging
+            print(f"Warning: Could not setup file logging: {e}")
         
     return logger
 

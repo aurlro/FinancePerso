@@ -28,3 +28,7 @@ Data/backups/
 
 # Backup files
 *.backup
+
+# Logs
+logs/
+*.log
