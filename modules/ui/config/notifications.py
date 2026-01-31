@@ -181,6 +181,7 @@ def render_notification_settings():
     with col_save:
         if st.button("💾 Sauvegarder les paramètres", type="primary", use_container_width=True):
             _save_all_settings(preview)
+            toast_success("Paramètres de notification sauvegardés", icon="🔔")
             st.success("✅ Paramètres sauvegardés !")
             st.rerun()
     
@@ -193,8 +194,10 @@ def render_notification_settings():
                 
                 if results['desktop']:
                     st.success("✅ Desktop OK !")
+                    toast_success("Notification desktop envoyée", icon="💻")
                 if results['email']:
                     st.success("✅ Email OK !")
+                    toast_success("Email de test envoyé", icon="📧")
                 
                 if results['errors']:
                     for error in results['errors']:
@@ -209,6 +212,7 @@ def render_notification_settings():
                 
                 if not results['desktop'] and not results['email'] and not results['errors']:
                     st.warning("⚠️ Aucune notification activée")
+                    toast_warning("Aucune notification activée", icon="🔕")
     
     with col_test2:
         if st.button("🔔 Vérifier budgets", use_container_width=True):
@@ -218,11 +222,13 @@ def render_notification_settings():
                 
                 if alerts:
                     st.success(f"🚨 {len(alerts)} alerte(s) !")
+                    toast_warning(f"{len(alerts)} alerte(s) budget détectée(s)", icon="🚨")
                     for alert in alerts:
                         emoji = "🚨" if alert['level'] == 'critical' else "⚠️" if alert['level'] == 'warning' else "ℹ️"
                         st.write(f"{emoji} **{alert['category']}**: {alert['spent']:.0f}€ / {alert['budget']:.0f}€")
                 else:
                     st.info("✅ Pas d'alerte")
+                    toast_info("Aucune alerte budget", icon="✅")
     
     # --- ALERT HISTORY ---
     st.divider()
