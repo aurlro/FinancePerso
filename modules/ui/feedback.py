@@ -439,3 +439,80 @@ def show_progress(label: str = "Chargement..."):
 def show_expanded_status(label: str):
     """Affiche un statut expansé pour les opérations détaillées."""
     return st.status(label, expanded=True)
+
+
+# ============================================================================
+# SCROLL TO TOP BUTTON
+# ============================================================================
+
+def render_scroll_to_top():
+    """
+    Render a floating scroll-to-top button at the bottom right of the page.
+    Uses HTML/CSS for fixed positioning and smooth scrolling.
+    """
+    st.markdown("""
+        <style>
+        /* Scroll to top button styles */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 9999;
+            opacity: 0.8;
+        }
+        .scroll-to-top:hover {
+            opacity: 1;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+        .scroll-to-top:active {
+            transform: translateY(-1px);
+        }
+        /* Show button only when scrolled */
+        @media (max-height: 100vh) {
+            .scroll-to-top {
+                display: flex;
+            }
+        }
+        </style>
+        
+        <button class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Retour en haut de page">
+            ⬆️
+        </button>
+        
+        <script>
+        // Optional: Show/hide button based on scroll position
+        (function() {
+            const button = document.querySelector('.scroll-to-top');
+            if (button) {
+                // Always show for simplicity in Streamlit
+                button.style.display = 'flex';
+            }
+        })();
+        </script>
+    """, unsafe_allow_html=True)
+
+
+def render_scroll_to_top_simple():
+    """
+    Alternative: Render a simple text link at the bottom of the page.
+    Less intrusive but requires being at the bottom to see it.
+    """
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        if st.button("⬆️ Retour en haut de page", use_container_width=True, type="secondary"):
+            st.markdown("<script>window.scrollTo(0, 0);</script>", unsafe_allow_html=True)

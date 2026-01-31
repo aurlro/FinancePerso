@@ -311,4 +311,8 @@ with tab3:
 
 # Footer
 st.divider()
+
+from modules.ui import render_scroll_to_top
+render_scroll_to_top()
+
 st.caption("🧪 Test Suite - 197 tests | ~78% coverage | Production Ready")

@@ -24,7 +24,7 @@ st.set_page_config(page_title="Règles & Mémoire", page_icon="🧠", layout="wi
 
 # 3. Local imports
 from modules.ui import load_css
-from modules.ui.layout import render_app_info
+from modules.ui.layout import render_app_info, render_scroll_to_top
 from modules.ui.rules import (
     render_rule_list,
     render_add_rule_form,
@@ -150,4 +150,5 @@ with tab_budgets:
 # FOOTER
 # =============================================================================
 st.divider()
+render_scroll_to_top()
 render_app_info()

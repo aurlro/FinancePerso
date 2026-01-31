@@ -4,14 +4,16 @@ from modules.db.transactions import save_transactions, get_all_transactions, get
 from modules.db.migrations import init_db
 from modules.db.stats import get_recent_imports, get_all_account_labels
 from modules.categorization import categorize_transaction
-from modules.ui import load_css
+from modules.ui import load_css, render_scroll_to_top
 from modules.ui.feedback import (
     toast_success, toast_error, toast_warning, toast_info,
     show_success, show_error, show_warning, import_feedback,
     celebrate_completion
 )
 from modules.utils import validate_csv_file
+from modules.validators import validate_transaction, sanitize_string_input
 from modules.ai_manager import is_ai_available
+from modules.error_tracking import track_errors, capture_exception
 import pandas as pd
 import datetime
 
@@ -208,6 +210,34 @@ if uploaded_file is not None:
                 period_label = selected_month if selected_month != 'Tous' else "toute l'année"
                 st.info(f"📊 {len(df)} transactions trouvées pour {period_label} {selected_year}.")
                 
+                # --- VALIDATION DES DONNÉES ---
+                validation_errors = []
+                for idx, row in df.iterrows():
+                    # Sanitize label
+                    df.at[idx, 'label'] = sanitize_string_input(row['label'], max_length=500)
+                    
+                    # Validate transaction
+                    is_valid, error = validate_transaction(
+                        label=row['label'],
+                        amount=row['amount'],
+                        tx_date=row['date']
+                    )
+                    if not is_valid:
+                        validation_errors.append(f"Ligne {idx + 1}: {error}")
+                
+                if validation_errors:
+                    with st.expander(f"⚠️ {len(validation_errors)} erreur(s) de validation"):
+                        for error in validation_errors[:10]:  # Show first 10
+                            st.markdown(f"- {error}")
+                        if len(validation_errors) > 10:
+                            st.caption(f"... et {len(validation_errors) - 10} autres erreurs")
+                    
+                    if len(validation_errors) > len(df) * 0.1:  # More than 10% errors
+                        st.error("Trop d'erreurs de validation. Veuillez vérifier votre fichier.")
+                        st.stop()
+                    else:
+                        st.warning(f"Certaines transactions ont des erreurs mais {len(df) - len(validation_errors)} sont valides.")
+                
                 # --- DUPLICATE DETECTION ---
                 existing_hashes = get_all_hashes()
                 force_import = False
@@ -377,6 +407,8 @@ if is_ai_available():
     st.caption("💡 Les transactions seront analysées par notre IA pour proposer des catégories.")
 else:
     st.caption("💡 Mode hors ligne : seules les règles manuelles seront appliquées. Configurez une clé API pour activer l'IA.")
+
+render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
 render_app_info()

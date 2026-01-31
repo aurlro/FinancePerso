@@ -16,7 +16,7 @@ from modules.analytics_v2 import (
     get_recurring_by_tags,
     analyze_recurrence_summary
 )
-from modules.ui import load_css
+from modules.ui import load_css, render_scroll_to_top
 from modules.ui.components.transaction_drill_down import render_transaction_drill_down
 
 st.set_page_config(page_title="Récurrence", page_icon="🔁", layout="wide")
@@ -301,6 +301,8 @@ else:
                 - Utilisez des tags pour marquer les opérations récurrentes
                 - Vérifiez que les montants sont cohérents (même opération = montant similaire)
                 """)
+
+render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
 render_app_info()

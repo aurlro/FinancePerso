@@ -1,5 +1,5 @@
 import streamlit as st
-from modules.ui import load_css, card_kpi
+from modules.ui import load_css, card_kpi, render_scroll_to_top
 from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
 from modules.db.members import add_member
@@ -138,3 +138,6 @@ else:
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
     render_app_info()
+    
+    # Scroll to top button
+    render_scroll_to_top()

@@ -3,7 +3,7 @@ import os
 import re
 from datetime import datetime
 from modules.ui import load_css
-from modules.ui.layout import render_app_info
+from modules.ui.layout import render_app_info, render_scroll_to_top
 from modules.ui.changelog_parser import parse_changelog
 
 st.set_page_config(page_title="Nouveautés", page_icon="🎁", layout="wide")
@@ -50,4 +50,5 @@ else:
 
 st.divider()
 
+render_scroll_to_top()
 render_app_info()

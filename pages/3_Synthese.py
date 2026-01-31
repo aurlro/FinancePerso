@@ -28,7 +28,7 @@ import pandas as pd
 from modules.db.migrations import init_db
 from modules.db.categories import get_categories_with_emojis
 from modules.db.members import get_orphan_labels, get_unique_members
-from modules.ui import load_css
+from modules.ui import load_css, render_scroll_to_top
 from modules.analytics import detect_financial_profile
 from modules.notifications import check_budget_alerts
 
@@ -243,6 +243,8 @@ def main():
     # =========================================================================
     # PIED DE PAGE
     # =========================================================================
+    render_scroll_to_top()
+    
     from modules.ui.layout import render_app_info
     render_app_info()
 

@@ -45,6 +45,7 @@ def card_kpi(title, value, trend=None, trend_color="positive"):
     st.markdown(html, unsafe_allow_html=True)
 
 from .layout import render_app_info
+from .feedback import render_scroll_to_top
 
 __all__ = [
     'components',
@@ -54,4 +55,5 @@ __all__ = [
     'load_css',
     'card_kpi',
     'render_app_info',
+    'render_scroll_to_top',
 ]

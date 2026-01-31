@@ -8,7 +8,7 @@ from modules.db.migrations import init_db
 from modules.db.categories import get_categories, get_categories_with_emojis, get_categories_suggested_tags
 from modules.db.tags import get_all_tags
 from modules.db.stats import get_all_account_labels
-from modules.ui import load_css
+from modules.ui import load_css, render_scroll_to_top
 from modules.utils import clean_label
 
 # New modular components
@@ -529,6 +529,8 @@ else:
             st.success("Toutes les opérations ont été identifiées ! ✨")
         else:
             show_validation_list(unknown_df, all_acc_labels, all_members, available_categories, cat_emoji_map, sort_key, active_card_maps, key_suffix="_unknown")
+
+render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
 render_app_info()

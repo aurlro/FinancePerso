@@ -1,5 +1,5 @@
 import streamlit as st
-from modules.ui import load_css
+from modules.ui import load_css, render_scroll_to_top
 from modules.db.migrations import init_db
 from modules.ui.config.config_dashboard import render_config_dashboard
 from modules.ui.config.config_mode import (
@@ -223,6 +223,8 @@ if is_advanced_mode():
         with col_back2:
             st.subheader("📑 Logs système", divider="blue")
             render_log_viewer()
+
+render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
 render_app_info()
