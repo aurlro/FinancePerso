@@ -99,7 +99,7 @@ def render_quick_validation_popover():
                             beneficiary=beneficiary
                         )
                         validated_count += 1
-                        toast_success(f"Transaction validée", icon="✅")
+                        set_flash_message(f"✅ Transaction validée : {row['label'][:30]}...", FeedbackType.SUCCESS)
                         st.rerun()
         
         # Actions footer
@@ -134,16 +134,18 @@ def render_quick_config_popover():
                                    format_func=lambda x: "🏘️ Foyer" if x == "HOUSEHOLD" else "💼 Tiers",
                                    horizontal=True)
                 
-                if st.form_submit_button("Ajouter", use_container_width=True, type="primary"):
-                    if new_name:
-                        if add_member(new_name, new_type):
+                submitted = st.form_submit_button("Ajouter", use_container_width=True, type="primary")
+                if submitted:
+                    if new_name and new_name.strip():
+                        cleaned_name = new_name.strip()
+                        if add_member(cleaned_name, new_type):
                             type_label = "Foyer" if new_type == "HOUSEHOLD" else "Tiers"
-                            save_feedback(f"Membre '{new_name}' ({type_label})", created=True)
+                            set_flash_message(f"✅ Membre '{cleaned_name}' ({type_label}) créé", FeedbackType.SUCCESS)
                             st.rerun()
                         else:
-                            toast_warning(f"Le membre '{new_name}' existe déjà", icon="⚠️")
+                            set_flash_message(f"⚠️ Le membre '{cleaned_name}' existe déjà", FeedbackType.WARNING)
                     else:
-                        toast_warning("Veuillez entrer un nom", icon="⚠️")
+                        set_flash_message("⚠️ Veuillez entrer un nom", FeedbackType.WARNING)
         
         # Tab 2: Add Category
         with tab_category:
@@ -156,15 +158,18 @@ def render_quick_config_popover():
                 
                 is_fixed = st.checkbox("Dépense fixe (loyer, abonnement...)")
                 
-                if st.form_submit_button("Ajouter", use_container_width=True, type="primary"):
-                    if new_cat:
-                        if add_category(new_cat, emoji, int(is_fixed)):
-                            save_feedback(f"Catégorie '{new_cat}'", created=True)
+                submitted = st.form_submit_button("Ajouter", use_container_width=True, type="primary")
+                if submitted:
+                    if new_cat and new_cat.strip():
+                        cleaned_cat = new_cat.strip()
+                        if add_category(cleaned_cat, emoji, int(is_fixed)):
+                            type_label = "fixe" if is_fixed else "variable"
+                            set_flash_message(f"✅ Catégorie '{cleaned_cat}' ({type_label}) créée", FeedbackType.SUCCESS)
                             st.rerun()
                         else:
-                            toast_warning("Cette catégorie existe déjà", icon="⚠️")
+                            set_flash_message(f"⚠️ La catégorie '{cleaned_cat}' existe déjà", FeedbackType.WARNING)
                     else:
-                        toast_warning("Veuillez entrer un nom", icon="⚠️")
+                        set_flash_message("⚠️ Veuillez entrer un nom de catégorie", FeedbackType.WARNING)
         
         # Tab 3: Add Rule
         with tab_rule:
@@ -175,18 +180,20 @@ def render_quick_config_popover():
                 )
                 target_cat = st.selectbox("Catégorie cible", options=get_categories())
                 
-                if st.form_submit_button("Créer la règle", use_container_width=True, type="primary"):
-                    if pattern:
+                submitted = st.form_submit_button("Créer la règle", use_container_width=True, type="primary")
+                if submitted:
+                    if pattern and pattern.strip():
+                        clean_pattern = pattern.strip()
                         try:
-                            if add_learning_rule(pattern.strip(), target_cat):
-                                toast_success(f"Règle '{pattern}' → '{target_cat}' créée !", icon="🧠")
+                            if add_learning_rule(clean_pattern, target_cat):
+                                set_flash_message(f"✅ Règle '{clean_pattern}' → '{target_cat}' créée", FeedbackType.SUCCESS)
                                 st.rerun()
                             else:
-                                toast_warning("Cette règle existe peut-être déjà", icon="⚠️")
+                                set_flash_message(f"⚠️ La règle '{clean_pattern}' existe déjà", FeedbackType.WARNING)
                         except Exception as e:
-                            toast_error(f"Erreur: {e}", icon="❌")
+                            set_flash_message(f"❌ Erreur création règle : {str(e)[:50]}", FeedbackType.ERROR)
                     else:
-                        toast_warning("Veuillez entrer un mot-clé", icon="⚠️")
+                        set_flash_message("⚠️ Veuillez entrer un mot-clé", FeedbackType.WARNING)
 
 
 def render_quick_import_popover():
@@ -252,7 +259,7 @@ def render_quick_import_popover():
                 
                 # Import button
                 if st.button("🚀 Importer maintenant", type="primary", use_container_width=True):
-                    with st.spinner("Import en cours..."):
+                    with st.spinner("🔄 Import en cours..."):
                         # Categorize
                         results = []
                         for _, row in df.iterrows():
@@ -265,9 +272,14 @@ def render_quick_import_popover():
                         # Save
                         count, skipped = save_transactions(df)
                     
-                    toast_success(f"{count} transactions importées !", icon="🎉")
-                    if count > 5:
-                        st.balloons()
+                    if count > 0:
+                        msg = f"✅ {count} transaction(s) importée(s)"
+                        if skipped > 0:
+                            msg += f" ({skipped} doublons ignorés)"
+                        set_flash_message(msg, FeedbackType.SUCCESS)
+                    else:
+                        set_flash_message("ℹ️ Aucune nouvelle transaction à importer", FeedbackType.INFO)
+                    
                     st.rerun()
                     
             except Exception as e:
@@ -338,6 +350,10 @@ def render_quick_actions_grid():
     Render the main quick actions grid with popovers.
     This replaces the simple buttons with interactive popovers.
     """
+    # Afficher les messages flash en attente (pour les actions dans les popovers)
+    from modules.ui.feedback import display_flash_toasts
+    display_flash_toasts()
+    
     st.subheader("📌 Actions Rapides")
     
     col_a, col_b, col_c, col_d = st.columns(4)

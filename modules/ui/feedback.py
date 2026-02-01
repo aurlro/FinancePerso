@@ -352,6 +352,37 @@ def clear_flash_messages():
         st.session_state.flash_messages = []
 
 
+def display_flash_toasts():
+    """Affiche et nettoie les messages flash en attente (toasts)."""
+    if 'flash_messages' not in st.session_state:
+        return
+    
+    current_time = time.time()
+    messages_to_display = []
+    messages_to_keep = []
+    
+    for msg in st.session_state.flash_messages:
+        # Messages de moins de 5 secondes
+        if current_time - msg['timestamp'] < 5:
+            messages_to_display.append(msg)
+        else:
+            messages_to_keep.append(msg)
+    
+    # Afficher les messages sous forme de toasts
+    for msg in messages_to_display:
+        if msg['type'] == 'success':
+            toast_success(msg['message'])
+        elif msg['type'] == 'error':
+            toast_error(msg['message'])
+        elif msg['type'] == 'warning':
+            toast_warning(msg['message'])
+        elif msg['type'] == 'info':
+            toast_info(msg['message'])
+    
+    # Mettre à jour le session state
+    st.session_state.flash_messages = messages_to_keep
+
+
 # ============================================================================
 # COMPOSANTS AVANCÉS
 # ============================================================================
