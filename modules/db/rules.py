@@ -6,7 +6,7 @@ import pandas as pd
 import re
 import streamlit as st
 from typing import List, Tuple, Optional
-from modules.db.connection import get_db_connection
+from modules.db.connection import get_db_connection, clear_db_cache
 from modules.logger import logger
 
 
@@ -40,6 +40,7 @@ def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
             return False
 
 
+@st.cache_data(ttl='1h')
 def get_learning_rules() -> pd.DataFrame:
     """
     Retrieve all learning rules.
@@ -117,10 +118,12 @@ def delete_learning_rule(rule_id: int) -> bool:
         conn.commit()
         deleted = cursor.rowcount > 0
         if deleted:
+            clear_db_cache()
             logger.info(f"Learning rule {rule_id} deleted")
         return deleted
 
 
+@st.cache_data(ttl='1h')
 def get_rules_for_category(category: str) -> pd.DataFrame:
     """
     Get all learning rules for a specific category.

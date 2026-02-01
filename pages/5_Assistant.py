@@ -9,6 +9,21 @@ from modules.categorization import clean_label, predict_category_ai
 from modules.ui import load_css, card_kpi, render_scroll_to_top
 from modules.ai_manager import get_ai_provider, get_active_model_name
 from modules.analytics import detect_recurring_payments, detect_financial_profile
+# Initialisation des variables de session
+if 'anomaly_results' not in st.session_state:
+    st.session_state['anomaly_results'] = None
+if 'audit_results' not in st.session_state:
+    st.session_state['audit_results'] = None
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+if 'setup_candidates' not in st.session_state:
+    st.session_state['setup_candidates'] = None
+if 'show_trends' not in st.session_state:
+    st.session_state['show_trends'] = None
+if 'trend_results' not in st.session_state:
+    st.session_state['trend_results'] = None
+
+
 
 st.set_page_config(page_title="Assistant Audit", page_icon="🕵️", layout="wide")
 load_css()
@@ -120,7 +135,7 @@ with tab_audit:
     # --- EXISTING AUDIT LOGIC ---
     col1, col2 = st.columns([3, 1])
     with col1:
-        if st.button("🔎 Lancer l'analyse complète", type="primary"):
+        if st.button("🔎 Lancer l'analyse complète", type="primary", key='button_138'):
             with st.spinner("Analyse des incohérences et vérification IA..."):
                 df = get_all_transactions()
                 
@@ -147,17 +162,17 @@ with tab_audit:
         bulk_cols = st.columns([2, 2, 2, 3])
         
         with bulk_cols[0]:
-            if st.button("📋 Sélectionner tout", use_container_width=True):
+            if st.button("📋 Sélectionner tout", use_container_width=True, key='button_165'):
                 st.session_state['audit_bulk_selection'] = list(range(len(st.session_state['audit_results'])))
                 st.rerun()
         
         with bulk_cols[1]:
-            if st.button("❌ Désélectionner tout", use_container_width=True):
+            if st.button("❌ Désélectionner tout", use_container_width=True, key='button_170'):
                 st.session_state['audit_bulk_selection'] = []
                 st.rerun()
         
         with bulk_cols[2]:
-            if st.button("🗑️ Ignorer sélection", use_container_width=True):
+            if st.button("🗑️ Ignorer sélection", use_container_width=True, key='button_175'):
                 selected = st.session_state.get('audit_bulk_selection', [])
                 for idx in sorted(selected, reverse=True):
                     if idx not in st.session_state['audit_hidden']:
@@ -166,7 +181,7 @@ with tab_audit:
                 st.rerun()
         
         with bulk_cols[3]:
-            if st.button("🧠 Créer règles pour la sélection", use_container_width=True, type="primary"):
+            if st.button("🧠 Créer règles pour la sélection", use_container_width=True, type="primary", key='button_184'):
                 # Bulk learning rule creation
                 selected = st.session_state.get('audit_bulk_selection', [])
                 rules_count = 0
@@ -346,7 +361,7 @@ with tab_trends:
         help="Exclut les virements entre vos comptes pour une analyse plus précise des vraies dépenses"
     )
     
-    if st.button("Analyser les tendances 📈", type="primary"):
+    if st.button("Analyser les tendances 📈", type="primary", key='button_364'):
         st.session_state['show_trends'] = True
         
     if st.session_state.get('show_trends', False):
@@ -379,7 +394,7 @@ with tab_trends:
             st.session_state['show_trends'] = False
             st.rerun()
     
-    if 'trend_results' in st.session_state:
+    if 'trend_results' in st.session_state and st.session_state['trend_results'] is not None:
         result = st.session_state['trend_results']
         insights = result.get('insights', [])
         period_current = result.get('period_current')
@@ -439,7 +454,7 @@ with tab_chat:
         st.rerun()
     
     # Clear chat button
-    if st.button("Effacer la conversation"):
+    if st.button("Effacer la conversation", key='button_457'):
         st.session_state['chat_history'] = []
         st.rerun()
 
@@ -447,7 +462,7 @@ with tab_setup:
     st.header("🏗️ Configuration Assistée")
     st.markdown("Répondez à quelques questions pour configurer automatiquement vos catégories principales (Salaire, Loyer...)")
     
-    if st.button("Lancer l'analyse 🚀", type="primary"):
+    if st.button("Lancer l'analyse 🚀", type="primary", key='button_465'):
         df = get_all_transactions()
         if df.empty:
             st.warning("Importez d'abord des données.")
@@ -460,7 +475,7 @@ with tab_setup:
         cands = st.session_state['setup_candidates']
         if not cands:
             st.success("🎉 Tout semble déjà configuré ! Je n'ai pas trouvé de nouvelles récurrences inconnues.")
-            if st.button("Forcer une ré-analyse complète (incluant le déjà connu)"):
+            if st.button("Forcer une ré-analyse complète (incluant le déjà connu)", key='button_478'):
                  # TBD: logic to clear cache or ignore existing checks
                  pass
         else:

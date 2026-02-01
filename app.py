@@ -4,6 +4,7 @@ import os
 # --- ERROR TRACKING & SECURITY INITIALIZATION ---
 from modules.error_tracking import init_error_tracking
 from modules.encryption import get_encryption
+from modules.logger import logger
 
 # Initialize Sentry if DSN configured
 if os.getenv('SENTRY_DSN'):
@@ -15,16 +16,18 @@ if os.getenv('SENTRY_DSN'):
 # Initialize encryption
 encryption = get_encryption()
 if encryption.is_enabled():
-    print("🔐 Encryption enabled for sensitive fields")
+    logger.info("🔐 Encryption enabled for sensitive fields")
 else:
-    print("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
+    logger.warning("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
 
-from modules.ui import load_css, card_kpi, render_scroll_to_top
+from modules.ui import load_css, card_kpi, render_scroll_to_top, display_flash_messages
 from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
 from modules.db.members import add_member
 from modules.ui.components.onboarding_modal import should_show_onboarding, render_onboarding_modal
 from modules.ui.components.quick_actions import render_quick_actions_grid
+from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
+from modules.notifications import NotificationManager, check_all_notifications, render_notification_badge
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -36,6 +39,12 @@ st.set_page_config(
 
 load_css()
 init_db()
+
+# Vérifier les notifications (budget alerts, daily digest, etc.)
+check_all_notifications()
+
+# Afficher le badge de notification dans la sidebar
+render_notification_badge()
 
 # Afficher les messages flash en attente
 display_flash_messages()
@@ -66,8 +75,8 @@ if not is_app_initialized():
         
         with st.form("onboarding_form"):
             st.write("Pour commencer, créons votre profil principal.")
-            user_name = st.text_input("Votre Prénom", value="Moi")
-            account_name = st.text_input("Nom de votre compte principal", value="Compte Principal")
+            user_name = st.text_input("Votre Prénom", value="Moi", key='text_input_78')
+            account_name = st.text_input("Nom de votre compte principal", value="Compte Principal", key='text_input_79')
             
             submit = st.form_submit_button("Commencer l'aventure ➡️", type="primary")
             
@@ -97,14 +106,14 @@ if not is_app_initialized():
         
         # Button to reopen onboarding modal
         st.divider()
-        if st.button("🎯 Guide de démarrage", use_container_width=True, type="secondary"):
+        if st.button("🎯 Guide de démarrage", use_container_width=True, type="secondary", key='button_109'):
             st.session_state['onboarding_dismissed'] = False
             st.session_state['onboarding_step'] = 1
             st.rerun()
 
     if st.session_state.get('onboarding_complete'):
         show_success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
-        if st.button("Aller à l'import 📥", type="primary"):
+        if st.button("Aller à l'import 📥", type="primary", key='button_116'):
             toast_success("Redirection vers l'import...", icon="📥")
             st.switch_page("pages/1_Import.py")
 
@@ -113,6 +122,14 @@ else:
     stats = get_global_stats()
     
     st.title("🏠 Accueil")
+    
+    # 🆕 DAILY WIDGET - Crée l'habitude quotidienne
+    render_daily_widget()
+    
+    # 🆕 QUICK STATS ROW
+    render_quick_stats_row()
+    
+    st.divider()
     
     # 1. Global KPIs
     c1, c2, c3, c4 = st.columns(4)
@@ -128,9 +145,9 @@ else:
         card_kpi("Épargne du Mois", f"{sav:+,.0f} €", trend=f"{stats.get('current_month_rate', 0):.1f}%", trend_color=color)
     with c4:
         st.write("")  # Placeholder or shortcut
-        if st.button("📥 Nouvel Import", use_container_width=True, type="primary"):
+        if st.button("📥 Nouvel Import", use_container_width=True, type="primary", key='button_148'):
             st.switch_page("pages/1_Import.py")
-        if st.button("📊 Voir la Synthèse", use_container_width=True):
+        if st.button("📊 Voir la Synthèse", use_container_width=True, key='button_150'):
             st.switch_page("pages/3_Synthese.py")
             
     st.divider()
@@ -148,7 +165,7 @@ else:
         
         # Quick access to onboarding
         st.divider()
-        if st.button("🎯 Revoir le guide", use_container_width=True):
+        if st.button("🎯 Revoir le guide", use_container_width=True, key='button_168'):
             st.session_state['onboarding_dismissed'] = False
             st.session_state['onboarding_step'] = 1
             st.rerun()
@@ -157,6 +174,19 @@ else:
     
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
+# Initialisation des variables de session
+if 'default_account_name' not in st.session_state:
+    st.session_state['default_account_name'] = None
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+if 'onboarding_complete' not in st.session_state:
+    st.session_state['onboarding_complete'] = None
+if 'onboarding_dismissed' not in st.session_state:
+    st.session_state['onboarding_dismissed'] = None
+if 'onboarding_step' not in st.session_state:
+    st.session_state['onboarding_step'] = None
+
+
     render_app_info()
     
     # Scroll to top button

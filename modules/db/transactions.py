@@ -5,11 +5,12 @@ Handles CRUD operations for transactions, the core entity of the application.
 import uuid
 import pandas as pd
 import streamlit as st
-from modules.db.connection import get_db_connection, build_filter_clause
+from modules.db.connection import get_db_connection, build_filter_clause, clear_db_cache
 from modules.db.members import get_member_mappings
 from modules.logger import logger
 
 
+@st.cache_data(ttl='1h')
 def transaction_exists(cursor, tx_hash: str) -> bool:
     """
     Check if a transaction exists based on tx_hash.
@@ -139,6 +140,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
     from modules.cache_manager import invalidate_transaction_caches
     invalidate_transaction_caches()
+    clear_db_cache()
 
     logger.info(f"Imported {new_count} new transactions, skipped {skipped_count} duplicates")
     return new_count, skipped_count
@@ -165,6 +167,7 @@ def apply_member_mappings_to_pending() -> int:
         return count
 
 
+@st.cache_data(ttl='1h')
 def get_transaction_count(date: str, label: str, amount: float) -> int:
     """
     Count existing transactions matching criteria.
@@ -180,6 +183,7 @@ def get_transaction_count(date: str, label: str, amount: float) -> int:
         return cursor.fetchone()[0]
 
 
+@st.cache_data(ttl='1h')
 def get_duplicates_report() -> pd.DataFrame:
     """
     Find transactions with identical date, label, and amount.
@@ -197,6 +201,7 @@ def get_duplicates_report() -> pd.DataFrame:
         return pd.read_sql(query, conn)
 
 
+@st.cache_data(ttl='1h')
 def get_transactions_by_criteria(
     date: str = None, 
     label: str = None, 
@@ -297,6 +302,7 @@ def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
 
 
 
+@st.cache_data(ttl='1h')
 def get_pending_transactions() -> pd.DataFrame:
     """
     Get all pending (unvalidated) transactions.

@@ -70,11 +70,11 @@ def render_onboarding_modal():
             
             col1, col2 = st.columns([1, 1])
             with col1:
-                if st.button("⏭️ Plus tard", use_container_width=True):
+                if st.button("⏭️ Plus tard", use_container_width=True, key='button_73'):
                     dismiss_onboarding()
                     st.rerun()
             with col2:
-                if st.button("🚀 Commencer", type="primary", use_container_width=True):
+                if st.button("🚀 Commencer", type="primary", use_container_width=True, key='button_77'):
                     st.session_state['onboarding_step'] = 2
                     st.rerun()
         
@@ -91,7 +91,7 @@ def render_onboarding_modal():
                 st.success(f"✅ {len(members)} membre(s) déjà configuré(s) : {', '.join(members['name'].tolist())}")
             
             with st.form("add_member_form"):
-                new_member = st.text_input("Nom du membre", placeholder="Ex: Aurélien, Élise...")
+                new_member = st.text_input("Nom du membre", placeholder="Ex: Aurélien, Élise...", key='text_input_94')
                 member_type = st.selectbox(
                     "Type",
                     options=["HOUSEHOLD", "EXTERNAL"],
@@ -120,11 +120,11 @@ def render_onboarding_modal():
             st.divider()
             col_nav1, col_nav2 = st.columns([1, 1])
             with col_nav1:
-                if st.button("← Retour", use_container_width=True):
+                if st.button("← Retour", use_container_width=True, key='button_123'):
                     st.session_state['onboarding_step'] = 1
                     st.rerun()
             with col_nav2:
-                if st.button("Suivant →", use_container_width=True):
+                if st.button("Suivant →", use_container_width=True, key='button_127'):
                     st.session_state['onboarding_step'] = 3
                     st.rerun()
         
@@ -164,11 +164,11 @@ def render_onboarding_modal():
             )
             
             # Custom category
-            custom_cat = st.text_input("Ou créez une catégorie personnalisée", placeholder="Ex: Sport, Enfants...")
+            custom_cat = st.text_input("Ou créez une catégorie personnalisée", placeholder="Ex: Sport, Enfants...", key='text_input_167')
             
             col1, col2 = st.columns([1, 1])
             with col1:
-                if st.button("➕ Ajouter les catégories", use_container_width=True):
+                if st.button("➕ Ajouter les catégories", use_container_width=True, key='button_171'):
                     from modules.db.categories import add_category
                     added = 0
                     
@@ -190,18 +190,18 @@ def render_onboarding_modal():
                         st.info("ℹ️ Toutes les catégories existent déjà")
             
             with col2:
-                if st.button("⏭️ Passer →", use_container_width=True):
+                if st.button("⏭️ Passer →", use_container_width=True, key='button_193'):
                     st.session_state['onboarding_step'] = 4
                     st.rerun()
             
             st.divider()
             col_nav1, col_nav2 = st.columns([1, 1])
             with col_nav1:
-                if st.button("← Retour", use_container_width=True):
+                if st.button("← Retour", use_container_width=True, key='button_200'):
                     st.session_state['onboarding_step'] = 2
                     st.rerun()
             with col_nav2:
-                if st.button("Suivant →", use_container_width=True):
+                if st.button("Suivant →", use_container_width=True, key='button_204'):
                     st.session_state['onboarding_step'] = 4
                     st.rerun()
         
@@ -258,12 +258,12 @@ def render_onboarding_modal():
             
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                if st.button("🚀 C'est parti !", type="primary", use_container_width=True):
+                if st.button("🚀 C'est parti !", type="primary", use_container_width=True, key='button_261'):
                     dismiss_onboarding()
                     st.rerun()
             
             st.divider()
-            if st.button("← Retour", use_container_width=True):
+            if st.button("← Retour", use_container_width=True, key='button_266'):
                 st.session_state['onboarding_step'] = 3
                 st.rerun()
     
@@ -286,7 +286,7 @@ def render_floating_help_button():
     
     col1, col2, col3 = st.columns([6, 6, 1])
     with col3:
-        if st.button("❓", help="Réouvrir le guide de démarrage"):
+        if st.button("❓", help="Réouvrir le guide de démarrage", key='button_289'):
             st.session_state['onboarding_dismissed'] = False
             st.session_state['onboarding_step'] = 1
             st.rerun()

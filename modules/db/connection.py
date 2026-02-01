@@ -1,3 +1,4 @@
+import streamlit as st
 """
 Database connection management.
 Provides context manager for SQLite connections.
@@ -77,3 +78,12 @@ def build_filter_clause(filters: dict) -> tuple[str, list]:
             params.append(condition)
 
     return where_clause, params
+
+
+def clear_db_cache():
+    """Invalide le cache des données DB après modification."""
+    try:
+        st.cache_data.clear()
+    except:
+        pass
+

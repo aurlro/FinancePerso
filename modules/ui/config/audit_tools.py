@@ -43,7 +43,7 @@ def render_audit_tools():
             - 🏷️ Normalise les tags (minuscules et dédoublonnage).
             - 🧠 Ré-applique vos règles aux transactions en attente.
         """)
-        if st.button("Lancer les corrections magiques ✨", type="primary"):
+        if st.button("Lancer les corrections magiques ✨", type="primary", key='button_46'):
             with st.spinner("Analyse et correction des données..."):
                 # Créer une sauvegarde avant
                 backup_path = create_backup(label="pre_magic_fix")

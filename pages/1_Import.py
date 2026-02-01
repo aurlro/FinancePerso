@@ -59,7 +59,7 @@ if import_mode == "Autre (Toutes banques)":
         'mapping': {}
     }
 
-uploaded_file = st.file_uploader("Choisir un fichier CSV", type=['csv'])
+uploaded_file = st.file_uploader("Choisir un fichier CSV", type=['csv'], key='file_uploader_62')
 
 if uploaded_file is not None:
     # Validate file
@@ -78,13 +78,13 @@ if uploaded_file is not None:
             
             c1, c2, c3, c4 = st.columns(4)
             with c1:
-                col_date = st.selectbox("Colonne Date", cols)
+                col_date = st.selectbox("Colonne Date", cols, key='selectbox_81')
             with c2:
-                col_amt = st.selectbox("Colonne Montant", cols)
+                col_amt = st.selectbox("Colonne Montant", cols, key='selectbox_83')
             with c3:
-                col_label = st.selectbox("Colonne Libellé", cols)
+                col_label = st.selectbox("Colonne Libellé", cols, key='selectbox_85')
             with c4:
-                col_member = st.selectbox("Colonne Carte (optionnel)", ["-- Ignorer --"] + cols)
+                col_member = st.selectbox("Colonne Carte (optionnel)", ["-- Ignorer --"] + cols, key='selectbox_87')
                 
             config['mapping'] = {
                 'date': col_date,
@@ -160,13 +160,13 @@ if uploaded_file is not None:
             if not existing_accounts:
                 existing_accounts = ["Compte Principal"]
             
-            account_choice = st.radio("Compte", ["Compte existant", "Créer un nouveau compte"])
+            account_choice = st.radio("Compte", ["Compte existant", "Créer un nouveau compte"], key='radio_163')
             
             if account_choice == "Compte existant":
-                account_name = st.selectbox("Sélectionner le compte", existing_accounts)
+                account_name = st.selectbox("Sélectionner le compte", existing_accounts, key='selectbox_166')
             else:
                 default_acc = st.session_state.get('default_account_name', "")
-                account_name = st.text_input("Nom du nouveau compte", value=default_acc, placeholder="Ex: Compte Joint, Livret A...")
+                account_name = st.text_input("Nom du nouveau compte", value=default_acc, placeholder="Ex: Compte Joint, Livret A...", key='text_input_169')
                 if not account_name:
                     account_name = "Nouveau Compte"
         
@@ -175,11 +175,11 @@ if uploaded_file is not None:
             # Dynamic years: from 2024 to current year + 1 (future-proof)
             current_year = datetime.date.today().year
             years = list(range(2024, current_year + 2))  # 2024 to next year
-            selected_year = st.selectbox("Année", years, index=len(years)-2)  # Default to current year
+            selected_year = st.selectbox("Année", years, index=len(years)-2, key='selectbox_178')  # Default to current year
             
             months = ["Tous", "Janvier", "Février", "Mars", "Avril", "Mai", "Juin", 
                      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-            selected_month = st.selectbox("Mois (optionnel)", months)
+            selected_month = st.selectbox("Mois (optionnel)", months, key='selectbox_182')
         
         # Parse file
         st.divider()
@@ -317,7 +317,7 @@ if uploaded_file is not None:
                     value=True
                 )
                 
-                if st.button("🚀 Valider et Importer", type="primary"):
+                if st.button("🚀 Valider et Importer", type="primary", key='button_320'):
                     status_container = st.empty()
                     progress_bar = st.progress(0)
                     

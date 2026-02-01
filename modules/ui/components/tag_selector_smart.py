@@ -16,6 +16,11 @@ from difflib import SequenceMatcher
 from modules.db.tags import get_all_tags
 from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
 from modules.db.transactions import get_transaction_by_id, get_transactions, update_transaction_tags
+# Initialisation des variables de session
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+
+
 
 
 def similarity(a: str, b: str) -> float:

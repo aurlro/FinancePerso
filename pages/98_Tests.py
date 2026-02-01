@@ -32,12 +32,12 @@ with tab1:
         test_category = st.radio(
             "Sélectionnez les tests à lancer :",
             [
-                "🌟 Tous les tests (197 tests)",
-                "💾 Tests DB (108 tests)",
+                "🌟 Tous les tests (293 tests)",
+                "💾 Tests DB (79 tests)",
                 "🧠 Tests AI (8 tests)",
-                "🎨 Tests UI Components (54 tests)",
-                "🔄 Tests Integration (9 tests)",
-                "⚙️ Tests Logic (18 tests)"
+                "🎨 Tests UI Components (67 tests)",
+                "🔄 Tests Integration (25 tests)",
+                "⚙️ Tests Logic & Others (114 tests)"
             ],
             help="Choisissez quelle catégorie de tests vous souhaitez exécuter"
         )
@@ -58,7 +58,7 @@ with tab1:
     with col2:
         st.subheader("Actions")
         
-        if st.button("▶️ Lancer les Tests", type="primary", use_container_width=True):
+        if st.button("▶️ Lancer les Tests", type="primary", use_container_width=True, key="btn_lancer_tests"):
             # Construction de la commande
             cmd = ["python3", "-m", "pytest"]
             
@@ -217,7 +217,7 @@ with tab2:
         stats_col1, stats_col2, stats_col3 = st.columns(3)
         
         with stats_col1:
-            st.metric("Tests Disponibles", "197")
+            st.metric("Tests Disponibles", "293")
             st.caption("108 DB + 8 AI + 54 UI + 18 Logic + 9 Integration")
         
         with stats_col2:
@@ -315,4 +315,4 @@ st.divider()
 from modules.ui import render_scroll_to_top
 render_scroll_to_top()
 
-st.caption("🧪 Test Suite - 197 tests | ~78% coverage | Production Ready")
+st.caption("🧪 Test Suite - 293 tests | ~82% coverage | Production Ready")

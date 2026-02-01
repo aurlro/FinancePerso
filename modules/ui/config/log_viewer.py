@@ -56,7 +56,7 @@ def render_log_viewer():
         )
     
     with col_filter2:
-        search = st.text_input("🔍 Recherche texte", placeholder="Error, DB, Ingestion...")
+        search = st.text_input("🔍 Recherche texte", placeholder="Error, DB, Ingestion...", key='text_input_59')
     
     # Load and filter logs
     with open(LOG_FILE, "r", encoding='utf-8') as f:
@@ -82,7 +82,7 @@ def render_log_viewer():
     
     # Slider for number of lines (only if no search filter - otherwise show all matches)
     if not search:
-        num_lines = st.slider("Nombre de lignes à afficher", 10, min(500, len(filtered_logs)), min(100, len(filtered_logs)))
+        num_lines = st.slider("Nombre de lignes à afficher", 10, min(500, len(filtered_logs)), min(100, len(filtered_logs)), key='log_viewer_lines')
         display_logs = filtered_logs[-num_lines:]
     else:
         display_logs = filtered_logs
@@ -112,11 +112,11 @@ def render_log_viewer():
     col_actions1, col_actions2 = st.columns(2)
     
     with col_actions1:
-        if st.button("🔄 Rafraîchir", use_container_width=True):
+        if st.button("🔄 Rafraîchir", use_container_width=True, key='button_115'):
             st.rerun()
     
     with col_actions2:
-        if st.button("🗑️ Effacer les logs", use_container_width=True, type="secondary"):
+        if st.button("🗑️ Effacer les logs", use_container_width=True, type="secondary", key='button_119'):
             with open(LOG_FILE, "w", encoding='utf-8') as f:
                 f.write("")
             st.toast("Logs effacés !", icon="🗑️")

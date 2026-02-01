@@ -75,7 +75,7 @@ def render_local_ml_section():
     
     with col_train:
         if not stats['is_trained']:
-            if st.button("🚀 Entraîner le modèle", type="primary", use_container_width=True):
+            if st.button("🚀 Entraîner le modèle", type="primary", use_container_width=True, key='button_78'):
                 with st.spinner("Entraînement en cours... Cela peut prendre quelques secondes."):
                     success, message = train_local_model()
                 
@@ -87,7 +87,7 @@ def render_local_ml_section():
                     toast_error(message, icon="❌")
                     st.error(f"❌ {message}")
         else:
-            if st.button("🔄 Réentraîner", type="secondary", use_container_width=True):
+            if st.button("🔄 Réentraîner", type="secondary", use_container_width=True, key='button_90'):
                 with st.spinner("Réentraînement..."):
                     success, message = train_local_model()
                 
@@ -101,7 +101,7 @@ def render_local_ml_section():
     
     with col_retrain:
         if stats['is_trained']:
-            if st.button("🗑️ Supprimer le modèle", type="secondary", use_container_width=True):
+            if st.button("🗑️ Supprimer le modèle", type="secondary", use_container_width=True, key='button_104'):
                 import os
                 try:
                     if os.path.exists(MODEL_PATH):

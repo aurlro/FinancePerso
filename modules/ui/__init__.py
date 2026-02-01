@@ -97,7 +97,7 @@ def card_kpi(title, value, trend=None, trend_color="positive"):
     st.markdown(html, unsafe_allow_html=True)
 
 from .layout import render_app_info
-from .feedback import render_scroll_to_top
+from .feedback import render_scroll_to_top, display_flash_messages
 
 __all__ = [
     'components',
@@ -108,4 +108,5 @@ __all__ = [
     'card_kpi',
     'render_app_info',
     'render_scroll_to_top',
+    'display_flash_messages',
 ]

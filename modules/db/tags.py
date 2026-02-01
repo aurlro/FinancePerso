@@ -59,6 +59,7 @@ def remove_tag_from_all_transactions(tag_to_remove: str) -> int:
         rows = cursor.fetchall()
         
         updated_count = 0
+        updates = []
         for tx_id, tags_str in rows:
             if not tags_str:
                 continue
@@ -67,8 +68,12 @@ def remove_tag_from_all_transactions(tag_to_remove: str) -> int:
             if tag_to_remove in current_tags:
                 current_tags.remove(tag_to_remove)
                 new_tags_str = ", ".join(current_tags) if current_tags else ""
-                cursor.execute("UPDATE transactions SET tags = ? WHERE id = ?", (new_tags_str, tx_id))
+                updates.append((new_tags_str, tx_id))
                 updated_count += 1
+        
+        # Batch update
+        if updates:
+            cursor.executemany("UPDATE transactions SET tags = ? WHERE id = ?", updates)
         
         conn.commit()
 
@@ -114,14 +119,19 @@ def learn_tags_from_history() -> int:
                 cat_tags_map[cat] = set()
             cat_tags_map[cat].update(tags)
         
-        # Update database with learned tags
+        # Update database with learned tags - OPTIMISÉ (batch)
         cursor = conn.cursor()
+        
+        # Récupérer toutes les catégories en une requête
+        cat_names = list(cat_tags_map.keys())
+        placeholders = ','.join(['?'] * len(cat_names))
+        cursor.execute(f"SELECT id, name, suggested_tags FROM categories WHERE name IN ({placeholders})", cat_names)
+        cat_data = {row[1]: (row[0], row[2]) for row in cursor.fetchall()}
+        
+        updates = []
         for cat, tags in cat_tags_map.items():
-            # Get existing suggested tags
-            cursor.execute("SELECT id, suggested_tags FROM categories WHERE name = ?", (cat,))
-            row = cursor.fetchone()
-            if row:
-                cat_id, existing_str = row
+            if cat in cat_data:
+                cat_id, existing_str = cat_data[cat]
                 existing = set([
                     t.strip() 
                     for t in str(existing_str).split(',') 
@@ -132,11 +142,12 @@ def learn_tags_from_history() -> int:
                 new_set = existing.union(tags)
                 if len(new_set) > len(existing):
                     new_str = ", ".join(sorted(list(new_set)))
-                    cursor.execute(
-                        "UPDATE categories SET suggested_tags = ? WHERE id = ?", 
-                        (new_str, cat_id)
-                    )
+                    updates.append((new_str, cat_id))
                     count_learned += (len(new_set) - len(existing))
+        
+        # Batch update
+        if updates:
+            cursor.executemany("UPDATE categories SET suggested_tags = ? WHERE id = ?", updates)
         
         conn.commit()
     

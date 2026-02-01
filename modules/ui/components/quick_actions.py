@@ -38,7 +38,7 @@ def render_quick_validation_popover():
         
         if df.empty:
             st.success("✅ Toutes les transactions sont déjà validées !")
-            if st.button("Aller à la validation complète →", use_container_width=True):
+            if st.button("Aller à la validation complète →", use_container_width=True, key='button_41'):
                 st.switch_page("pages/2_Validation.py")
             return
         
@@ -107,7 +107,7 @@ def render_quick_validation_popover():
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("Valider tout en masse...", use_container_width=True, type="secondary"):
+            if st.button("Valider tout en masse...", use_container_width=True, type="secondary", key='button_110'):
                 st.switch_page("pages/2_Validation.py")
         
         with col2:
@@ -129,7 +129,7 @@ def render_quick_config_popover():
         # Tab 1: Add Member
         with tab_member:
             with st.form("quick_add_member", clear_on_submit=True):
-                new_name = st.text_input("Nom", placeholder="Ex: Jean")
+                new_name = st.text_input("Nom", placeholder="Ex: Jean", key='text_input_132')
                 new_type = st.radio("Type", ["HOUSEHOLD", "EXTERNAL"], 
                                    format_func=lambda x: "🏘️ Foyer" if x == "HOUSEHOLD" else "💼 Tiers",
                                    horizontal=True)
@@ -152,11 +152,11 @@ def render_quick_config_popover():
             with st.form("quick_add_category", clear_on_submit=True):
                 col1, col2 = st.columns([3, 1])
                 with col1:
-                    new_cat = st.text_input("Nom", placeholder="Ex: Sports")
+                    new_cat = st.text_input("Nom", placeholder="Ex: Sports", key='text_input_155')
                 with col2:
-                    emoji = st.text_input("Emoji", value="🏷️")
+                    emoji = st.text_input("Emoji", value="🏷️", key='text_input_157')
                 
-                is_fixed = st.checkbox("Dépense fixe (loyer, abonnement...)")
+                is_fixed = st.checkbox("Dépense fixe (loyer, abonnement...)", key='checkbox_159')
                 
                 submitted = st.form_submit_button("Ajouter", use_container_width=True, type="primary")
                 if submitted:
@@ -178,7 +178,7 @@ def render_quick_config_popover():
                     "Mot-clé ou pattern",
                     placeholder="Ex: UBER, AMAZON, NETFLIX..."
                 )
-                target_cat = st.selectbox("Catégorie cible", options=get_categories())
+                target_cat = st.selectbox("Catégorie cible", options=get_categories(), key='selectbox_181')
                 
                 submitted = st.form_submit_button("Créer la règle", use_container_width=True, type="primary")
                 if submitted:
@@ -221,9 +221,9 @@ def render_quick_import_popover():
             existing_accounts = get_all_account_labels()
             
             if existing_accounts:
-                account = st.selectbox("Compte", existing_accounts)
+                account = st.selectbox("Compte", existing_accounts, key='selectbox_224')
             else:
-                account = st.text_input("Nom du compte", value="Compte Principal")
+                account = st.text_input("Nom du compte", value="Compte Principal", key='text_input_226')
             
             # Preview and import
             try:
@@ -258,7 +258,7 @@ def render_quick_import_popover():
                     st.dataframe(preview, use_container_width=True, hide_index=True)
                 
                 # Import button
-                if st.button("🚀 Importer maintenant", type="primary", use_container_width=True):
+                if st.button("🚀 Importer maintenant", type="primary", use_container_width=True, key='button_261'):
                     with st.spinner("🔄 Import en cours..."):
                         # Categorize
                         results = []
@@ -341,7 +341,7 @@ def render_quick_stats_popover():
         
         # Link to full stats
         st.divider()
-        if st.button("Voir la synthèse complète →", use_container_width=True):
+        if st.button("Voir la synthèse complète →", use_container_width=True, key='button_344'):
             st.switch_page("pages/3_Synthese.py")
 
 

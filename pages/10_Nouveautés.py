@@ -85,7 +85,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
             help="Liste des fichiers principaux modifiés dans cette version"
         )
         
-        breaking = st.checkbox("⚠️ Contient des breaking changes")
+        breaking = st.checkbox("⚠️ Contient des breaking changes", key='checkbox_88')
         breaking_changes = None
         if breaking:
             breaking_changes = st.text_area(

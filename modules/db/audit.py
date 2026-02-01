@@ -24,35 +24,55 @@ def auto_fix_common_inconsistencies() -> int:
     with get_db_connection() as conn:
         cursor = conn.cursor()
         
-        # 1. Accent fixes
+        # 1. Accent fixes - OPTIMISÉ (batch)
         fixes = {"Élise": "Elise", "Aurelien": "Aurélien", "Anonyme": "Inconnu"}
+        
+        # Récupérer tous les membres valides en une requête
+        cursor.execute("SELECT name FROM members")
+        valid_members = {row[0] for row in cursor.fetchall()}
+        
+        # Préparer les updates batch
+        updates_member = []
+        updates_beneficiary = []
+        
         for wrong, right in fixes.items():
-            # Only fix if 'wrong' exists in transactions but 'right' is an official member
-            cursor.execute("SELECT count(*) FROM members WHERE name = ?", (right,))
-            if cursor.fetchone()[0] > 0:
-                cursor.execute("UPDATE transactions SET member = ? WHERE member = ?", (right, wrong))
-                total_fixed += cursor.rowcount
-                cursor.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (right, wrong))
-                total_fixed += cursor.rowcount
+            if right in valid_members:
+                updates_member.append((right, wrong))
+                updates_beneficiary.append((right, wrong))
         
-        # 2. Auto-delete duplicates (robust logic)
-        query = "SELECT date, label, amount, COUNT(*) as c FROM transactions GROUP BY date, label, amount HAVING c > 1"
-        dups = pd.read_sql(query, conn)
-        for _, row in dups.iterrows():
-            cursor.execute(
-                "SELECT id FROM transactions WHERE date = ? AND label = ? AND amount = ? ORDER BY id ASC",
-                (str(row['date']), row['label'], row['amount'])
-            )
-            ids = [r[0] for r in cursor.fetchall()]
-            to_delete = ids[1:]  # Keep first, delete rest
-            if to_delete:
-                placeholders = ','.join(['?'] * len(to_delete))
-                cursor.execute(f"DELETE FROM transactions WHERE id IN ({placeholders})", to_delete)
-                total_fixed += cursor.rowcount
+        # Exécuter en batch
+        if updates_member:
+            cursor.executemany("UPDATE transactions SET member = ? WHERE member = ?", updates_member)
+            total_fixed += cursor.rowcount
+        if updates_beneficiary:
+            cursor.executemany("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", updates_beneficiary)
+            total_fixed += cursor.rowcount
         
-        # 3. Normalize tags (lowercase and dedupe)
+        # 2. Auto-delete duplicates - OPTIMISÉ (batch)
+        # Utilise GROUP_CONCAT pour récupérer tous les IDs en une requête
+        cursor.execute("""
+            SELECT date, label, amount, GROUP_CONCAT(id) as ids
+            FROM transactions
+            GROUP BY date, label, amount
+            HAVING COUNT(*) > 1
+        """)
+        
+        all_ids_to_delete = []
+        for row in cursor.fetchall():
+            ids = [int(x) for x in row[3].split(',')]
+            all_ids_to_delete.extend(ids[1:])  # Garder le premier, supprimer le reste
+        
+        # Batch delete
+        if all_ids_to_delete:
+            placeholders = ','.join(['?'] * len(all_ids_to_delete))
+            cursor.execute(f"DELETE FROM transactions WHERE id IN ({placeholders})", all_ids_to_delete)
+            total_fixed += cursor.rowcount
+        
+        # 3. Normalize tags - OPTIMISÉ (batch)
         cursor.execute("SELECT id, tags FROM transactions WHERE tags IS NOT NULL AND tags != ''")
         idx_tags = cursor.fetchall()
+        
+        updates = []
         for tx_id, tags_str in idx_tags:
             normalized = ", ".join(sorted(list(set([
                 t.strip().lower() 
@@ -60,8 +80,12 @@ def auto_fix_common_inconsistencies() -> int:
                 if t.strip()
             ]))))
             if normalized != tags_str:
-                cursor.execute("UPDATE transactions SET tags = ? WHERE id = ?", (normalized, tx_id))
-                total_fixed += 1
+                updates.append((normalized, tx_id))
+        
+        # Batch update
+        if updates:
+            cursor.executemany("UPDATE transactions SET tags = ? WHERE id = ?", updates)
+            total_fixed += len(updates)
         
         conn.commit()
 

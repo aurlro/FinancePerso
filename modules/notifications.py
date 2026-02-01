@@ -1,338 +1,99 @@
 """
-Notification system for FinancePerso.
-Supports email notifications and desktop notifications for budget alerts.
+Système de notifications pour MyFinance Companion.
+Alertes budget, rappels, et récapitulatifs.
 """
+
 import os
-import smtplib
 import json
-from datetime import datetime, timedelta
+import smtplib
+import sqlite3
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timedelta
+from typing import List, Dict, Optional
+from dataclasses import dataclass, asdict
+from pathlib import Path
+
+import streamlit as st
+
 from modules.logger import logger
+from modules.db.budgets import get_budgets
+from modules.db.stats import get_global_stats
+from modules.db.transactions import get_all_transactions
 from modules.db.connection import get_db_connection
+import pandas as pd
 
 
-def get_notification_settings():
-    """Get notification settings from database."""
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT key, value FROM settings WHERE key LIKE 'notif_%'")
-        settings = {row[0]: row[1] for row in cursor.fetchall()}
-        return settings
+# ============ SETTINGS MANAGEMENT ============
+
+def get_notification_settings() -> Dict[str, str]:
+    """Récupère tous les paramètres de notification depuis la base de données."""
+    settings = {}
+    try:
+        with get_db_connection() as conn:
+            # Activer le mode row_factory pour avoir des accès par nom de colonne
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value FROM app_settings WHERE key LIKE 'notif_%'")
+            rows = cursor.fetchall()
+            settings = {row['key']: row['value'] for row in rows}
+    except Exception as e:
+        logger.error(f"Error loading notification settings: {e}")
+    
+    # Valeurs par défaut
+    defaults = {
+        'notif_enabled': 'false',
+        'notif_desktop': 'true',
+        'notif_email_enabled': 'false',
+        'notif_smtp_server': 'smtp.gmail.com',
+        'notif_smtp_port': '587',
+        'notif_smtp_user': '',
+        'notif_smtp_password': '',
+        'notif_email_to': '',
+        'notif_threshold_critical': '100',
+        'notif_threshold_warning': '90',
+        'notif_threshold_notice': '75',
+        'notif_last_budget_check': 'Jamais',
+    }
+    
+    for key, value in defaults.items():
+        if key not in settings:
+            settings[key] = value
+    
+    return settings
 
 
 def save_notification_setting(key: str, value: str):
-    """Save a notification setting."""
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            """INSERT INTO settings (key, value, description) 
-               VALUES (?, ?, ?) 
-               ON CONFLICT(key) DO UPDATE SET value = excluded.value""",
-            (key, value, f"Notification setting: {key}")
-        )
-        conn.commit()
-
-
-def send_desktop_notification(title: str, message: str):
-    """
-    Send a desktop notification.
-    Works on macOS, Linux (with notify-send), and Windows.
-    """
+    """Sauvegarde un paramètre de notification."""
     try:
-        import platform
-        system = platform.system()
-        
-        if system == "Darwin":  # macOS
-            import subprocess
-            script = f'display notification "{message}" with title "{title}" sound name "Submarine"'
-            subprocess.run(["osascript", "-e", script], check=True)
-            return True
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
             
-        elif system == "Linux":
-            import subprocess
-            subprocess.run(["notify-send", title, message], check=True)
-            return True
+            # Créer la table si elle n'existe pas
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS app_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
             
-        elif system == "Windows":
-            try:
-                from win10toast import ToastNotifier
-                toaster = ToastNotifier()
-                toaster.show_toast(title, message, duration=10)
-                return True
-            except ImportError:
-                logger.warning("win10toast not installed, desktop notification skipped")
-                return False
-                
+            cursor.execute("""
+                INSERT INTO app_settings (key, value, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (key, value))
+            
+            conn.commit()
+            logger.info(f"Notification setting saved: {key}")
     except Exception as e:
-        logger.error(f"Desktop notification failed: {e}")
-        return False
+        logger.error(f"Error saving notification setting {key}: {e}")
 
 
-def send_email_notification(subject: str, html_body: str, text_body: str = None):
-    """
-    Send an email notification.
-    Requires SMTP configuration in settings.
-    
-    Returns:
-        tuple: (success: bool, error_message: str or None)
-    """
-    settings = get_notification_settings()
-    
-    smtp_server = settings.get('notif_smtp_server', '')
-    smtp_port = int(settings.get('notif_smtp_port', '587'))
-    smtp_user = settings.get('notif_smtp_user', '')
-    smtp_password = settings.get('notif_smtp_password', '')
-    to_email = settings.get('notif_email_to', smtp_user)
-    
-    # Validation des paramètres
-    if not smtp_server:
-        return False, "Serveur SMTP non configuré"
-    if not smtp_user:
-        return False, "Email/Utilisateur SMTP non configuré"
-    if not smtp_password:
-        return False, "Mot de passe SMTP non configuré"
-    
-    try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subject
-        msg['From'] = smtp_user
-        msg['To'] = to_email
-        
-        # Attach text part
-        if text_body:
-            msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
-        
-        # Attach HTML part
-        msg.attach(MIMEText(html_body, 'html', 'utf-8'))
-        
-        # Send email
-        with smtplib.SMTP(smtp_server, smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
-        
-        logger.info(f"Email notification sent to {to_email}")
-        return True, None
-        
-    except smtplib.SMTPAuthenticationError as e:
-        error_msg = "Authentification échouée - vérifiez votre email et mot de passe (utilisez un App Password pour Gmail)"
-        logger.error(f"Email auth failed: {e}")
-        return False, error_msg
-    except smtplib.SMTPConnectError as e:
-        error_msg = f"Impossible de se connecter au serveur SMTP - vérifiez l'adresse et le port"
-        logger.error(f"SMTP connection error: {e}")
-        return False, error_msg
-    except smtplib.SMTPRecipientsRefused as e:
-        error_msg = f"Destinataire refusé - vérifiez l'adresse email"
-        logger.error(f"SMTP recipient refused: {e}")
-        return False, error_msg
-    except Exception as e:
-        error_msg = f"Erreur d'envoi: {str(e)}"
-        logger.error(f"Email notification failed: {e}")
-        return False, error_msg
-
-
-def check_budget_alerts(force_check: bool = False):
-    """
-    Check for budget overruns and send notifications.
-    
-    Args:
-        force_check: If True, check even if already checked today
-        
-    Returns:
-        List of alerts triggered
-    """
-    from modules.db.budgets import get_budgets
-    from modules.db.transactions import get_all_transactions
-    import pandas as pd
-    
-    settings = get_notification_settings()
-    
-    # Check if notifications are enabled
-    if settings.get('notif_enabled', 'false').lower() != 'true':
-        return []
-    
-    # Check if we already notified today (unless force_check)
-    if not force_check:
-        last_check = settings.get('notif_last_budget_check', '')
-        today = datetime.now().strftime('%Y-%m-%d')
-        if last_check == today:
-            return []  # Already checked today
-    
-    # Update last check date
-    save_notification_setting('notif_last_budget_check', datetime.now().strftime('%Y-%m-%d'))
-    
-    # Get budgets and current month transactions
-    budgets = get_budgets()
-    if budgets.empty:
-        return []
-    
-    df = get_all_transactions()
-    if df.empty:
-        return []
-    
-    # Filter current month
-    today = datetime.now()
-    current_month = today.strftime('%Y-%m')
-    df['date_dt'] = pd.to_datetime(df['date'])
-    df_month = df[df['date_dt'].dt.strftime('%Y-%m') == current_month]
-    
-    # Calculate spending by category
-    expenses_by_category = df_month[df_month['amount'] < 0].groupby('category_validated')['amount'].sum().abs()
-    
-    alerts = []
-    
-    for _, budget_row in budgets.iterrows():
-        category = budget_row['category']
-        budget_amount = budget_row['amount']
-        spent = expenses_by_category.get(category, 0)
-        
-        if budget_amount <= 0:
-            continue
-        
-        percentage = (spent / budget_amount) * 100
-        
-        # Determine alert level
-        if percentage >= 100:
-            alert_level = 'critical'
-            alert_message = f"🚨 DÉPASSEMENT: {category}"
-        elif percentage >= 90:
-            alert_level = 'warning'
-            alert_message = f"⚠️ Alerte: {category} à {percentage:.0f}%"
-        elif percentage >= 75:
-            alert_level = 'notice'
-            alert_message = f"ℹ️ {category} à {percentage:.0f}% du budget"
-        else:
-            continue  # No alert needed
-        
-        # Check if we already sent this alert recently
-        alert_key = f"notif_alert_sent_{current_month}_{category}_{alert_level}"
-        if settings.get(alert_key) and not force_check:
-            continue  # Already sent this alert
-        
-        alert = {
-            'category': category,
-            'budget': budget_amount,
-            'spent': spent,
-            'percentage': percentage,
-            'level': alert_level,
-            'message': alert_message
-        }
-        alerts.append(alert)
-        
-        # Mark as sent
-        save_notification_setting(alert_key, datetime.now().isoformat())
-    
-    # Send notifications if alerts found
-    if alerts:
-        _send_budget_alert_notifications(alerts)
-    
-    return alerts
-
-
-def _send_budget_alert_notifications(alerts):
-    """Send notifications for budget alerts."""
-    settings = get_notification_settings()
-    
-    # Build notification message
-    critical_alerts = [a for a in alerts if a['level'] == 'critical']
-    warning_alerts = [a for a in alerts if a['level'] == 'warning']
-    notice_alerts = [a for a in alerts if a['level'] == 'notice']
-    
-    # Desktop notification
-    if settings.get('notif_desktop', 'true').lower() == 'true':
-        title = f"FinancePerso - {len(alerts)} alerte(s) budget"
-        message_parts = []
-        if critical_alerts:
-            message_parts.append(f"{len(critical_alerts)} dépassement(s)")
-        if warning_alerts:
-            message_parts.append(f"{len(warning_alerts)} alerte(s)")
-        message = " | ".join(message_parts) if message_parts else f"{len(alerts)} notification(s)"
-        send_desktop_notification(title, message)
-    
-    # Email notification
-    if settings.get('notif_email_enabled', 'false').lower() == 'true':
-        subject = f"🚨 FinancePerso - Alertes budget {datetime.now().strftime('%B %Y')}"
-        html_body = _build_budget_alert_email(alerts)
-        text_body = _build_budget_alert_text(alerts)
-        success, error = send_email_notification(subject, html_body, text_body)
-        if not success:
-            logger.warning(f"Budget alert email failed: {error}")
-
-
-def _build_budget_alert_email(alerts):
-    """Build HTML email for budget alerts."""
-    current_month = datetime.now().strftime('%B %Y')
-    
-    html = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-            .header {{ background: #1F3A5F; color: white; padding: 20px; text-align: center; }}
-            .content {{ padding: 20px; }}
-            .alert {{ margin: 15px 0; padding: 15px; border-radius: 5px; }}
-            .critical {{ background: #fee2e2; border-left: 4px solid #dc2626; }}
-            .warning {{ background: #fef3c7; border-left: 4px solid #f59e0b; }}
-            .notice {{ background: #dbeafe; border-left: 4px solid #3b82f6; }}
-            .amount {{ font-size: 1.2em; font-weight: bold; }}
-            .footer {{ margin-top: 30px; padding: 20px; text-align: center; color: #666; font-size: 0.9em; }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>📊 FinancePerso - Alertes Budget</h1>
-            <p>{current_month}</p>
-        </div>
-        <div class="content">
-            <p>Bonjour,</p>
-            <p>Voici vos alertes budgétaires pour ce mois :</p>
-    """
-    
-    for alert in alerts:
-        level_class = alert['level']
-        emoji = "🚨" if alert['level'] == 'critical' else "⚠️" if alert['level'] == 'warning' else "ℹ️"
-        
-        html += f"""
-            <div class="alert {level_class}">
-                <strong>{emoji} {alert['category']}</strong><br>
-                <span class="amount">{alert['spent']:.2f}€ / {alert['budget']:.2f}€</span> 
-                ({alert['percentage']:.1f}%)
-            </div>
-        """
-    
-    html += """
-        </div>
-        <div class="footer">
-            <p>Notification envoyée par FinancePerso</p>
-            <p><a href="http://localhost:8501">Ouvrir l'application</a></p>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return html
-
-
-def _build_budget_alert_text(alerts):
-    """Build plain text email for budget alerts."""
-    current_month = datetime.now().strftime('%B %Y')
-    
-    text = f"FinancePerso - Alertes Budget {current_month}\n"
-    text += "=" * 40 + "\n\n"
-    
-    for alert in alerts:
-        emoji = "🚨" if alert['level'] == 'critical' else "⚠️" if alert['level'] == 'warning' else "ℹ️"
-        text += f"{emoji} {alert['category']}\n"
-        text += f"   Dépensé: {alert['spent']:.2f}€ / Budget: {alert['budget']:.2f}€ ({alert['percentage']:.1f}%)\n\n"
-    
-    text += "\nOuvrir FinancePerso: http://localhost:8501"
-    return text
-
-
-def test_notification_settings():
-    """Test notification configuration."""
+def test_notification_settings() -> Dict[str, any]:
+    """Teste la configuration des notifications."""
     settings = get_notification_settings()
     results = {
         'desktop': False,
@@ -340,24 +101,386 @@ def test_notification_settings():
         'errors': []
     }
     
-    # Test desktop
-    if settings.get('notif_desktop', 'true').lower() == 'true':
-        results['desktop'] = send_desktop_notification(
-            "Test FinancePerso",
-            "Vos notifications desktop fonctionnent !"
-        )
-        if not results['desktop']:
-            results['errors'].append("Notification desktop échouée")
+    # Test Desktop
+    if settings.get('notif_desktop', 'false').lower() == 'true':
+        try:
+            # Test simple de notification desktop via plyer ou notification native
+            try:
+                from plyer import notification
+                notification.notify(
+                    title='MyFinance - Test',
+                    message='Notifications desktop fonctionnent !',
+                    timeout=5
+                )
+                results['desktop'] = True
+            except ImportError:
+                # Fallback pour macOS
+                import platform
+                if platform.system() == 'Darwin':
+                    os.system("""
+                        osascript -e 'display notification "Notifications desktop fonctionnent !" with title "MyFinance Test"'
+                    """)
+                    results['desktop'] = True
+                else:
+                    results['errors'].append("Module plyer non installé: pip install plyer")
+        except Exception as e:
+            results['errors'].append(f"Desktop: {str(e)}")
     
-    # Test email
+    # Test Email
     if settings.get('notif_email_enabled', 'false').lower() == 'true':
-        success, error = send_email_notification(
-            "Test FinancePerso - Notifications",
-            "<h1>Test réussi !</h1><p>Vos notifications email fonctionnent.</p>",
-            "Test réussi ! Vos notifications email fonctionnent."
-        )
-        results['email'] = success
-        if not success:
-            results['errors'].append(f"❌ Email: {error}")
+        try:
+            smtp_server = settings.get('notif_smtp_server', 'smtp.gmail.com')
+            smtp_port = int(settings.get('notif_smtp_port', '587'))
+            smtp_user = settings.get('notif_smtp_user', '')
+            smtp_pass = settings.get('notif_smtp_password', '')
+            email_to = settings.get('notif_email_to', smtp_user)
+            
+            if not all([smtp_server, smtp_user, smtp_pass]):
+                results['errors'].append("Configuration email incomplète")
+            else:
+                # Créer le message
+                msg = MIMEMultipart()
+                msg['From'] = smtp_user
+                msg['To'] = email_to
+                msg['Subject'] = 'MyFinance - Test de notification'
+                
+                body = """Ceci est un email de test.
+
+Si vous recevez cet email, votre configuration SMTP fonctionne correctement !
+
+---
+MyFinance Companion"""
+                
+                msg.attach(MIMEText(body, 'plain', 'utf-8'))
+                
+                # Connexion et envoi avec gestion spécifique Gmail
+                server = None
+                try:
+                    server = smtplib.SMTP(smtp_server, smtp_port, timeout=10)
+                    server.set_debuglevel(0)  # Mettre à 1 pour debug
+                    
+                    # EHLO/HELO explicite pour Gmail
+                    server.ehlo()
+                    
+                    # STARTTLS pour port 587
+                    if smtp_port == 587:
+                        server.starttls()
+                        server.ehlo()
+                    
+                    # Authentification
+                    server.login(smtp_user, smtp_pass)
+                    
+                    # Envoi
+                    server.send_message(msg)
+                    results['email'] = True
+                    logger.info(f"Test email sent successfully to {email_to}")
+                    
+                except smtplib.SMTPAuthenticationError as e:
+                    error_msg = str(e)
+                    if '535' in error_msg or 'Username and Password not accepted' in error_msg:
+                        results['errors'].append(
+                            "Authentification échouée - Pour Gmail: utilisez un 'App Password' ("
+                            "https://myaccount.google.com/apppasswords) et vérifiez que l'"
+                            "authentification à 2 facteurs est activée"
+                        )
+                    else:
+                        results['errors'].append(f"Erreur d'authentification: {error_msg}")
+                except smtplib.SMTPConnectError as e:
+                    results['errors'].append(f"Impossible de se connecter au serveur SMTP: {str(e)}")
+                except Exception as e:
+                    results['errors'].append(f"Erreur SMTP: {str(e)}")
+                finally:
+                    if server:
+                        try:
+                            server.quit()
+                        except:
+                            pass
+                        
+        except Exception as e:
+            results['errors'].append(f"Email: {str(e)}")
     
     return results
+
+
+@dataclass
+class Notification:
+    """Représente une notification."""
+    id: str
+    type: str  # 'budget_alert', 'weekly_digest', 'goal_progress', etc.
+    title: str
+    message: str
+    priority: str  # 'low', 'medium', 'high'
+    created_at: str
+    read: bool = False
+    action_url: Optional[str] = None
+
+
+class NotificationManager:
+    """Gère les notifications de l'application."""
+    
+    def __init__(self):
+        self.notifications_file = Path("Data/notifications.json")
+        self.notifications_file.parent.mkdir(exist_ok=True)
+        self.notifications: List[Notification] = []
+        self._load()
+    
+    def _load(self):
+        """Charge les notifications depuis le fichier."""
+        if self.notifications_file.exists():
+            try:
+                with open(self.notifications_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.notifications = [Notification(**n) for n in data]
+            except Exception as e:
+                logger.error(f"Error loading notifications: {e}")
+    
+    def _save(self):
+        """Sauvegarde les notifications."""
+        try:
+            with open(self.notifications_file, 'w', encoding='utf-8') as f:
+                json.dump([asdict(n) for n in self.notifications], f, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving notifications: {e}")
+    
+    def add(self, notification: Notification):
+        """Ajoute une notification."""
+        self.notifications.append(notification)
+        self._save()
+    
+    def get_unread(self) -> List[Notification]:
+        """Retourne les notifications non lues."""
+        return [n for n in self.notifications if not n.read]
+    
+    def mark_as_read(self, notification_id: str):
+        """Marque une notification comme lue."""
+        for n in self.notifications:
+            if n.id == notification_id:
+                n.read = True
+                break
+        self._save()
+    
+    def clear_old(self, days: int = 30):
+        """Supprime les notifications vieilles de plus de X jours."""
+        cutoff = datetime.now() - timedelta(days=days)
+        self.notifications = [
+            n for n in self.notifications 
+            if datetime.fromisoformat(n.created_at) > cutoff
+        ]
+        self._save()
+
+
+def check_budget_alerts(force_check: bool = False) -> List[Dict]:
+    """
+    Vérifie les budgets et génère des alertes si dépassés ou proches.
+    Retourne la liste des alertes sous forme de dictionnaires.
+    
+    Args:
+        force_check: Si True, vérifie même si une alerte a déjà été envoyée aujourd'hui
+    """
+    alerts = []
+    
+    try:
+        settings = get_notification_settings()
+        
+        # Récupérer les seuils
+        critical_threshold = int(settings.get('notif_threshold_critical', '100'))
+        warning_threshold = int(settings.get('notif_threshold_warning', '90'))
+        
+        # Récupérer les budgets
+        budgets_df = get_budgets()
+        if budgets_df.empty:
+            return alerts
+        
+        # Récupérer les transactions du mois en cours
+        today = datetime.now()
+        first_day = today.replace(day=1)
+        
+        # Filtrer les transactions du mois
+        all_tx = get_all_transactions()
+        if not all_tx.empty and 'date' in all_tx.columns and 'category' in all_tx.columns:
+            all_tx['date'] = pd.to_datetime(all_tx['date'])
+            month_tx = all_tx[
+                (all_tx['date'] >= first_day) & 
+                (all_tx['date'] <= today)
+            ]
+            
+            # Calculer les dépenses par catégorie
+            spending_by_category = month_tx.groupby('category')['amount'].sum().to_dict()
+            
+            for _, budget in budgets_df.iterrows():
+                category = budget['category']
+                limit = budget['amount']
+                spent = spending_by_category.get(category, 0)
+                percentage = (spent / limit * 100) if limit > 0 else 0
+                
+                # Déterminer le niveau d'alerte
+                level = None
+                if percentage >= critical_threshold:
+                    level = 'critical'
+                elif percentage >= warning_threshold:
+                    level = 'warning'
+                
+                if level:
+                    # Vérifier si déjà envoyé aujourd'hui (sauf force_check)
+                    alert_key = f"notif_alert_sent_{category}_{today.strftime('%Y%m%d')}"
+                    if not force_check and settings.get(alert_key):
+                        continue
+                    
+                    alert = {
+                        'category': category,
+                        'spent': spent,
+                        'budget': limit,
+                        'percentage': percentage,
+                        'level': level,
+                        'remaining': limit - spent
+                    }
+                    alerts.append(alert)
+                    
+                    # Marquer comme envoyé
+                    if not force_check:
+                        save_notification_setting(alert_key, 'true')
+        
+        # Mettre à jour la date de dernière vérification
+        save_notification_setting('notif_last_budget_check', today.strftime('%Y-%m-%d %H:%M'))
+    
+    except Exception as e:
+        logger.error(f"Error checking budget alerts: {e}")
+    
+    return alerts
+
+
+def generate_daily_digest() -> Optional[Notification]:
+    """
+    Génère le récapitulatif quotidien.
+    À appeler une fois par jour (via cron ou au lancement).
+    """
+    today = datetime.now()
+    
+    # Vérifier si déjà généré aujourd'hui
+    notif_id = f"daily_digest_{today.strftime('%Y%m%d')}"
+    
+    manager = NotificationManager()
+    existing = [n for n in manager.notifications if n.id == notif_id]
+    if existing:
+        return None  # Déjà généré
+    
+    # Récupérer les stats globales
+    stats = get_global_stats()
+    
+    if not stats:
+        return None
+    
+    # Construire le message
+    total_count = stats.get('total_transactions', 0)
+    current_savings = stats.get('current_month_savings', 0)
+    
+    message = f"""💰 Récap du jour
+
+• {total_count} transactions enregistrées
+• Épargne du mois: {current_savings:+.2f}€
+
+Continuez à suivre vos objectifs ! 📊"""
+    
+    notif = Notification(
+        id=notif_id,
+        type="daily_digest",
+        title=f"📊 Récap du {today.strftime('%d/%m')}",
+        message=message,
+        priority="low",
+        created_at=today.isoformat(),
+        action_url="pages/3_Synthese.py"
+    )
+    
+    return notif
+
+
+def send_email_notification(notification: Notification, to_email: str) -> bool:
+    """
+    Envoie une notification par email.
+    Nécessite la configuration SMTP dans les variables d'environnement.
+    """
+    smtp_host = os.getenv('SMTP_HOST')
+    smtp_port = int(os.getenv('SMTP_PORT', '587'))
+    smtp_user = os.getenv('SMTP_USER')
+    smtp_pass = os.getenv('SMTP_PASSWORD')
+    
+    if not all([smtp_host, smtp_user, smtp_pass]):
+        logger.warning("SMTP not configured, email not sent")
+        return False
+    
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = smtp_user
+        msg['To'] = to_email
+        msg['Subject'] = f"[MyFinance] {notification.title}"
+        
+        body = f"""{notification.message}
+
+---
+MyFinance Companion
+Ne pas répondre à cet email.
+"""
+        msg.attach(MIMEText(body, 'plain'))
+        
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+        
+        logger.info(f"Email sent to {to_email}: {notification.title}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return False
+
+
+def render_notification_badge():
+    """Affiche le badge de notification dans la sidebar Streamlit."""
+    manager = NotificationManager()
+    unread = manager.get_unread()
+    count = len(unread)
+    
+    if count > 0:
+        st.sidebar.markdown(
+            f"🔔 **{count} notification{'s' if count > 1 else ''}**",
+            help="Cliquez pour voir les détails"
+        )
+        
+        with st.sidebar.expander("📬 Notifications"):
+            for idx, notif in enumerate(unread[:5]):  # Max 5
+                col1, col2 = st.columns([0.8, 0.2])
+                with col1:
+                    priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🔵"}.get(notif.priority, "⚪")
+                    st.markdown(f"{priority_emoji} **{notif.title}**")
+                    st.caption(notif.message[:100] + "..." if len(notif.message) > 100 else notif.message)
+                with col2:
+                    # Utiliser idx pour garantir l'unicité de la clé
+                    if st.button("✓", key=f"read_{notif.id}_{idx}"):
+                        manager.mark_as_read(notif.id)
+                        st.rerun()
+    else:
+        st.sidebar.markdown("🔔 Aucune notification")
+
+
+# Fonction à appeler régulièrement
+def check_all_notifications():
+    """Vérifie toutes les sources de notifications."""
+    manager = NotificationManager()
+    
+    # Budget alerts
+    budget_notifs = check_budget_alerts()
+    for notif in budget_notifs:
+        # Vérifier si déjà existe
+        existing = [n for n in manager.notifications if n.id == notif.id]
+        if not existing:
+            manager.add(notif)
+            logger.info(f"New budget alert: {notif.title}")
+    
+    # Daily digest (une fois par jour)
+    digest = generate_daily_digest()
+    if digest:
+        manager.add(digest)
+    
+    # Cleanup vieilles notifs
+    manager.clear_old(days=30)

@@ -97,10 +97,10 @@ def confirm_dialog(
         
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button(confirm_label, type="primary" if not danger else "secondary", use_container_width=True):
+            if st.button(confirm_label, type="primary" if not danger else "secondary", use_container_width=True, key='button_100'):
                 return True
         with col2:
-            if st.button(cancel_label, type="secondary" if not danger else "primary", use_container_width=True):
+            if st.button(cancel_label, type="secondary" if not danger else "primary", use_container_width=True, key='button_103'):
                 return False
         return None
 
@@ -545,5 +545,5 @@ def render_scroll_to_top_simple():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("⬆️ Retour en haut de page", use_container_width=True, type="secondary"):
+        if st.button("⬆️ Retour en haut de page", use_container_width=True, type="secondary", key='button_548'):
             st.markdown("<script>window.scrollTo(0, 0);</script>", unsafe_allow_html=True)

@@ -1,5 +1,10 @@
 # 💰 FinancePerso - Personal Finance Manager
 
+[![CI - Tests & Lint](https://github.com/aurelien/FinancePerso/actions/workflows/ci.yml/badge.svg)](https://github.com/aurelien/FinancePerso/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.47+-ff4b4b.svg)](https://streamlit.io)
+[![License](https://img.shields.io/badge/license-Personal-orange.svg)]()
+
 Un assistant intelligent de gestion financière personnelle développé avec Streamlit et alimenté par l'IA.
 
 ## 📋 Vue d'ensemble

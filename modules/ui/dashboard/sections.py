@@ -284,7 +284,7 @@ def render_ai_tab(df_current: pd.DataFrame, df_prev: pd.DataFrame,
     st.markdown("---")
     
     # Bouton de génération
-    if st.button("🪄 Générer le rapport & conseils", type="primary", use_container_width=True):
+    if st.button("🪄 Générer le rapport & conseils", type="primary", use_container_width=True, key='button_287'):
         with st.spinner("L'IA analyse vos finances sur cette période..."):
             render_ai_financial_report(df_current, df_prev, df_full, selected_years, selected_months)
         st.success("Rapport généré avec succès !")

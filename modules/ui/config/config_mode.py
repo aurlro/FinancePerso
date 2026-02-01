@@ -3,6 +3,13 @@ Configuration Mode Manager - Simple vs Advanced mode.
 Allows users to switch between simplified and full configuration views.
 """
 import streamlit as st
+# Initialisation des variables de session
+if 'config_advanced_mode' not in st.session_state:
+    st.session_state['config_advanced_mode'] = None
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+
+
 
 
 def is_advanced_mode() -> bool:

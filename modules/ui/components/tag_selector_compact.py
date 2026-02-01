@@ -13,6 +13,11 @@ from modules.db.tags import get_all_tags
 from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
 
 
+# Initialisation des variables de session
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+
+
 def render_tag_selector_compact(
     transaction_id: int,
     current_tags: List[str],

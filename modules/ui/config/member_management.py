@@ -11,6 +11,11 @@ from modules.ui.feedback import (
     save_feedback, delete_feedback,
     show_success, show_warning, show_error
 )
+# Initialisation des variables de session
+if 'pending_rename' not in st.session_state:
+    st.session_state['pending_rename'] = None
+if 'editing_member_id' not in st.session_state:
+    st.session_state['editing_member_id'] = None
 
 
 def render_member_management():
@@ -22,15 +27,15 @@ def render_member_management():
     st.markdown("Définissez les personnes associées à ce compte pour l'attribution des dépenses.")
     
     # Handle pending rename with impact preview
-    if 'pending_rename' in st.session_state:
-        pending = st.session_state['pending_rename']
+    pending = st.session_state.get('pending_rename')
+    if pending is not None:
         with st.container(border=True):
             st.warning("⚠️ Confirmer le renommage ?")
             render_impact_preview('member_rename', pending['impact'])
             
             col_confirm, col_cancel = st.columns([1, 1])
             with col_confirm:
-                if st.button("✅ Confirmer le renommage", type="primary", use_container_width=True):
+                if st.button("✅ Confirmer le renommage", type="primary", use_container_width=True, key='button_38'):
                     try:
                         rename_member(pending['old_name'], pending['new_name'])
                         del st.session_state['pending_rename']
@@ -58,7 +63,7 @@ def render_member_management():
                         else:
                             toast_error(f"❌ Erreur lors du renommage : {error_msg[:50]}", icon="❌")
             with col_cancel:
-                if st.button("❌ Annuler", use_container_width=True):
+                if st.button("❌ Annuler", use_container_width=True, key='button_66'):
                     del st.session_state['pending_rename']
                     toast_info("Renommage annulé", icon="🚫")
                     st.rerun()

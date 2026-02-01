@@ -15,6 +15,13 @@ from modules.ai.rules_auditor import analyze_rules_integrity
 from modules.logger import logger
 
 
+# Initialisation des variables de session
+if 'audit_last_run' not in st.session_state:
+    st.session_state['audit_last_run'] = None
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+
+
 def invalidate_audit_cache():
     """Invalidate audit-related session state caches."""
     keys_to_clear = [
@@ -79,7 +86,7 @@ def render_audit_section():
     col_audit, col_status = st.columns([1, 3])
     
     with col_audit:
-        if st.button("🚀 Lancer l'audit IA", type="primary", use_container_width=True):
+        if st.button("🚀 Lancer l'audit IA", type="primary", use_container_width=True, key='button_89'):
             with st.spinner("Analyse en cours..."):
                 try:
                     audit_results = analyze_rules_integrity(rules_df)

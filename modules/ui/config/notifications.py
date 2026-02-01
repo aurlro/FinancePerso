@@ -47,7 +47,7 @@ def render_notification_settings():
     
     if not preview['notif_enabled']:
         st.info("🔕 Les notifications sont désactivées.")
-        if st.button("💾 Sauvegarder", type="primary"):
+        if st.button("💾 Sauvegarder", type="primary", key="notif_save_disabled"):
             _save_all_settings(preview)
             st.success("✅ Paramètres sauvegardés !")
             st.rerun()
@@ -179,14 +179,14 @@ def render_notification_settings():
     col_save, col_test1, col_test2 = st.columns([2, 1, 1])
     
     with col_save:
-        if st.button("💾 Sauvegarder les paramètres", type="primary", use_container_width=True):
+        if st.button("💾 Sauvegarder les paramètres", type="primary", use_container_width=True, key="notif_save_settings"):
             _save_all_settings(preview)
             toast_success("Paramètres de notification sauvegardés", icon="🔔")
             st.success("✅ Paramètres sauvegardés !")
             st.rerun()
     
     with col_test1:
-        if st.button("📤 Test notification", use_container_width=True):
+        if st.button("📤 Test notification", use_container_width=True, key="notif_test_send"):
             # Save temporarily for test
             _save_all_settings(preview)
             with st.spinner("Envoi en cours..."):
@@ -215,7 +215,7 @@ def render_notification_settings():
                     toast_warning("Aucune notification activée", icon="🔕")
     
     with col_test2:
-        if st.button("🔔 Vérifier budgets", use_container_width=True):
+        if st.button("🔔 Vérifier budgets", use_container_width=True, key="notif_check_budgets"):
             _save_all_settings(preview)
             with st.spinner("Analyse..."):
                 alerts = check_budget_alerts(force_check=True)

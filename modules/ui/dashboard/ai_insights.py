@@ -135,7 +135,7 @@ def render_ai_financial_report(df_current: pd.DataFrame, df_prev: pd.DataFrame,
         }
     }
 
-    if st.button("Générer le rapport & conseils 🪄"):
+    if st.button("Générer le rapport & conseils 🪄", key='button_138'):
         with st.spinner("L'IA analyse vos finances sur cette période..."):
             report = generate_financial_report(stats_payload)
             st.markdown(report)

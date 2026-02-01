@@ -85,7 +85,7 @@ def render_quick_actions():
         if st.session_state.get('quick_audit_score', 100) < 50:
             help_text += " ⚠️ Vos règles ont des problèmes de santé, l'application pourrait être imprécise."
         
-        if st.button("🪄 Appliquer les règles", help=help_text, use_container_width=True, type="secondary"):
+        if st.button("🪄 Appliquer les règles", help=help_text, use_container_width=True, type="secondary", key='button_88'):
             # Check for critical issues before applying
             try:
                 audit = analyze_rules_integrity(rules_df)

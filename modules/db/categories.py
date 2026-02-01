@@ -5,7 +5,7 @@ Handles CRUD operations for transaction categories and their metadata (emojis, s
 import sqlite3
 import pandas as pd
 import streamlit as st
-from modules.db.connection import get_db_connection
+from modules.db.connection import get_db_connection, clear_db_cache
 from modules.logger import logger
 
 
@@ -62,6 +62,7 @@ def update_category_fixed(cat_id: int, is_fixed: int) -> None:
         # Invalidate cache for category-related functions
         from modules.cache_manager import invalidate_category_caches
         invalidate_category_caches()
+        clear_db_cache()
 
 
 def update_category_suggested_tags(cat_id: int, tags_list_str: str) -> None:
@@ -155,6 +156,7 @@ def get_categories_suggested_tags() -> dict[str, list[str]]:
         return result
 
 
+@st.cache_data(ttl='1h')
 def get_categories_df() -> pd.DataFrame:
     """
     Get all category data as DataFrame.
@@ -166,6 +168,7 @@ def get_categories_df() -> pd.DataFrame:
         return pd.read_sql("SELECT * FROM categories ORDER BY name", conn)
 
 
+@st.cache_data(ttl='1h')
 def get_all_categories_including_ghosts() -> list[dict]:
     """
     Get all categories, including 'ghost' categories.

@@ -10,6 +10,11 @@ from modules.db.tags import get_all_tags
 from modules.db.stats import get_all_account_labels
 from modules.ui import load_css, render_scroll_to_top
 from modules.utils import clean_label
+# Initialisation des variables de session
+if 'get' not in st.session_state:
+    st.session_state['get'] = None
+
+
 
 # New modular components
 from modules.ui.components.filters import render_transaction_filters
@@ -108,7 +113,7 @@ else:
     col_sort1, col_sort2, col_sort3 = st.columns([2, 1, 1])
     with col_sort1:
         sort_options = get_sort_options()
-        sort_choice = st.selectbox("Trier par", list(sort_options.keys()), label_visibility="visible")
+        sort_choice = st.selectbox("Trier par", list(sort_options.keys()), label_visibility="visible", key='selectbox_116')
         sort_key = sort_options[sort_choice]
 
     with col_sort2:
@@ -120,7 +125,7 @@ else:
         with h_c1:
             with st.popover("🔙", help="Annuler la dernière action"):
                 st.write("Voulez-vous annuler la dernière validation ?")
-                if st.button("Confirmer l'annulation", type="primary", use_container_width=True):
+                if st.button("Confirmer l'annulation", type="primary", use_container_width=True, key='button_128'):
                     from modules.data_manager import undo_last_action
                     success, msg = undo_last_action()
                     if success:

@@ -1,4 +1,13 @@
 {
     "claudeCode.useTerminal": true,
-    "kimi.yoloMode": true
+    "kimi.yoloMode": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "*test*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

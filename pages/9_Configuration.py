@@ -188,8 +188,8 @@ with tabs[3]:
             st.info("Toutes les catégories ont déjà un budget !")
         else:
             with st.form("add_budget"):
-                cat = st.selectbox("Catégorie", available_cats)
-                amount = st.number_input("Montant mensuel (€)", min_value=1, value=100)
+                cat = st.selectbox("Catégorie", available_cats, key='selectbox_191')
+                amount = st.number_input("Montant mensuel (€)", min_value=1, value=100, key='number_input_192')
                 
                 # Preview impact
                 impact = analyze_budget_creation_impact(cat, amount)
@@ -240,4 +240,9 @@ if is_advanced_mode():
 render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
+# Initialisation des variables de session
+if 'config_jump_to' not in st.session_state:
+    st.session_state['config_jump_to'] = None
+
+
 render_app_info()
