@@ -8,7 +8,7 @@ from modules.categorization import generate_financial_report
 def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_months: list, 
                                fixed_categories: list):
     """
-    Render month-end forecasting for current month.
+    Render month-end forecasting with multiple scenarios.
     
     Args:
         df: Full transaction dataset
@@ -26,6 +26,7 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
     
     days_in_month = calendar.monthrange(today.year, today.month)[1]
     days_passed = today.day
+    days_remaining = days_in_month - days_passed
     
     # date_dt est déjà présent depuis la page principale (cache)
     df_month = df[(df['date_dt'].dt.year == today.year) & (df['date_dt'].dt.month == today.month)].copy()
@@ -48,37 +49,130 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
     income = df_month[df_month['amount'] > 0]['amount'].sum()
     
     if days_passed > 0:
-        avg_daily_var = exp_var / days_passed
-        proj_var = avg_daily_var * days_in_month
-        proj_total = exp_fixed + proj_var
-        proj_bal = income - proj_total
+        # Calcul intelligent: moyenne sur jours avec dépenses UNIQUEMENT
+        days_with_expenses = len(df_m_exp[df_m_exp['type'] == 'Variable']['date_dt'].dt.date.unique())
+        if days_with_expenses > 0:
+            avg_daily_var = exp_var / days_with_expenses
+        else:
+            avg_daily_var = exp_var / days_passed if days_passed > 0 else 0
         
+        # Scénarios
+        scenarios = {
+            'pessimiste': {
+                'multiplier': 1.3,  # +30% (dépenses augmentent)
+                'label': '🔴 Si dépenses augmentent',
+                'emoji': '🔴'
+            },
+            'realiste': {
+                'multiplier': 1.0,  # Tendance actuelle
+                'label': '🟡 Tendance actuelle',
+                'emoji': '🟡'
+            },
+            'optimiste': {
+                'multiplier': 0.75,  # -25% (réduction)
+                'label': '🟢 Si réduit de 25%',
+                'emoji': '🟢'
+            }
+        }
+        
+        # Affichage des scénarios
+        st.caption("**Projection selon différents scénarios**")
+        
+        cols = st.columns(3)
+        for i, (name, scenario) in enumerate(scenarios.items()):
+            proj_var = avg_daily_var * days_remaining * scenario['multiplier']
+            proj_total = exp_fixed + exp_var + proj_var
+            balance = income - proj_total
+            
+            with cols[i]:
+                with st.container(border=True):
+                    st.markdown(f"{scenario['label']}")
+                    
+                    # Montant principal coloré selon le résultat
+                    if balance >= 0:
+                        st.markdown(f"<h3 style='color: #22c55e; margin: 0;'>{balance:+.0f}€</h3>", 
+                                   unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<h3 style='color: #ef4444; margin: 0;'>{balance:+.0f}€</h3>", 
+                                   unsafe_allow_html=True)
+                    
+                    st.caption(f"Dépenses totales: {proj_total:.0f}€")
+                    
+                    # Message contextuel
+                    if name == 'pessimiste' and balance < 0:
+                        st.error(f"⚠️ Déficit de {abs(balance):.0f}€")
+                    elif name == 'realiste':
+                        if balance >= 0:
+                            st.success(f"✅ +{balance:.0f}€ d'épargne")
+                        else:
+                            st.warning(f"⚠️ -{abs(balance):.0f}€ de déficit")
+                    elif name == 'optimiste' and balance > 0:
+                        st.success(f"🎯 Objectif atteint!")
+        
+        # KPIs actuels
+        st.divider()
         col_f1, col_f2, col_f3 = st.columns(3)
         with col_f1:
+            current_balance = income - (exp_fixed + exp_var)
             card_kpi(
                 "Solde Actuel", 
-                f"{income - (exp_fixed+exp_var):+.0f} €", 
+                f"{current_balance:+.0f} €", 
                 trend=f"Recettes: {income:.0f}€", 
-                trend_color="positive"
+                trend_color="positive" if current_balance >= 0 else "negative"
             )
         with col_f2:
             card_kpi(
-                "Dépenses Projetées", 
-                f"{proj_total:.0f} €", 
-                trend=f"soit {proj_var:.0f}€ var.", 
+                "Dépenses à ce jour", 
+                f"{exp_fixed + exp_var:.0f} €", 
+                trend=f"{exp_fixed:.0f}€ fixes + {exp_var:.0f}€ var.", 
                 trend_color="negative"
             )
         with col_f3:
+            days_left = days_in_month - days_passed
             card_kpi(
-                "Atterrissage Estimé", 
-                f"{proj_bal:+.0f} €", 
-                trend="Épargne" if proj_bal > 0 else "Déficit", 
-                trend_color="positive" if proj_bal > 0 else "negative"
+                "Jours restants", 
+                f"{days_left}", 
+                trend=f"Sur {days_in_month} jours", 
+                trend_color="neutral"
             )
         
-        st.info(f"💡 Moyenne de **{avg_daily_var:.0f}€/jour** (variable). Estimation fin de mois : **{proj_bal:+.0f}€**.")
+        # Recommandation personnalisée
+        st.divider()
+        remaining_budget = income - exp_fixed - exp_var
+        
+        if days_remaining > 0:
+            daily_budget = remaining_budget / days_remaining
+            
+            if daily_budget < 0:
+                st.error(f"💡 **Alerte critique**: Vous avez déjà dépassé votre capacité. "
+                        f"Objectif: **0€/jour** jusqu'à la fin du mois pour limiter les dégâts.")
+            elif daily_budget < 20:
+                st.warning(f"💡 **Attention serré**: Pour tenir, ne dépassez pas **{daily_budget:.0f}€/jour** "
+                          f"en dépenses variables sur les {days_remaining} jours restants.")
+            else:
+                st.info(f"💡 **Conseil**: Budget journalier recommandé: **{daily_budget:.0f}€/jour** "
+                       f"pour finir le mois à l'équilibre.")
+        
+        # Historique comparatif si données dispo
+        try:
+            prev_month = today.replace(day=1) - datetime.timedelta(days=1)
+            df_prev = df[(df['date_dt'].dt.year == prev_month.year) & 
+                        (df['date_dt'].dt.month == prev_month.month)].copy()
+            
+            if not df_prev.empty:
+                prev_exp = abs(df_prev[df_prev['amount'] < 0]['amount'].sum())
+                prev_inc = df_prev[df_prev['amount'] > 0]['amount'].sum()
+                prev_bal = prev_inc - prev_exp
+                
+                evolution = ((current_balance - prev_bal) / abs(prev_bal) * 100) if prev_bal != 0 else 0
+                trend_emoji = "📈" if evolution > 0 else "📉" if evolution < 0 else "➡️"
+                
+                st.caption(f"{trend_emoji} **vs mois dernier**: {prev_bal:+.0f}€ → {current_balance:+.0f}€ "
+                          f"({evolution:+.0f}%)")
+        except Exception:
+            pass
     else:
-        st.write("Début de mois, pas assez de données pour projeter.")
+        st.write("📅 Début de mois — les prévisions seront disponibles dans quelques jours.")
 
 def render_ai_financial_report(df_current: pd.DataFrame, df_prev: pd.DataFrame, 
                                 df: pd.DataFrame, selected_years: list, selected_months: list):

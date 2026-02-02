@@ -69,19 +69,23 @@ def render_budget_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
     df_exp = prepare_expense_dataframe(df_current, cat_emoji_map)
     budgets = get_budgets()
     
-    # Suivi des budgets
-    render_budget_tracker(df_exp, cat_emoji_map)
+    # Suivi des budgets (avec données historiques pour les tendances)
+    render_budget_tracker(df_exp, cat_emoji_map, df_full)
     
     st.markdown("---")
     
-    # Alertes budgétaires avec prédictions
-    st.subheader("📈 Alertes Budgétaires")
+    # Alertes budgétaires avec prédictions - VERSION AMÉLIORÉE
+    st.subheader("📈 Alertes & Recommandations")
     
     if budgets.empty:
-        st.info("Définissez des budgets pour activer les alertes prédictives.")
+        st.info("📝 **Aucun budget défini**")
+        st.caption("Configurez vos budgets pour recevoir des alertes intelligentes")
+        if st.button("➕ Créer un budget", type="primary", key="btn_create_budget"):
+            st.switch_page("pages/4_Regles.py")
     else:
         # Données du mois en cours
         import datetime
+        import calendar
         today = datetime.date.today()
         current_month = today.strftime('%Y-%m')
         df_month = df_full[df_full['date_dt'].dt.strftime('%Y-%m') == current_month]
@@ -89,53 +93,104 @@ def render_budget_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
         predictions = get_cached_budget_predictions(df_month, budgets)
         
         if predictions:
+            # Trier par sévérité: overrun > warning > ok
+            severity_order = {'overrun': 0, 'warning': 1, 'ok': 2}
+            predictions_sorted = sorted(predictions, key=lambda x: severity_order.get(x['status'], 3))
+            
             summary = get_budget_alerts_summary(predictions)
             
-            # Métriques en colonnes
+            # KPIs en colonnes avec couleurs
             cols = st.columns(4)
             with cols[0]:
-                st.metric("✅ OK", summary['ok_count'])
+                st.metric("✅ Sur la bonne voie", summary['ok_count'])
             with cols[1]:
-                st.metric("⚠️ Attention", summary['warning_count'])
+                if summary['warning_count'] > 0:
+                    st.metric("⚠️ À surveiller", summary['warning_count'], delta="Attention")
+                else:
+                    st.metric("⚠️ À surveiller", 0)
             with cols[2]:
-                st.metric("🚨 Dépassement", summary['overrun_count'])
+                if summary['overrun_count'] > 0:
+                    st.metric("🚨 Critique", summary['overrun_count'], delta="Action requise", delta_color="inverse")
+                else:
+                    st.metric("🚨 Critique", 0)
             with cols[3]:
                 total = summary['ok_count'] + summary['warning_count'] + summary['overrun_count']
                 st.metric("📊 Total Budgets", total)
             
-            # Détails des alertes
-            alert_count = sum(1 for p in predictions if p['status'] != 'ok')
-            if alert_count > 0:
-                with st.expander(f"Voir les {alert_count} alertes", expanded=True):
-                    for pred in predictions:
-                        if pred['status'] != 'ok':
-                            with st.container():
-                                col_icon, col_info = st.columns([0.1, 0.9])
-                                with col_icon:
-                                    st.markdown(f"### {pred['alert_level']}")
-                                with col_info:
-                                    st.write(f"**{pred['category']}** - {pred['usage_percent']:.0f}% du budget")
-                                    col1, col2, col3 = st.columns(3)
-                                    with col1:
-                                        st.metric("Dépensé", f"{pred['current_spent']:.0f}€")
-                                    with col2:
-                                        st.metric("Projection", f"{pred['projected_spent']:.0f}€")
-                                    with col3:
-                                        st.metric("Moy/jour", f"{pred['daily_avg']:.0f}€")
-                                    
-                                    # Drill-down des transactions
-                                    tx_ids = df_month[
-                                        df_month['category_validated'] == pred['category']
-                                    ]['id'].tolist()
-                                    if tx_ids:
+            # Section 1: Alertes CRITIQUES (🔴)
+            critical_preds = [p for p in predictions_sorted if p['status'] == 'overrun']
+            if critical_preds:
+                st.error(f"🔴 **{len(critical_preds)} budget{'s' if len(critical_preds) > 1 else ''} en dépassement**")
+                for pred in critical_preds:
+                    with st.container(border=True):
+                        col1, col2, col3 = st.columns([2, 2, 1])
+                        
+                        with col1:
+                            st.markdown(f"**{pred['category']}**")
+                            overrun = pred['projected_spent'] - pred['budget']
+                            st.caption(f"Projection: **{pred['projected_spent']:.0f}€** / {pred['budget']:.0f}€ budget")
+                            st.markdown(f"📈 **+{pred['usage_percent']:.0f}%** — Dépassé de **{overrun:.0f}€**")
+                        
+                        with col2:
+                            # Conseil contextuel
+                            st.caption("💡 **Conseil**")
+                            days_left = calendar.monthrange(today.year, today.month)[1] - today.day
+                            if days_left > 0:
+                                daily_max = max(0, (pred['budget'] - pred['current_spent']) / days_left)
+                                st.markdown(f"Max {daily_max:.0f}€/jour jusqu'à la fin du mois")
+                        
+                        with col3:
+                            # Actions rapides
+                            if st.button("💡 Conseils", key=f"tips_{pred['category']}", use_container_width=True):
+                                st.toast(f"Analyse de {pred['category']}...", icon="💡")
+                            
+                            # Limiter à 5 dernières transactions pour le drill-down
+                            tx_ids = df_month[
+                                df_month['category_validated'] == pred['category']
+                            ]['id'].tolist()[:5]  # Limiter à 5
+                            
+                            if tx_ids and len(tx_ids) > 0:
+                                if st.button(f"📊 Voir ({len(tx_ids)}+)", key=f"details_{pred['category']}", use_container_width=True):
+                                    st.session_state[f"show_budget_drill_{pred['category']}"] = True
+                                
+                                if st.session_state.get(f"show_budget_drill_{pred['category']}", False):
+                                    with st.expander(f"Transactions {pred['category']}", expanded=True):
                                         render_transaction_drill_down(
                                             category=pred['category'],
                                             transaction_ids=tx_ids,
                                             key_prefix=f"budget_alert_{pred['category']}"
                                         )
-                                st.divider()
+            
+            # Section 2: Avertissements (🟠)
+            warning_preds = [p for p in predictions_sorted if p['status'] == 'warning']
+            if warning_preds:
+                with st.expander(f"🟠 {len(warning_preds)} budget{'s' if len(warning_preds) > 1 else ''} à surveiller", expanded=False):
+                    for pred in warning_preds:
+                        col1, col2 = st.columns([3, 2])
+                        with col1:
+                            st.markdown(f"**{pred['category']}**: {pred['usage_percent']:.0f}% utilisé")
+                            remaining = pred['budget'] - pred['current_spent']
+                            st.caption(f"Reste: {remaining:.0f}€ sur {pred['budget']:.0f}€")
+                        
+                        with col2:
+                            days_left = calendar.monthrange(today.year, today.month)[1] - today.day
+                            if days_left > 0:
+                                daily_allowance = remaining / days_left
+                                st.caption(f"💡 **{daily_allowance:.0f}€/jour max** pour tenir")
+            
+            # Section 3: Budgets OK - Résumé compact
+            ok_preds = [p for p in predictions_sorted if p['status'] == 'ok']
+            if ok_preds:
+                with st.expander(f"🟢 {len(ok_preds)} budget{'s' if len(ok_preds) > 1 else ''} sous contrôle", expanded=False):
+                    cols_ok = st.columns(min(len(ok_preds), 4))
+                    for i, pred in enumerate(ok_preds[:8]):  # Limiter à 8
+                        with cols_ok[i % 4]:
+                            st.caption(f"{pred['category']}")
+                            st.progress(min(pred['usage_percent'] / 100, 1.0), 
+                                       text=f"{pred['usage_percent']:.0f}%")
+                            st.caption(f"{pred['current_spent']:.0f}€ / {pred['budget']:.0f}€")
         else:
-            st.info("Pas assez de données pour les prédictions ce mois-ci.")
+            st.info("📊 Pas assez de données ce mois-ci pour les prédictions. Importez des transactions pour activer les alertes.")
     
     st.markdown("---")
     
