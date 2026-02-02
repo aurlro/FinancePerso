@@ -92,9 +92,31 @@ def render_quick_actions():
                 if audit.get('conflicts'):
                     st.warning(
                         f"🚨 **Attention** : {len(audit['conflicts'])} conflit(s) majeur(s) détecté(s). "
-                        "L'application des règles risque d'être incohérente. Vérifiez l'audit ci-dessous.",
+                        "L'application des règles risque d'être incohérente.",
                         icon="⚠️"
                     )
+                    
+                    # Show conflicts details with actions
+                    st.markdown("**Détails des conflits :**")
+                    for conflict in audit['conflicts'][:3]:  # Show first 3
+                        cols = st.columns([3, 1])
+                        with cols[0]:
+                            st.markdown(f"- `{conflict['pattern']}` → {', '.join(conflict['categories'])}")
+                        with cols[1]:
+                            if st.button("🗑️ Supprimer", key=f"quick_del_{conflict['ids'][0]}"):
+                                from modules.db.rules import delete_learning_rule
+                                for rule_id in conflict['ids']:
+                                    delete_learning_rule(rule_id)
+                                st.success("✅ Règles supprimées")
+                                st.rerun()
+                    
+                    # Option to go to audit tab
+                    if st.button("🔍 Voir l'audit complet", type="primary"):
+                        st.session_state['rules_active_tab'] = 'audit'
+                        st.rerun()
+                    
+                    st.divider()
+                    st.markdown("*Vous pouvez corriger les conflits ci-dessus ou continuer quand même.*")
                 
                 with st.spinner("Application des règles en cours..."):
                     count = auto_fix_common_inconsistencies()
@@ -110,24 +132,89 @@ def render_quick_actions():
                 show_error(f"Erreur lors de l'application des règles: {e}")
 
 # =============================================================================
-# MAIN PAGE LAYOUT
+# MAIN PAGE LAYOUT - NAVIGATION PAR ONGLETS CONTRÔLABLE
 # =============================================================================
+
+# Initialize active tab in session state
+if 'rules_active_tab' not in st.session_state:
+    st.session_state['rules_active_tab'] = 'rules'
 
 # Quick actions bar
 render_quick_actions()
 st.divider()
 
-# Create tabs for better organization
-tab_rules, tab_audit, tab_budgets = st.tabs([
-    "📋 Règles de catégorisation",
-    "🕵️ Audit IA",
-    "🎯 Budgets mensuels"
-])
+# Tab selector using radio styled as tabs (allows programmatic switching)
+tab_options = {
+    'rules': '📋 Règles de catégorisation',
+    'audit': '🕵️ Audit IA',
+    'budgets': '🎯 Budgets mensuels'
+}
+
+# CSS to make radio look like tabs
+st.markdown("""
+<style>
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] {
+        background-color: transparent;
+    }
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] > label {
+        display: none;
+    }
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] div[role="radiogroup"] {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        border-bottom: 2px solid #e0e0e0;
+    }
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] div[role="radiogroup"] label {
+        padding: 0.75rem 1.5rem;
+        margin: 0;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] div[role="radiogroup"] label:hover {
+        background-color: rgba(102, 126, 234, 0.1);
+    }
+    div[data-testid="stHorizontalBlock"] div[data-testid="column"] [data-testid="stRadio"] div[role="radiogroup"] label[data-baseweb="radio"] input:checked + div {
+        border-bottom: 3px solid #667eea;
+        color: #667eea;
+        font-weight: 600;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Tab selector
+cols = st.columns([1, 1, 1, 3])
+with cols[0]:
+    if st.button('📋 Règles', use_container_width=True, 
+                 type='primary' if st.session_state['rules_active_tab'] == 'rules' else 'secondary',
+                 key='tab_btn_rules'):
+        st.session_state['rules_active_tab'] = 'rules'
+        st.rerun()
+with cols[1]:
+    if st.button('🕵️ Audit', use_container_width=True,
+                 type='primary' if st.session_state['rules_active_tab'] == 'audit' else 'secondary',
+                 key='tab_btn_audit'):
+        st.session_state['rules_active_tab'] = 'audit'
+        st.rerun()
+with cols[2]:
+    if st.button('🎯 Budgets', use_container_width=True,
+                 type='primary' if st.session_state['rules_active_tab'] == 'budgets' else 'secondary',
+                 key='tab_btn_budgets'):
+        st.session_state['rules_active_tab'] = 'budgets'
+        st.rerun()
+
+st.divider()
 
 # =============================================================================
-# TAB 1: RULES MANAGEMENT
+# TAB CONTENT
 # =============================================================================
-with tab_rules:
+
+active_tab = st.session_state.get('rules_active_tab', 'rules')
+
+# TAB 1: RULES MANAGEMENT
+if active_tab == 'rules':
     st.markdown("### Ajouter une nouvelle règle")
     render_add_rule_form()
     
@@ -135,16 +222,12 @@ with tab_rules:
     st.markdown("### Liste des règles")
     render_rule_list()
 
-# =============================================================================
 # TAB 2: AI AUDIT
-# =============================================================================
-with tab_audit:
+elif active_tab == 'audit':
     render_audit_section()
 
-# =============================================================================
 # TAB 3: BUDGETS
-# =============================================================================
-with tab_budgets:
+elif active_tab == 'budgets':
     render_budget_section()
 
 # =============================================================================

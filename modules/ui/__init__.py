@@ -1,9 +1,10 @@
 """
 UI Package
-User interface components and layouts for Fin ancePerso.
+User interface components and layouts for FinancePerso.
 """
 
 import streamlit as st
+
 
 # Load CSS helper (copied from ui.py for backward compatibility)
 def load_css():
@@ -11,7 +12,7 @@ def load_css():
     # Load main CSS
     with open("assets/style.css") as f:
         main_css = f.read()
-        st.markdown(f'<style>{main_css}</style>', unsafe_allow_html=True)
+        st.markdown(f"<style>{main_css}</style>", unsafe_allow_html=True)
     
     # Load global component styles
     try:
@@ -19,7 +20,7 @@ def load_css():
         global_css_path = os.path.join(os.path.dirname(__file__), "styles", "global.css")
         with open(global_css_path) as f:
             global_css = f.read()
-            st.markdown(f'<style>{global_css}</style>', unsafe_allow_html=True)
+            st.markdown(f"<style>{global_css}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
         pass  # Global CSS is optional
     
@@ -29,84 +30,62 @@ def load_css():
 
 def _inject_pwa_support():
     """Inject PWA manifest and service worker registration."""
+    pwa_meta = """
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js")
+            .then(reg => console.log("SW registered"))
+            .catch(err => console.log("SW registration failed"));
+    }
+    </script>
+    """
+    st.markdown(pwa_meta, unsafe_allow_html=True)
+
+
+# Import commonly used UI functions for convenience
+from .feedback import (
+    toast_success, toast_error, toast_warning, toast_info,
+    show_success, show_error, show_warning, show_info,
+    confirm_dialog,
+    render_scroll_to_top,
+    display_flash_messages
+)
+from .layout import render_app_info
+
+# Import from legacy ui.py module for backward compatibility
+try:
+    import importlib.util
+    import sys
     import os
     
-    # Manifest link
-    st.markdown(
-        '<link rel="manifest" href="/app/static/manifest.json">',
-        unsafe_allow_html=True
-    )
-    
-    # Theme color for mobile browsers
-    st.markdown(
-        '<meta name="theme-color" content="#0F172A">',
-        unsafe_allow_html=True
-    )
-    
-    # Apple touch icon
-    st.markdown(
-        '<link rel="apple-touch-icon" href="/app/static/favicon-192x192.png">',
-        unsafe_allow_html=True
-    )
-    
-    # Mobile viewport optimization
-    st.markdown(
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">',
-        unsafe_allow_html=True
-    )
-    
-    # iOS standalone mode
-    st.markdown(
-        '<meta name="apple-mobile-web-app-capable" content="yes">',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
-        unsafe_allow_html=True
-    )
-    
-    # Load PWA JavaScript
-    try:
-        pwa_js_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "pwa.js")
-        if os.path.exists(pwa_js_path):
-            with open(pwa_js_path) as f:
-                pwa_js = f.read()
-                st.markdown(f'<script>{pwa_js}</script>', unsafe_allow_html=True)
-    except Exception:
-        pass  # PWA JS is optional
+    # Load card_kpi from the legacy ui.py file (not the package)
+    legacy_ui_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ui.py')
+    if os.path.exists(legacy_ui_path):
+        spec = importlib.util.spec_from_file_location("legacy_ui", legacy_ui_path)
+        legacy_ui = importlib.util.module_from_spec(spec)
+        sys.modules["legacy_ui"] = legacy_ui
+        spec.loader.exec_module(legacy_ui)
+        card_kpi = legacy_ui.card_kpi
+    else:
+        card_kpi = None
+except Exception:
+    card_kpi = None
 
-def card_kpi(title, value, trend=None, trend_color="positive"):
-    """
-    Renders a custom HTML card for key metrics.
-    trend: str (e.g. "+12%")
-    trend_color: "positive" (green) or "negative" (red)
-    """
-    trend_html = ""
-    if trend:
-        color_class = "card-trend-positive" if trend_color == "positive" else "card-trend-negative"
-        icon = "↗" if trend_color == "positive" else "↘"
-        trend_html = f'<div class="{color_class}">{icon} {trend}</div>'
-    
-    html = f"""
-    <div class="custom-card">
-        <div class="card-title">{title}</div>
-        <div class="card-value">{value}</div>
-        {trend_html}
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
 
-from .layout import render_app_info
-from .feedback import render_scroll_to_top, display_flash_messages
-
+# Export all for easy importing
 __all__ = [
-    'components',
-    'validation',
-    'dashboard',
-    'config',
-    'load_css',
-    'card_kpi',
-    'render_app_info',
-    'render_scroll_to_top',
-    'display_flash_messages',
+    # CSS
+    "load_css",
+    # Feedback
+    "toast_success", "toast_error", "toast_warning", "toast_info",
+    "show_success", "show_error", "show_warning", "show_info",
+    "confirm_dialog",
+    "render_scroll_to_top",
+    "display_flash_messages",
+    # Layout
+    "render_app_info",
+    # Components
+    "card_kpi",
 ]

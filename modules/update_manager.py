@@ -363,6 +363,204 @@ class UpdateManager:
         except Exception as e:
             logger.error(f"Failed to parse changelog: {e}")
             return []
+    
+    def analyze_git_changes(self) -> Dict:
+        """
+        Analyze git changes since last version tag.
+        
+        Returns:
+            Dict with detected changes:
+            {
+                'files_modified': List[str],
+                'added': List[str],
+                'fixed': List[str],
+                'performance': List[str],
+                'suggested_title': str,
+                'suggested_bump': str
+            }
+        """
+        import subprocess
+        
+        result = {
+            'files_modified': [],
+            'added': [],
+            'fixed': [],
+            'performance': [],
+            'other': [],
+            'suggested_title': '',
+            'suggested_bump': 'patch'
+        }
+        
+        try:
+            # Get current version and find last tag
+            current_version = self.get_current_version()
+            
+            # Try to get commits since last tag
+            try:
+                # Check if we're in a git repo
+                subprocess.run(['git', 'rev-parse', '--git-dir'], 
+                             capture_output=True, check=True, cwd=self.project_root)
+                
+                # Get last tag
+                tag_result = subprocess.run(
+                    ['git', 'describe', '--tags', '--abbrev=0'],
+                    capture_output=True, text=True, cwd=self.project_root
+                )
+                
+                if tag_result.returncode == 0:
+                    last_tag = tag_result.stdout.strip()
+                    commit_range = f"{last_tag}..HEAD"
+                else:
+                    # No tags, get last 20 commits
+                    commit_range = "HEAD~20..HEAD"
+                    
+            except subprocess.CalledProcessError:
+                logger.warning("Git not available or not a git repository")
+                return result
+            
+            # Get modified files
+            files_result = subprocess.run(
+                ['git', 'diff', '--name-only', commit_range],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            if files_result.returncode == 0:
+                files = [f.strip() for f in files_result.stdout.split('\n') if f.strip()]
+                # Filter relevant files
+                relevant_extensions = ['.py', '.md', '.toml', '.txt', '.css', '.js', '.html']
+                result['files_modified'] = [
+                    f for f in files 
+                    if any(f.endswith(ext) for ext in relevant_extensions)
+                ][:20]  # Limit to 20 files
+            
+            # Get commit messages
+            commits_result = subprocess.run(
+                ['git', 'log', '--pretty=format:%s', commit_range],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            if commits_result.returncode == 0:
+                commits = commits_result.stdout.strip().split('\n')
+                
+                # Categorize commits
+                add_patterns = [
+                    r'add', r'new', r'feature', r'implement', r'ajout', r'nouveau',
+                    r'création', r'crée', r'implémente', r'✨'
+                ]
+                fix_patterns = [
+                    r'fix', r'bug', r'correct', r'resolve', r'repair', r'corrig',
+                    r'résolu', r'résolution', r'🐛', r'🩹'
+                ]
+                perf_patterns = [
+                    r'perf', r'optimiz', r'speed', r'fast', r'cache', r'memory',
+                    r'optimis', r'rapid', r'performance', r'⚡'
+                ]
+                major_patterns = [
+                    r'break', r'remov', r'delet', r'refactor', r'rewrite',
+                    r'refacto', r'suppress', r'🗑️', r'💥'
+                ]
+                
+                for commit in commits:
+                    commit_lower = commit.lower()
+                    
+                    # Skip merge commits
+                    if commit_lower.startswith('merge'):
+                        continue
+                    
+                    categorized = False
+                    
+                    # Check patterns
+                    if any(re.search(p, commit_lower) for p in add_patterns):
+                        result['added'].append(commit)
+                        categorized = True
+                    elif any(re.search(p, commit_lower) for p in fix_patterns):
+                        result['fixed'].append(commit)
+                        categorized = True
+                    elif any(re.search(p, commit_lower) for p in perf_patterns):
+                        result['performance'].append(commit)
+                        categorized = True
+                    else:
+                        result['other'].append(commit)
+                    
+                    # Check for major changes
+                    if any(re.search(p, commit_lower) for p in major_patterns):
+                        result['suggested_bump'] = 'major'
+                    elif result['suggested_bump'] != 'major' and result['added']:
+                        result['suggested_bump'] = 'minor'
+                
+                # Suggest title based on most common type
+                if result['added']:
+                    result['suggested_title'] = f"Nouvelles fonctionnalités - {len(result['added'])} ajouts"
+                elif result['fixed']:
+                    result['suggested_title'] = f"Corrections - {len(result['fixed'])} bugs résolus"
+                elif result['performance']:
+                    result['suggested_title'] = f"Optimisations - {len(result['performance'])} améliorations"
+                else:
+                    result['suggested_title'] = "Mise à jour diverses"
+                    
+        except Exception as e:
+            logger.error(f"Failed to analyze git changes: {e}")
+        
+        return result
+    
+    def get_module_changes(self) -> Dict:
+        """
+        Analyze changes by scanning modules directory.
+        Useful when git is not available.
+        
+        Returns:
+            Dict with detected new/modified modules
+        """
+        result = {
+            'files_modified': [],
+            'added': [],
+            'suggested_title': 'Mise à jour des modules'
+        }
+        
+        try:
+            modules_dir = os.path.join(self.project_root, 'modules')
+            pages_dir = os.path.join(self.project_root, 'pages')
+            
+            # Scan for recently modified files (last 7 days)
+            cutoff_time = datetime.now().timestamp() - (7 * 24 * 3600)
+            
+            for directory in [modules_dir, pages_dir]:
+                if not os.path.exists(directory):
+                    continue
+                    
+                for root, dirs, files in os.walk(directory):
+                    # Skip __pycache__ and backups
+                    dirs[:] = [d for d in dirs if d not in ['__pycache__', '.pytest_cache']]
+                    
+                    for file in files:
+                        if not file.endswith('.py'):
+                            continue
+                        if 'backup' in file.lower():
+                            continue
+                            
+                        filepath = os.path.join(root, file)
+                        rel_path = os.path.relpath(filepath, self.project_root)
+                        
+                        try:
+                            mtime = os.path.getmtime(filepath)
+                            if mtime > cutoff_time:
+                                result['files_modified'].append(rel_path)
+                                
+                                # Try to extract docstring
+                                with open(filepath, 'r', encoding='utf-8') as f:
+                                    content = f.read()
+                                    doc_match = re.search(r'"""(.*?)"""', content, re.DOTALL)
+                                    if doc_match:
+                                        first_line = doc_match.group(1).strip().split('\n')[0]
+                                        if first_line:
+                                            result['added'].append(f"{rel_path}: {first_line}")
+                        except Exception:
+                            pass
+                            
+        except Exception as e:
+            logger.error(f"Failed to scan module changes: {e}")
+        
+        return result
 
 
 # Convenience functions

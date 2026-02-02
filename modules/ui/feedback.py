@@ -6,6 +6,7 @@ toasts, et messages de confirmation à l'utilisateur.
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 from enum import Enum
 from typing import Optional, Callable, Any
 import functools
@@ -479,14 +480,32 @@ def show_expanded_status(label: str):
 def render_scroll_to_top():
     """
     Render a floating scroll-to-top button at the bottom right of the page.
-    Uses HTML/CSS for fixed positioning and smooth scrolling.
+    Uses a Streamlit-native button with JavaScript injection for scrolling.
     """
-    st.markdown("""
+    import streamlit.components.v1 as components
+    
+    # Create a placeholder for the button at the bottom of the page
+    st.markdown("---")
+    col1, col2, col3 = st.columns([3, 1, 3])
+    
+    with col2:
+        # Use a unique key based on page to avoid conflicts
+        page_key = st.session_state.get('current_page', 'default')
+        if st.button("⬆️ Haut de page", key=f"scroll_top_{page_key}", use_container_width=True, type="secondary"):
+            # JavaScript to scroll to top
+            components.html("""
+                <script>
+                window.parent.scrollTo({top: 0, behavior: 'smooth'});
+                </script>
+            """, height=0)
+            st.rerun()
+    
+    # Also add the floating button using HTML with proper height
+    components.html("""
         <style>
-        /* Scroll to top button styles */
-        .scroll-to-top {
+        .scroll-to-top-floating {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             right: 20px;
             width: 50px;
             height: 50px;
@@ -501,40 +520,19 @@ def render_scroll_to_top():
             font-size: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             transition: all 0.3s ease;
-            z-index: 9999;
+            z-index: 999999;
             opacity: 0.8;
         }
-        .scroll-to-top:hover {
+        .scroll-to-top-floating:hover {
             opacity: 1;
             transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(0,0,0,0.4);
         }
-        .scroll-to-top:active {
-            transform: translateY(-1px);
-        }
-        /* Show button only when scrolled */
-        @media (max-height: 100vh) {
-            .scroll-to-top {
-                display: flex;
-            }
-        }
         </style>
-        
-        <button class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Retour en haut de page">
+        <button class="scroll-to-top-floating" onclick="window.parent.scrollTo({top: 0, behavior: 'smooth'});" title="Retour en haut">
             ⬆️
         </button>
-        
-        <script>
-        // Optional: Show/hide button based on scroll position
-        (function() {
-            const button = document.querySelector('.scroll-to-top');
-            if (button) {
-                // Always show for simplicity in Streamlit
-                button.style.display = 'flex';
-            }
-        })();
-        </script>
-    """, unsafe_allow_html=True)
+    """, height=80)
 
 
 def render_scroll_to_top_simple():

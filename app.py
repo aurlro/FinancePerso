@@ -21,11 +21,13 @@ else:
     logger.warning("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
 
 from modules.ui import load_css, card_kpi, render_scroll_to_top, display_flash_messages
+from modules.ui.feedback import toast_success, show_success
 from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
 from modules.db.members import add_member
 from modules.ui.components.onboarding_modal import should_show_onboarding, render_onboarding_modal
 from modules.ui.components.quick_actions import render_quick_actions_grid
+from modules.ui.components.smart_actions import render_smart_actions
 from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
 from modules.notifications import NotificationManager, check_all_notifications, render_notification_badge
 
@@ -160,15 +162,8 @@ else:
         render_quick_actions_grid()
 
     with c_right:
-        st.subheader("💡 Le saviez-vous ?")
-        st.info("Vous pouvez définir des règles automatiques pour classer vos dépenses récurrentes directement depuis la page 'Validation'.")
-        
-        # Quick access to onboarding
-        st.divider()
-        if st.button("🎯 Revoir le guide", use_container_width=True, key='button_168'):
-            st.session_state['onboarding_dismissed'] = False
-            st.session_state['onboarding_step'] = 1
-            st.rerun()
+        # 🆕 SMART ACTIONS - remplace le bouton "Revoir le guide" inutile
+        render_smart_actions()
     
     st.sidebar.success("✅ Application Initialisée")
     

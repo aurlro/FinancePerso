@@ -25,29 +25,82 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
     manager = get_update_manager()
     current_version = manager.get_current_version()
     
+    # Auto-detect changes
+    st.subheader("🔍 Détection automatique des changements")
+    
+    col_auto1, col_auto2 = st.columns([1, 2])
+    
+    with col_auto1:
+        auto_detect = st.button("🔍 Analyser les changements", type="secondary", use_container_width=True)
+    
+    # Initialize session state for detected changes
+    if 'detected_changes' not in st.session_state:
+        st.session_state.detected_changes = None
+    
+    if auto_detect:
+        with st.spinner("Analyse en cours..."):
+            # Try git analysis first, fallback to file scanning
+            git_changes = manager.analyze_git_changes()
+            if not git_changes['files_modified']:
+                git_changes = manager.get_module_changes()
+            st.session_state.detected_changes = git_changes
+            st.success("✅ Changements détectés !")
+    
+    # Show detected changes summary
+    if st.session_state.detected_changes:
+        changes = st.session_state.detected_changes
+        with col_auto2:
+            cols_summary = st.columns(4)
+            with cols_summary[0]:
+                st.metric("Fichiers", len(changes['files_modified']))
+            with cols_summary[1]:
+                st.metric("✨ Ajouts", len(changes['added']))
+            with cols_summary[2]:
+                st.metric("🐛 Corrections", len(changes['fixed']))
+            with cols_summary[3]:
+                st.metric("⚡ Perf", len(changes['performance']))
+    
+    st.divider()
+    
     col1, col2 = st.columns(2)
     with col1:
         st.info(f"Version actuelle : **v{current_version}**")
     
     with col2:
+        # Pre-select bump type based on detected changes
+        default_bump_idx = 0  # patch
+        if st.session_state.detected_changes:
+            detected_bump = st.session_state.detected_changes.get('suggested_bump', 'patch')
+            default_bump_idx = {'patch': 0, 'minor': 1, 'major': 2}.get(detected_bump, 0)
+        
         bump_type = st.selectbox(
             "Type de mise à jour",
             options=[("patch", "🔧 Correction (patch)"), ("minor", "✨ Fonctionnalité (minor)"), ("major", "🚀 Majeure (major)")],
-            format_func=lambda x: x[1]
+            format_func=lambda x: x[1],
+            index=default_bump_idx
         )[0]
         
         new_version = manager.bump_version(current_version, bump_type)
         st.success(f"Nouvelle version : **v{new_version}**")
     
+    # Get pre-filled values from detected changes
+    detected = st.session_state.detected_changes or {}
+    default_title = detected.get('suggested_title', '')
+    default_added = '\n'.join([f"- {item}" for item in detected.get('added', [])])
+    default_fixed = '\n'.join([f"- {item}" for item in detected.get('fixed', [])])
+    default_perf = '\n'.join([f"- {item}" for item in detected.get('performance', [])])
+    default_files = '\n'.join(detected.get('files_modified', []))
+    
     # Update form
     with st.form("update_form"):
         update_title = st.text_input(
             "Titre de la mise à jour",
+            value=default_title,
             placeholder="Ex: Nouvelle fonctionnalité X - Refonte complète",
             help="Décrivez brièvement le thème principal de cette mise à jour"
         )
         
-        st.subheader("📝 Changements")
+        st.subheader("📝 Changements (modifiable)")
         
         col_added, col_fixed, col_perf = st.columns(3)
         
@@ -55,6 +108,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
             st.markdown("**✨ Nouveautés**")
             added = st.text_area(
                 "Liste (une par ligne)",
+                value=default_added,
                 placeholder="- Nouvelle fonction X\n- Amélioration Y",
                 key="added_changes",
                 height=150
@@ -64,6 +118,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
             st.markdown("**🐛 Corrections**")
             fixed = st.text_area(
                 "Liste (une par ligne)",
+                value=default_fixed,
                 placeholder="- Bug Z corrigé\n- Problème W résolu",
                 key="fixed_changes",
                 height=150
@@ -73,6 +128,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
             st.markdown("**⚡ Performance**")
             perf = st.text_area(
                 "Liste (une par ligne)",
+                value=default_perf,
                 placeholder="- Optimisation A\n- Cache B amélioré",
                 key="perf_changes",
                 height=150
@@ -81,6 +137,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
         st.subheader("📁 Fichiers modifiés")
         files_modified = st.text_area(
             "Liste des fichiers (un par ligne)",
+            value=default_files,
             placeholder="modules/nouveau.py\npages/1_Import.py",
             help="Liste des fichiers principaux modifiés dans cette version"
         )

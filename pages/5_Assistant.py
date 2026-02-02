@@ -116,38 +116,61 @@ def ai_audit_batch(df):
         return []
 
 
-tab_audit, tab_anomalies, tab_trends, tab_chat, tab_sub, tab_setup = st.tabs([
-    "🔎 Audit & Qualité", 
-    "🎯 Anomalies", 
-    "📊 Tendances",
-    "💬 Chat IA",
-    "💸 Abonnements & Récurrents", 
-    "🏗️ Configuration Assistée"
+# Onglets simplifiés et regroupés par logique
+tab_analyze, tab_insights, tab_setup = st.tabs([
+    "🔎 Analyse & Anomalies",  # Regroupe audit + anomalies
+    "📊 Tendances & Chat",     # Regroupe tendances + chat
+    "⚙️ Configuration"         # Setup + abonnements
 ])
 
-with tab_audit:
+with tab_analyze:
     # Initialize corrected anomalies tracking
     if 'audit_corrected' not in st.session_state:
         st.session_state['audit_corrected'] = []
     if 'audit_hidden' not in st.session_state:
         st.session_state['audit_hidden'] = []
     
-    # --- EXISTING AUDIT LOGIC ---
+    # --- AUDIT LOGIC WITH PROGRESS ---
     col1, col2 = st.columns([3, 1])
     with col1:
         if st.button("🔎 Lancer l'analyse complète", type="primary", key='button_138'):
-            with st.spinner("Analyse des incohérences et vérification IA..."):
-                df = get_all_transactions()
+            df = get_all_transactions()
+            
+            if df.empty:
+                st.warning("Pas de transactions à analyser.")
+            else:
+                # Progress bar détaillée
+                progress_bar = st.progress(0)
+                status_text = st.empty()
                 
-                if df.empty:
-                    st.warning("Pas de transactions à analyser.")
-                else:
-                    inconsistencies = detect_inconsistencies(df)
-                    ai_suggestions = ai_audit_batch(df)
-                    
-                    st.session_state['audit_results'] = inconsistencies + ai_suggestions
-                    st.session_state['audit_corrected'] = []
-                    st.rerun()
+                # Étape 1: Chargement
+                status_text.info("📊 Étape 1/3: Chargement des transactions...")
+                progress_bar.progress(15)
+                import time
+                time.sleep(0.3)
+                
+                # Étape 2: Détection des incohérences
+                status_text.info("🔍 Étape 2/3: Détection des incohérences...")
+                progress_bar.progress(40)
+                inconsistencies = detect_inconsistencies(df)
+                time.sleep(0.3)
+                
+                # Étape 3: Analyse IA
+                status_text.info("🤖 Étape 3/3: Analyse IA des catégorisations...")
+                progress_bar.progress(75)
+                ai_suggestions = ai_audit_batch(df)
+                
+                # Finalisation
+                progress_bar.progress(100)
+                status_text.success(f"✅ Analyse terminée ! {len(inconsistencies) + len(ai_suggestions)} anomalies trouvées")
+                time.sleep(0.8)
+                
+                progress_bar.empty()
+                status_text.empty()
+                
+                st.session_state['audit_results'] = inconsistencies + ai_suggestions
+                st.session_state['audit_corrected'] = []
+                st.rerun()
     
     with col2:
         # Filter options
@@ -181,27 +204,74 @@ with tab_audit:
                 st.rerun()
         
         with bulk_cols[3]:
-            if st.button("🧠 Créer règles pour la sélection", use_container_width=True, type="primary", key='button_184'):
-                # Bulk learning rule creation
-                selected = st.session_state.get('audit_bulk_selection', [])
-                rules_count = 0
-                for idx in selected:
-                    if idx < len(st.session_state['audit_results']):
-                        item = st.session_state['audit_results'][idx]
-                        suggested = item.get('suggested_category')
-                        if suggested:
-                            pattern = clean_label(item['label'])
-                            if add_learning_rule(pattern, suggested, priority=5):
-                                rules_count += 1
-                if rules_count > 0:
-                    st.success(f"✅ {rules_count} règles créées !")
-                    st.toast(f"🧠 {rules_count} règles mémorisées", icon="🧠")
+            selected_count = len(st.session_state.get('audit_bulk_selection', []))
+            if selected_count > 0:
+                if st.button(f"🧠 Créer règles ({selected_count})", use_container_width=True, type="primary", key='btn_bulk_rules'):
+                    st.session_state['confirm_bulk_rules'] = True
+                    st.rerun()
+            else:
+                st.button("🧠 Créer règles", use_container_width=True, type="primary", 
+                         key='btn_bulk_rules', disabled=True, help="Sélectionnez d'abord des anomalies")
+        
+        # Confirmation dialog for bulk actions
+        if st.session_state.get('confirm_bulk_rules'):
+            selected = st.session_state.get('audit_bulk_selection', [])
+            st.warning(f"⚠️ Vous allez créer {len(selected)} règles d'apprentissage. Cette action est irréversible.")
+            conf_cols = st.columns([1, 1])
+            with conf_cols[0]:
+                if st.button("✅ Confirmer", key='confirm_bulk_yes', type="primary"):
+                    rules_count = 0
+                    for idx in selected:
+                        if idx < len(st.session_state['audit_results']):
+                            item = st.session_state['audit_results'][idx]
+                            suggested = item.get('suggested_category')
+                            if suggested:
+                                pattern = clean_label(item['label'])
+                                if add_learning_rule(pattern, suggested, priority=5):
+                                    rules_count += 1
+                    st.session_state['confirm_bulk_rules'] = False
+                    st.session_state['audit_bulk_selection'] = []
+                    if rules_count > 0:
+                        st.success(f"✅ {rules_count} règles créées !")
+                        st.toast(f"🧠 {rules_count} règles mémorisées", icon="🧠")
+                        st.rerun()
+            with conf_cols[1]:
+                if st.button("❌ Annuler", key='confirm_bulk_no'):
+                    st.session_state['confirm_bulk_rules'] = False
+                    st.rerun()
     
     if 'audit_results' in st.session_state:
         results = st.session_state['audit_results']
         
         if not results:
-            st.success("Aucune anomalie détectée ! Tout semble propre. ✨")
+            # Empty state amélioré avec CTA
+            st.markdown("""
+            <div style='text-align: center; padding: 3rem; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-radius: 15px; border: 2px solid #86efac; margin: 2rem 0;'>
+                <h1 style='font-size: 3rem; margin-bottom: 1rem;'>✨</h1>
+                <h2 style='color: #166534; margin-bottom: 1rem;'>Tout est parfait !</h2>
+                <p style='color: #166534; font-size: 1.1rem;'>Aucune anomalie détectée. Vos données sont impeccables.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.success("🎉 Félicitations ! Votre gestion financière est exemplaire.")
+            
+            # CTA pour continuer
+            st.markdown("### Que souhaitez-vous faire ensuite ?")
+            col_next1, col_next2, col_next3 = st.columns(3)
+            
+            with col_next1:
+                if st.button("📈 Voir mes tendances", type="primary", use_container_width=True, key='empty_trends'):
+                    st.session_state['show_trends'] = True
+                    st.rerun()
+            
+            with col_next2:
+                if st.button("💬 Poser une question", use_container_width=True, key='empty_chat'):
+                    st.switch_page("pages/5_Assistant.py")  # Scroll to chat tab
+            
+            with col_next3:
+                if st.button("⚙️ Configurer des règles", use_container_width=True, key='empty_setup'):
+                    st.session_state['setup_candidates'] = []
+                    st.rerun()
         else:
             # Count visible anomalies
             visible_count = 0
@@ -309,10 +379,10 @@ with tab_audit:
                                 st.toast("Catégorie corrigée et mémorisée", icon="🧠")
                                 st.rerun()
 
-# --- NEW: ANOMALIES TAB ---
-with tab_anomalies:
-    st.header("🎯 Détection d'Anomalies de Montant")
-    st.markdown("Identifie les transactions avec des montants inhabituels par rapport à l'historique.")
+    # --- SECTION: ANOMALIES DE MONTANT (fusionné dans Analyse) ---
+    st.divider()
+    st.subheader("🎯 Anomalies de Montant")
+    st.markdown("Détection des transactions avec des montants inhabituels.")
     
     if st.button("Analyser les anomalies 🔍", type="primary", key="btn_anoms"):
         from modules.ai import detect_amount_anomalies
@@ -350,7 +420,7 @@ with tab_anomalies:
 
 
 # --- NEW: TRENDS TAB ---
-with tab_trends:
+with tab_insights:
     st.header("📊 Analyse de Tendances")
     st.markdown("Identifie les changements significatifs dans vos habitudes de dépenses.")
     
@@ -425,19 +495,51 @@ with tab_trends:
                 key_prefix=f"trend_{i}"
             )
 
-# --- NEW: CHAT IA TAB ---
-with tab_chat:
-    st.header("💬 Assistant Conversationnel")
+    # --- SECTION: CHAT IA (fusionné dans Insights) ---
+    st.divider()
+    st.subheader("💬 Assistant Conversationnel")
     st.markdown("Posez vos questions sur vos finances en langage naturel.")
     
     # Initialize chat history
     if 'chat_history' not in st.session_state:
         st.session_state['chat_history'] = []
     
-    # Display chat history
-    for msg in st.session_state['chat_history']:
-        with st.chat_message(msg['role']):
-            st.markdown(msg['content'])
+    # Display chat history or empty state with suggestions
+    if not st.session_state['chat_history']:
+        # Empty state with suggestions
+        st.markdown("""
+        <div style='text-align: center; padding: 2rem; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+                    border-radius: 12px; border: 1px dashed #94a3b8; margin: 1rem 0;'>
+            <div style='font-size: 3rem; margin-bottom: 0.5rem;'>💡</div>
+            <p style='color: #475569; margin-bottom: 1rem;'>Commencez par une question suggérée :</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Suggestion chips
+        suggestions = [
+            "Quelles sont mes plus grosses dépenses ce mois ?",
+            "Combien ai-je dépensé en restaurants ?",
+            "Compare mes dépenses janvier et février",
+            "Quels abonnements me coûtent le plus cher ?"
+        ]
+        
+        sugg_cols = st.columns(2)
+        for i, suggestion in enumerate(suggestions):
+            with sugg_cols[i % 2]:
+                if st.button(f"💬 {suggestion}", key=f"sugg_{i}", use_container_width=True):
+                    st.session_state['chat_history'].append({'role': 'user', 'content': suggestion})
+                    
+                    # Get AI response immediately
+                    from modules.ai import chat_with_assistant
+                    with st.spinner("L'assistant réfléchit..."):
+                        response = chat_with_assistant(suggestion, st.session_state['chat_history'])
+                    st.session_state['chat_history'].append({'role': 'assistant', 'content': response})
+                    st.rerun()
+    else:
+        # Display chat history
+        for msg in st.session_state['chat_history']:
+            with st.chat_message(msg['role']):
+                st.markdown(msg['content'])
     
     # Chat input
     if user_input := st.chat_input("Posez votre question..."):
@@ -453,107 +555,165 @@ with tab_chat:
         st.session_state['chat_history'].append({'role': 'assistant', 'content': response})
         st.rerun()
     
-    # Clear chat button
-    if st.button("Effacer la conversation", key='button_457'):
-        st.session_state['chat_history'] = []
-        st.rerun()
+    # Clear chat button - compact layout (only if history exists)
+    if st.session_state['chat_history']:
+        chat_cols = st.columns([1, 4])
+        with chat_cols[0]:
+            if st.button("🗑️ Effacer", key='clear_chat_btn', help="Effacer l'historique de conversation"):
+                st.session_state['chat_history'] = []
+                st.rerun()
+        with chat_cols[1]:
+            st.caption(f"{len(st.session_state['chat_history'])} messages")
 
 with tab_setup:
-    st.header("🏗️ Configuration Assistée")
-    st.markdown("Répondez à quelques questions pour configurer automatiquement vos catégories principales (Salaire, Loyer...)")
+    # Sous-onglets pour organiser la configuration
+    setup_tab_auto, setup_tab_sub, setup_tab_manual = st.tabs([
+        "🤖 Configuration Auto", 
+        "📅 Abonnements & Prévisions",
+        "⚙️ Paramètres Manuel"
+    ])
     
-    if st.button("Lancer l'analyse 🚀", type="primary", key='button_465'):
-        df = get_all_transactions()
-        if df.empty:
-            st.warning("Importez d'abord des données.")
-        else:
-            candidates = detect_financial_profile(df)
-            st.session_state['setup_candidates'] = candidates
-            st.rerun()
-            
-    if 'setup_candidates' in st.session_state:
-        cands = st.session_state['setup_candidates']
-        if not cands:
-            st.success("🎉 Tout semble déjà configuré ! Je n'ai pas trouvé de nouvelles récurrences inconnues.")
-            if st.button("Forcer une ré-analyse complète (incluant le déjà connu)", key='button_478'):
-                 # TBD: logic to clear cache or ignore existing checks
-                 pass
-        else:
-            st.info(f"J'ai trouvé **{len(cands)}** nouvelles suggestions personnalisées pour vous.")
-            
-            # Form
-            with st.form("onboarding_form"):
-                selection_map = {}
+    # --- ONGLET 1: Configuration Automatique ---
+    with setup_tab_auto:
+        st.header("🏗️ Configuration Assistée")
+        st.markdown("Répondez à quelques questions pour configurer automatiquement vos catégories principales (Salaire, Loyer...)")
+        
+        if st.button("Lancer l'analyse 🚀", type="primary", key='btn_setup_analyze'):
+            df = get_all_transactions()
+            if df.empty:
+                st.warning("Importez d'abord des données.")
+            else:
+                with st.spinner("Analyse de votre profil financier..."):
+                    candidates = detect_financial_profile(df)
+                    st.session_state['setup_candidates'] = candidates
+                st.rerun()
                 
-                for i, cand in enumerate(cands):
-                    st.divider()
-                    col1, col2 = st.columns([2, 1])
-                    with col1:
-                        st.markdown(f"**{cand['label']}** (~{cand['amount']:.0f} €)")
-                        st.caption(f"Détecté comme : {cand['type']}")
-                        
-                        # Add details button
-                        with st.popover("👁️ Voir détails", use_container_width=False):
-                            st.markdown("### 📊 Informations complètes")
-                            details_data = cand.get('sample_transactions', pd.DataFrame())
-                            if not details_data.empty:
-                                # Show first transaction as example
-                                sample = details_data.iloc[0]
-                                st.markdown(f"**Libellé complet** : `{sample.get('label', 'N/A')}`")
-                                st.markdown(f"**Date** : {sample.get('date', 'N/A')}")
-                                st.markdown(f"**Montant** : {sample.get('amount', 0):.2f} €")
-                                st.markdown(f"**Compte** : {sample.get('account_label', 'N/A')}")
-                                st.markdown(f"**Catégorie actuelle** : {sample.get('category_validated', 'Inconnu')}")
-                                
-                                if len(details_data) > 1:
-                                    st.markdown(f"*({len(details_data)} transactions similaires trouvées)*")
-                            else:
-                                st.info("Aucun détail disponible")
-                                
-                    with col2:
-                        # User choice
-                        choice = st.radio(
-                            "C'est bien ça ?",
-                            ("Oui, confirmer", "Non, ignorer", "Changer catégorie"),
-                            key=f"q_{i}",
-                            horizontal=True,
-                            label_visibility="collapsed"
-                        )
-                        
-                        if choice == "Changer catégorie":
-                            new_cat = st.selectbox("Catégorie correcte", 
-                                         get_categories(), 
-                                         key=f"cat_{i}")
-                            selection_map[i] = {"action": "save", "cat": new_cat}
-                        elif choice == "Oui, confirmer":
-                             selection_map[i] = {"action": "save", "cat": cand['default_category']}
-                        else:
-                             selection_map[i] = {"action": "skip"}
-
-                submitted = st.form_submit_button("Sauvegarder ma configuration ✅")
+        if 'setup_candidates' in st.session_state:
+            cands = st.session_state['setup_candidates']
+            if not cands:
+                st.success("🎉 Tout semble déjà configuré ! Je n'ai pas trouvé de nouvelles récurrences inconnues.")
+                if st.button("Forcer une ré-analyse complète (incluant le déjà connu)", key='btn_force_reanalyze'):
+                     st.info("🔄 Ré-analyse en cours...")
+            else:
+                st.info(f"J'ai trouvé **{len(cands)}** nouvelles suggestions personnalisées pour vous.")
                 
-                if submitted:
-                    count = 0
-                    for i, cand in enumerate(cands):
-                        decision = selection_map.get(i)
-                        if decision and decision['action'] == "save":
-                            # Create Learning Rule (+ Validate existing?)
-                            # For simplicity, we just add the rule. The user can re-validate or next import acts.
-                            # Ideally we also define priority.
-                            add_learning_rule(cand['label'], decision['cat'])
-                            count += 1
+                # Form
+                with st.form("onboarding_form"):
+                    selection_map = {}
                     
-                    st.success(f"{count} règles de configuration créées ! 🚀")
-                    del st.session_state['setup_candidates']  
-                    # Rerurn to refresh rules in background? 
-                    # st.rerun() is inside button logic, might need sleep or direct message.
-    
-    st.divider()
-    # --- NEW: MANUAL PROFILE SETUP FORM ---
-    from modules.ui.components.profile_form import render_profile_setup_form
-    render_profile_setup_form(key_prefix="assistant")
+                    for i, cand in enumerate(cands):
+                        st.divider()
+                        col1, col2 = st.columns([2, 1])
+                        with col1:
+                            st.markdown(f"**{cand['label']}** (~{cand['amount']:.0f} €)")
+                            st.caption(f"Détecté comme : {cand['type']}")
+                            
+                            # Add details button
+                            with st.popover("👁️ Voir détails", use_container_width=False):
+                                st.markdown("### 📊 Informations complètes")
+                                details_data = cand.get('sample_transactions', pd.DataFrame())
+                                if not details_data.empty:
+                                    # Show first transaction as example
+                                    sample = details_data.iloc[0]
+                                    st.markdown(f"**Libellé complet** : `{sample.get('label', 'N/A')}`")
+                                    st.markdown(f"**Date** : {sample.get('date', 'N/A')}")
+                                    st.markdown(f"**Montant** : {sample.get('amount', 0):.2f} €")
+                                    st.markdown(f"**Compte** : {sample.get('account_label', 'N/A')}")
+                                    st.markdown(f"**Catégorie actuelle** : {sample.get('category_validated', 'Inconnu')}")
+                                    
+                                    if len(details_data) > 1:
+                                        st.markdown(f"*({len(details_data)} transactions similaires trouvées)*")
+                                else:
+                                    st.info("Aucun détail disponible")
+                                    
+                        with col2:
+                            # User choice
+                            choice = st.radio(
+                                "C'est bien ça ?",
+                                ("Oui, confirmer", "Non, ignorer", "Changer catégorie"),
+                                key=f"q_{i}",
+                                horizontal=True,
+                                label_visibility="collapsed"
+                            )
+                            
+                            if choice == "Changer catégorie":
+                                new_cat = st.selectbox("Catégorie correcte", 
+                                             get_categories(), 
+                                             key=f"cat_{i}")
+                                selection_map[i] = {"action": "save", "cat": new_cat}
+                            elif choice == "Oui, confirmer":
+                                 selection_map[i] = {"action": "save", "cat": cand['default_category']}
+                            else:
+                                 selection_map[i] = {"action": "skip"}
 
-with tab_sub:
+                    submitted = st.form_submit_button("Sauvegarder ma configuration ✅")
+                    
+                    if submitted:
+                        count = 0
+                        for i, cand in enumerate(cands):
+                            decision = selection_map.get(i)
+                            if decision and decision['action'] == "save":
+                                add_learning_rule(cand['label'], decision['cat'])
+                                count += 1
+                        
+                        st.success(f"{count} règles de configuration créées ! 🚀")
+                        del st.session_state['setup_candidates']
+    
+    # --- ONGLET 2: Abonnements & Prévisions ---
+    with setup_tab_sub:
+        st.header("📅 Détection des Abonnements")
+        st.markdown("Analyse des paiements récurrents sur la base de vos transactions passées.")
+        
+        df_sub = get_all_transactions()
+        if df_sub.empty:
+            st.info("Importez des données pour détecter vos abonnements.")
+        else:
+            with st.spinner("Analyse des paiements récurrents..."):
+                recurring = detect_recurring_payments(df_sub)
+            
+            if recurring.empty:
+                st.warning("Aucun paiement récurrent détecté pour l'instant (il faut au moins 2 occurrences).")
+                st.info("💡 Astuce : Les abonnements seront détectés automatiquement après 2-3 mois de données.")
+            else:
+                # Display KPIs
+                monthly_total = recurring['avg_amount'].sum()
+                
+                col_s1, col_s2 = st.columns(2)
+                with col_s1:
+                    card_kpi("Budget Mensuel Estimé", f"{abs(monthly_total):.2f} €", trend="Fixe", trend_color="neutral")
+                with col_s2:
+                    card_kpi("Abonnements détectés", f"{len(recurring)}", trend="Actifs", trend_color="neutral")
+                
+                st.divider()
+                st.subheader("Détails des récurrences")
+                
+                # Formating for display
+                display_rec = recurring[['label', 'avg_amount', 'frequency_label', 'variability', 'category', 'last_date']].copy()
+                display_rec['avg_amount'] = display_rec['avg_amount'].apply(lambda x: f"{x:.2f} €")
+                
+                st.dataframe(
+                    display_rec,
+                    column_config={
+                        "label": "Libellé",
+                        "avg_amount": "Montant Moyen",
+                        "frequency_label": "Fréquence",
+                        "variability": "Type",
+                        "category": "Catégorie",
+                        "last_date": "Dernière transaction"
+                    },
+                    use_container_width=True
+                )
+                
+                st.caption("*Note : Cette liste est basée sur la régularité des paiements (intervalle ~30 jours) et la constance du montant.*")
+    
+    # --- ONGLET 3: Paramètres Manuel ---
+    with setup_tab_manual:
+        st.header("⚙️ Configuration Manuelle")
+        st.markdown("Personnalisez directement vos paramètres financiers.")
+        
+        # --- NEW: MANUAL PROFILE SETUP FORM ---
+        from modules.ui.components.profile_form import render_profile_setup_form
+        render_profile_setup_form(key_prefix="assistant")
     st.header("Détection des Abonnements")
     st.markdown("Analyse des paiements récurrents sur la base de vos transactions passées.")
     
