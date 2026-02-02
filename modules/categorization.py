@@ -173,9 +173,17 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
     # 4. AI Cloud
     cat, conf = predict_category_ai(label, amount, date)
     
-    # 5. Global Constraint: Negative amounts cannot be "Revenus"
+    # 5. Global Constraints: Amount sign must match category type
+    EXPENSE_CATEGORIES = ["Alimentation", "Transport", "Loisirs", "Santé", "Logement", 
+                          "Shopping", "Restaurants", "Services", "Abonnements"]
+    
+    # Negative amounts cannot be "Revenus"
     if cat == "Revenus" and amount < 0:
         return "Inconnu", "rule_constraint", 0.0
+    
+    # Positive amounts cannot be expense categories
+    if cat in EXPENSE_CATEGORIES and amount > 0:
+        return "Revenus", "rule_constraint", 0.0
         
     return cat, "ai", conf
 

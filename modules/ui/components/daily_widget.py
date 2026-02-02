@@ -41,7 +41,7 @@ def get_spending_insight() -> Dict[str, Any]:
             all_tx['date'] = pd.to_datetime(all_tx['date'])
             today_tx = all_tx[all_tx['date'].dt.strftime('%Y-%m-%d') == today_str]
             today_spending = today_tx['amount'].sum() if not today_tx.empty else 0
-    except:
+    except Exception:
         today_spending = 0
     
     # Vérifier les budgets
@@ -116,7 +116,7 @@ def get_spending_insight() -> Dict[str, Any]:
                         "action": "pages/3_Synthese.py",
                         "action_label": "Explorer"
                     }
-    except:
+    except Exception:
         pass
     
     # Défaut

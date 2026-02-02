@@ -309,19 +309,20 @@ def render_analysis_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
                 st.info("Aucun bénéficiaire tiers détecté sur cette période.")
     
     with col_right:
-        # Analyse par tags
+        # Analyse par tags - VERSION VECTORISÉE (plus rapide)
         st.subheader("🏷️ Par Tags")
         
         if 'tags' in df_current.columns:
-            tag_data = []
-            for _, row in df_current[df_current['amount'] < 0].iterrows():
-                if pd.notna(row['tags']):
-                    tags = [t.strip() for t in str(row['tags']).split(',') if t.strip()]
-                    for t in tags:
-                        tag_data.append({"Tag": t, "Montant": abs(row['amount'])})
+            # Filtrer les dépenses avec tags
+            expense_df = df_current[df_current['amount'] < 0].dropna(subset=['tags'])
             
-            if tag_data:
-                df_tags = pd.DataFrame(tag_data).groupby('Tag')['Montant'].sum().reset_index()
+            if not expense_df.empty:
+                # Vectorisation: explode des tags puis groupby
+                tag_series = expense_df['tags'].str.split(',').explode().str.strip()
+                tag_amounts = tag_series[tag_series != ''].to_frame('Tag')
+                tag_amounts['Montant'] = expense_df.loc[tag_amounts.index, 'amount'].abs().values
+                
+                df_tags = tag_amounts.groupby('Tag')['Montant'].sum().reset_index()
                 df_tags = df_tags.sort_values('Montant', ascending=True).tail(10)
                 
                 fig = px.bar(

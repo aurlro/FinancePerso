@@ -108,8 +108,13 @@ def detect_recurring_payments_v2(df: pd.DataFrame) -> pd.DataFrame:
     data['clean_label'] = data['label'].apply(clean_label)
     data['base_label'] = data['label'].apply(extract_base_label)
     
-    # Check for income patterns
-    data['income_check'] = data['label'].apply(lambda x: detect_income_pattern(x)[0])
+    # Check for income patterns (by category first, then by label pattern)
+    from modules.transaction_types import is_income_category, is_excluded_category
+    
+    data['income_check'] = data.apply(
+        lambda x: is_income_category(x['category_validated']) or detect_income_pattern(x['label'])[0], 
+        axis=1
+    )
     data['income_type'] = data['label'].apply(lambda x: detect_income_pattern(x)[1])
     
     recurring_items = []

@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import re
 from datetime import datetime
+from modules.db.migrations import init_db
 from modules.ui import load_css
 from modules.ui.layout import render_app_info
 from modules.ui.feedback import render_scroll_to_top
@@ -10,6 +11,7 @@ from modules.update_manager import get_update_manager, VersionEntry
 
 st.set_page_config(page_title="Nouveautés", page_icon="🎁", layout="wide")
 load_css()
+init_db()
 
 st.title("🎁 Nouveautés & Mises à jour")
 

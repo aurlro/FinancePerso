@@ -178,7 +178,7 @@ def render_rule_list():
                 try:
                     created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
                     st.caption(created_at.strftime("%d/%m/%Y"))
-                except:
+                except (ValueError, TypeError):
                     st.caption(str(created_at)[:10])
             else:
                 st.caption(str(created_at)[:10] if created_at else "-")

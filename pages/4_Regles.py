@@ -49,7 +49,7 @@ init_db()  # Ensure migrations are applied
 # =============================================================================
 # PAGE HEADER
 # =============================================================================
-st.title("🧠 Mémoire de l'assistant")
+st.title("🧠 Règles & Mémoire de l'assistant")
 st.markdown("Gérez les règles de catégorisation automatique, auditez leur qualité et définissez vos budgets mensuels.")
 
 # =============================================================================

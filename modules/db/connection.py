@@ -84,6 +84,7 @@ def clear_db_cache():
     """Invalide le cache des données DB après modification."""
     try:
         st.cache_data.clear()
-    except:
-        pass
+    except Exception as e:
+        from modules.logger import logger
+        logger.warning(f"Cache clear failed: {e}")
 

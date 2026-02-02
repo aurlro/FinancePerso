@@ -10,10 +10,12 @@ from modules.db.members import get_member_mappings
 from modules.logger import logger
 
 
-@st.cache_data(ttl='1h')
 def transaction_exists(cursor, tx_hash: str) -> bool:
     """
     Check if a transaction exists based on tx_hash.
+    
+    Note: Pas de cache car cursor n'est pas hashable.
+    La requête est déjà rapide (index sur tx_hash).
     
     Args:
         cursor: Database cursor
@@ -64,30 +66,35 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
         # Ensure date is string for consistent grouping/querying
         df['date_str'] = df['date'].astype(str)
+        
+        # Ensure account_label exists for grouping
+        if 'account_label' not in df.columns:
+            df['account_label'] = 'Unknown'
 
-        # Group by signature (date, label, amount)
-        grouped = df.groupby(['date_str', 'label', 'amount'])
+        # Group by signature (date, label, amount, account_label)
+        # account_label included to avoid false positives on transfers between accounts
+        grouped = df.groupby(['date_str', 'label', 'amount', 'account_label'])
 
         # OPTIMIZATION #1: Batch COUNT query instead of N+1 queries
-        # Extract all unique (date, label, amount) tuples
-        unique_sigs = [(date, label, amount) for (date, label, amount), _ in grouped]
+        # Extract all unique (date, label, amount, account_label) tuples
+        unique_sigs = [(date, label, amount, account) for (date, label, amount, account), _ in grouped]
 
         # Build batch query for all signatures
         if len(unique_sigs) > 0:
             # Create placeholders for IN clause
-            placeholders = ','.join(['(?,?,?)'] * len(unique_sigs))
+            placeholders = ','.join(['(?,?,?,?)'] * len(unique_sigs))
             batch_query = f"""
-                SELECT date, label, amount, COUNT(*) as cnt
+                SELECT date, label, amount, account_label, COUNT(*) as cnt
                 FROM transactions
-                WHERE (date, label, amount) IN ({placeholders})
-                GROUP BY date, label, amount
+                WHERE (date, label, amount, account_label) IN ({placeholders})
+                GROUP BY date, label, amount, account_label
             """
             # Flatten tuples for query params
             flat_params = [item for sig in unique_sigs for item in sig]
             cursor.execute(batch_query, flat_params)
 
-            # Build lookup dict: (date, label, amount) -> count
-            db_counts = {(row[0], row[1], row[2]): row[3] for row in cursor.fetchall()}
+            # Build lookup dict: (date, label, amount, account_label) -> count
+            db_counts = {(row[0], row[1], row[2], row[3]): row[4] for row in cursor.fetchall()}
         else:
             db_counts = {}
 
@@ -95,9 +102,9 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         rows_to_insert = []
         insert_columns = None
 
-        for (date, label, amount), group in grouped:
+        for (date, label, amount, account), group in grouped:
             # Get DB count from batch query result
-            db_count = db_counts.get((date, label, amount), 0)
+            db_count = db_counts.get((date, label, amount, account), 0)
 
             # Count in Input
             input_count = len(group)

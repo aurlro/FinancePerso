@@ -107,19 +107,17 @@ class TestCompiledRules:
         assert not pattern_compiled.search('TOTALLY DIFFERENT')
 
     def test_invalid_regex_handling(self, temp_db):
-        """Test that invalid regex patterns are handled gracefully."""
-        # Add an invalid regex pattern (unbalanced brackets)
-        add_learning_rule('[INVALID(', 'TestCat', priority=5)
+        """Test that invalid regex patterns are rejected at insertion."""
+        # Try to add an invalid regex pattern (unbalanced brackets)
+        result = add_learning_rule('[INVALID(', 'TestCat', priority=5)
+        
+        # Should be rejected by validation
+        assert result == False, "Invalid regex should be rejected at insertion"
 
         compiled_rules = get_compiled_learning_rules()
 
-        # Should have 1 rule, but with None as compiled pattern
-        assert len(compiled_rules) == 1
-        pattern_compiled, category, priority, pattern_str = compiled_rules[0]
-
-        assert pattern_compiled is None, "Invalid regex should result in None"
-        assert category == 'TestCat'
-        assert pattern_str == '[INVALID('
+        # Should have 0 rules (invalid pattern was rejected)
+        assert len(compiled_rules) == 0
 
 class TestAddRule:
     """Tests for adding learning rules."""

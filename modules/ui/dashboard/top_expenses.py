@@ -1,9 +1,11 @@
 import streamlit as st
 import pandas as pd
+from modules.transaction_types import filter_expense_transactions
 
 def render_top_expenses(df_current: pd.DataFrame, cat_emoji_map: dict, limit: int = 10):
     """
     Render table of top expenses.
+    Filtre les dépenses en utilisant les catégories (pas le signe du montant).
     
     Args:
         df_current: Current period transactions
@@ -12,11 +14,8 @@ def render_top_expenses(df_current: pd.DataFrame, cat_emoji_map: dict, limit: in
     """
     st.subheader("🔝 Top 10 Dépenses")
     
-    # Filter expenses only, exclude certain categories
-    df_exp = df_current[
-        (df_current['amount'] < 0) & 
-        (~df_current['category_validated'].isin(['Revenus', 'Virement Interne', 'Hors Budget']))
-    ].copy()
+    # Filter expenses only using categories
+    df_exp = filter_expense_transactions(df_current).copy()
     
     if df_exp.empty:
         st.info("Aucune dépense sur cette période.")

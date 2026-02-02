@@ -243,7 +243,7 @@ class GamificationManager:
                         spending = today_tx['amount'].sum() if not today_tx.empty else 0
                         if spending == 0:
                             is_complete = True
-                except:
+                except Exception:
                     pass
             
             elif challenge.condition_type == 'create_budget':

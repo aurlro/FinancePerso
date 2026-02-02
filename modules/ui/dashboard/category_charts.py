@@ -3,10 +3,16 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from modules.transaction_types import (
+    filter_expense_transactions,
+    is_excluded_category,
+    EXCLUDED_CATEGORIES
+)
 
 def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> pd.DataFrame:
     """
     Prepare expense dataframe with category emojis.
+    Filtre les dépenses en utilisant les catégories (pas le signe du montant).
     
     Args:
         df_current: Current period transactions
@@ -15,11 +21,8 @@ def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> 
     Returns:
         Prepared dataframe with categorized expenses
     """
-    # Filter expenses only, exclude certain categories
-    df_exp = df_current[
-        (df_current['amount'] < 0) & 
-        (~df_current['category_validated'].isin(['Revenus', 'Virement Interne', 'Hors Budget']))
-    ].copy()
+    # Filter expenses only using categories
+    df_exp = filter_expense_transactions(df_current).copy()
     
     if df_exp.empty:
         return pd.DataFrame()

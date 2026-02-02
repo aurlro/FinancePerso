@@ -16,18 +16,18 @@ class TestCalculateTrends:
     
     def test_calculate_trends_basic(self):
         """Test basic trend calculation."""
-        # Current period data
+        # Current period data with categories
         df_current = pd.DataFrame([
-            {'amount': -100.00},
-            {'amount': -200.00},
-            {'amount': 500.00}
+            {'amount': -100.00, 'category_validated': 'Alimentation'},
+            {'amount': -200.00, 'category_validated': 'Transport'},
+            {'amount': 500.00, 'category_validated': 'Revenus'}
         ])
         
-        # Previous period data
+        # Previous period data with categories
         df_prev = pd.DataFrame([
-            {'amount': -150.00},
-            {'amount': -100.00},
-            {'amount': 400.00}
+            {'amount': -150.00, 'category_validated': 'Alimentation'},
+            {'amount': -100.00, 'category_validated': 'Transport'},
+            {'amount': 400.00, 'category_validated': 'Revenus'}
         ])
         
         trends = calculate_trends(df_current, df_prev)
@@ -44,8 +44,8 @@ class TestCalculateTrends:
     
     def test_calculate_trends_with_improvement(self):
         """Test trend showing improvement (lower expenses)."""
-        df_current = pd.DataFrame([{'amount': -100.00}])
-        df_prev = pd.DataFrame([{'amount': -200.00}])
+        df_current = pd.DataFrame([{'amount': -100.00, 'category_validated': 'Alimentation'}])
+        df_prev = pd.DataFrame([{'amount': -200.00, 'category_validated': 'Alimentation'}])
         
         trends = calculate_trends(df_current, df_prev)
         
@@ -55,8 +55,8 @@ class TestCalculateTrends:
     
     def test_calculate_trends_with_deterioration(self):
         """Test trend showing deterioration (higher expenses)."""
-        df_current = pd.DataFrame([{'amount': -200.00}])
-        df_prev = pd.DataFrame([{'amount': -100.00}])
+        df_current = pd.DataFrame([{'amount': -200.00, 'category_validated': 'Alimentation'}])
+        df_prev = pd.DataFrame([{'amount': -100.00, 'category_validated': 'Alimentation'}])
         
         trends = calculate_trends(df_current, df_prev)
         
@@ -66,7 +66,10 @@ class TestCalculateTrends:
     
     def test_calculate_trends_empty_previous(self):
         """Test trend calculation with no previous period data."""
-        df_current = pd.DataFrame([{'amount': -100.00}, {'amount': 500.00}])
+        df_current = pd.DataFrame([
+            {'amount': -100.00, 'category_validated': 'Alimentation'}, 
+            {'amount': 500.00, 'category_validated': 'Revenus'}
+        ])
         df_prev = pd.DataFrame()
         
         trends = calculate_trends(df_current, df_prev)

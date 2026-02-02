@@ -8,6 +8,7 @@ import streamlit as st
 from typing import List, Tuple, Optional
 from modules.db.connection import get_db_connection, clear_db_cache
 from modules.logger import logger
+from modules.utils import validate_regex_pattern
 
 
 def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
@@ -25,6 +26,12 @@ def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
     Example:
         add_learning_rule("CARREFOUR", "Alimentation", priority=5)
     """
+    # Valider le pattern avant insertion (protection ReDoS)
+    is_valid, error_msg = validate_regex_pattern(pattern)
+    if not is_valid:
+        logger.error(f"Invalid rule pattern: {error_msg}")
+        return False
+    
     with get_db_connection() as conn:
         cursor = conn.cursor()
         try:

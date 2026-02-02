@@ -193,7 +193,7 @@ MyFinance Companion"""
                     if server:
                         try:
                             server.quit()
-                        except:
+                        except Exception:
                             pass
                         
         except Exception as e:

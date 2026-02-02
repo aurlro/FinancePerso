@@ -323,7 +323,7 @@ def is_ai_available():
         try:
             requests.get(f"{provider.base_url}/api/tags", timeout=2)
             return True
-        except:
+        except Exception:
             return False
     elif isinstance(provider, OpenAICompatibleProvider):
         return bool(provider.api_key)

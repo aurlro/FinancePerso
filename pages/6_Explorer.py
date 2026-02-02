@@ -9,7 +9,9 @@ Navigation:
 - Les paramètres sont passés via URL : ?type=category&value=Alimentation&from=3_Synthese
 """
 import streamlit as st
-from modules.ui import load_css
+from modules.db.migrations import init_db
+from modules.ui import load_css, render_scroll_to_top
+from modules.ui.layout import render_app_info
 from modules.ui.explorer import render_explorer_page
 
 # Page config
@@ -22,6 +24,7 @@ st.set_page_config(
 
 # Load styles
 load_css()
+init_db()
 
 # Get parameters from URL
 explorer_type = st.query_params.get('type', 'category')
@@ -60,3 +63,6 @@ render_explorer_page(
     explorer_value=explorer_value,
     from_page=from_page
 )
+
+render_scroll_to_top()
+render_app_info()

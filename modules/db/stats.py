@@ -59,18 +59,23 @@ def get_global_stats() -> dict:
             df_last = pd.read_sql("SELECT MAX(import_date) as last_imp FROM transactions", conn)
             last_import = df_last.iloc[0]['last_imp']
             
-            # 3. Current Month Savings
+            # 3. Current Month Savings (utilise les catégories, pas le signe)
             today = datetime.date.today()
             month_str = today.strftime('%Y-%m')
             
-            query_month = f"SELECT amount FROM transactions WHERE strftime('%Y-%m', date) = ?"
+            query_month = f"SELECT amount, category_validated FROM transactions WHERE strftime('%Y-%m', date) = ?"
             df_curr = pd.read_sql(query_month, conn, params=(month_str,))
             
             if not df_curr.empty:
-                inc = df_curr[df_curr['amount'] > 0]['amount'].sum()
-                exp = abs(df_curr[df_curr['amount'] < 0]['amount'].sum())
+                from modules.transaction_types import (
+                    calculate_true_income, 
+                    calculate_true_expenses,
+                    calculate_savings_rate
+                )
+                inc = calculate_true_income(df_curr, include_refunds=False)
+                exp = calculate_true_expenses(df_curr, include_refunds=True)
                 savings = inc - exp
-                savings_rate = (savings / inc * 100) if inc > 0 else 0.0
+                savings_rate = calculate_savings_rate(df_curr)
             else:
                 inc, exp, savings, savings_rate = 0.0, 0.0, 0.0, 0.0
             

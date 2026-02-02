@@ -727,16 +727,18 @@ class TestRuleManagementWorkflow:
         assert len(issues['duplicates']) > 0 or len(issues['conflicts']) > 0
 
     def test_invalid_regex_pattern_handling(self, temp_db, db_connection):
-        """Test handling of invalid regex patterns."""
+        """Test that invalid regex patterns are rejected at insertion."""
         from modules.db.rules import get_compiled_learning_rules
 
-        # Step 1: Add invalid regex pattern
-        add_learning_rule('[INVALID(', 'TestCategory', priority=5)
+        # Step 1: Try to add invalid regex pattern
+        result = add_learning_rule('[INVALID(', 'TestCategory', priority=5)
+        
+        # Should be rejected by validation
+        assert result == False, "Invalid regex pattern should be rejected"
 
         # Step 2: Get compiled rules
         compiled = get_compiled_learning_rules()
 
-        # Should handle gracefully (None for invalid patterns)
+        # Should have no rules (invalid pattern was rejected)
         invalid_rule = [r for r in compiled if r[3] == '[INVALID(']
-        assert len(invalid_rule) == 1
-        assert invalid_rule[0][0] is None  # pattern_compiled should be None
+        assert len(invalid_rule) == 0, "Invalid pattern should not be in database"

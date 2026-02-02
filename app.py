@@ -42,6 +42,25 @@ st.set_page_config(
 load_css()
 init_db()
 
+# --- SESSION STATE INITIALIZATION (AVANT toute utilisation) ---
+if 'default_account_name' not in st.session_state:
+    st.session_state['default_account_name'] = None
+if 'onboarding_complete' not in st.session_state:
+    st.session_state['onboarding_complete'] = None
+if 'onboarding_dismissed' not in st.session_state:
+    st.session_state['onboarding_dismissed'] = None
+if 'onboarding_step' not in st.session_state:
+    st.session_state['onboarding_step'] = None
+
+# --- DASHBOARD CLEANUP (Auto-repair on startup) ---
+try:
+    from modules.db.dashboard_cleanup import run_startup_cleanup
+    cleanup_result = run_startup_cleanup()
+    if cleanup_result.widgets_fixed > 0 or cleanup_result.widgets_removed > 0:
+        logger.info(f"Dashboard auto-cleanup: {cleanup_result.message}")
+except Exception as e:
+    logger.warning(f"Dashboard cleanup failed (non-critical): {e}")
+
 # Vérifier les notifications (budget alerts, daily digest, etc.)
 check_all_notifications()
 
@@ -169,19 +188,6 @@ else:
     
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
-# Initialisation des variables de session
-if 'default_account_name' not in st.session_state:
-    st.session_state['default_account_name'] = None
-if 'get' not in st.session_state:
-    st.session_state['get'] = None
-if 'onboarding_complete' not in st.session_state:
-    st.session_state['onboarding_complete'] = None
-if 'onboarding_dismissed' not in st.session_state:
-    st.session_state['onboarding_dismissed'] = None
-if 'onboarding_step' not in st.session_state:
-    st.session_state['onboarding_step'] = None
-
-
     render_app_info()
     
     # Scroll to top button

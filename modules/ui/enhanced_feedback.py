@@ -41,7 +41,7 @@ def show_action_toast(message: str, type_: str = "success", duration: int = 3):
             st.warning(f"{icon} {message}")
         else:
             st.info(f"{icon} {message}")
-    except:
+    except Exception:
         # Fallback pour les anciennes versions
         if type_ == "success":
             st.success(f"{icon} {message}")

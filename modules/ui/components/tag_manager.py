@@ -12,9 +12,7 @@ from modules.db.tags import get_all_tags
 from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
 from modules.db.transactions import get_all_transactions
 from modules.categorization import clean_label
-# Initialisation des variables de session
-if 'get' not in st.session_state:
-    st.session_state['get'] = None
+from modules.utils import escape_html
 
 
 
@@ -120,7 +118,7 @@ def render_pill_tags(tags: List[str], size: str = "normal", removable: bool = Fa
                     on_remove(tag)
                 st.rerun()
         
-        pills_html.append(f'<span style="{pill_style}">{tag}</span>')
+        pills_html.append(f'<span style="{pill_style}">{escape_html(tag)}</span>')
     
     # Render container
     container_style = """

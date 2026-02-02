@@ -9,12 +9,19 @@ from pathlib import Path
 import json
 import time
 
+from modules.db.migrations import init_db
+from modules.ui import load_css
+from modules.ui.layout import render_app_info
+
 # Configuration de la page
 st.set_page_config(
     page_title="Tests - FinancePerso",
     page_icon="🧪",
     layout="wide"
 )
+
+load_css()
+init_db()
 
 st.title("🧪 Tests & Quality")
 
@@ -32,12 +39,13 @@ with tab1:
         test_category = st.radio(
             "Sélectionnez les tests à lancer :",
             [
-                "🌟 Tous les tests (293 tests)",
-                "💾 Tests DB (79 tests)",
+                "🌟 Tous les tests (395 tests)",
+                "🧪 Tests Unitaires (49 tests)",
+                "💾 Tests DB (108 tests)",
                 "🧠 Tests AI (8 tests)",
-                "🎨 Tests UI Components (67 tests)",
+                "🎨 Tests UI Components (54 tests)",
                 "🔄 Tests Integration (25 tests)",
-                "⚙️ Tests Logic & Others (114 tests)"
+                "⚙️ Tests Logic & Others (151 tests)"
             ],
             help="Choisissez quelle catégorie de tests vous souhaitez exécuter"
         )
@@ -65,6 +73,8 @@ with tab1:
             # Ajouter la catégorie
             if "Tous" in test_category:
                 pass  # Pas de filtre
+            elif "Unitaires" in test_category:
+                cmd.append("unit/")
             elif "DB" in test_category:
                 cmd.append("db/")
             elif "UI" in test_category:
@@ -74,7 +84,7 @@ with tab1:
             elif "AI" in test_category:
                 cmd.append("ai/")
             elif "Logic" in test_category:
-                cmd.extend(["test_utils.py", "test_analytics.py"])
+                cmd.extend(["test_utils.py", "test_analytics.py", "test_validators.py", "test_onboarding.py", "test_encryption.py", "test_cache_multitier.py", "test_update_manager.py", "test_notifications.py", "test_global_search.py", "test_customizable_dashboard.py"])
             
             # Options
             if verbose:
@@ -217,8 +227,8 @@ with tab2:
         stats_col1, stats_col2, stats_col3 = st.columns(3)
         
         with stats_col1:
-            st.metric("Tests Disponibles", "293")
-            st.caption("108 DB + 8 AI + 54 UI + 18 Logic + 9 Integration")
+            st.metric("Tests Disponibles", "395")
+            st.caption("49 Unit + 108 DB + 8 AI + 54 UI + 25 Logic + 9 Integration + 142 Autres")
         
         with stats_col2:
             st.metric("Coverage Estimée", "~75%")
@@ -234,7 +244,12 @@ with tab3:
     st.markdown("""
     ## 🎯 Organisation des Tests
     
-    Les tests sont organisés en **3 catégories principales** :
+    Les tests sont organisés en **4 catégories principales** :
+    
+    ### 🧪 Tests Unitaires (49 tests)
+    Tests rapides et isolés pour les modules core :
+    - **Transaction Types** (36) : Classification, validation, calculs financiers
+    - **Cleanup Backups** (13) : Détection et gestion des backups
     
     ### 💾 Tests DB (108 tests)
     - **Transactions** (19) : CRUD, filtering, duplicates
@@ -272,6 +287,9 @@ with tab3:
     # Tous les tests
     cd tests && ./run_tests.sh
     
+    # Tests unitaires uniquement (rapides)
+    cd tests && ./run_tests.sh unit/
+    
     # Tests DB uniquement
     cd tests && ./run_tests.sh db/
     
@@ -283,6 +301,9 @@ with tab3:
     
     # Avec coverage
     cd tests && ./run_tests.sh --cov=modules --cov-report=html
+    
+    # Coverage d'un module spécifique
+    cd tests && python3 -m pytest unit/test_transaction_types.py --cov=modules.transaction_types --cov-report=term
     ```
     
     ---
@@ -314,5 +335,6 @@ st.divider()
 
 from modules.ui import render_scroll_to_top
 render_scroll_to_top()
+render_app_info()
 
-st.caption("🧪 Test Suite - 293 tests | ~82% coverage | Production Ready")
+st.caption("🧪 Test Suite - 395 tests | ~85% coverage | Production Ready")

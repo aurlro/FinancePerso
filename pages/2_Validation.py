@@ -10,11 +10,6 @@ from modules.db.tags import get_all_tags
 from modules.db.stats import get_all_account_labels
 from modules.ui import load_css, render_scroll_to_top
 from modules.utils import clean_label
-# Initialisation des variables de session
-if 'get' not in st.session_state:
-    st.session_state['get'] = None
-
-
 
 # New modular components
 from modules.ui.components.filters import render_transaction_filters

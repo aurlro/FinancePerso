@@ -26,10 +26,10 @@ class TestGlobalStats:
         
     def test_get_global_stats_with_data(self, temp_db, db_connection):
         """Test stats calculation."""
-        # Add sample transactions
+        # Add sample transactions with proper categories
         df = pd.DataFrame([
-            {'date': str(date.today()), 'label': 'INCOME', 'amount': 2000.0, 'status': 'validated'},
-            {'date': str(date.today()), 'label': 'EXPENSE', 'amount': -500.0, 'status': 'validated'}
+            {'date': str(date.today()), 'label': 'INCOME', 'amount': 2000.0, 'status': 'validated', 'category_validated': 'Revenus'},
+            {'date': str(date.today()), 'label': 'EXPENSE', 'amount': -500.0, 'status': 'validated', 'category_validated': 'Alimentation'}
         ])
         save_transactions(df)
         

@@ -7,7 +7,7 @@ from modules.categorization import categorize_transaction
 from modules.ui import load_css, render_scroll_to_top
 from modules.ui.feedback import (
     toast_success, toast_error, toast_warning, toast_info,
-    show_success, show_error, show_warning, import_feedback,
+    show_success, show_error, show_warning, show_info, import_feedback,
     celebrate_completion
 )
 from modules.utils import validate_csv_file
@@ -17,11 +17,33 @@ from modules.error_tracking import track_errors, capture_exception
 import pandas as pd
 import datetime
 
-st.set_page_config(page_title="Import", page_icon="📥")
+st.set_page_config(page_title="Import", page_icon="📥", layout="wide")
 load_css()
 init_db()
 
+# Onboarding pour nouveaux utilisateurs
+from modules.onboarding import render_onboarding_widget
+df_check = get_all_transactions()
+render_onboarding_widget("default", has_data=not df_check.empty)
+
 st.title("📥 Import des relevés")
+
+# Guide rapide pour utilisateurs existants
+with st.expander("📖 Guide rapide d'import", expanded=False):
+    st.markdown("""
+    ### Comment importer vos relevés bancaires
+    
+    1. **Connectez-vous** à votre banque en ligne
+    2. **Téléchargez** votre relevé au format CSV
+    3. **Sélectionnez** le format de votre banque ci-dessous
+    4. **Glissez-déposez** le fichier ou cliquez pour sélectionner
+    5. **Vérifiez** le preview avant de confirmer
+    
+    **Formats supportés :** Boursorama, Revolut, N26, Fortuneo, et banques standards CSV
+    """)    
+    # TODO: Ajouter tutoriel vidéo quand disponible
+    # st.video("https://example.com/tutorial-import.mp4")
+    st.info("🎥 Tutoriel vidéo à venir - En attendant, suivez les étapes ci-dessus")
 
 # --- RECENT IMPORTS SUMMARY ---
 if 'hide_import_summary' not in st.session_state:

@@ -182,6 +182,60 @@ def render_config_dashboard():
     
     st.divider()
     
+    # --- DASHBOARD MAINTENANCE ---
+    st.subheader("🔧 Maintenance du Dashboard")
+    st.markdown("Outils de diagnostic et réparation pour le tableau de bord personnalisable.")
+    
+    col_m1, col_m2, col_m3 = st.columns(3)
+    
+    with col_m1:
+        if st.button("🔍 Vérifier les widgets", use_container_width=True, key='btn_check_widgets'):
+            with st.spinner("Vérification en cours..."):
+                from modules.db.dashboard_cleanup import DashboardCleanupManager, CleanupScenario
+                manager = DashboardCleanupManager()
+                result = manager.run_cleanup(CleanupScenario.VALIDATE_ONLY)
+                
+                if result.success and result.widgets_checked > 0:
+                    st.success(f"✅ {result.widgets_checked} widget(s) vérifié(s)")
+                    if result.errors:
+                        st.warning(f"⚠️ {len(result.errors)} problème(s) détecté(s)")
+                        with st.expander("Voir les détails"):
+                            for error in result.errors[:5]:
+                                st.caption(f"• {error}")
+                else:
+                    st.info("Aucun widget à vérifier")
+    
+    with col_m2:
+        if st.button("🔧 Réparer automatiquement", use_container_width=True, key='btn_repair_widgets'):
+            with st.spinner("Réparation en cours..."):
+                from modules.db.dashboard_cleanup import run_startup_cleanup
+                result = run_startup_cleanup()
+                
+                if result.widgets_fixed > 0 or result.widgets_removed > 0:
+                    st.success(f"✅ {result.widgets_fixed} corrigé(s), {result.widgets_removed} supprimé(s)")
+                    st.rerun()
+                else:
+                    st.success("✅ Aucun problème détecté")
+    
+    with col_m3:
+        if st.button("🔄 Reset complet", use_container_width=True, key='btn_reset_dashboard', type="secondary"):
+            st.warning("⚠️ Cette action va supprimer toute personnalisation du dashboard.")
+            
+            col_confirm, col_cancel = st.columns(2)
+            with col_confirm:
+                if st.button("Confirmer le reset", key='btn_confirm_reset', type="primary"):
+                    with st.spinner("Reset en cours..."):
+                        from modules.db.dashboard_cleanup import reset_dashboard
+                        result = reset_dashboard()
+                        
+                        if result.success:
+                            st.success("✅ Dashboard réinitialisé")
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Erreur: {result.message}")
+    
+    st.divider()
+    
     # --- RECENT ACTIVITY ---
     st.subheader("📈 Activité récente")
     

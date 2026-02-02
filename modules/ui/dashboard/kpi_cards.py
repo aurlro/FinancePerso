@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 from modules.ui import card_kpi
+from modules.transaction_types import (
+    calculate_true_income, 
+    calculate_true_expenses,
+    calculate_savings_rate,
+    filter_excluded_transactions
+)
 
 
 def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:
@@ -13,6 +19,7 @@ def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:
 def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
     """
     Calculate KPI trends between current and previous periods.
+    Utilise les catégories pour déterminer revenus vs dépenses (pas le signe du montant).
     
     Args:
         df_current: Current period transactions
@@ -21,16 +28,20 @@ def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
     Returns:
         Dict with trend data for each KPI
     """
-    # Current Stats
-    cur_exp = abs(df_current[df_current['amount'] < 0]['amount'].sum())
-    cur_rev = df_current[df_current['amount'] > 0]['amount'].sum()
+    # Exclure les virements internes pour les calculs
+    df_current_clean = filter_excluded_transactions(df_current)
+    df_prev_clean = filter_excluded_transactions(df_prev) if not df_prev.empty else df_prev
+    
+    # Current Stats - utilisation des catégories, pas du signe
+    cur_exp = calculate_true_expenses(df_current_clean, include_refunds=True)
+    cur_rev = calculate_true_income(df_current_clean, include_refunds=False)
     cur_solde = cur_rev - cur_exp
-    cur_saving_rate = (cur_solde / cur_rev * 100) if cur_rev > 0 else 0
+    cur_saving_rate = calculate_savings_rate(df_current_clean)
     
     # Previous Stats for Trends
-    if not df_prev.empty:
-        prev_exp = abs(df_prev[df_prev['amount'] < 0]['amount'].sum())
-        prev_rev = df_prev[df_prev['amount'] > 0]['amount'].sum()
+    if not df_prev_clean.empty:
+        prev_exp = calculate_true_expenses(df_prev_clean, include_refunds=True)
+        prev_rev = calculate_true_income(df_prev_clean, include_refunds=False)
         prev_solde = prev_rev - prev_exp
         
         def get_trend(cur, prev, inverse=False):
