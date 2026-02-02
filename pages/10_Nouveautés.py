@@ -236,5 +236,71 @@ else:
 
 st.divider()
 
+# --- ROADMAP SECTION ---
+st.header("🚀 Roadmap & Évolutions Futures")
+st.markdown("Idées et fonctionnalités envisagées pour les versions futures.")
+
+roadmap_tabs = st.tabs(["💡 Propositions", "🔬 R&D", "🎯 Priorisées", "⏸️ En attente"])
+
+with roadmap_tabs[0]:
+    st.subheader("💡 Idées proposées")
+    st.markdown("""
+    ### Comparatif anonymisé
+    - **Description** : "Vous dépensez 20% de plus que la moyenne des utilisateurs"
+    - **Use case** : Donner une perspective comparative sur les habitudes de dépense
+    - **Complexité** : Moyenne (nécessite agrégation de données anonymisées)
+    - **Statut** : 💭 Idée
+    
+    ### Prédictions ML avancées
+    - **Description** : Utilisation de modèles LSTM pour prédire les dépenses futures
+    - **Use case** : Anticiper les dépassements de budget avant qu'ils n'arrivent
+    - **Complexité** : Élevée (besoin de données historiques conséquentes)
+    - **Statut** : 💭 Idée
+    
+    ### Assistant vocal
+    - **Description** : "Combien puis-je dépenser ce week-end ?"
+    - **Use case** : Interaction mains-libres avec l'assistant financier
+    - **Complexité** : Moyenne (intégration STT/TTS)
+    - **Statut** : 💭 Idée
+    """)
+
+with roadmap_tabs[1]:
+    st.subheader("🔬 En recherche & développement")
+    st.markdown("""
+    ### Intégration bancaire temps réel
+    - **Description** : Alertes en temps réel via webhook bancaire
+    - **Use case** : Notification instantanée lors d'un paiement
+    - **Complexité** : Élevée (nécessite partenariats bancaires)
+    - **Statut** : 🔬 R&D
+    
+    ### Détection de fraude par IA
+    - **Description** : Analyse des patterns pour détecter transactions suspectes
+    - **Use case** : Alerte si une transaction inhabituelle est détectée
+    - **Complexité** : Élevée
+    - **Statut** : 🔬 R&D
+    """)
+
+with roadmap_tabs[2]:
+    st.subheader("🎯 Priorisées pour développement")
+    st.info("Les fonctionnalités ici sont celles qui seront développées en priorité.")
+    st.markdown("""
+    *Aucune fonctionnalité priorisée actuellement. Les évolutions se font au fil des besoins.*
+    """)
+
+with roadmap_tabs[3]:
+    st.subheader("⏸️ En attente / Reportées")
+    st.markdown("""
+    Ces fonctionnalités ont été proposées mais sont actuellement reportées :
+    
+    | Fonctionnalité | Raison du report |
+    |----------------|------------------|
+    | Comparatif anonymisé | Complexité d'agrégation des données |
+    | Prédictions ML LSTM | Besoin de plus de données historiques |
+    | Assistant vocal | Priorité moindre vs features core |
+    | Webhook bancaire | Dépendance externe (banques) |
+    """)
+
+st.divider()
+
 render_scroll_to_top()
 render_app_info()

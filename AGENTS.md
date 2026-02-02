@@ -1,5 +1,5 @@
 # 🤖 AGENTS.md - Guide pour Assistants IA
-> **Version du projet**: `v4.0.0`
+> **Version du projet**: `v4.1.0`
 >
 
 > Ce document est destiné aux agents IA (Gemini, Claude, etc.) travaillant sur le projet FinancePerso.

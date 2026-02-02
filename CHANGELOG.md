@@ -6,6 +6,36 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [4.1.0] - 2026-02-02
+
+### Nouvelles fonctionnalités - 8 ajouts
+
+**✨ Ajouté**
+- - feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - ✨ feat: Amélioration UI/UX et feedback - Configuration
+- - ✨ feat: ML Local, Mobile Responsive & PWA Mode Hors-ligne
+- - ✨ Système de mise à jour complet - v3.6.0
+- - ✨ feat: Add scroll-to-top button on all pages
+- - ✨ feat: Add comprehensive visual feedback system and quick actions popups
+
+**🐛 Corrigé**
+- - fix: amélioration scroll-to-top et graphique évolution mensuelle
+- - fix: correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+- - 🐛 fix: Système de logs - fichier et viewer
+- - 🔧 fix: Audit corrections - version sync, cleanup, docs
+- - 🔧 fix: Improve email notification error handling and user feedback
+
+**⚡ Performance**
+- - 🔒 Implémentation complète : Chiffrement, Cache, Validateurs - v3.5.0
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, EMAIL_TROUBLESHOOTING.md, INDISPENSABILITY_UPGRADES.md, README.md, app.py, assets/offline.html, assets/pwa.js, assets/service-worker.js, assets/style.css, docs/ARCHITECTURE_EXPLORER.md, docs/ASSISTANT_UX_WIREFRAME.md, docs/AUDIT_FIXES_SUMMARY.md, docs/COMPLETE_AUDIT_REPORT.md, docs/EXPLORER_INTEGRATION.md, docs/FINAL_AUDIT_SUMMARY.md, docs/FINAL_CORRECTIONS_REPORT.md
+
+---
+
 ## [4.0.0] - 2026-02-02
 
 ### Nouvelles fonctionnalités - 8 ajouts
