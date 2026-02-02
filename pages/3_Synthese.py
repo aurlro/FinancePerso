@@ -40,10 +40,14 @@ from modules.ui.dashboard.filters import (
     compute_previous_period,
 )
 from modules.ui.dashboard.sections import (
-    render_overview_tab,
     render_budget_tab,
     render_analysis_tab,
     render_ai_tab,
+)
+from modules.ui.dashboard.customizable_dashboard import (
+    render_customizable_overview,
+    render_dashboard_configurator,
+    DashboardLayoutManager
 )
 
 # ============================================================================
@@ -209,10 +213,25 @@ def main():
     ])
     
     # -------------------------------------------------------------------------
-    # Onglet 1: Vue d'ensemble (KPIs, Évolution, Catégories)
+    # Onglet 1: Vue d'ensemble personnalisable
     # -------------------------------------------------------------------------
     with tab_overview:
-        render_overview_tab(df_current, df_prev, cat_emoji_map)
+        # Bouton de configuration dans la sidebar
+        with st.sidebar:
+            st.divider()
+            if st.button("🎛️ Personnaliser le dashboard", use_container_width=True, key="btn_customize"):
+                st.session_state['show_dashboard_config'] = True
+        
+        # Afficher le configurateur si demandé
+        if st.session_state.get('show_dashboard_config', False):
+            with st.expander("Configuration du dashboard", expanded=True):
+                render_dashboard_configurator()
+                if st.button("Fermer", key="close_config"):
+                    st.session_state['show_dashboard_config'] = False
+                    st.rerun()
+        
+        # Rendre la vue d'ensemble personnalisée
+        render_customizable_overview(df_current, df_prev, cat_emoji_map, df)
     
     # -------------------------------------------------------------------------
     # Onglet 2: Budgets & Prévisions

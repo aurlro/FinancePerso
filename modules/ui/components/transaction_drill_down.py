@@ -257,45 +257,22 @@ def _handle_validated_transactions(
     anomaly_list_key: Optional[str] = None
 ):
     """
-    Display and handle validated transactions with improved UX.
+    Display and handle validated transactions - VERSION COMPACTE.
     """
-    st.subheader(f"✅ Transactions Validées ({len(df_validated)})")
+    # Header compact avec compteur
+    cols = st.columns([4, 1])
+    with cols[0]:
+        st.markdown(f"**✅ Validées ({len(df_validated)})**")
+    with cols[1]:
+        with st.popover("💡 Aide", use_container_width=True):
+            st.caption("**Actions possibles :**")
+            st.markdown("""
+            - 📂 Corriger la catégorie
+            - 🏷️ Ajouter des tags
+            - 📝 Ajouter des notes
+            """)
     
-    # Info box redesign - plus moderne et engageant
-    st.markdown("""
-    <div style='
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-left: 4px solid #0ea5e9;
-        padding: 1rem 1.25rem;
-        border-radius: 0 12px 12px 0;
-        margin: 1rem 0;
-    '>
-        <h4 style='margin: 0 0 0.75rem 0; color: #0369a1; font-size: 1.1rem;'>
-            🎯 Que pouvez-vous faire ici ?
-        </h4>
-        <div style='display: grid; gap: 0.5rem;'>
-            <div style='display: flex; align-items: flex-start; gap: 0.5rem;'>
-                <span style='font-size: 1.1rem;'>📂</span>
-                <span><strong>Corriger la catégorie</strong> si l'IA s'est trompée</span>
-            </div>
-            <div style='display: flex; align-items: flex-start; gap: 0.5rem;'>
-                <span style='font-size: 1.1rem;'>🏷️</span>
-                <span><strong>Ajouter des tags</strong> pour regrouper vos dépenses (ex: Vacances, Projet X)</span>
-            </div>
-            <div style='display: flex; align-items: flex-start; gap: 0.5rem;'>
-                <span style='font-size: 1.1rem;'>📝</span>
-                <span><strong>Ajouter des notes</strong> pour vous souvenir du contexte</span>
-            </div>
-            <div style='display: flex; align-items: flex-start; gap: 0.5rem;'>
-                <span style='font-size: 1.1rem;'>🧾</span>
-                <span><strong>Préciser la nature</strong> pour les chèques (apparaît automatiquement)</span>
-            </div>
-        </div>
-        <div style='margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed #7dd3fc; color: #0284c7; font-size: 0.9rem;'>
-            💡 <em>Les tags sont magiques : suivez une dépense (comme "Rénovation") à travers plusieurs catégories !</em>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Info minimale (peut être étendue avec le popover)
     
     # Initialize session
     session_key = f'{key_prefix}_validated_edits'
