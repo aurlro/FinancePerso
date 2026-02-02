@@ -24,6 +24,12 @@ load_css()
 init_db()
 init_assistant_state()
 
+# Helper function for tab switching (définie avant utilisation)
+def switch_to_tab(tab_name: str):
+    """Switch to specified tab using query params."""
+    st.query_params['tab'] = tab_name
+    st.rerun()
+
 # Title
 st.title("🤖 Assistant IA")
 st.markdown("Votre conseiller financier intelligent.")
@@ -59,12 +65,6 @@ with tab_audit:
 
 with tab_config:
     render_config_tab()
-
-# Helper function for tab switching
-def switch_to_tab(tab_name: str):
-    """Switch to specified tab using query params or session state."""
-    st.query_params['tab'] = tab_name
-    st.rerun()
 
 # Handle query params for tab switching
 query_tab = st.query_params.get('tab')
