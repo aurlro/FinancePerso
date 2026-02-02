@@ -257,6 +257,31 @@ def init_db() -> None:
             "INSERT OR IGNORE INTO settings (key, value, description) VALUES (?, ?, ?)",
             default_settings
         )
+        
+        # Dashboard Layouts table for customizable dashboard
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS dashboard_layouts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                layout_json TEXT NOT NULL,
+                is_active INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create index on name for faster lookups
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_layout_name ON dashboard_layouts(name)")
+        
+        # Initialize default layout if not exists
+        cursor.execute("SELECT COUNT(*) FROM dashboard_layouts WHERE name = 'default'")
+        if cursor.fetchone()[0] == 0:
+            default_layout_json = '''[{"id": "kpi_1", "type": "kpi_depenses", "title": "💸 Dépenses", "position": 1, "size": "small", "visible": true, "config": {}}, {"id": "kpi_2", "type": "kpi_revenus", "title": "💰 Revenus", "position": 2, "size": "small", "visible": true, "config": {}}, {"id": "kpi_3", "type": "kpi_solde", "title": "📊 Solde", "position": 3, "size": "small", "visible": true, "config": {}}, {"id": "kpi_4", "type": "kpi_epargne", "title": "🎯 Taux d'épargne", "position": 4, "size": "small", "visible": true, "config": {}}, {"id": "evol_1", "type": "evolution_chart", "title": "📈 Évolution", "position": 5, "size": "large", "visible": true, "config": {}}, {"id": "sav_1", "type": "savings_trend", "title": "💹 Tendance épargne", "position": 6, "size": "medium", "visible": true, "config": {}}, {"id": "cat_1", "type": "categories_chart", "title": "📊 Répartition", "position": 7, "size": "medium", "visible": true, "config": {}}, {"id": "top_1", "type": "top_expenses", "title": "🔥 Top dépenses", "position": 8, "size": "medium", "visible": true, "config": {}}]'''
+            cursor.execute(
+                "INSERT INTO dashboard_layouts (name, layout_json, is_active) VALUES (?, ?, ?)",
+                ("default", default_layout_json, 1)
+            )
+            logger.info("Created default dashboard layout")
 
         conn.commit()
         logger.info("Database initialized successfully")
