@@ -68,9 +68,16 @@ class DashboardWidget:
     @classmethod
     def from_dict(cls, data: Dict) -> 'DashboardWidget':
         """Crée un widget depuis un dictionnaire."""
+        # Handle case where type might already be a WidgetType or a string
+        type_val = data['type']
+        if isinstance(type_val, WidgetType):
+            widget_type = type_val
+        else:
+            widget_type = WidgetType(type_val)
+        
         return cls(
             id=data['id'],
-            type=WidgetType(data['type']),
+            type=widget_type,
             title=data['title'],
             position=data['position'],
             size=data['size'],
@@ -333,6 +340,14 @@ def render_customizable_overview(df_current: pd.DataFrame, df_prev: pd.DataFrame
     # Utiliser le preview si en mode édition, sinon le layout actif
     use_preview = manager.is_preview_mode()
     widgets = manager.get_layout(use_preview=use_preview)
+    
+    # Si aucun widget visible, proposer de réinitialiser
+    if not widgets:
+        st.info("📝 Aucun widget configuré. Cliquez sur '🎛️ Personnaliser le dashboard' pour configurer votre vue.")
+        if st.button("🔄 Réinitialiser au layout par défaut", key="reset_default_layout"):
+            manager.reset_to_default()
+            st.rerun()
+        return
     
     # Trier par position
     widgets = sorted(widgets, key=lambda w: w.position)

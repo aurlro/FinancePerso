@@ -55,8 +55,16 @@ def get_active_layout() -> Optional[List[Dict]]:
             
             if result:
                 return json.loads(result[0])
-            # Fallback to default
-            return get_layout("default")
+            
+            # Fallback: try to get 'default' layout
+            cursor.execute(
+                "SELECT layout_json FROM dashboard_layouts WHERE name = 'default' LIMIT 1"
+            )
+            result = cursor.fetchone()
+            if result:
+                return json.loads(result[0])
+            
+            return None
     except Exception as e:
         logger.error(f"Error loading active layout: {e}")
         return None
