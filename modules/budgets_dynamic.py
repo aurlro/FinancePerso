@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
-from modules.db.budgets import get_budgets, update_budget
+from modules.db.budgets import get_budgets, set_budget
 from modules.logger import logger
 
 
@@ -430,7 +430,7 @@ def render_dynamic_budget_suggestions(engine: DynamicBudgetEngine):
                 
                 if st.button("Appliquer", key=f"apply_{sugg.category}", use_container_width=True):
                     try:
-                        update_budget(sugg.category, sugg.suggested_budget)
+                        set_budget(sugg.category, sugg.suggested_budget)
                         st.success(f"Budget {sugg.category} mis à jour !")
                         st.rerun()
                     except Exception as e:
