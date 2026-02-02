@@ -22,6 +22,13 @@ from modules.ui.dashboard.smart_recommendations import (
     render_smart_recommendations_section, 
     render_quick_actions_banner
 )
+from modules.ui.dashboard.smart_recommendations import render_smart_recommendations_section
+from modules.budgets_dynamic import (
+    DynamicBudgetEngine, 
+    render_dynamic_budget_suggestions,
+    render_seasonal_adjustments,
+    render_challenges_section
+)
 from modules.ui.components.transaction_drill_down import render_transaction_drill_down
 from modules.ai import predict_budget_overruns, get_budget_alerts_summary
 
@@ -213,6 +220,24 @@ def render_budget_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
     cat_props = get_categories_df()
     fixed_categories = cat_props[cat_props['is_fixed'] == 1]['name'].tolist()
     render_month_end_forecast(df_full, selected_years, selected_months, fixed_categories)
+    
+    st.markdown("---")
+    
+    # PHASE 3: Budgets Dynamiques & Challenges
+    # Ajustements saisonniers
+    if not df_full.empty:
+        engine = DynamicBudgetEngine(df_full)
+        render_seasonal_adjustments(engine)
+        
+        st.markdown("---")
+        
+        # Suggestions d'ajustement
+        render_dynamic_budget_suggestions(engine)
+        
+        st.markdown("---")
+        
+        # Challenges d'économies
+        render_challenges_section(df_full, df_month)
 
 
 @st.fragment

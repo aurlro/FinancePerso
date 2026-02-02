@@ -153,6 +153,10 @@ def main():
     # Vérifier les alertes budget (notifications système)
     check_budget_alerts()
     
+    # PHASE 3: Notifications temps réel
+    from modules.notifications_realtime import render_notification_banner
+    render_notification_banner()
+    
     # Charger les données (avec cache)
     df = get_cached_transactions()
     
