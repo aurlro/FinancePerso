@@ -4,10 +4,10 @@ Displays contextual actions based on user's app usage state.
 Replaces the static 'Revoir le guide' button with intelligent suggestions.
 """
 import streamlit as st
-from modules.db.transactions import get_transactions
+from modules.db.transactions import get_all_transactions
 from modules.db.rules import get_learning_rules
 from modules.db.budgets import get_budgets
-from modules.db.stats import get_quick_stats
+from modules.db.stats import get_global_stats
 
 
 def get_user_progress_state():
@@ -37,13 +37,13 @@ def get_user_progress_state():
     
     try:
         # Get transaction stats
-        stats = get_quick_stats()
+        stats = get_global_stats()
         state['tx_count'] = stats.get('total_transactions', 0)
         state['has_transactions'] = state['tx_count'] > 0
         
         # Check for uncategorized transactions
         if state['has_transactions']:
-            df = get_transactions(limit=1000)
+            df = get_all_transactions(limit=1000)
             if not df.empty and 'category_validated' in df.columns:
                 uncategorized = df[
                     (df['category_validated'].isna()) | 

@@ -1,4 +1,6 @@
 # 🤖 AGENTS.md - Guide pour Assistants IA
+> **Version du projet**: `v4.0.0`
+>
 
 > Ce document est destiné aux agents IA (Gemini, Claude, etc.) travaillant sur le projet FinancePerso.
 > Il décrit l'architecture, les conventions et les bonnes pratiques du projet.
@@ -23,7 +25,9 @@
 
 ## 🏗️ Architecture technique
 
-### Stack technologique
+
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.### Stack technologique
 
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
@@ -410,6 +414,6 @@ pytest tests/ai/test_anomaly_detector.py -v
 
 ---
 
-**Dernière mise à jour** : 2026-01-30
+**Dernière mise à jour** : 2026-02-02
 **Version du projet** : 3.1.0
 **Langue principale** : Français

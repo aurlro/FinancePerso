@@ -6,6 +6,37 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [4.0.0] - 2026-02-02
+
+### Nouvelles fonctionnalités - 8 ajouts
+
+**✨ Ajouté**
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - ✨ feat: Amélioration UI/UX et feedback - Configuration
+- - ✨ feat: ML Local, Mobile Responsive & PWA Mode Hors-ligne
+- - ✨ Système de mise à jour complet - v3.6.0
+- - ✨ feat: Add scroll-to-top button on all pages
+- - ✨ feat: Add comprehensive visual feedback system and quick actions popups
+- - feat: Implement enhanced audit functionality with bulk actions, filtering, and a new analytics module.
+
+**🐛 Corrigé**
+- - fix: correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+- - 🐛 fix: Système de logs - fichier et viewer
+- - 🔧 fix: Audit corrections - version sync, cleanup, docs
+- - 🔧 fix: Improve email notification error handling and user feedback
+- - fix: Correct cache invalidation import errors
+
+**⚡ Performance**
+- - 🔒 Implémentation complète : Chiffrement, Cache, Validateurs - v3.5.0
+- - 🔒 Sécurité & Optimisation: Refactorisation majeure v3.2.0
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, EMAIL_TROUBLESHOOTING.md, GUIDE_UTILISATEUR.md, INDISPENSABILITY_UPGRADES.md, README.md, app.py, assets/offline.html, assets/pwa.js, assets/service-worker.js, assets/style.css, docs/AUDIT_FIXES_SUMMARY.md, docs/COMPLETE_AUDIT_REPORT.md, docs/FINAL_AUDIT_SUMMARY.md, docs/FINAL_CORRECTIONS_REPORT.md, docs/N1_FIX_PLAN.md, docs/NEW_FEATURES.md
+
+---
+
 ## [3.1.0] - 2026-01-30
 
 ### ✨ Analyse des Récurrences V2 - Refonte Complète
