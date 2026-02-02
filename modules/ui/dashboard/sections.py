@@ -18,6 +18,10 @@ from modules.ui.dashboard.category_charts import (
 from modules.ui.dashboard.top_expenses import render_top_expenses
 from modules.ui.dashboard.budget_tracker import render_budget_tracker
 from modules.ui.dashboard.ai_insights import render_month_end_forecast, render_ai_financial_report
+from modules.ui.dashboard.smart_recommendations import (
+    render_smart_recommendations_section, 
+    render_quick_actions_banner
+)
 from modules.ui.components.transaction_drill_down import render_transaction_drill_down
 from modules.ai import predict_budget_overruns, get_budget_alerts_summary
 
@@ -191,6 +195,17 @@ def render_budget_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
                             st.caption(f"{pred['current_spent']:.0f}€ / {pred['budget']:.0f}€")
         else:
             st.info("📊 Pas assez de données ce mois-ci pour les prédictions. Importez des transactions pour activer les alertes.")
+    
+    st.markdown("---")
+    
+    # NOUVELLE SECTION: Recommandations intelligentes (Phase 2)
+    # Bannière d'actions rapides
+    quick_action = render_quick_actions_banner(df_month, budgets)
+    if quick_action:
+        st.warning(quick_action)
+    
+    # Section recommandations détaillées
+    render_smart_recommendations_section(df_full, df_month)
     
     st.markdown("---")
     
