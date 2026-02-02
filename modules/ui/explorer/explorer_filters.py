@@ -237,13 +237,13 @@ def render_explorer_filters(df: pd.DataFrame, key_prefix: str = "explorer") -> p
         # Row 1: Date, Amount
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            start_date, _ = render_date_filter(df, key_prefix)
+            start_date, end_date = render_date_filter(df, f"{key_prefix}_date")
         with col2:
-            _, end_date = render_date_filter(df, key_prefix)
+            st.empty()  # Placeholder for alignment
         with col3:
-            min_amount, _ = render_amount_filter(df, key_prefix)
+            min_amount, max_amount = render_amount_filter(df, f"{key_prefix}_amount")
         with col4:
-            _, max_amount = render_amount_filter(df, key_prefix)
+            st.empty()  # Placeholder for alignment
         
         # Row 2: Type, Account, Member
         col5, col6, col7 = st.columns(3)
