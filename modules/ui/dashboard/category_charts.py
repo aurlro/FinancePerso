@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> pd.DataFrame:
     """
@@ -136,13 +138,13 @@ def _prepare_monthly_stacked_data(df: pd.DataFrame, cat_emoji_map: dict) -> pd.D
 
 def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
     """
-    Render stacked bar chart of monthly expenses by category.
+    Render stacked bar chart of monthly expenses by category with income line.
     
     Args:
         df: Full transaction dataset (avec date_dt déjà présent)
         cat_emoji_map: Category to emoji mapping
     """
-    st.subheader("Évolution Mensuelle par Catégorie")
+    st.subheader("📊 Évolution Mensuelle par Catégorie")
     
     # Utiliser les données en cache
     df_stacked = _prepare_monthly_stacked_data(df, cat_emoji_map)
@@ -151,20 +153,87 @@ def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
         st.info("Aucune donnée disponible.")
         return
     
-    # Create stacked bar chart
-    fig_stacked = px.bar(
-        df_stacked, 
-        x='Mois', 
-        y='Montant', 
-        color='Catégorie', 
-        title="Dépenses mensuelles empilées", 
+    # Préparer les données des revenus
+    df_revenus = df[df['amount'] > 0].copy()
+    if not df_revenus.empty:
+        df_revenus['month_year'] = df_revenus['date_dt'].dt.strftime('%Y-%m')
+        df_revenus_mensuel = df_revenus.groupby('month_year')['amount'].sum().reset_index()
+        df_revenus_mensuel.columns = ['Mois', 'Revenus']
+    else:
+        df_revenus_mensuel = pd.DataFrame()
+    
+    # Créer le graphique combiné avec double axe Y
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    # Ajouter les barres empilées des dépenses par catégorie
+    categories = df_stacked['Catégorie'].unique()
+    colors = px.colors.qualitative.Set2
+    
+    for i, cat in enumerate(categories):
+        df_cat = df_stacked[df_stacked['Catégorie'] == cat]
+        fig.add_trace(
+            go.Bar(
+                x=df_cat['Mois'],
+                y=df_cat['Montant'],
+                name=cat,
+                marker_color=colors[i % len(colors)],
+                opacity=0.8
+            ),
+            secondary_y=False
+        )
+    
+    # Ajouter la courbe des revenus
+    if not df_revenus_mensuel.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=df_revenus_mensuel['Mois'],
+                y=df_revenus_mensuel['Revenus'],
+                name='💰 Revenus',
+                mode='lines+markers',
+                line=dict(color='#22c55e', width=4, dash='solid'),
+                marker=dict(size=10, symbol='diamond'),
+            ),
+            secondary_y=False
+        )
+        
+        # Calculer et ajouter le solde (revenus - dépenses totaux)
+        df_depenses_totales = df_stacked.groupby('Mois')['Montant'].sum().reset_index()
+        df_combined = df_revenus_mensuel.merge(df_depenses_totales, on='Mois', how='outer').fillna(0)
+        df_combined['Solde'] = df_combined['Revenus'] - df_combined['Montant']
+        
+        fig.add_trace(
+            go.Scatter(
+                x=df_combined['Mois'],
+                y=df_combined['Solde'],
+                name='📈 Solde Net',
+                mode='lines+markers',
+                line=dict(color='white', width=3, dash='dot'),
+                marker=dict(size=6),
+            ),
+            secondary_y=True
+        )
+    
+    # Mise à jour du layout
+    fig.update_layout(
+        title="Dépenses par catégorie vs Revenus",
         barmode='stack',
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
-    fig_stacked.update_layout(
-        xaxis_title='', 
-        yaxis_title='Montant (€)', 
-        legend_title='Catégorie'
+        xaxis_title='',
+        yaxis_title='Montant (€)',
+        legend_title='Légende',
+        hovermode='x unified',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
     
-    st.plotly_chart(fig_stacked, use_container_width=True)
+    fig.update_yaxes(title_text="Montant (€)", secondary_y=False)
+    fig.update_yaxes(title_text="Solde Net (€)", secondary_y=True)
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Ajouter une légende explicative
+    st.caption("💡 **Lecture**: Les barres empilées représentent les dépenses par catégorie. La ligne verte 💰 montre les revenus. La ligne pointillée blanche 📈 montre le solde (revenus - dépenses).")

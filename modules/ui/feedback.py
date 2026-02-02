@@ -477,36 +477,44 @@ def show_expanded_status(label: str):
 # SCROLL TO TOP BUTTON
 # ============================================================================
 
-def render_scroll_to_top():
+def render_scroll_to_top(anchor_id: str = "top"):
     """
     Render a floating scroll-to-top button at the bottom right of the page.
-    Uses a Streamlit-native button with JavaScript injection for scrolling.
+    Uses an anchor-based approach for reliable navigation.
+    
+    Args:
+        anchor_id: ID de l'ancre cible (défaut: "top")
     """
     import streamlit.components.v1 as components
     
-    # Create a placeholder for the button at the bottom of the page
-    st.markdown("---")
-    col1, col2, col3 = st.columns([3, 1, 3])
+    # Créer l'ancre en haut de la page (invisible)
+    st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
     
-    with col2:
-        # Use a unique key based on page to avoid conflicts
+    # Bouton en bas à droite (pas centré)
+    st.markdown("---")
+    
+    # Layout avec le bouton aligné à droite
+    cols = st.columns([6, 1])
+    with cols[1]:
         page_key = st.session_state.get('current_page', 'default')
-        if st.button("⬆️ Haut de page", key=f"scroll_top_{page_key}", use_container_width=True, type="secondary"):
-            # JavaScript to scroll to top
-            components.html("""
+        if st.button("⬆️ Haut", key=f"scroll_top_{page_key}_{anchor_id}", 
+                    use_container_width=True, type="secondary"):
+            # Redirection vers l'ancre avec JavaScript
+            components.html(f"""
                 <script>
-                window.parent.scrollTo({top: 0, behavior: 'smooth'});
+                    window.parent.location.hash = "#{anchor_id}";
+                    window.parent.scrollTo({{top: 0, behavior: 'smooth'}});
                 </script>
             """, height=0)
             st.rerun()
     
-    # Also add the floating button using HTML with proper height
+    # Bouton flottant permanent en bas à droite
     components.html("""
         <style>
         .scroll-to-top-floating {
             position: fixed;
-            bottom: 80px;
-            right: 20px;
+            bottom: 30px;
+            right: 30px;
             width: 50px;
             height: 50px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -519,20 +527,21 @@ def render_scroll_to_top():
             justify-content: center;
             font-size: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            z-index: 999999;
-            opacity: 0.8;
+            z-index: 9999;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
         .scroll-to-top-floating:hover {
-            opacity: 1;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+        .scroll-to-top-floating:active {
+            transform: scale(0.95);
         }
         </style>
-        <button class="scroll-to-top-floating" onclick="window.parent.scrollTo({top: 0, behavior: 'smooth'});" title="Retour en haut">
+        <button class="scroll-to-top-floating" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Haut de page">
             ⬆️
         </button>
-    """, height=80)
+    """, height=0)
 
 
 def render_scroll_to_top_simple():
