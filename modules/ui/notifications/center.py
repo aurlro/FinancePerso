@@ -479,24 +479,58 @@ def render_notification_settings():
             st.rerun()
 
 
+
 def render_notification_badge_sidebar():
     """
-    Version simplifiée du badge pour la sidebar.
-    Affiche uniquement un compteur cliquable.
+    Affiche le badge de notification dans la sidebar avec un expander
+    pour voir les détails rapidement (style Legacy amélioré).
     """
     manager = get_notification_manager()
-    count = manager.unread_count
+    unread = manager.get_history_by_level(NotificationLevel.CRITICAL) + \
+             manager.get_history_by_level(NotificationLevel.WARNING) + \
+             manager.get_history_by_level(NotificationLevel.INFO) + \
+             manager.get_history_by_level(NotificationLevel.SUCCESS) + \
+             manager.get_history_by_level(NotificationLevel.ACHIEVEMENT)
     
-    # Utiliser des colonnes pour aligner
-    col1, col2 = st.columns([3, 1])
+    # Filter strictly unread
+    unread = [n for n in unread if not n.read]
+    # Sort by date desc (recent first)
+    unread.sort(key=lambda x: x.created_at, reverse=True)
     
-    with col1:
-        if count > 0:
-            st.markdown(f"🔔 **{count}**")
-        else:
-            st.caption("🔔 0")
+    count = len(unread)
     
-    with col2:
-        if st.button("📬", key="open_notif_center", help="Ouvrir le centre de notifications"):
-            st.session_state['show_notif_center'] = True
-            st.rerun()
+    # Header du badge
+    if count > 0:
+        st.sidebar.markdown(f"🔔 **{count} notification{'s' if count > 1 else ''}**")
+        
+        # Expander pour voir les détails
+        with st.sidebar.expander("📬 Messages Récents", expanded=False):
+            if not unread:
+                st.caption("Rien de nouveau.")
+            else:
+                for notif in unread[:5]:  # Max 5
+                    with st.container(border=True):
+                        col1, col2 = st.columns([0.8, 0.2])
+                        with col1:
+                            st.caption(f"{notif.icon or 'ℹ️'} **{notif.title or 'Info'}**")
+                            st.markdown(f"<div style='font-size: 0.8em; color: #555;'>{notif.message}</div>", unsafe_allow_html=True)
+                            if notif.age_seconds < 60:
+                                st.caption("À l'instant")
+                            elif notif.age_seconds < 3600:
+                                st.caption(f"Il y a {int(notif.age_seconds/60)} min")
+                        
+                        with col2:
+                            if st.button("✓", key=f"sb_read_{notif.id}", help="Marquer comme lu"):
+                                manager.mark_as_read(notif.id)
+                                st.rerun()
+                
+                if count > 5:
+                    st.caption(f"... et {count - 5} autres.")
+                
+                # Global actions
+                if st.button("Tout marquer lu", key="sb_read_all"):
+                    manager.mark_all_as_read()
+                    st.rerun()
+    else:
+        st.sidebar.markdown("🔔 Aucune notification")
+

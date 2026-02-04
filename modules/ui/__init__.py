@@ -48,6 +48,9 @@ def _inject_pwa_support():
 from .feedback import (
     toast_success, toast_error, toast_warning, toast_info,
     show_success, show_error, show_warning, show_info,
+    show_rich_success,
+    validation_feedback,
+    celebrate_all_done,
     confirm_dialog,
     render_scroll_to_top,
     display_flash_messages
@@ -81,6 +84,9 @@ __all__ = [
     # Feedback
     "toast_success", "toast_error", "toast_warning", "toast_info",
     "show_success", "show_error", "show_warning", "show_info",
+    "show_rich_success",
+    "validation_feedback",
+    "celebrate_all_done",
     "confirm_dialog",
     "render_scroll_to_top",
     "display_flash_messages",

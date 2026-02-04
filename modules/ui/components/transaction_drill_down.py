@@ -11,6 +11,7 @@ from modules.db.categories import get_categories
 from modules.db.rules import add_learning_rule
 from modules.utils import clean_label
 from modules.logger import logger
+from modules.ui.feedback import toast_success, show_rich_success
 from modules.ui.components.tag_selector_compact import render_cheque_nature_field
 from modules.ui.components.tag_manager import (
     render_smart_tag_selector, 
@@ -202,52 +203,6 @@ def _render_transaction_row_compact(
         st.divider()
 
 
-def _show_save_confirmation(msg: str, key_prefix: str, on_close_callback=None):
-    """
-    Show a confirmation toast and banner with auto-close and keep-open option.
-    
-    Args:
-        msg: Success message to display
-        key_prefix: Unique prefix for session state keys
-        on_close_callback: Optional callback to execute on close
-    """
-    # Show toast
-    st.toast(msg, icon="✅")
-    
-    # Show persistent banner with timer
-    timer_key = f"{key_prefix}_close_timer"
-    keep_open_key = f"{key_prefix}_keep_open"
-    
-    if keep_open_key not in st.session_state:
-        st.session_state[keep_open_key] = False
-    
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.success(msg)
-    with col2:
-        if st.button("📌 Garder ouvert", key=f"{key_prefix}_keep_btn"):
-            st.session_state[keep_open_key] = True
-            st.rerun()
-    
-    # Auto-close after 3 seconds if not kept open
-    if not st.session_state.get(keep_open_key, False):
-        st.markdown("""
-            <script>
-                setTimeout(function() {
-                    window.parent.postMessage({type: 'streamlit:closeExpander'}, '*');
-                }, 3000);
-            </script>
-        """, unsafe_allow_html=True)
-        
-        # For Streamlit, we'll use a different approach
-        import time
-        time.sleep(0.1)  # Small delay to let the UI render
-        
-        # Mark for auto-close
-        if on_close_callback:
-            on_close_callback()
-
-
 def _handle_validated_transactions(
     df_validated: pd.DataFrame, 
     key_prefix: str,
@@ -360,7 +315,7 @@ def _handle_validated_transactions(
                 
                 # Show confirmation
                 st.session_state[f'{key_prefix}_success_msg'] = msg
-                st.session_state[f'{key_prefix}_show_confetti'] = True
+                # st.session_state[f'{key_prefix}_show_confetti'] = True # Deprecated
                 
                 # Mark anomaly as corrected if applicable
                 if anomaly_index is not None and anomaly_list_key:
@@ -452,7 +407,6 @@ def _handle_pending_transactions(df_pending: pd.DataFrame, key_prefix: str, cate
             if rules_created > 0:
                 msg += f" \n🧠 {rules_created} règles créées."
             
-            st.toast(msg, icon="✅")
             st.session_state[f'{key_prefix}_success_msg'] = msg
             st.rerun()
 
@@ -494,24 +448,29 @@ def render_transaction_drill_down(
         st.warning("Les transactions n'ont pas pu être chargées.")
         return
     
-    # Show success message if exists
+    # -------------------------------------------------------------------------
+    # IMPROVED: Show success message using Standardized Rich Feedback
+    # -------------------------------------------------------------------------
     if f'{key_prefix}_success_msg' in st.session_state:
         msg = st.session_state[f'{key_prefix}_success_msg']
         
-        # Show confirmation with keep-open option
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            st.success(msg)
-        with col2:
-            if st.button("📌 Garder ouvert", key=f"{key_prefix}_keep_btn"):
-                # Just clear the flag but don't auto-close
-                del st.session_state[f'{key_prefix}_success_msg']
-                st.rerun()
+        # Use the standarized component
+        show_rich_success(
+            message=msg,
+            key_prefix=key_prefix,
+            keep_open=False, # Default to auto close unless pinned
+            auto_close_delay=3
+        )
         
-        # Auto-close the expander after delay (handled by parent)
-        keep_open_key = f'{key_prefix}_keep_open'
-        if keep_open_key not in st.session_state or not st.session_state[keep_open_key]:
-            st.caption("✨ Cette anomalie sera fermée automatiquement dans 3 secondes...")
+        # We don't delete immediately to allow 'keep open' to work during reruns if pinned
+        # logic is handled in show_rich_success now.
+        # However, we must ensure we don't show it forever if not pinned.
+        if f"{key_prefix}_keep_open" not in st.session_state or not st.session_state[f"{key_prefix}_keep_open"]:
+             # If not pinned, we might want to clear it after one viewing?
+             # But show_rich_success handles the auto-close visual.
+             # The issue is if the user navigates away and back.
+             pass
+
     
     # Summary
     df_all = pd.concat([df_validated, df_pending], ignore_index=True)

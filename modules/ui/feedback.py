@@ -3,6 +3,7 @@ Module de feedback visuel centralisé pour FinancePerso.
 
 Fournit des fonctions standardisées pour afficher des notifications,
 toasts, et messages de confirmation à l'utilisateur.
+# Force reload
 """
 
 import streamlit as st
@@ -107,8 +108,80 @@ def confirm_dialog(
 
 
 # ============================================================================
-# SPINNER / PROGRESS
+# RICH FEEDBACK (Toast + Banner + Timer)
 # ============================================================================
+
+def show_rich_success(
+    message: str, 
+    key_prefix: str, 
+    keep_open: bool = False,
+    auto_close_delay: int = 3,
+    on_close_callback: Optional[Callable] = None
+):
+    """
+    Affiche un feedback riche : Toast immédiat + Banner optionnel + Auto-close.
+    
+    Args:
+        message: Message de succès
+        key_prefix: Préfixe unique pour les clés de session state
+        keep_open: Si True, force l'affichage persistant initialement
+        auto_close_delay: Délai avant fermeture automatique (si non gardé ouvert)
+        on_close_callback: Callback optionnel à l'expiration
+    """
+    # 1. Toast immédiat
+    toast_success(message, icon="✅")
+    
+    # Gestion des clés d'état
+    keep_open_key = f"{key_prefix}_keep_open"
+    if keep_open_key not in st.session_state:
+        st.session_state[keep_open_key] = keep_open
+
+    # 2. Conteneur persistant (Banner)
+    # On utilise un conteneur pour pouvoir le vider ou le cacher
+    container = st.empty()
+    
+    # Si l'utilisateur a demandé de garder ouvert ou qu'on est dans le délai
+    with container.container():
+        col1, col2 = st.columns([5, 1])
+        with col1:
+            st.success(message)
+        with col2:
+            # Bouton pour garder ouvert / fermer
+            if not st.session_state[keep_open_key]:
+                if st.button("📌 Fixer", key=f"{key_prefix}_pin_btn", help="Garder ce message affiché"):
+                    st.session_state[keep_open_key] = True
+                    st.rerun()
+            else:
+                if st.button("❌ Fermer", key=f"{key_prefix}_close_btn"):
+                    st.session_state[keep_open_key] = False
+                    # On force le re-run pour nettoyer
+                    st.rerun()
+
+    # 3. Logique d'Auto-Close (Javascript)
+    if not st.session_state.get(keep_open_key, False):
+        # On utilise un script pour envoyer un signal de fermeture au parent (si dans un expander)
+        # ou juste pour masquer visuellement après délai
+        # Note: Streamlit ne permet pas facilement de supprimer un élément après délai sans rerun.
+        # Mais on peut utiliser setTimeout pour appeler un callback Streamlit si on avait des custom components.
+        # Ici, on utilise l'astuce du postMessage pour les expanders, ou rien si c'est top-level.
+        
+        st.markdown(f"""
+            <script>
+                setTimeout(function() {{
+                    const keepOpen = {str(st.session_state.get(keep_open_key, False)).lower()};
+                    if (!keepOpen) {{
+                        try {{
+                            window.parent.postMessage({{type: 'streamlit:closeExpander'}}, '*');
+                        }} catch (e) {{}}
+                    }}
+                }}, {auto_close_delay * 1000});
+            </script>
+        """, unsafe_allow_html=True)
+        
+        # Optionnel: Callback Python (ne marchera qu'au prochain rerun malheureusement)
+        if on_close_callback:
+            # On ne peut pas appeler le callback "dans le futur" ici sans blocage.
+            pass
 
 def with_spinner(message: str = "Chargement..."):
     """

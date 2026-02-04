@@ -6,6 +6,60 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [4.2.1] - 2026-02-04
+
+### Nouvelles fonctionnalités - 7 ajouts
+
+**✨ Ajouté**
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+- - fix: correction vue d'ensemble vide - ajout fallback et messages
+- - feat: Update project to version 4.1.0, incorporating new features, bug fixes, and performance enhancements.
+- - feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - ✨ feat: Amélioration UI/UX et feedback - Configuration
+
+**🐛 Corrigé**
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+- - fix: déplacement de switch_to_tab avant son utilisation
+- - fix: correction clés dupliquées dans explorer_filters
+- - fix: correction import update_budget → set_budget
+- - fix: amélioration scroll-to-top et graphique évolution mensuelle
+- - fix: correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, EMAIL_TROUBLESHOOTING.md, INDISPENSABILITY_UPGRADES.md, README.md, STABILIZATION_PLAN.md, app.py, docs/ARCHITECTURE_EXPLORER.md, docs/ASSISTANT_UX_WIREFRAME.md, docs/AUDIT_COHERENCE_360.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, docs/AUDIT_FIXES_SUMMARY.md, docs/AUDIT_REVENUS_DEPENSES.md, docs/CHANGEMENTS_REVENUS_DEPENSES.md, docs/COMPLETE_AUDIT_REPORT.md, docs/DASHBOARD_CLEANUP_GUIDE.md, docs/EXPLORER_INTEGRATION.md
+
+---
+
+## [4.2.0] - 2026-02-03
+
+### Nouvelles fonctionnalités - 7 ajouts
+
+**✨ Ajouté**
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+- - fix: correction vue d'ensemble vide - ajout fallback et messages
+- - feat: Update project to version 4.1.0, incorporating new features, bug fixes, and performance enhancements.
+- - feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - ✨ feat: Amélioration UI/UX et feedback - Configuration
+
+**🐛 Corrigé**
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+- - fix: déplacement de switch_to_tab avant son utilisation
+- - fix: correction clés dupliquées dans explorer_filters
+- - fix: correction import update_budget → set_budget
+- - fix: amélioration scroll-to-top et graphique évolution mensuelle
+- - fix: correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, EMAIL_TROUBLESHOOTING.md, INDISPENSABILITY_UPGRADES.md, README.md, STABILIZATION_PLAN.md, app.py, docs/ARCHITECTURE_EXPLORER.md, docs/ASSISTANT_UX_WIREFRAME.md, docs/AUDIT_COHERENCE_360.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, docs/AUDIT_FIXES_SUMMARY.md, docs/AUDIT_REVENUS_DEPENSES.md, docs/CHANGEMENTS_REVENUS_DEPENSES.md, docs/COMPLETE_AUDIT_REPORT.md, docs/DASHBOARD_CLEANUP_GUIDE.md, docs/EXPLORER_INTEGRATION.md
+
+---
+
 ## [4.1.0] - 2026-02-02
 
 ### Nouvelles fonctionnalités - 8 ajouts

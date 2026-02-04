@@ -8,7 +8,8 @@ from modules.db.migrations import init_db
 from modules.db.categories import get_categories, get_categories_with_emojis, get_categories_suggested_tags
 from modules.db.tags import get_all_tags
 from modules.db.stats import get_all_account_labels
-from modules.ui import load_css, render_scroll_to_top
+from modules.ui import load_css, render_scroll_to_top, show_success, toast_success, toast_warning
+from modules.ui.feedback import validation_feedback, celebrate_all_done
 from modules.utils import clean_label
 
 # New modular components
@@ -18,6 +19,7 @@ from modules.ui.components.tag_manager import render_smart_tag_selector, render_
 from modules.ui.components.member_selector import render_member_selector
 from modules.ui.validation.grouping import get_smart_groups, calculate_group_stats, get_group_transactions
 from modules.ui.validation.sorting import sort_groups, get_sort_options
+from modules.ui.validation.row_view import render_validation_row
 
 import re
 import pandas as pd
@@ -217,294 +219,69 @@ else:
         if len(group_stats) > 40:
             st.info(f"Affichage des 40 premiers groupes (sur {len(group_stats)}). Validez-les pour voir la suite.")
 
-        for i, group_name in enumerate(display_groups):
+        if len(group_stats) > 40:
+            st.info(f"Affichage des 40 premiers groupes (sur {len(group_stats)}). Validez-les pour voir la suite.")
+
+        # --- NEW HORIZONTAL ROW LAYOUT ---
+        # Initialize validation handler (closure to capture context)
+        def handle_row_validation(row_id, category, member):
+            # Find the group data again (or pass it through?)
+            # Since this is a callback, we need to locate the IDs.
+            # Efficient way: We know row_id maps to a group leader ID.
+            
+            # Simple approach: Re-filter for this group
+            # OR better: The function is called inside the loop context? 
+            # No, if it's a callback, streamlits reruns. 
+            # Actually, my render_validation_row implementation calls the callback directly inside the button check.
+            # So we are IN the loop context when it executes (before rerun).
+            
+            # Re-fetch group info
+            target_group = next((g for g in display_groups if local_df[local_df['clean_group'] == g].iloc[0]['id'] == row_id), None)
+            if not target_group: return # Should not happen
+            
+            g_df = local_df[local_df['clean_group'] == target_group]
+            g_ids = g_df['id'].tolist()
+            
+            # Call existing validation logic
+            validate_with_memory(g_ids, g_df.iloc[0]['label'], category, True, member)
+            
+            # Feedback
+            st.session_state[f'validation_success_{row_id}'] = {'count': len(g_ids), 'category': category}
+            validation_feedback(len(g_ids), "opération")
+            if len(display_groups) == 1:
+                celebrate_all_done()
+            st.rerun()
+
+        for group_name in display_groups:
             group_df = local_df[local_df['clean_group'] == group_name]
-            # Representative row (first one)
             row = group_df.iloc[0]
-            group_ids = group_df['id'].tolist()
-            group_count = len(group_df)
-            group_total = group_df['amount'].sum()
-            group_id = row['id']
             
-            # --- PRE-COMPUTE STATE & LABELS ---
-            # We need these BEFORE the UI to allow "Blind Validation" (External Button)
+            # Prepare data dict for the component
+            row_data = {
+                'id': row['id'],
+                'label': row['label'],
+                'date': row['date'],
+                'total_amount': group_df['amount'].sum(),
+                'count': len(group_df),
+                'category': row.get('category_validated') or row['original_category'],
+                'member': row.get('member', '')
+            }
             
-            # 1. Cleaned Title
-            display_title = clean_label(row['label'])
-            
-            # 2. Category State
-            cat_key = f"cat_{row['id']}{key_suffix}"
-            if cat_key not in st.session_state:
-                current_cat = row.get('category_validated') if row.get('category_validated') != 'Inconnu' else (row['original_category'] or "Inconnu")
-                st.session_state[cat_key] = current_cat if current_cat in available_categories else "Inconnu"
-            
-            # 3. Payeur/Benef Default State (Logic moved up for availability)
-            current_member = row.get('member', '')
-            suffix = row.get('card_suffix')
-            if suffix and suffix in active_card_maps:
-                current_member = active_card_maps[suffix]
-            if not current_member or current_member == 'Inconnu':
-                acc_label = str(row.get('account_label', '')).lower()
-                if 'joint' in acc_label:
-                    current_member = "Duo"
-                elif 'aurélien' in acc_label or 'aurelien' in acc_label:
-                    current_member = "Aurélien"
-                else:
-                    current_member = ""
-            
-            current_benef = row.get('beneficiary', 'Famille') # Default
-            if not current_benef: current_benef = ""
-            
-            # 4. Tags State
-            current_tags_str = row.get('tags', '') if row.get('tags') else ""
-            current_tags = [t.strip() for t in current_tags_str.split(',') if t.strip()]
-            
-            # AUTOMATION: Remboursement for positive "Avoir"
-            if group_total > 0 and "AVOIR" in str(row['label']).upper() and "Remboursement" not in current_tags:
-                current_tags.append("Remboursement")
-            
-            # Add pending tags for this group (for auto-select after creation)
-            if group_id in st.session_state.get('pending_tag_additions', {}):
-                pending = st.session_state['pending_tag_additions'][group_id]
-                current_tags = list(set(current_tags + pending))  # Merge and dedupe
-                # Clear pending after adding
-                del st.session_state['pending_tag_additions'][group_id]
+            # Heuristic for Member default if empty
+            if not row_data['member'] or row_data['member'] not in all_members:
+                 suffix = row.get('card_suffix')
+                 if suffix and suffix in active_card_maps:
+                     row_data['member'] = active_card_maps[suffix]
+                 
+            render_validation_row(
+                row_data=row_data,
+                all_members=all_members,
+                all_categories=available_categories,
+                cat_emoji_map=cat_emoji_map,
+                on_validate=handle_row_validation,
+                key_prefix=key_suffix
+            )
 
-            # --- SMART EXPANDER LAYOUT ---
-            # Columns: [Checkbox (5%)] [Expander (85%)] [Validate Button (10%)]
-            c_chk, c_exp, c_btn = st.columns([0.05, 0.85, 0.10], vertical_alignment="top")
-            
-            group_ids_tuple = tuple(group_ids)
-            is_selected = group_ids_tuple in st.session_state['bulk_selected_groups']
-            
-            with c_chk:
-                st.markdown("<div style='height: 0.3rem;'></div>", unsafe_allow_html=True)
-                if st.checkbox("Select", value=is_selected, key=f"d_chk_{group_id}{key_suffix}", label_visibility="collapsed"):
-                    st.session_state['bulk_selected_groups'].add(group_ids_tuple)
-                else:
-                    if group_ids_tuple in st.session_state['bulk_selected_groups']:
-                        st.session_state['bulk_selected_groups'].remove(group_ids_tuple)
-            
-            # Construct Label with Markdown
-            # Pattern: :grey[Date] • **Title** • :color[**Amount**] :grey[(Count)]
-            
-            color_str = "red" if group_total < 0 else "green"
-            count_str = f"({group_count})" if group_count > 1 else ""
-            
-            # Detect if this is a transfer (virement)
-            label_upper = str(row['label']).upper()
-            is_transfer = any(keyword in label_upper for keyword in ['VIR', 'VIREMENT', 'INST'])
-            transfer_icon = "🔄 " if is_transfer else ""
-            
-            # Note: We replaced emojis for amount with color, but kept date formatting
-            expander_label = f"{transfer_icon}:grey[{row['date']}] • **{display_title}** • :{color_str}[**{group_total:,.2f} €**] :grey[{count_str}]"
-            
-            # --- EXTERNAL VALIDATION (Blind) ---
-            with c_btn:
-                # Spacer to align with expander header roughly
-                st.markdown("<div style='height: 0.2rem;'></div>", unsafe_allow_html=True)
-                btn_key_ext = f"btn_ext_{group_id}{key_suffix}"
-                # Use Icon Only Button
-                if st.button("✅", key=btn_key_ext, help="Valider sans ouvrir", type="primary", use_container_width=True):
-                    # Use defaults/current state
-                    # Note: Inputs (SelectBox) might not be rendered yet if expander closed!
-                    # So we use the PRE-COMPUTED/SessionState values.
-                    
-                    # Logic: Use st.session_state if key exists (user modified before closed?), else default from row.
-                    
-                    # Payeur
-                    mem_key = f"mem_sel_{group_id}{key_suffix}"
-                    mem_input_key = f"mem_input_{group_id}{key_suffix}"
-                    val_mem = st.session_state.get(mem_key, current_member)
-                    if val_mem == "✍️ Saisie...": val_mem = st.session_state.get(mem_input_key, "")
-                    
-                    # Benef
-                    ben_key = f"benef_sel_{group_id}{key_suffix}"
-                    ben_input_key = f"benef_input_{group_id}{key_suffix}"
-                    val_ben = st.session_state.get(ben_key, current_benef)
-                    if val_ben == "✍️ Saisie...": val_ben = st.session_state.get(ben_input_key, "")
-                    
-                    # Tags
-                    tag_key = f"tag_sel_{group_id}{key_suffix}"
-                    val_tags = st.session_state.get(tag_key, current_tags)
-                    val_tags_str = ", ".join(val_tags) if isinstance(val_tags, list) else ""
-                    
-                    # Memory
-                    mem_check_key = f"mem_check_{group_id}{key_suffix}"
-                    val_mem_check = st.session_state.get(mem_check_key, True)
-                    
-                    validate_with_memory(group_ids, row['label'], st.session_state[cat_key], val_mem_check, val_mem, tags=val_tags_str, beneficiary=val_ben)
-                    
-                    # Enhanced feedback
-                    st.session_state[f'validation_success_{group_id}'] = {
-                        'count': len(group_ids),
-                        'category': st.session_state[cat_key]
-                    }
-                    validation_feedback(len(group_ids), "opération")
-                    if len(display_groups) == 1:
-                        celebrate_all_done()
-                    st.rerun()
-
-            # --- EXPANDER CONTENT ---
-            with c_exp:
-                with st.expander(expander_label, expanded=False):
-                    
-                    # --- HEADER INFO INSIDE (Optional, maybe redundancy but good for context) ---
-                    # Let's keep the Meta line: Date, Account, Badges
-                    meta_items = [f"🏬 {row.get('account_label', 'Compte')}"]
-                    if str(group_name).startswith("single_"): meta_items.append("📦 Isolée")
-                    elif group_count > 1: meta_items.append(f"📦 {group_count} ops")
-                    
-                    # Transfer details (if detected)
-                    if is_transfer:
-                        source_account = row.get('account_label', 'Inconnu')
-                        destination = current_benef if current_benef else "Inconnu"
-                        meta_items.append(f"🔄 De : **{source_account}** → Vers : **{destination}**")
-                    
-                    st.caption(" • ".join(meta_items))
-                    
-                    # --- INPUTS ROW (Compact Step 2) ---
-                    # [Category] [Payeur] [Benef] [Tags] [Actions]
-                    ci_cat, ci_pay, ci_ben, ci_tags, ci_act = st.columns([3, 2, 2, 3, 2], vertical_alignment="bottom")
-                    
-                    with ci_cat:
-                        # Category Select (Key already init above)
-                        options = list(available_categories)
-                        if row['original_category'] and row['original_category'] not in options: options.append(row['original_category'])
-                        if st.session_state[cat_key] not in options: options.append(st.session_state[cat_key])
-                        def format_cat(cat_name): return f"{cat_emoji_map.get(cat_name, '🏷️')} {cat_name}"
-                        try: c_idx = options.index(st.session_state[cat_key])
-                        except: c_idx = 0
-                        st.selectbox("📂 Catégorie", options, index=c_idx, key=cat_key, format_func=format_cat)
-                    
-                    with ci_pay:
-                        # Payeur selector using component
-                        mem_key = f"mem_sel_{group_id}{key_suffix}"
-                        mem_input_key = f"mem_input_{group_id}{key_suffix}"
-                        
-                        selected_member = render_member_selector(
-                            label="👤 Qui a payé ?",
-                            current_value=current_member,
-                            all_members=all_members,
-                            member_type_map=member_type_map,
-                            key=mem_key,
-                            allow_custom=True,
-                            extra_options=["Famille", "Maison"]
-                        )
-                        
-                        # Handle custom input
-                        if selected_member == "✍️ Saisie...":
-                            member_val = st.text_input("Nom", key=mem_input_key, label_visibility="collapsed")
-                        else:
-                            member_val = selected_member
-                    
-                    with ci_ben:
-                        # Beneficiary selector using component
-                        beneficiary_key = f"benef_sel_{group_id}{key_suffix}"
-                        beneficiary_input_key = f"benef_input_{group_id}{key_suffix}"
-                        
-                        ben_label = "💰 Source" if group_total > 0 else "🎯 Pour qui ?"
-                        
-                        selected_benef = render_member_selector(
-                            label=ben_label,
-                            current_value=current_benef,
-                            all_members=all_members,
-                            member_type_map=member_type_map,
-                            key=beneficiary_key,
-                            allow_custom=True,
-                            extra_options=["Famille", "Maison"]
-                        )
-                        
-                        # Handle custom input
-                        if selected_benef == "✍️ Saisie...":
-                            beneficiary_val = st.text_input("Nom", key=beneficiary_input_key, label_visibility="collapsed")
-                        else:
-                            beneficiary_val = selected_benef
-                            
-                    with ci_tags:
-                        # Smart tag selector with pill display and propagation
-                        current_cat_name = st.session_state[cat_key]
-                        
-                        # Display current tags as pills
-                        if current_tags:
-                            render_pill_tags(current_tags, size="small")
-                        
-                        selected_tags = render_smart_tag_selector(
-                            transaction_id=group_id,
-                            current_tags=current_tags,
-                            category=current_cat_name,
-                            label=row['label'],
-                            key_suffix=key_suffix,
-                            max_quick_tags=4,
-                            enable_propagation=True
-                        )
-                                         
-                        final_tags_str = ", ".join(selected_tags)
-                        
-                    with ci_act:
-                        remember = st.toggle("Mém.", key=f"mem_check_{group_id}{key_suffix}", value=True)
-                        if st.button("Valider", key=f"btn_in_{group_id}{key_suffix}", type="primary", use_container_width=True):
-                             validate_with_memory(group_ids, row['label'], st.session_state[cat_key], remember, member_val, tags=final_tags_str, beneficiary=beneficiary_val)
-                             
-                             # Show enhanced confirmation
-                             st.session_state[f'validation_success_{group_id}'] = {
-                                 'count': len(group_ids),
-                                 'category': st.session_state[cat_key]
-                             }
-                             validation_feedback(len(group_ids), "opération")
-                             
-                             # Check if we should auto-close or keep open
-                             if not st.session_state.get(f'keep_open_{group_id}', False):
-                                 st.rerun()
-                             else:
-                                 show_success(f"Validé ! {len(group_ids)} opération(s) dans '{st.session_state[cat_key]}'")
-                    
-                    # --- CHEQUE NATURE FIELD ---
-                    if _is_cheque_transaction(row['label']):
-                        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-                        cheque_cols = st.columns([0.5, 3, 1])
-                        with cheque_cols[1]:
-                            st.markdown("📝 **Nature du chèque**")
-                            nature_cols = st.columns([2, 1])
-                            with nature_cols[0]:
-                                cheque_nature = st.text_input(
-                                    "Nature",
-                                    key=f"cheque_nature_{group_id}{key_suffix}",
-                                    placeholder="Décrivez l'usage de ce chèque...",
-                                    label_visibility="collapsed"
-                                )
-                            with nature_cols[1]:
-                                nature_quick = st.selectbox(
-                                    "Rapide",
-                                    options=["", "Santé", "Voiture", "Loyer", "Facture", "Cadeau", "Professionnel", "Vacances", "Divers"],
-                                    key=f"cheque_nature_quick_{group_id}{key_suffix}",
-                                    label_visibility="collapsed"
-                                )
-                                if nature_quick and not cheque_nature:
-                                    cheque_nature = nature_quick
-                            
-                            if cheque_nature:
-                                st.caption(f"Sera tagué comme : 🏷️ chèque-{cheque_nature.lower().replace(' ', '-')}")
-                                # Add to tags
-                                nature_tag = f"chèque-{cheque_nature.lower().replace(' ', '-')}"
-                                if nature_tag not in selected_tags:
-                                    selected_tags.append(nature_tag)
-                                    final_tags_str = ", ".join(selected_tags)
-
-                    # --- DETAILS LIST via Drill-Down ---
-                    st.divider()
-                    st.caption(f"Ajustement des {group_count} opérations avant validation")
-                    
-                    from modules.ui.components.transaction_drill_down import render_transaction_drill_down
-                    render_transaction_drill_down(
-                        category=st.session_state[cat_key],
-                        transaction_ids=group_ids,
-                        key_prefix=f"val_drill_{group_id}{key_suffix}",
-                        show_anomaly_management=False
-                    )
-            
-            # Separator between groups
-            st.markdown("<hr style='margin-top: 0.5rem; margin-bottom: 0.5rem; opacity: 0.3;'>", unsafe_allow_html=True)
             
 
     # --- TABS FOR VALIDATION ---

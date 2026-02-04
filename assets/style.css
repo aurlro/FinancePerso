@@ -355,3 +355,128 @@ textarea:focus-visible {
         background: white !important;
     }
 }
+
+/* ============================================================================
+   VALIDATION INTERFACE REDESIGN
+   ============================================================================ */
+
+/* Validation Row Container */
+.validation-row {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    padding: 12px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+.validation-row:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
+}
+
+.validation-row.validated {
+    background: #F8FAFC;
+    border-left: 4px solid #10B981;
+}
+
+/* Avatar Selector */
+.avatar-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.avatar-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 2px solid transparent;
+    background: #F1F5F9;
+    color: #64748B;
+}
+
+.avatar-circle:hover {
+    background: #E2E8F0;
+    transform: scale(1.05);
+}
+
+.avatar-circle.selected {
+    background: #DBEAFE;
+    color: #2563EB;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.avatar-initials {
+    text-transform: uppercase;
+    user-select: none;
+}
+
+/* Chips Horizontal */
+.chips-container {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px; /* Space for scrollbar if needed */
+    scrollbar-width: none; /* Firefox */
+}
+.chips-container::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+}
+
+.chip-item {
+    padding: 6px 12px;
+    background: #F1F5F9;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: #475569;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.chip-item:hover {
+    background: #E2E8F0;
+}
+
+.chip-item.active {
+    background: #F0FDF4;
+    color: #166534;
+    border-color: #86EFAC;
+}
+
+/* Typography Tweaks */
+.row-label {
+    font-weight: 600;
+    color: #0F172A;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.row-meta {
+    font-size: 0.75rem;
+    color: #94A3B8;
+    font-weight: 500;
+}
+
+/* Action Button Styles */
+.action-btn-wrapper button {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+}
