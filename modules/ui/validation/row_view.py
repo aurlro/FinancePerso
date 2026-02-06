@@ -4,6 +4,7 @@ from modules.ui.components.avatar_selector import render_avatar_selector
 from modules.ui.components.chip_selector import render_chip_selector
 from modules.utils import clean_label
 from modules.db.categories import get_categories_with_emojis
+from modules.transaction_types import get_transaction_icon, get_color_for_transaction, get_transaction_label
 
 def render_validation_row(
     row_data: dict,
@@ -46,10 +47,21 @@ def render_validation_row(
             if row_data.get('count', 1) > 1:
                 st.caption(f"{row_data['count']} opérations")
                 
-        # Amount
+        # Amount with clear income/expense indicator
         with c_amount:
-            color = "red" if amount < 0 else "green"
-            st.markdown(f":{color}[**{amount:,.2f} €**]")
+            # Get category for this row (fallback to current selection or 'Inconnu')
+            cat_key = f"{key_prefix}_cat_{row_id}"
+            current_cat = st.session_state.get(cat_key, row_data.get('category', 'Inconnu'))
+            
+            # Use category-based coloring (NOT amount sign!)
+            # A refund (positive amount) in expense category should still be red
+            icon = get_transaction_icon(current_cat)
+            color = get_color_for_transaction(current_cat)
+            tx_type = get_transaction_label(current_cat)
+            
+            # Display: Icon + Amount + Type tooltip
+            st.markdown(f"{icon} :{color}[**{amount:,.2f} €**]")
+            st.caption(tx_type)
             
         # Category (Pill/Selectbox)
         with c_cat:

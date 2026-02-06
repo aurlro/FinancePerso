@@ -1,7 +1,19 @@
 """
 Transaction Types Module
 Centralise la définition et la détection des types de transactions.
-Règle d'or : Une transaction est caractérisée par SA CATÉGORIE, pas par le signe de son montant.
+
+🔴 RÈGLE D'OR : Une transaction est caractérisée par SA CATÉGORIE, pas par le signe de son montant.
+
+Ne JAMAIS utiliser `amount > 0` ou `amount < 0` pour déterminer le type d'une transaction.
+Utiliser TOUJOURS les fonctions de ce module :
+  - is_income_category(category)
+  - is_expense_category(category) 
+  - get_category_type(category)
+  - get_transaction_icon(category)
+
+Exemples :
+  ✅ CORRECT : is_expense_category('Alimentation') → True
+  ❌ INCORRECT : amount < 0  (une dépense remboursée a un montant positif !)
 """
 from typing import List, Tuple, Optional
 import pandas as pd
@@ -143,6 +155,95 @@ def get_category_type(category: Optional[str]) -> str:
         return 'expense'
     
     return 'unknown'
+
+
+def get_transaction_icon(category: Optional[str]) -> str:
+    """
+    Retourne l'icône emoji appropriée pour une catégorie.
+    
+    Args:
+        category: Nom de la catégorie
+        
+    Returns:
+        Emoji représentant le type de transaction
+        
+    Examples:
+        >>> get_transaction_icon('Salaire')
+        '📥'
+        >>> get_transaction_icon('Alimentation')
+        '📤'
+        >>> get_transaction_icon('Remboursement')
+        '💰'
+    """
+    tx_type = get_category_type(category)
+    
+    icons = {
+        'income': '📥',      # Revenu = argent qui entre
+        'expense': '📤',     # Dépense = argent qui sort
+        'refund': '💰',      # Remboursement = retour d'argent
+        'excluded': '➡️',    # Exclu = mouvement interne
+        'unknown': '❓'      # Inconnu
+    }
+    
+    return icons.get(tx_type, '❓')
+
+
+def get_transaction_label(category: Optional[str]) -> str:
+    """
+    Retourne le libellé français du type de transaction.
+    
+    Args:
+        category: Nom de la catégorie
+        
+    Returns:
+        Libellé en français
+        
+    Examples:
+        >>> get_transaction_label('Salaire')
+        'Revenu'
+        >>> get_transaction_label('Alimentation')
+        'Dépense'
+    """
+    tx_type = get_category_type(category)
+    
+    labels = {
+        'income': 'Revenu',
+        'expense': 'Dépense',
+        'refund': 'Remboursement',
+        'excluded': 'Exclu',
+        'unknown': 'Inconnu'
+    }
+    
+    return labels.get(tx_type, 'Inconnu')
+
+
+def get_color_for_transaction(category: Optional[str]) -> str:
+    """
+    Retourne la couleur appropriée pour l'affichage.
+    
+    Args:
+        category: Nom de la catégorie
+        
+    Returns:
+        Nom de couleur Streamlit ('green', 'red', 'blue', 'gray', 'orange')
+        
+    Examples:
+        >>> get_color_for_transaction('Salaire')
+        'green'
+        >>> get_color_for_transaction('Alimentation')
+        'red'
+    """
+    tx_type = get_category_type(category)
+    
+    colors = {
+        'income': 'green',    # Revenu = vert (positif)
+        'expense': 'red',     # Dépense = rouge (attention)
+        'refund': 'blue',     # Remboursement = bleu (spécial)
+        'excluded': 'gray',   # Exclu = gris (neutre)
+        'unknown': 'orange'   # Inconnu = orange (alerte)
+    }
+    
+    return colors.get(tx_type, 'gray')
 
 
 # ============================================================================
