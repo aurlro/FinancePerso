@@ -170,6 +170,11 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
         if cat:
             return cat, "local_ml", conf
     
+    # CHECK OFFLINE MODE
+    from modules.feature_flags import is_enabled
+    if is_enabled('FORCE_OFFLINE_MODE'):
+        return "Inconnu", "offline_forced", 0.0
+
     # 4. AI Cloud
     cat, conf = predict_category_ai(label, amount, date)
     

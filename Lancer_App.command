@@ -1,1 +1,0 @@
-scripts/Lancer_App.command

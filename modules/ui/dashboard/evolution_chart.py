@@ -35,8 +35,8 @@ def _compute_monthly_evolution(df_current: pd.DataFrame) -> pd.DataFrame:
 
 def render_evolution_chart(df_current: pd.DataFrame):
     """
-    Render monthly income/expenses evolution line chart with filled areas.
-    Shows surplus (green) and deficit (red) zones.
+    Render monthly income/expenses evolution as grouped bar chart.
+    Simplified version: bars for income/expenses + line for net balance.
     
     Args:
         df_current: Current period transactions with date_dt column
@@ -49,78 +49,54 @@ def render_evolution_chart(df_current: pd.DataFrame):
         st.info("Aucune donnée disponible.")
         return
     
-    # Create figure
-    fig_evol = go.Figure()
+    # Calculate net balance
+    df_plot['Solde'] = df_plot['Revenus'] - df_plot['Dépenses']
     
-    # Calculate min for the fill trick
-    min_line = np.minimum(df_plot['Revenus'], df_plot['Dépenses'])
+    # Create figure with grouped bars
+    fig = go.Figure()
     
-    # 1. Base trace for Surplus (Green area between min and Revenus)
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=min_line,
-        line=dict(width=0),
-        showlegend=False,
-        hoverinfo='skip'
-    ))
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=df_plot['Revenus'],
-        fill='tonexty',
-        fillcolor='rgba(34, 197, 94, 0.3)',
-        line=dict(width=0),
-        name="Zone de Surplus (Épargne)",
-        hoverinfo='skip'
-    ))
-    
-    # 2. Base trace for Deficit (Red area between min and Dépenses)
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=min_line,
-        line=dict(width=0),
-        showlegend=False,
-        hoverinfo='skip'
-    ))
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=df_plot['Dépenses'],
-        fill='tonexty',
-        fillcolor='rgba(239, 68, 68, 0.3)',
-        line=dict(width=0),
-        name="Zone de Déficit",
-        hoverinfo='skip'
-    ))
-    
-    # 3. Solid lines on top
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=df_plot['Revenus'],
+    # Income bars (green)
+    fig.add_trace(go.Bar(
+        x=df_plot['Mois'],
+        y=df_plot['Revenus'],
         name="Revenus",
-        line=dict(color="#22c55e", width=4, shape='spline'),
-        mode='lines+markers'
+        marker_color='#22c55e',
+        text=df_plot['Revenus'].apply(lambda x: f"{x:,.0f}€"),
+        textposition='outside'
     ))
-    fig_evol.add_trace(go.Scatter(
-        x=df_plot['Mois'], y=df_plot['Dépenses'],
+    
+    # Expense bars (red)
+    fig.add_trace(go.Bar(
+        x=df_plot['Mois'],
+        y=df_plot['Dépenses'],
         name="Dépenses",
-        line=dict(color="#ef4444", width=4, shape='spline'),
-        mode='lines+markers'
+        marker_color='#ef4444',
+        text=df_plot['Dépenses'].apply(lambda x: f"{x:,.0f}€"),
+        textposition='outside'
     ))
     
-    # 4. Solde Net (Line)
-    df_net = df_plot.copy()
-    df_net['Solde'] = df_net['Revenus'] - df_net['Dépenses']
-    fig_evol.add_trace(go.Scatter(
-        x=df_net['Mois'], y=df_net['Solde'],
-        name="Caisse (Net)",
-        line=dict(color="white" if not st.get_option("theme.base") == "light" else "black", width=2, dash='dot'),
-        mode='lines'
+    # Net balance line
+    fig.add_trace(go.Scatter(
+        x=df_plot['Mois'],
+        y=df_plot['Solde'],
+        name="Solde Net",
+        line=dict(color='#3b82f6', width=3),
+        mode='lines+markers',
+        marker=dict(size=8)
     ))
     
-    fig_evol.update_layout(
-        xaxis_title="", 
-        yaxis_title="Montant (€)", 
-        height=450,
+    # Layout
+    fig.update_layout(
+        barmode='group',
+        xaxis_title="",
+        yaxis_title="Montant (€)",
+        height=400,
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         margin=dict(l=0, r=0, t=50, b=0)
     )
     
-    st.plotly_chart(fig_evol, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def render_savings_trend_chart():

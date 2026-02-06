@@ -306,7 +306,8 @@ class UpdateManager:
                      changes: Dict[str, List[str]],
                      bump_type: str = "patch",
                      files_modified: Optional[List[str]] = None,
-                     breaking_changes: Optional[List[str]] = None) -> Tuple[bool, str]:
+                     breaking_changes: Optional[List[str]] = None,
+                     force: bool = False) -> Tuple[bool, str]:
         """
         Create a complete update across all files.
         
@@ -316,10 +317,36 @@ class UpdateManager:
             bump_type: "patch", "minor", or "major"
             files_modified: List of modified files
             breaking_changes: List of breaking changes
+            force: If True, bypass duplicate detection
             
         Returns:
-            Tuple of (success, new_version)
+            Tuple of (success, new_version_or_error_message)
         """
+        # Check for duplicate with last entry (unless forced)
+        if not force:
+            recent = self.get_recent_changes(count=1)
+            if recent:
+                last_entry = recent[0]
+                # Compare changes content (normalize and compare)
+                last_content = last_entry.get('content', '').lower().strip()
+                
+                # Build a signature from current changes
+                current_items = []
+                for category, items in changes.items():
+                    for item in items:
+                        # Clean the item (remove leading "- " if present)
+                        clean_item = item.lstrip('- ').lower().strip()
+                        current_items.append(clean_item)
+                
+                # Check if all current items exist in the last entry
+                if current_items:
+                    matches = sum(1 for item in current_items if item in last_content)
+                    match_ratio = matches / len(current_items)
+                    
+                    if match_ratio > 0.8:  # 80% similarity threshold
+                        logger.warning(f"Duplicate update detected: {match_ratio:.0%} similar to v{last_entry.get('version')}")
+                        return False, f"Cette mise à jour est identique à la version précédente (v{last_entry.get('version')}). Cochez 'Forcer la création' pour ignorer cette alerte."
+        
         current_version = self.get_current_version()
         new_version = self.bump_version(current_version, bump_type)
         

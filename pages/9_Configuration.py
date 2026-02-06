@@ -92,6 +92,26 @@ with tabs[2]:
     
     # ML Mode Selector
     st.subheader("Mode de catégorisation", divider="blue")
+    
+    # Offline Mode Toggle
+    from modules.feature_flags import get_feature_manager, FeatureFlag
+    fm = get_feature_manager()
+    is_offline = fm.is_enabled('FORCE_OFFLINE_MODE')
+    
+    col_off, col_help = st.columns([1, 2])
+    with col_off:
+        if st.checkbox("🚫 Mode Hors-ligne Forcé", value=is_offline, help="Interdit tout appel aux APIs externes (IA Cloud). L'application utilisera uniquement les règles et le modèle local."):
+            if not is_offline:
+                fm.enable('FORCE_OFFLINE_MODE', "User forced offline mode")
+                st.rerun()
+        else:
+            if is_offline:
+                fm.disable('FORCE_OFFLINE_MODE')
+                st.rerun()
+                
+    if is_offline:
+        st.warning("⚠️ Mode Hors-ligne activé : Aucune donnée ne sera envoyée vers les services d'IA externe.")
+    
     ml_mode = render_ml_mode_selector()
     
     st.divider()

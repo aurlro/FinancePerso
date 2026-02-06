@@ -202,6 +202,7 @@ FEATURES = {
     'API_ACCESS': 'rest_api_access',
     'BANK_SYNC': 'bank_synchronization',
     'RECEIPT_SCANNER': 'receipt_ocr_scanner',
+    'FORCE_OFFLINE_MODE': 'force_offline_mode',
 }
 
 

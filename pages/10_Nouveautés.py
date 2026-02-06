@@ -151,6 +151,9 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                 "Breaking changes (une par ligne)",
                 placeholder="- API X modifiée\n- Dépréciation de Y"
             )
+            
+        # Add Force Option
+        force_update = st.checkbox("Forcer la création (ignorer les doublons)", help="Cochez si vous obtenez une erreur de mise à jour identique.")
         
         submitted = st.form_submit_button("🚀 Créer la mise à jour", type="primary", use_container_width=True)
         
@@ -179,7 +182,8 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                         changes=changes,
                         bump_type=bump_type,
                         files_modified=files_list,
-                        breaking_changes=breaking_list
+                        breaking_changes=breaking_list,
+                        force=force_update
                     )
                 
                 if success:
@@ -197,7 +201,8 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                     # Refresh the page to show new changelog
                     st.rerun()
                 else:
-                    st.error("❌ Erreur lors de la création de la mise à jour. Vérifiez les logs.")
+                    # version contains error message when success is False
+                    st.error(f"❌ {version}")
 
 # Path to changelog
 CHANGELOG_PATH = os.path.join(os.getcwd(), "CHANGELOG.md")

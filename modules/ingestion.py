@@ -33,12 +33,11 @@ def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
         # Deduplication against DB happens in data_manager.save_transactions by checking counts.
         norm_label = str(row['label']).strip().upper()
         
-        # Include account_label in hash to avoid detecting same transaction on different accounts as duplicate
-        account = str(row.get('account_label', '')).strip().upper()
+        # UNIVERSAL SIGNATURE: We EXCLUDE account_label from the hash.
+        # This prevents duplicate imports if the same file is imported under a different account name.
+        # base = date + label + amount + index
         
-        # New hash = SHA(date|label|amount|account|local_occ)
-        # This hash represents "The Nth occurrence of this transaction in THIS file for THIS account".
-        base = f"{row['date']}|{norm_label}|{row['amount']}|{account}|{row['_local_occ']}"
+        base = f"{row['date']}|{norm_label}|{row['amount']}|{row['_local_occ']}"
         return hashlib.sha256(base.encode()).hexdigest()[:16]
         
     df['tx_hash'] = df.apply(calculate_hash, axis=1)
