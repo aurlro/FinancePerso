@@ -77,14 +77,16 @@ class TestFieldEncryption:
         enc_with_key = FieldEncryption("test_key")
         assert enc_with_key.is_enabled()
         
-        # Temporarily remove ENCRYPTION_KEY from environment to test disabled state
-        original_key = os.getenv('ENCRYPTION_KEY')
-        if 'ENCRYPTION_KEY' in os.environ:
-            del os.environ['ENCRYPTION_KEY']
+        # Test without key - explicitly pass None and ensure no env var is used
+        # The conftest.py fixture ensures singleton is reset before each test
+        original_key = os.environ.pop('ENCRYPTION_KEY', None)  # Remove and get value
         
         try:
+            # Force creating a new instance without key
             enc_without_key = FieldEncryption(None)
-            assert not enc_without_key.is_enabled()
+            assert not enc_without_key.is_enabled(), \
+                f"Encryption should be disabled but is_enabled() returned True. " \
+                f"ENCRYPTION_KEY in env: {'ENCRYPTION_KEY' in os.environ}"
         finally:
             # Restore the original key
             if original_key:
