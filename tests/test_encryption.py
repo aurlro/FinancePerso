@@ -72,24 +72,23 @@ class TestFieldEncryption:
         result = enc.encrypt(None)
         assert result is None
     
-    def test_is_enabled(self):
-        """Test is_enabled method."""
+    def test_is_enabled_with_key(self):
+        """Test is_enabled returns True when key is provided."""
         enc_with_key = FieldEncryption("test_key")
         assert enc_with_key.is_enabled()
-        
-        # Test without key - explicitly pass None and ensure no env var is used
-        # The conftest.py fixture ensures singleton is reset before each test
-        original_key = os.environ.pop('ENCRYPTION_KEY', None)  # Remove and get value
+    
+    def test_is_enabled_without_key(self):
+        """Test is_enabled returns False when no key is provided."""
+        # Save current env state
+        original_key = os.environ.pop('ENCRYPTION_KEY', None)
         
         try:
-            # Force creating a new instance without key
+            # Create instance with explicit None (should not read env)
             enc_without_key = FieldEncryption(None)
-            assert not enc_without_key.is_enabled(), \
-                f"Encryption should be disabled but is_enabled() returned True. " \
-                f"ENCRYPTION_KEY in env: {'ENCRYPTION_KEY' in os.environ}"
+            assert not enc_without_key.is_enabled()
         finally:
-            # Restore the original key
-            if original_key:
+            # Restore env
+            if original_key is not None:
                 os.environ['ENCRYPTION_KEY'] = original_key
 
 
