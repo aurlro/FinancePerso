@@ -93,10 +93,9 @@ class RealTimeNotificationManager:
         # 2. Détecter les anomalies dans la catégorie
         if not df_history.empty and tx.get('category_validated'):
             category = tx['category_validated']
-            cat_history = df_history[
-                (df_history['category_validated'] == category) & 
-                (df_history['amount'] < 0)
-            ]
+            # Include all transactions in this category (not just amount < 0)
+            # A refund (positive amount) should be included in history for context
+            cat_history = df_history[df_history['category_validated'] == category]
             
             if len(cat_history) >= 3:
                 amounts = cat_history['amount'].abs()

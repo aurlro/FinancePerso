@@ -155,8 +155,9 @@ def detect_financial_profile(df):
                     "default_category": "Revenus"
                 })
 
-    # 2. Fixed Expenses & Bills
-    expenses = df[df['amount'] < 0].copy()
+    # 2. Fixed Expenses & Bills (using categories, not amount sign!)
+    from modules.transaction_types import filter_expense_transactions
+    expenses = filter_expense_transactions(df).copy()
     if not expenses.empty:
         expenses['clean'] = expenses['label'].apply(clean_label)
         grouped = expenses.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()

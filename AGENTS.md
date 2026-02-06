@@ -1,5 +1,5 @@
 # 🤖 AGENTS.md - Guide pour Assistants IA
-> **Version du projet**: `v5.0.0`
+> **Version du projet**: `v5.0.2`
 >
 
 > Ce document est destiné aux agents IA (Gemini, Claude, etc.) travaillant sur le projet FinancePerso.
@@ -28,7 +28,8 @@
 
 - - ✨ feat: Amélioration feedback actions rapides (quick_actions)
 - - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
-- - fix: correction vue d'ensemble vide - ajout fallback et messages### Stack technologique
+- - fix: correction vue d'ensemble vide - ajout fallback et messages
+- - ci: Ajoute debug et timeout au workflow de test### Stack technologique
 
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
@@ -415,6 +416,6 @@ pytest tests/ai/test_anomaly_detector.py -v
 
 ---
 
-**Dernière mise à jour** : 2026-02-06
+**Dernière mise à jour** : 2026-02-07
 **Version du projet** : 3.1.0
 **Langue principale** : Français

@@ -5,6 +5,9 @@ import streamlit as st
 import pandas as pd
 from datetime import date, datetime
 from typing import Tuple, Optional, List
+from modules.transaction_types import (
+    is_expense_category, is_income_category, is_excluded_category
+)
 
 
 def render_date_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> Tuple[Optional[date], Optional[date]]:
@@ -188,11 +191,13 @@ def apply_filters(
         filtered = filtered[mask]
     
     # Type filter
-    if tx_type != "Tous" and 'amount' in filtered.columns:
+    if tx_type != "Tous" and 'category_validated' in filtered.columns:
         if tx_type == "Dépenses":
-            filtered = filtered[filtered['amount'].astype(float) < 0]
+            filtered = filtered[filtered['category_validated'].apply(is_expense_category)]
         elif tx_type == "Revenus":
-            filtered = filtered[filtered['amount'].astype(float) > 0]
+            filtered = filtered[filtered['category_validated'].apply(is_income_category)]
+        elif tx_type == "Exclus":
+            filtered = filtered[filtered['category_validated'].apply(is_excluded_category)]
     
     # Account filter
     if accounts and 'account_label' in filtered.columns:

@@ -22,6 +22,7 @@ from modules.data_manager import save_transactions
 from modules.db.transactions import get_all_hashes
 from modules.categorization import categorize_transaction
 from modules.ai_manager import is_ai_available
+from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 
 
 def render_quick_validation_popover():
@@ -331,8 +332,8 @@ def render_quick_stats_popover():
             return
         
         # Calculate stats
-        expenses = month_df[month_df['amount'] < 0]['amount'].sum()
-        income = month_df[month_df['amount'] > 0]['amount'].sum()
+        expenses = filter_expense_transactions(month_df)['amount'].sum()
+        income = filter_income_transactions(month_df)['amount'].sum()
         balance = income + expenses
         
         # Display metrics
@@ -349,7 +350,7 @@ def render_quick_stats_popover():
         st.divider()
         st.caption("Top catégories de dépenses")
         
-        expenses_df = month_df[month_df['amount'] < 0].copy()
+        expenses_df = filter_expense_transactions(month_df).copy()
         if not expenses_df.empty:
             expenses_df['amount_abs'] = expenses_df['amount'].abs()
             top_cats = expenses_df.groupby('category_validated')['amount_abs'].sum().sort_values(ascending=False).head(3)

@@ -6,6 +6,7 @@ Affiche les recommandations intelligentes par catégorie.
 import streamlit as st
 import pandas as pd
 from typing import List, Optional
+from modules.transaction_types import filter_expense_transactions
 from modules.ai.category_insights import (
     CategoryInsightsEngine, 
     CategoryInsight,
@@ -205,7 +206,7 @@ def render_quick_actions_banner(df_current: pd.DataFrame, budgets_df: pd.DataFra
     # Vérifier les budgets en dépassement
     if not budgets_df.empty:
         # Calcul simplifié
-        expenses = df_current[df_current['amount'] < 0].groupby('category_validated')['amount'].sum().abs()
+        expenses = filter_expense_transactions(df_current).groupby('category_validated')['amount'].sum().abs()
         
         for _, budget in budgets_df.iterrows():
             cat = budget['category']

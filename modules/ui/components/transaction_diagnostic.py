@@ -10,6 +10,7 @@ from modules.transaction_types import (
     suggest_amount_sign,
     fix_amount_sign,
     get_category_type,
+    get_color_for_transaction,
     INCOME_CATEGORIES,
     EXCLUDED_CATEGORIES
 )
@@ -102,7 +103,8 @@ def render_diagnostic_summary():
             
             with col2:
                 amount = problem['amount']
-                color = "red" if amount < 0 else "green"
+                category = problem['category']
+                color = get_color_for_transaction(category)
                 st.markdown(f"<span style='color:{color};font-size:1.5em'>{amount:,.2f} €</span>", unsafe_allow_html=True)
             
             with col3:

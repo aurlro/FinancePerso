@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from modules.db.budgets import get_budgets, set_budget
 from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 @dataclass
@@ -66,10 +67,8 @@ class DynamicBudgetEngine:
         if self.df.empty:
             return None
         
-        cat_data = self.df[
-            (self.df['category_validated'] == category) & 
-            (self.df['amount'] < 0)
-        ].copy()
+        cat_data = filter_expense_transactions(self.df)
+        cat_data = cat_data[cat_data['category_validated'] == category].copy()
         
         if len(cat_data) < 10:
             return None
@@ -152,10 +151,10 @@ class DynamicBudgetEngine:
             
             # Calculer la moyenne réelle des 6 derniers mois
             six_months_ago = datetime.now() - timedelta(days=180)
-            recent = self.df[
-                (self.df['category_validated'] == category) & 
-                (self.df['amount'] < 0) &
-                (self.df['date_dt'] >= six_months_ago)
+            recent = filter_expense_transactions(self.df)
+            recent = recent[
+                (recent['category_validated'] == category) &
+                (recent['date_dt'] >= six_months_ago)
             ]
             
             if len(recent) < 3:
@@ -222,10 +221,8 @@ class DynamicBudgetEngine:
             budget_amount = budget['amount']
             
             # Dépenses actuelles
-            spent = current_month_df[
-                (current_month_df['category_validated'] == category) &
-                (current_month_df['amount'] < 0)
-            ]['amount'].abs().sum()
+            spent = filter_expense_transactions(current_month_df)
+            spent = spent[spent['category_validated'] == category]['amount'].abs().sum()
             
             remaining = budget_amount - spent
             
@@ -263,10 +260,8 @@ class DynamicBudgetEngine:
         
         # Calculer les dépenses moyennes actuelles
         six_months_ago = datetime.now() - timedelta(days=180)
-        recent_expenses = self.df[
-            (self.df['amount'] < 0) &
-            (self.df['date_dt'] >= six_months_ago)
-        ].copy()
+        recent_expenses = filter_expense_transactions(self.df)
+        recent_expenses = recent_expenses[recent_expenses['date_dt'] >= six_months_ago].copy()
         
         if recent_expenses.empty:
             return {}

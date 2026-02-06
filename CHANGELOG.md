@@ -6,6 +6,58 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.0.2] - 2026-02-07
+
+### Nouvelles fonctionnalités - 8 ajouts
+
+**✨ Ajouté**
+- - ci: Ajoute debug et timeout au workflow de test
+- - fix: Ajoute fixture pour réinitialiser le singleton encryption entre tests
+- - feat: Implement comprehensive Git change analysis in UpdateManager to detect committed and uncommitted changes, categorize commits, and suggest version bumps, accompanied by new tests.
+- - feat: Refactor page structure by consolidating rules, recurrences, budgets, and AI audit into a new Intelligence page, and modularize import, validation, and search functionalities.
+- - feat: implement offline mode for categorization, redesign the evolution chart, and reorganize project structure with new tests and scripts.
+- - feat: Implement clickable category buttons in the dashboard to launch the explorer, refactoring parameter passing to use session state.
+- - feat: Introduce new UI components for validation, including avatar and chip selectors, and refactor the notification system to V2.
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+
+**🐛 Corrigé**
+- - fix: Lancement rapide si déjà installé - évite la réinstallation
+- - fix: Sépare test_is_enabled en deux tests distincts
+- - fix: Améliore test_is_enabled avec meilleur message d'erreur
+- - fix: Déplace la fixture reset_encryption_singleton dans conftest.py global
+- - fix: Corrige test_is_enabled qui échouait en CI à cause de ENCRYPTION_KEY définie
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+
+*Fichiers modifiés* : docs/FIX_WIDGETTYPE_V2.md, tests/ui/test_kpi_cards.py, modules/db/transactions.py, CHANGELOG.md, modules/constants.py, modules/ui/dashboard/kpi_cards.py, docs/GUIDE_UTILISATEUR.md, test_results_1769981704.txt, tests/test_analytics.py, docs/EMAIL_TROUBLESHOOTING.md, modules/ui/explorer/explorer_launcher.py, tests/unit/test_transaction_types.py, scripts/budget_redesign_prototype.py, modules/ui/feedback.py, modules/ui/components/chip_selector.py, modules/db/settings.py, modules/ui/dashboard/customizable_dashboard.py, modules/ui/__init__.py, modules/ui/dashboard/sections.py, modules/ui/dashboard/budget_tracker.py, modules/ui/enhanced_feedback.py, docs/STABILIZATION_PLAN.md, scripts/repair_hashes.py, modules/ui/notifications/types.py, scripts/audit_codebase.py, pages/6_Recherche.py, docs/INDISPENSABILITY_UPGRADES.md, modules/analytics_v2.py, modules/ui/components/smart_actions.py, scripts/cleanup_backups.py, modules/categorization.py, tests/conftest.py, tests/test_notifications.py, tests/ui/test_progress_tracker.py, docs/AUDIT_COHERENCE_360.md, tests/db/test_stats.py, AGENTS.md, modules/ui/dashboard/category_charts.py, tests/db/test_rules.py, modules/db/maintenance.py, modules/ui/recurrence_tabs.py, docs/audit_report_20260201.md, tests/ai/test_conversational_assistant.py, tests/ui/test_member_selector.py, pages/98_Tests.py, modules/ui/notifications/README.md, modules/ui/assistant/state.py, modules/ui/config/log_viewer.py, modules/ui/components/avatar_selector.py, modules/onboarding.py, pages/3_Synthese.py, modules/ui/dashboard/top_expenses.py, pages/2_Validation.py, test_results_1769764966.txt, tests/ui/test_ui_redesign.py, modules/ai_manager.py, assets/style.css, tests/test_validators.py, modules/ui/notifications/components.py, pages/1_Import.py, tests/README.md, modules/transaction_types.py, modules/ui/validation/main.py, pages/4_Recurrence.py, test_email.py, docs/DASHBOARD_CLEANUP_GUIDE.md, modules/ui/global_search.py, modules/ui/notifications/center.py, docs/AUDIT_REVENUS_DEPENSES.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, modules/ui/config/member_management.py, modules/gamification.py, modules/notifications.py, tests/test_cache_multitier.py, modules/ui/validation/row_view.py, modules/analytics.py, modules/ui/rules/rule_manager.py, modules/ui/explorer/explorer_results.py, tests/test_utils.py, tests/test_essential.py, scripts/cleanup_duplicates.py, docs/FIX_WIDGET_ERROR.md, modules/ui/notifications/__init__.py, pages/5_Assistant.py, tests/test_encryption.py, tests/ui/validation/test_sorting.py, app.py, modules/ui/dashboard/evolution_chart.py, modules/ui/components/transaction_diagnostic.py, pages/4_Intelligence.py, pages/6_Explorer.py, modules/ui/explorer/explorer_main.py, modules/ui/importing/main.py, modules/ui/config/audit_tools.py, scripts/fix_dashboard_layouts.py, tests/test_update_manager.py, pages/4_Regles.py, modules/ui/assistant/dashboard_tab.py, docs/TRANSACTION_TYPES_GUIDE.md, modules/performance_monitor.py, modules/ui/components/quick_actions.py, modules/ui/config/category_management.py, modules/update_manager.py, docs/CHANGEMENTS_REVENUS_DEPENSES.md, modules/ui/notifications/manager.py, tests/ui/test_tag_manager.py, modules/db/connection.py, modules/ui/dashboard/filters.py, modules/db/audit.py, pages/9_Configuration.py, tests/test_integration.py, modules/ui/config/config_dashboard.py, modules/db/migrations.py, modules/db/dashboard_cleanup.py, tests/ui/test_filters.py, modules/db/rules.py, modules/ui/components/transaction_drill_down.py, modules/db/members.py, modules/db/stats.py, modules/feature_flags.py, modules/ingestion.py, modules/ui/components/daily_widget.py, tests/ui/test_category_charts.py, modules/ui/components/tag_manager.py, modules/ui/config/backup_restore.py, test_components.py
+
+---
+
+## [5.0.1] - 2026-02-07
+
+### Nouvelles fonctionnalités - 8 ajouts
+
+**✨ Ajouté**
+- - ci: Ajoute debug et timeout au workflow de test
+- - fix: Ajoute fixture pour réinitialiser le singleton encryption entre tests
+- - feat: Implement comprehensive Git change analysis in UpdateManager to detect committed and uncommitted changes, categorize commits, and suggest version bumps, accompanied by new tests.
+- - feat: Refactor page structure by consolidating rules, recurrences, budgets, and AI audit into a new Intelligence page, and modularize import, validation, and search functionalities.
+- - feat: implement offline mode for categorization, redesign the evolution chart, and reorganize project structure with new tests and scripts.
+- - feat: Implement clickable category buttons in the dashboard to launch the explorer, refactoring parameter passing to use session state.
+- - feat: Introduce new UI components for validation, including avatar and chip selectors, and refactor the notification system to V2.
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+
+**🐛 Corrigé**
+- - fix: Lancement rapide si déjà installé - évite la réinstallation
+- - fix: Sépare test_is_enabled en deux tests distincts
+- - fix: Améliore test_is_enabled avec meilleur message d'erreur
+- - fix: Déplace la fixture reset_encryption_singleton dans conftest.py global
+- - fix: Corrige test_is_enabled qui échouait en CI à cause de ENCRYPTION_KEY définie
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+
+*Fichiers modifiés* : docs/FIX_WIDGETTYPE_V2.md, tests/ui/test_kpi_cards.py, modules/db/transactions.py, CHANGELOG.md, modules/constants.py, modules/ui/dashboard/kpi_cards.py, docs/GUIDE_UTILISATEUR.md, test_results_1769981704.txt, tests/test_analytics.py, docs/EMAIL_TROUBLESHOOTING.md, modules/ui/explorer/explorer_launcher.py, tests/unit/test_transaction_types.py, scripts/budget_redesign_prototype.py, modules/ui/feedback.py, modules/ui/components/chip_selector.py, modules/db/settings.py, modules/ui/dashboard/customizable_dashboard.py, modules/ui/__init__.py, modules/ui/dashboard/sections.py, modules/ui/dashboard/budget_tracker.py, modules/ui/enhanced_feedback.py, docs/STABILIZATION_PLAN.md, scripts/repair_hashes.py, modules/ui/notifications/types.py, scripts/audit_codebase.py, pages/6_Recherche.py, docs/INDISPENSABILITY_UPGRADES.md, modules/analytics_v2.py, modules/ui/components/smart_actions.py, scripts/cleanup_backups.py, modules/categorization.py, tests/conftest.py, tests/test_notifications.py, tests/ui/test_progress_tracker.py, docs/AUDIT_COHERENCE_360.md, tests/db/test_stats.py, AGENTS.md, modules/ui/dashboard/category_charts.py, tests/db/test_rules.py, modules/db/maintenance.py, modules/ui/recurrence_tabs.py, docs/audit_report_20260201.md, tests/ai/test_conversational_assistant.py, tests/ui/test_member_selector.py, pages/98_Tests.py, modules/ui/notifications/README.md, modules/ui/assistant/state.py, modules/ui/config/log_viewer.py, modules/ui/components/avatar_selector.py, modules/onboarding.py, pages/3_Synthese.py, modules/ui/dashboard/top_expenses.py, pages/2_Validation.py, test_results_1769764966.txt, tests/ui/test_ui_redesign.py, modules/ai_manager.py, assets/style.css, tests/test_validators.py, modules/ui/notifications/components.py, pages/1_Import.py, tests/README.md, modules/transaction_types.py, modules/ui/validation/main.py, pages/4_Recurrence.py, test_email.py, docs/DASHBOARD_CLEANUP_GUIDE.md, modules/ui/global_search.py, modules/ui/notifications/center.py, docs/AUDIT_REVENUS_DEPENSES.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, modules/ui/config/member_management.py, modules/gamification.py, modules/notifications.py, tests/test_cache_multitier.py, modules/ui/validation/row_view.py, modules/analytics.py, modules/ui/rules/rule_manager.py, modules/ui/explorer/explorer_results.py, tests/test_utils.py, tests/test_essential.py, scripts/cleanup_duplicates.py, docs/FIX_WIDGET_ERROR.md, modules/ui/notifications/__init__.py, pages/5_Assistant.py, tests/test_encryption.py, tests/ui/validation/test_sorting.py, app.py, modules/ui/dashboard/evolution_chart.py, modules/ui/components/transaction_diagnostic.py, pages/4_Intelligence.py, pages/6_Explorer.py, modules/ui/explorer/explorer_main.py, modules/ui/importing/main.py, modules/ui/config/audit_tools.py, scripts/fix_dashboard_layouts.py, tests/test_update_manager.py, pages/4_Regles.py, modules/ui/assistant/dashboard_tab.py, docs/TRANSACTION_TYPES_GUIDE.md, modules/performance_monitor.py, modules/ui/components/quick_actions.py, modules/ui/config/category_management.py, modules/update_manager.py, docs/CHANGEMENTS_REVENUS_DEPENSES.md, modules/ui/notifications/manager.py, tests/ui/test_tag_manager.py, modules/db/connection.py, modules/ui/dashboard/filters.py, modules/db/audit.py, pages/9_Configuration.py, tests/test_integration.py, modules/ui/config/config_dashboard.py, modules/db/migrations.py, modules/db/dashboard_cleanup.py, tests/ui/test_filters.py, modules/db/rules.py, modules/ui/components/transaction_drill_down.py, modules/db/members.py, modules/db/stats.py, modules/feature_flags.py, modules/ingestion.py, modules/ui/components/daily_widget.py, tests/ui/test_category_charts.py, modules/ui/components/tag_manager.py, modules/ui/config/backup_restore.py, test_components.py
+
+---
+
 ## [5.0.0] - 2026-02-06
 
 ### Nouvelles fonctionnalités - 19 ajouts

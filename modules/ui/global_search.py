@@ -11,6 +11,7 @@ from datetime import datetime
 from modules.db.transactions import get_all_transactions
 from modules.db.categories import get_categories_with_emojis
 from modules.logger import logger
+from modules.transaction_types import get_color_for_transaction
 
 
 class GlobalSearch:
@@ -95,7 +96,7 @@ class GlobalSearch:
         label = row['label'][:40] + "..." if len(row['label']) > 40 else row['label']
         category = row.get('category_validated', 'Non catégorisé')
         
-        color = "green" if amount > 0 else "red"
+        color = get_color_for_transaction(category)
         sign = "+" if amount > 0 else ""
         return f"📅 {date_str} | **{label}** | :{color}[{sign}{amount_str}] | *{category}*"
     

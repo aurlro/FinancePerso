@@ -7,6 +7,9 @@ import re
 from typing import Tuple, List, Dict
 from datetime import datetime
 from modules.categorization import clean_label
+from modules.transaction_types import (
+    is_income_category, is_expense_category, filter_expense_transactions
+)
 from modules.analytics_constants import (
     MIN_OCCURRENCES_FOR_RECURRING,
     AMOUNT_TOLERANCE_ENERGY,
@@ -214,7 +217,7 @@ def _analyze_group(label: str, group: pd.DataFrame, grouping_key: str, is_income
         "transaction_ids": transaction_ids,
         "grouping_key": grouping_key,
         "sample_labels": sample_labels,
-        "is_income": is_income or avg_amount > 0
+        "is_income": is_income or is_income_category(group_df['category_validated'].iloc[0] if 'category_validated' in group_df.columns else '')
     }
 
 
@@ -286,8 +289,9 @@ def analyze_recurrence_summary(df: pd.DataFrame, recurring_df: pd.DataFrame) -> 
         return {}
     
     total_recurring = len(recurring_df)
-    expenses = recurring_df[recurring_df['avg_amount'] < 0]
-    incomes = recurring_df[recurring_df['avg_amount'] > 0]
+    # Use categories to determine type, not the sign of avg_amount
+    expenses = recurring_df[recurring_df['category'].apply(is_expense_category)]
+    incomes = recurring_df[recurring_df['category'].apply(is_income_category)]
     
     summary = {
         'total_detected': total_recurring,

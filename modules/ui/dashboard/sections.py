@@ -328,7 +328,8 @@ def render_analysis_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
         
         if 'tags' in df_current.columns:
             # Filtrer les dépenses avec tags
-            expense_df = df_current[df_current['amount'] < 0].dropna(subset=['tags'])
+            from modules.transaction_types import filter_expense_transactions
+            expense_df = filter_expense_transactions(df_current).dropna(subset=['tags'])
             
             if not expense_df.empty:
                 # Vectorisation: explode des tags puis groupby

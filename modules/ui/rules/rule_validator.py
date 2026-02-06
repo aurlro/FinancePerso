@@ -14,6 +14,7 @@ from modules.db.transactions import get_all_transactions
 from modules.db.categories import get_categories
 from modules.utils import validate_regex_pattern
 from modules.logger import logger
+from modules.transaction_types import get_color_for_transaction
 
 
 def test_pattern_against_transactions(
@@ -153,7 +154,8 @@ def render_pattern_tester():
                     st.markdown(f"{match['label'][:40]}..." if len(match['label']) > 40 else match['label'])
                 with cols[2]:
                     amount = match['amount']
-                    color = "red" if amount and amount < 0 else "green"
+                    category = match['category']
+                    color = get_color_for_transaction(category)
                     st.markdown(f":{color}[{amount:,.2f} €]")
                 with cols[3]:
                     cat = match['category']

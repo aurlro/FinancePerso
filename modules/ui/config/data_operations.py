@@ -11,6 +11,7 @@ from modules.ui.feedback import (
     toast_success, toast_error, toast_warning, toast_info,
     show_success, show_warning, show_info
 )
+from modules.transaction_types import get_color_for_transaction
 
 
 def render_export_section():
@@ -186,7 +187,7 @@ def render_data_operations():
             for _, row in results.iterrows():
                 with st.container(border=True):
                     c1, c2 = st.columns([4, 1])
-                    amount_color = "red" if row['amount'] < 0 else "green"
+                    amount_color = get_color_for_transaction(row.get('category_validated', 'Inconnu'))
                     c1.markdown(
                         f"📅 **{row['date']}**  \n"
                         f"📝 {row['label']}  \n"

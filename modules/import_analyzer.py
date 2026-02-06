@@ -9,6 +9,7 @@ from datetime import datetime
 
 from modules.notifications_realtime import get_notification_manager, RealTimeAlert
 from modules.ai.category_insights import CategoryInsightsEngine
+from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 
 
 def analyze_imported_transactions(df_new: pd.DataFrame, df_history: pd.DataFrame) -> List[Dict]:
@@ -52,16 +53,14 @@ def analyze_imported_transactions(df_new: pd.DataFrame, df_history: pd.DataFrame
             budget_amount = budget['amount']
             
             # Calculer les dépenses actuelles
-            spent = df_month[
-                (df_month['category_validated'] == category) &
-                (df_month['amount'] < 0)
-            ]['amount'].abs().sum()
+            spent = filter_expense_transactions(df_month)
+            spent = spent[spent['category_validated'] == category]['amount'].abs().sum()
             
             # Vérifier si on vient de dépasser
-            old_spent = df_history[
-                (df_history['category_validated'] == category) &
-                (df_history['amount'] < 0) &
-                (df_history['date_dt'].dt.strftime('%Y-%m') == current_month)
+            old_spent = filter_expense_transactions(df_history)
+            old_spent = old_spent[
+                (old_spent['category_validated'] == category) &
+                (old_spent['date_dt'].dt.strftime('%Y-%m') == current_month)
             ]['amount'].abs().sum()
             
             # Si on dépasse maintenant mais pas avant
@@ -132,8 +131,8 @@ def get_import_insights(df_imported: pd.DataFrame) -> Dict:
     insights = {
         'total_imported': len(df_imported),
         'total_amount': df_imported['amount'].sum(),
-        'income_count': len(df_imported[df_imported['amount'] > 0]),
-        'expense_count': len(df_imported[df_imported['amount'] < 0]),
+        'income_count': len(filter_income_transactions(df_imported)),
+        'expense_count': len(filter_expense_transactions(df_imported)),
         'categories': df_imported['category_validated'].nunique(),
         'date_range': {
             'min': df_imported['date'].min(),
@@ -142,7 +141,7 @@ def get_import_insights(df_imported: pd.DataFrame) -> Dict:
     }
     
     # Top catégories
-    expenses = df_imported[df_imported['amount'] < 0]
+    expenses = filter_expense_transactions(df_imported)
     if not expenses.empty:
         insights['top_category'] = expenses.groupby('category_validated')['amount'].sum().abs().idxmax()
         insights['largest_expense'] = expenses['amount'].abs().max()

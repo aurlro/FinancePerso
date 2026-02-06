@@ -173,10 +173,8 @@ def analyze_budget_creation_impact(category: str, amount: float) -> dict:
     df['date_dt'] = pd.to_datetime(df['date'])
     month_df = df[df['date_dt'].dt.strftime('%Y-%m') == current_month]
     
-    spending = month_df[
-        (month_df['category_validated'] == category) & 
-        (month_df['amount'] < 0)
-    ]['amount'].sum()
+    # Spending for this category (using category, not amount sign!)
+    spending = month_df[month_df['category_validated'] == category]['amount'].sum()
     
     spending = abs(spending)
     percentage = (spending / amount * 100) if amount > 0 else 0

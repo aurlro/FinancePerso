@@ -15,6 +15,7 @@ from modules.ui.recurrence_manager import (
     set_recurrence_feedback
 )
 from modules.db.recurrence_feedback import get_all_feedback
+from modules.transaction_types import get_color_for_transaction, is_income_category, is_expense_category
 
 def render_timeline_chart(recurring_df: pd.DataFrame):
     """Render a monthly timeline of recurring payments."""
@@ -34,7 +35,7 @@ def render_timeline_chart(recurring_df: pd.DataFrame):
             'Day': day,
             'Label': row['label'],
             'Amount': row['avg_amount'],
-            'Type': 'Revenu' if row['avg_amount'] > 0 else 'Dépense'
+            'Type': 'Revenu' if is_income_category(row.get('category')) else 'Dépense'
         })
     
     df_timeline = pd.DataFrame(timeline_data).sort_values('Day')
@@ -91,8 +92,11 @@ def render_dashboard_tab(recurring_df: pd.DataFrame, validated_df: pd.DataFrame)
         st.info("Aucun abonnement confirmé. Allez dans l'onglet 'Validation' pour confirmer vos récurrences.")
         return
 
-    monthly_expenses = confirmed_df[confirmed_df['avg_amount'] < 0]['avg_amount'].sum()
-    monthly_income = confirmed_df[confirmed_df['avg_amount'] > 0]['avg_amount'].sum()
+    # Déterminer les revenus et dépenses en utilisant les catégories
+    monthly_expenses = sum(row['avg_amount'] for _, row in confirmed_df.iterrows() 
+                           if is_expense_category(row.get('category')))
+    monthly_income = sum(row['avg_amount'] for _, row in confirmed_df.iterrows() 
+                         if is_income_category(row.get('category')))
     balance = monthly_income + monthly_expenses # Expenses are negative
 
     col1, col2, col3 = st.columns(3)
@@ -133,7 +137,8 @@ def render_dashboard_tab(recurring_df: pd.DataFrame, validated_df: pd.DataFrame)
                 date_str = f"Le {row['day']} du mois"
                 st.caption(f"🗓️ {date_str}")
                 amount = row['avg_amount']
-                color = "red" if amount < 0 else "green"
+                category = row.get('category', '')
+                color = get_color_for_transaction(category)
                 st.markdown(f":{color}[{abs(amount):,.0f} €]")
 
 
@@ -184,9 +189,9 @@ def render_subscriptions_tab(recurring_df: pd.DataFrame, cat_emoji_map: Dict):
     if confirmed_df.empty:
         st.info("Aucun abonnement actif.")
     else:
-        # Group by type
-        incomes = confirmed_df[confirmed_df['avg_amount'] > 0]
-        expenses = confirmed_df[confirmed_df['avg_amount'] < 0]
+        # Group by type using categories
+        incomes = confirmed_df[confirmed_df['category'].apply(is_income_category)]
+        expenses = confirmed_df[confirmed_df['category'].apply(is_expense_category)]
         
         if not incomes.empty:
             st.subheader(f"💰 Revenus ({len(incomes)})")

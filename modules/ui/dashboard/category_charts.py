@@ -55,10 +55,11 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
     # Group by category and sum (expenses are negative, so we use abs() on the RESULT)
     df_cat_sum = df_exp.groupby(['Catégorie', 'raw_cat'])['amount'].sum().reset_index()
     
-    # Une catégorie n'est affichée que si le NET est une dépense (somme < 0)
-    # ou si on veut afficher l'impact net (quitte à ce qu'il soit à 0)
-    df_cat_sum['amount'] = df_cat_sum['amount'].apply(lambda x: abs(x) if x < 0 else 0) 
+    # Afficher toutes les catégories de dépenses, même si net positif (remboursements)
+    # La valeur affichée est toujours positive pour le graphique
+    df_cat_sum['amount'] = df_cat_sum['amount'].abs()
     
+    # Garder uniquement les catégories avec des dépenses non nulles
     df_cat_sum = df_cat_sum[df_cat_sum['amount'] > 0]
     df_cat_sum = df_cat_sum.sort_values('amount', ascending=True)
     
