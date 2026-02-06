@@ -26,10 +26,13 @@ st.set_page_config(
 load_css()
 init_db()
 
-# Get parameters from URL
-explorer_type = st.query_params.get('type', 'category')
-explorer_value = st.query_params.get('value', '')
-from_page = st.query_params.get('from', '3_Synthese')
+# Page title
+st.title("🔍 Explorateur")
+
+# Get parameters from session state (from launch_explorer) or URL
+explorer_type = st.session_state.pop('_explorer_type', None) or st.query_params.get('type', 'category')
+explorer_value = st.session_state.pop('_explorer_value', None) or st.query_params.get('value', '')
+from_page = st.session_state.pop('_explorer_from', None) or st.query_params.get('from', '6_Explorer')
 
 # Validate parameters
 if not explorer_value:

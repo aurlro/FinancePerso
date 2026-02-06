@@ -64,8 +64,8 @@ def render_explorer_header(
     col1, col2 = st.columns([6, 1])
     
     with col1:
-        st.title(f"{icon} {explorer_value}")
-        st.markdown(f"Exploration par **{label}** • {from_page.replace('.py', '').replace('_', ' ')}")
+        st.header(f"{icon} {explorer_value}")
+        st.caption(f"Exploration par {label}")
     
     with col2:
         render_back_button(from_page)

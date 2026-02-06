@@ -154,3 +154,9 @@ def get_audit_stats() -> Dict[str, int]:
         'hidden': len(hidden),
         'pending': max(0, pending)
     }
+
+
+def switch_to_tab(tab_name: str):
+    """Switch to specified tab using query params."""
+    st.query_params['tab'] = tab_name
+    st.rerun()

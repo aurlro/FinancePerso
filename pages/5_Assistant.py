@@ -10,7 +10,7 @@ Page refactorisée avec architecture propre :
 import streamlit as st
 from modules.ui import load_css, render_scroll_to_top
 from modules.db.migrations import init_db
-from modules.ui.assistant.state import init_assistant_state
+from modules.ui.assistant.state import init_assistant_state, switch_to_tab
 
 # Page config
 st.set_page_config(
@@ -23,12 +23,6 @@ st.set_page_config(
 load_css()
 init_db()
 init_assistant_state()
-
-# Helper function for tab switching (définie avant utilisation)
-def switch_to_tab(tab_name: str):
-    """Switch to specified tab using query params."""
-    st.query_params['tab'] = tab_name
-    st.rerun()
 
 # Title
 st.title("🤖 Assistant IA")

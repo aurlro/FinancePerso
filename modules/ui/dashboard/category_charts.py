@@ -40,7 +40,7 @@ def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> 
 
 def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
     """
-    Render horizontal bar chart of expenses by category.
+    Render horizontal bar chart of expenses by category with clickable buttons.
     
     Args:
         df_current: Current period transactions
@@ -55,7 +55,7 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
         return
     
     # Group by category and sum
-    df_cat_sum = df_exp.groupby('Catégorie')['amount'].sum().reset_index()
+    df_cat_sum = df_exp.groupby(['Catégorie', 'raw_cat'])['amount'].sum().reset_index()
     df_cat_sum = df_cat_sum.sort_values('amount', ascending=True)
     
     # Create bar chart
@@ -74,6 +74,35 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
     )
     
     st.plotly_chart(fig_cat, use_container_width=True)
+    
+    # Clickable category buttons
+    st.caption("🔍 Cliquez sur une catégorie pour voir le détail des opérations :")
+    
+    # Import explorer launcher
+    from modules.ui.explorer import launch_explorer
+    
+    # Create buttons in rows of 4
+    categories_sorted = df_cat_sum.sort_values('amount', ascending=False)
+    num_cols = 4
+    
+    for i in range(0, len(categories_sorted), num_cols):
+        cols = st.columns(num_cols)
+        for j, col in enumerate(cols):
+            idx = i + j
+            if idx < len(categories_sorted):
+                row = categories_sorted.iloc[idx]
+                raw_cat = row['raw_cat']
+                display_cat = row['Catégorie']
+                amount = row['amount']
+                
+                with col:
+                    if st.button(
+                        f"{display_cat}\n{amount:,.0f} €",
+                        key=f"cat_btn_{raw_cat}_{idx}",
+                        use_container_width=True
+                    ):
+                        launch_explorer('category', raw_cat, '6_Explorer')
+
 
 def render_category_pie_chart(df_current: pd.DataFrame, cat_emoji_map: dict, 
                               title: str = "Répartition des Dépenses"):

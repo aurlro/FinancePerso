@@ -18,10 +18,10 @@ def launch_explorer(
         value: Category or tag value to explore
         from_page: Page to return to (for back button)
     """
-    # Set query params
-    st.query_params['type'] = explorer_type
-    st.query_params['value'] = value
-    st.query_params['from'] = from_page
+    # Store params in session state (older Streamlit workaround)
+    st.session_state['_explorer_type'] = explorer_type
+    st.session_state['_explorer_value'] = value
+    st.session_state['_explorer_from'] = from_page
     
     # Navigate
     st.switch_page("pages/6_Explorer.py")
