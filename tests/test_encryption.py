@@ -13,6 +13,17 @@ from modules.encryption import (
 )
 
 
+@pytest.fixture(autouse=True)
+def reset_encryption_singleton():
+    """Reset the encryption singleton before each encryption test."""
+    # Reset the singleton instance before test
+    import modules.encryption as enc_module
+    enc_module._encryption_instance = None
+    yield
+    # Reset again after test to clean up
+    enc_module._encryption_instance = None
+
+
 class TestFieldEncryption:
     """Test FieldEncryption class."""
     
