@@ -9,6 +9,24 @@ import tempfile
 import streamlit as st
 from datetime import datetime, date
 
+
+@pytest.fixture(autouse=True)
+def reset_encryption_singleton():
+    """
+    Reset the encryption singleton before each test.
+    This ensures tests don't interfere with each other via the global
+    encryption instance, especially when testing with/without ENCRYPTION_KEY.
+    """
+    # Reset the singleton instance before test
+    import modules.encryption as enc_module
+    original_instance = enc_module._encryption_instance
+    enc_module._encryption_instance = None
+    
+    yield
+    
+    # Reset again after test to clean up
+    enc_module._encryption_instance = None
+
 @pytest.fixture
 def temp_db():
     """
