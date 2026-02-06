@@ -10,6 +10,7 @@ from modules.db.transactions import get_all_transactions
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories
 from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 import json
@@ -37,8 +38,8 @@ def get_spending_history(category: str = None, months: int = 3) -> dict:
     df['date_dt'] = pd.to_datetime(df['date'])
     df_period = df[df['date_dt'].dt.date >= start_date].copy()
     
-    # Filter expenses
-    df_exp = df_period[df_period['amount'] < 0].copy()
+    # Filter expenses using categories (not amount sign!)
+    df_exp = filter_expense_transactions(df_period).copy()
     
     # Filter by category
     if category:
@@ -74,7 +75,8 @@ def get_expenses_by_category(category: str = None, month: str = None) -> dict:
         Dict with total and transaction count
     """
     df = get_all_transactions()
-    df_exp = df[df['amount'] < 0].copy()
+    # Use categories to filter expenses, not amount sign
+    df_exp = filter_expense_transactions(df).copy()
     
     if month:
         df_exp['date_dt'] = pd.to_datetime(df_exp['date'])
@@ -123,7 +125,12 @@ def get_budget_status(category: str = None) -> dict:
         
         df['date_dt'] = pd.to_datetime(df['date'])
         df_month = df[df['date_dt'].dt.strftime('%Y-%m') == month_str]
-        df_cat = df_month[(df_month['category_validated'] == category) & (df_month['amount'] < 0)]
+        # Filter by category (all transactions in expense category, not just amount < 0)
+        from modules.transaction_types import is_expense_category
+        df_cat = df_month[
+            (df_month['category_validated'] == category) & 
+            (df_month['category_validated'].apply(is_expense_category))
+        ]
         
         spent = abs(df_cat['amount'].sum())
         remaining = budget_amt - spent
@@ -156,7 +163,8 @@ def get_top_expenses(month: str = None, limit: int = 5) -> list:
         List of top expense dicts
     """
     df = get_all_transactions()
-    df_exp = df[df['amount'] < 0].copy()
+    # Filter expenses using categories (not amount sign!)
+    df_exp = filter_expense_transactions(df).copy()
     
     if month:
         df_exp['date_dt'] = pd.to_datetime(df_exp['date'])

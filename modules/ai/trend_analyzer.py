@@ -5,6 +5,7 @@ Identifies changes in financial behavior by comparing periods.
 """
 import pandas as pd
 from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 def analyze_spending_trends(df_current: pd.DataFrame, df_previous: pd.DataFrame, 
@@ -58,9 +59,9 @@ def analyze_spending_trends(df_current: pd.DataFrame, df_previous: pd.DataFrame,
     
     insights = []
     
-    # Prepare expense data
+    # Prepare expense data using categories (not amount sign!)
     def prepare_expenses(df):
-        df_exp = df[df['amount'] < 0].copy()
+        df_exp = filter_expense_transactions(df).copy()
         df_exp['abs_amount'] = df_exp['amount'].abs()
         df_exp['cat'] = df_exp.apply(
             lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' 
@@ -180,7 +181,7 @@ def get_top_categories_comparison(df_current: pd.DataFrame, df_previous: pd.Data
         DataFrame with columns: category, current, previous, change_pct
     """
     def get_top_cats(df):
-        df_exp = df[df['amount'] < 0].copy()
+        df_exp = filter_expense_transactions(df).copy()
         df_exp['abs_amount'] = df_exp['amount'].abs()
         df_exp['cat'] = df_exp.apply(
             lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' 

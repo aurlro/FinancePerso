@@ -70,16 +70,11 @@ class CategoryInsightsEngine:
         if self.df.empty:
             return insights
         
-        # Filtrer les données de cette catégorie
-        cat_history = self.df[
-            (self.df['category_validated'] == category) & 
-            (self.df['amount'] < 0)
-        ].copy()
+        # Filtrer les données de cette catégorie (toutes les transactions, pas seulement amount < 0)
+        # Un remboursement (amount > 0) dans une catégorie de dépense doit être inclus
+        cat_history = self.df[self.df['category_validated'] == category].copy()
         
-        cat_current = current_month_df[
-            (current_month_df['category_validated'] == category) & 
-            (current_month_df['amount'] < 0)
-        ].copy()
+        cat_current = current_month_df[current_month_df['category_validated'] == category].copy()
         
         if cat_history.empty or cat_current.empty:
             return insights
@@ -270,9 +265,11 @@ class CategoryInsightsEngine:
         if current_month_df.empty or 'category_validated' not in current_month_df.columns:
             return all_insights
         
+        # Obtenir les catégories uniques (sans filtrer par amount, car une catégorie de dépense
+        # peut avoir des remboursements avec amount > 0)
+        from modules.transaction_types import is_expense_category
         categories = current_month_df[
-            (current_month_df['amount'] < 0) & 
-            (current_month_df['category_validated'].notna())
+            current_month_df['category_validated'].apply(is_expense_category)
         ]['category_validated'].unique()
         
         for category in categories:
@@ -301,15 +298,10 @@ class CategoryInsightsEngine:
         """
         anomalies = []
         
-        cat_history = self.df[
-            (self.df['category_validated'] == category) & 
-            (self.df['amount'] < 0)
-        ].copy()
+        # Inclure toutes les transactions de la catégorie (pas seulement amount < 0)
+        cat_history = self.df[self.df['category_validated'] == category].copy()
         
-        cat_current = current_month_df[
-            (current_month_df['category_validated'] == category) & 
-            (current_month_df['amount'] < 0)
-        ].copy()
+        cat_current = current_month_df[current_month_df['category_validated'] == category].copy()
         
         if cat_history.empty or cat_current.empty:
             return anomalies

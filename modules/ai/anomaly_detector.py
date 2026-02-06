@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from modules.utils import clean_label
 from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> list:
@@ -33,8 +34,8 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
     if df.empty:
         return []
     
-    # Work only with expenses (negative amounts) and non-ignored ones
-    df_exp = df[df['amount'] < 0].copy()
+    # Work only with expense categories (not based on amount sign!)
+    df_exp = filter_expense_transactions(df).copy()
     
     # Exclude transactions with 'ignore_anomaly' tag
     if 'tags' in df_exp.columns:

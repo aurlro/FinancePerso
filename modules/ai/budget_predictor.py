@@ -7,6 +7,7 @@ import pandas as pd
 import datetime
 import calendar
 from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 def predict_budget_overruns(df_month: pd.DataFrame, budgets: pd.DataFrame) -> list:
@@ -44,8 +45,8 @@ def predict_budget_overruns(df_month: pd.DataFrame, budgets: pd.DataFrame) -> li
     if days_passed == 0:
         return []
     
-    # Prepare expense data
-    df_exp = df_month[df_month['amount'] < 0].copy()
+    # Prepare expense data using categories (not amount sign!)
+    df_exp = filter_expense_transactions(df_month).copy()
     df_exp['abs_amount'] = df_exp['amount'].abs()
     
     # Get category from validated or original
