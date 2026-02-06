@@ -77,7 +77,6 @@ class TestFieldEncryption:
         enc_with_key = FieldEncryption("test_key")
         assert enc_with_key.is_enabled()
     
-    @pytest.mark.skip(reason="TODO: Fix CI environment issue with ENCRYPTION_KEY")
     def test_is_enabled_without_key(self):
         """Test is_enabled returns False when no key is provided."""
         # Save current env state
