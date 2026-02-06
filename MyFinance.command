@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Script de lancement et d'installation pour MyFinance Companion
-# Ce script détecte si l'application est installée et l'installe si nécessaire
+# Script de lancement intelligent pour MyFinance Companion
+# Détecte si l'app est déjà installée et ne réinstalle que si nécessaire
 
 # Configuration
 PROJECT_DIR="/Users/aurelien/Documents/Projets/FinancePerso"
@@ -16,7 +16,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  MyFinance Companion - Installation et Lancement${NC}"
+echo -e "${BLUE}  MyFinance Companion${NC}"
 echo -e "${BLUE}══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
@@ -27,110 +27,100 @@ cd "$PROJECT_DIR" || {
     exit 1
 }
 
-echo -e "📂 Dossier du projet : $(pwd)"
-echo ""
-
 # 2. Détecter Python 3
-echo -e "${BLUE}🔍 Vérification de Python 3...${NC}"
 if command -v python3 &> /dev/null; then
     PYTHON_CMD=python3
 elif command -v python &> /dev/null; then
     PYTHON_CMD=python
 else
-    echo -e "${RED}❌ Erreur : Python 3 n'est pas installé.${NC}"
-    echo -e "${YELLOW}💡 Veuillez installer Python 3 depuis https://www.python.org/downloads/${NC}"
+    echo -e "${RED}❌ Python 3 n'est pas installé.${NC}"
+    echo -e "${YELLOW}💡 https://www.python.org/downloads/${NC}"
     read -p "Appuyez sur Entrée pour quitter..."
     exit 1
 fi
 
-PYTHON_VERSION=$($PYTHON_CMD --version 2>&1)
-echo -e "${GREEN}✅ $PYTHON_VERSION détecté${NC}"
+# 3. FONCTION CLÉ : Vérifier si on peut déjà lancer l'app
+check_if_ready() {
+    # Vérifier si streamlit est disponible (globalement ou via un venv existant)
+    if $PYTHON_CMD -c "import streamlit" 2>/dev/null; then
+        return 0  # Prêt !
+    fi
+    
+    # Vérifier si un venv existe et contient streamlit
+    if [ -d "$VENV_DIR" ]; then
+        if "$VENV_DIR/bin/python" -c "import streamlit" 2>/dev/null; then
+            return 0  # Prêt via venv existant !
+        fi
+    fi
+    
+    return 1  # Pas prêt, besoin d'installation
+}
+
+# 4. Si tout est prêt, lancer directement !
+if check_if_ready; then
+    echo -e "${GREEN}✅ Application détectée, lancement rapide...${NC}"
+    echo ""
+    
+    # Si le venv existe et a streamlit, l'utiliser
+    if [ -d "$VENV_DIR" ] && "$VENV_DIR/bin/python" -c "import streamlit" 2>/dev/null; then
+        source "$VENV_DIR/bin/activate"
+    fi
+    
+    echo -e "${GREEN}🚀 Lancement de MyFinance Companion...${NC}"
+    echo ""
+    $PYTHON_CMD -m streamlit run app.py
+    
+    echo ""
+    read -p "Appuyez sur Entrée pour fermer..."
+    exit 0
+fi
+
+# 5. Sinon, procéder à l'installation
+echo -e "${YELLOW}⚠️  Application non détectée ou installation incomplète${NC}"
+echo -e "${BLUE}📦 Démarrage de l'installation...${NC}"
 echo ""
 
-# 3. Vérifier si l'environnement virtuel existe
+# Créer l'environnement virtuel s'il n'existe pas
 if [ ! -d "$VENV_DIR" ]; then
-    echo -e "${YELLOW}⚠️  Environnement virtuel non trouvé à : $VENV_DIR${NC}"
     echo -e "${BLUE}📦 Création de l'environnement virtuel...${NC}"
-    
     $PYTHON_CMD -m venv "$VENV_DIR" || {
-        echo -e "${RED}❌ Erreur lors de la création de l'environnement virtuel${NC}"
-        echo -e "${YELLOW}💡 Essayez de lancer : $PYTHON_CMD -m pip install --user virtualenv${NC}"
+        echo -e "${RED}❌ Erreur lors de la création du venv${NC}"
         read -p "Appuyez sur Entrée pour quitter..."
         exit 1
     }
-    
-    echo -e "${GREEN}✅ Environnement virtuel créé${NC}"
+    echo -e "${GREEN}✅ Environnement créé${NC}"
     echo ""
 fi
 
-# 4. Activer l'environnement virtuel
-echo -e "${BLUE}🔄 Activation de l'environnement virtuel...${NC}"
-source "$VENV_DIR/bin/activate" || {
-    echo -e "${RED}❌ Erreur : Impossible d'activer l'environnement virtuel${NC}"
+# Activer l'environnement
+source "$VENV_DIR/bin/activate"
+
+# Installer les dépendances
+echo -e "${BLUE}📦 Installation des dépendances...${NC}"
+echo -e "${YELLOW}⏳ Cela peut prendre quelques minutes (une seule fois)...${NC}"
+echo ""
+
+pip install --upgrade pip -q
+pip install -r "$REQUIREMENTS_FILE" || {
+    echo -e "${RED}❌ Erreur lors de l'installation${NC}"
     read -p "Appuyez sur Entrée pour quitter..."
     exit 1
 }
-echo -e "${GREEN}✅ Environnement virtuel activé${NC}"
-echo ""
-
-# 5. Vérifier si les dépendances sont installées
-echo -e "${BLUE}🔍 Vérification des dépendances...${NC}"
-
-# Vérifier si streamlit est installé
-if ! $PYTHON_CMD -c "import streamlit" 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  Dépendances non installées${NC}"
-    
-    if [ -f "$REQUIREMENTS_FILE" ]; then
-        echo -e "${BLUE}📦 Installation des dépendances depuis requirements.txt...${NC}"
-        echo -e "${YELLOW}⏳ Cette opération peut prendre quelques minutes...${NC}"
-        echo ""
-        
-        pip install --upgrade pip
-        pip install -r "$REQUIREMENTS_FILE" || {
-            echo -e "${RED}❌ Erreur lors de l'installation des dépendances${NC}"
-            read -p "Appuyez sur Entrée pour quitter..."
-            exit 1
-        }
-        
-        echo ""
-        echo -e "${GREEN}✅ Dépendances installées avec succès${NC}"
-    else
-        echo -e "${RED}❌ Fichier requirements.txt non trouvé${NC}"
-        read -p "Appuyez sur Entrée pour quitter..."
-        exit 1
-    fi
-else
-    echo -e "${GREEN}✅ Dépendances déjà installées${NC}"
-fi
 
 echo ""
+echo -e "${GREEN}✅ Installation terminée !${NC}"
+echo ""
 
-# 6. Vérifier le fichier .env
-echo -e "${BLUE}🔍 Vérification de la configuration...${NC}"
+# Créer .env si nécessaire
 if [ ! -f "$PROJECT_DIR/.env" ] && [ -f "$PROJECT_DIR/.env.example" ]; then
-    echo -e "${YELLOW}⚠️  Fichier .env non trouvé, création depuis .env.example...${NC}"
     cp "$PROJECT_DIR/.env.example" "$PROJECT_DIR/.env"
-    echo -e "${GREEN}✅ Fichier .env créé${NC}"
-    echo -e "${YELLOW}💡 Vous pouvez modifier ce fichier pour configurer vos clés API${NC}"
-else
-    echo -e "${GREEN}✅ Configuration OK${NC}"
+    echo -e "${GREEN}✅ Configuration créée${NC}"
 fi
 
+# Lancer
+echo -e "${GREEN}🚀 Lancement de MyFinance Companion...${NC}"
 echo ""
-echo -e "${GREEN}══════════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  🚀 Lancement de MyFinance Companion...${NC}"
-echo -e "${GREEN}══════════════════════════════════════════════════════════════${NC}"
-echo ""
+$PYTHON_CMD -m streamlit run app.py
 
-# 7. Lancer l'application
-$PYTHON_CMD -m streamlit run app.py || {
-    echo ""
-    echo -e "${RED}❌ L'application s'est arrêtée avec une erreur${NC}"
-    read -p "Appuyez sur Entrée pour fermer..."
-    exit 1
-}
-
-# 8. En cas d'arrêt normal
 echo ""
-echo -e "${BLUE}👋 Application arrêtée${NC}"
-read -p "Appuyez sur Entrée pour fermer cette fenêtre..."
+read -p "Appuyez sur Entrée pour fermer..."
