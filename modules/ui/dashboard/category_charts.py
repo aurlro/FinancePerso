@@ -145,9 +145,9 @@ def _prepare_monthly_stacked_data(df: pd.DataFrame, cat_emoji_map: dict) -> pd.D
     if df.empty:
         return pd.DataFrame()
     
-    # date_dt est déjà présent depuis la page principale
-    exclude_cats = ['Revenus', 'Virement Interne', 'Hors Budget']
-    df_monthly = df[(df['amount'] < 0) & (~df['category_validated'].isin(exclude_cats))].copy()
+    # Utiliser les catégories pour filtrer les dépenses (pas le signe du montant!)
+    # Un remboursement (montant positif) dans une catégorie de dépense doit être inclus
+    df_monthly = filter_expense_transactions(df).copy()
     
     if df_monthly.empty:
         return pd.DataFrame()

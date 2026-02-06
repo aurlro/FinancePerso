@@ -4,6 +4,12 @@ import datetime
 import calendar
 from modules.ui import card_kpi
 from modules.categorization import generate_financial_report
+from modules.transaction_types import (
+    filter_expense_transactions,
+    filter_income_transactions,
+    calculate_true_income,
+    calculate_true_expenses
+)
 
 def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_months: list, 
                                fixed_categories: list):
@@ -35,9 +41,9 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
         st.info("Aucune donnée pour le mois en cours pour les prévisions.")
         return
     
-    # Prepare expense data
-    df_m_exp = df_month[df_month['amount'] < 0].copy()
-    df_m_exp['amount'] = df_m_exp['amount'].abs()
+    # Prepare expense data using categories (not amount sign!)
+    df_m_exp = filter_expense_transactions(df_month).copy()
+    df_m_exp['amount'] = df_m_exp['amount'].abs()  # Take absolute for display
     df_m_exp['raw_cat'] = df_m_exp.apply(
         lambda x: x['category_validated'] if x['category_validated'] != 'Inconnu' else (x['original_category'] or "Inconnu"), 
         axis=1
@@ -46,7 +52,9 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
     
     exp_fixed = df_m_exp[df_m_exp['type'] == 'Fixe']['amount'].sum()
     exp_var = df_m_exp[df_m_exp['type'] == 'Variable']['amount'].sum()
-    income = df_month[df_month['amount'] > 0]['amount'].sum()
+    
+    # Income using categories (not amount sign!)
+    income = calculate_true_income(df_month, include_refunds=False)
     
     if days_passed > 0:
         # Calcul intelligent: moyenne sur jours avec dépenses UNIQUEMENT
@@ -160,8 +168,8 @@ def render_month_end_forecast(df: pd.DataFrame, selected_years: list, selected_m
                         (df['date_dt'].dt.month == prev_month.month)].copy()
             
             if not df_prev.empty:
-                prev_exp = abs(df_prev[df_prev['amount'] < 0]['amount'].sum())
-                prev_inc = df_prev[df_prev['amount'] > 0]['amount'].sum()
+                prev_exp = calculate_true_expenses(df_prev, include_refunds=True)
+                prev_inc = calculate_true_income(df_prev, include_refunds=False)
                 prev_bal = prev_inc - prev_exp
                 
                 evolution = ((current_balance - prev_bal) / abs(prev_bal) * 100) if prev_bal != 0 else 0
@@ -192,20 +200,20 @@ def render_ai_financial_report(df_current: pd.DataFrame, df_prev: pd.DataFrame,
         st.info("Sélectionnez une période avec des données pour générer un rapport.")
         return
     
-    # 1. Current Period Stats (from df_current)
-    cur_inc = df_current[df_current['amount'] > 0]['amount'].sum()
-    cur_exp_val = abs(df_current[df_current['amount'] < 0]['amount'].sum())
-    cur_top_cat = df_current[df_current['amount'] < 0].groupby('category_validated')['amount'].sum().abs().nlargest(3).to_dict()
+    # 1. Current Period Stats (from df_current) - using categories not amount sign
+    cur_inc = calculate_true_income(df_current, include_refunds=False)
+    cur_exp_val = calculate_true_expenses(df_current, include_refunds=True)
+    cur_top_cat = filter_expense_transactions(df_current).groupby('category_validated')['amount'].sum().abs().nlargest(3).to_dict()
     
     # 2. Previous Period Stats (from df_prev)
-    prev_exp_val = abs(df_prev[df_prev['amount'] < 0]['amount'].sum()) if not df_prev.empty else 0
+    prev_exp_val = calculate_true_expenses(df_prev, include_refunds=True) if not df_prev.empty else 0
     
     # 3. YTD context (all data for the latest year in selection)
     latest_year = max(selected_years) if selected_years else datetime.date.today().year
     # date_dt est déjà présent depuis la page principale (cache)
     df_ytd = df[df['date_dt'].dt.year == latest_year]
-    ytd_inc = df_ytd[df_ytd['amount'] > 0]['amount'].sum()
-    ytd_exp = abs(df_ytd[df_ytd['amount'] < 0]['amount'].sum())
+    ytd_inc = calculate_true_income(df_ytd, include_refunds=False)
+    ytd_exp = calculate_true_expenses(df_ytd, include_refunds=True)
     ytd_sav = ytd_inc - ytd_exp
 
     stats_payload = {
