@@ -116,6 +116,34 @@ def set_internal_transfer_targets(targets: List[str]) -> bool:
     )
 
 
+def get_internal_transfer_keywords() -> List[str]:
+    """Get the keywords that identify a transaction as a transfer (e.g. VIR, VRT)."""
+    val = get_setting("internal_transfer_keywords", "VIR,VIREMENT,VRT,PIVOT,MOUVEMENT,TRANSFERT")
+    return [t.strip().upper() for t in val.split(",") if t.strip()]
+
+
+def set_internal_transfer_keywords(keywords: List[str]) -> bool:
+    """Set the keywords that identify a transaction as a transfer."""
+    val = ",".join([t.strip().upper() for t in keywords if t.strip()])
+    return set_setting("internal_transfer_keywords", val, "Mots-clés d'identification des virements (VIR, VRT, etc.)")
+
+
+def get_verified_transfer_labels() -> List[str]:
+    """Get the list of verified labels that are known to be correct as internal transfers."""
+    val = get_setting("internal_transfer_verified_labels", "")
+    return [t.strip() for t in val.split("|") if t.strip()] # Use | as separator to allow commas in labels
+
+
+def add_verified_transfer_label(label: str) -> bool:
+    """Add a label to the whitelist of verified internal transfers."""
+    current = get_verified_transfer_labels()
+    if label in current:
+        return True
+    current.append(label)
+    val = "|".join(current)
+    return set_setting("internal_transfer_verified_labels", val, "Liste blanche des libellés de virement vérifiés")
+
+
 def get_all_settings() -> dict:
     """
     Get all settings from the database.

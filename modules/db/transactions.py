@@ -6,7 +6,7 @@ import uuid
 import pandas as pd
 import streamlit as st
 from modules.db.connection import get_db_connection, build_filter_clause, clear_db_cache
-from modules.db.members import get_member_mappings
+from modules.db.members import get_member_mappings, detect_member_from_content
 from modules.logger import logger
 
 
@@ -54,6 +54,11 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
     """
     if df.empty:
         return 0, 0
+
+    # Ensure tx_hash exists (Magic Fix 5.1 Enhancement for robust deduplication)
+    if 'tx_hash' not in df.columns or df['tx_hash'].isna().any():
+        from modules.ingestion import generate_tx_hash
+        df = generate_tx_hash(df)
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -124,10 +129,15 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
                     if 'date_str' in row_dict:
                         del row_dict['date_str']
 
-                    # Apply member mapping if card suffix exists
-                    suffix = row_dict.get('card_suffix')
-                    if suffix and suffix in card_maps:
-                        row_dict['member'] = card_maps[suffix]
+                    # Apply member mapping (Smart Detection) - ONLY if not provided or Inconnu
+                    if row_dict.get('member') in [None, '', 'Inconnu']:
+                        suffix = row_dict.get('card_suffix')
+                        account = row_dict.get('account_label')
+                        row_dict['member'] = detect_member_from_content(
+                            label=row_dict['label'],
+                            card_suffix=suffix,
+                            account_label=account
+                        )
 
                     # Store column order on first row
                     if insert_columns is None:
@@ -155,21 +165,31 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
 def apply_member_mappings_to_pending() -> int:
     """
-    Update all pending transactions based on current member mappings.
+    Update all pending transactions based on current smart member detection logic.
     
     Returns:
         Number of transactions updated
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        card_maps = get_member_mappings()
+        
+        # Fetch all pending transactions
+        cursor.execute("SELECT id, label, card_suffix, account_label, member FROM transactions WHERE status = 'pending'")
+        rows = cursor.fetchall()
+        
         count = 0
-        for suffix, member in card_maps.items():
-            cursor.execute(
-                "UPDATE transactions SET member = ? WHERE card_suffix = ? AND status = 'pending'",
-                (member, suffix)
-            )
-            count += cursor.rowcount
+        for tx_id, label, suffix, account, current_member in rows:
+            detected_member = detect_member_from_content(label, suffix, account)
+            
+            # Only update if changed and not previously set to something else than Inconnu
+            # unless forced? Let's say we update if it was Inconnu or starts with "Carte "
+            if detected_member != current_member and (current_member == "Inconnu" or str(current_member).startswith("Carte ")):
+                cursor.execute(
+                    "UPDATE transactions SET member = ? WHERE id = ?",
+                    (detected_member, tx_id)
+                )
+                count += 1
+                
         conn.commit()
         return count
 

@@ -6,6 +6,84 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.0.0] - 2026-02-06
+
+### Nouvelles fonctionnalités - 19 ajouts
+
+**✨ Ajouté**
+- - feat: implement offline mode for categorization, redesign the evolution chart, and reorganize project structure with new tests and scripts.
+- - feat: Implement clickable category buttons in the dashboard to launch the explorer, refactoring parameter passing to use session state.
+- - feat: Introduce new UI components for validation, including avatar and chip selectors, and refactor the notification system to V2.
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+- - fix: correction vue d'ensemble vide - ajout fallback et messages
+- - feat: Update project to version 4.1.0, incorporating new features, bug fixes, and performance enhancements.
+- - feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+- - ✨ feat: Amélioration UI/UX et feedback - Configuration
+- - ✨ feat: ML Local, Mobile Responsive & PWA Mode Hors-ligne
+- - ✨ Système de mise à jour complet - v3.6.0
+- - ✨ feat: Add scroll-to-top button on all pages
+- - ✨ feat: Add comprehensive visual feedback system and quick actions popups
+- - feat: Implement enhanced audit functionality with bulk actions, filtering, and a new analytics module.
+- - perf: Add database pagination, composite indexes, and selective cache invalidation
+- - feat: Add comprehensive input validation and security utilities
+- - Add versionning and a new logic to present commits
+- - feat: Implement `st.toast` for user feedback, refactor tag suggestion UI, and enhance rules auditor with stale rule detection and health scoring.
+
+**🐛 Corrigé**
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+- - fix: déplacement de switch_to_tab avant son utilisation
+- - fix: correction clés dupliquées dans explorer_filters
+- - fix: correction import update_budget → set_budget
+- - fix: amélioration scroll-to-top et graphique évolution mensuelle
+- - fix: correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+- - 🐛 fix: Système de logs - fichier et viewer
+- - 🔧 fix: Audit corrections - version sync, cleanup, docs
+- - 🔧 fix: Improve email notification error handling and user feedback
+- - fix: Correct cache invalidation import errors
+- - chore: Critical code cleanup - remove dead code and fix bugs
+- - security: Fix critical security issues and improve error handling
+
+**⚡ Performance**
+- - 🔒 Implémentation complète : Chiffrement, Cache, Validateurs - v3.5.0
+- - 🔒 Sécurité & Optimisation: Refactorisation majeure v3.2.0
+- - perf: Critical business logic optimizations (90-95% faster)
+- - refactor: Phase 2 - Code cleanup and optimization
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, README.md, app.py, assets/offline.html, assets/pwa.js, assets/service-worker.js, assets/style.css, docs/ARCHITECTURE_EXPLORER.md, docs/ASSISTANT_UX_WIREFRAME.md, docs/AUDIT_COHERENCE_360.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, docs/AUDIT_FIXES_SUMMARY.md, docs/AUDIT_REVENUS_DEPENSES.md, docs/CHANGEMENTS_REVENUS_DEPENSES.md, docs/COMPLETE_AUDIT_REPORT.md, docs/DASHBOARD_CLEANUP_GUIDE.md, docs/EMAIL_TROUBLESHOOTING.md, docs/EXPLORER_INTEGRATION.md, docs/FINAL_AUDIT_SUMMARY.md, docs/FINAL_CORRECTIONS_REPORT.md, docs/FIX_WIDGETTYPE_V2.md, docs/FIX_WIDGET_ERROR.md, docs/GUIDE_UTILISATEUR.md, docs/INDISPENSABILITY_UPGRADES.md, docs/N1_FIX_PLAN.md, docs/NEW_FEATURES.md, docs/ROADMAP.md, docs/STABILIZATION_PLAN.md, docs/TRANSACTION_TYPES_GUIDE.md, docs/ULTIMATE_FINAL_REPORT.md, docs/UX_IMPROVEMENTS.md, docs/WIDGETS_STATE_FIXES.md, docs/audit_budgets_ux_archi.md, docs/audit_report.md, docs/gemini.md, modules/ai/audit_engine.py, modules/ai/category_insights.py, modules/ai/rules_auditor.py, modules/ai_manager.py, modules/analytics.py, modules/analytics_constants.py, modules/analytics_v2.py, modules/budgets_dynamic.py, modules/cache_manager.py, modules/cache_multitier.py, modules/categorization.py, modules/constants.py, modules/data_manager_OLD_BACKUP.py, modules/db/audit.py, modules/db/categories.py, modules/db/connection.py, modules/db/dashboard_cleanup.py, modules/db/dashboard_layouts.py, modules/db/members.py, modules/db/migrations.py, modules/db/recurrence_feedback.py, modules/db/rules.py, modules/db/settings.py, modules/db/stats.py, modules/db/tags.py, modules/db/transactions.py, modules/db/transactions_batch.py, modules/encryption.py, modules/error_tracking.py, modules/exceptions.py, modules/feature_flags.py, modules/gamification.py, modules/impact_analyzer.py, modules/import_analyzer.py, modules/ingestion.py, modules/local_ml.py, modules/logger.py, modules/notifications.py, modules/notifications_realtime.py, modules/onboarding.py, modules/performance_monitor.py, modules/transaction_types.py, modules/ui/__init__.py, modules/ui/assistant/__init__.py, modules/ui/assistant/analytics_tab.py, modules/ui/assistant/audit_tab.py, modules/ui/assistant/components.py, modules/ui/assistant/config_tab.py, modules/ui/assistant/dashboard_tab.py, modules/ui/assistant/state.py, modules/ui/changelog_parser.py, modules/ui/components/__init__.py, modules/ui/components/avatar_selector.py, modules/ui/components/chip_selector.py, modules/ui/components/daily_widget.py, modules/ui/components/local_ml_manager.py, modules/ui/components/onboarding_modal.py, modules/ui/components/quick_actions.py, modules/ui/components/smart_actions.py, modules/ui/components/tag_manager.py, modules/ui/components/tag_selector_compact.py, modules/ui/components/tag_selector_smart.py, modules/ui/components/transaction_diagnostic.py, modules/ui/components/transaction_drill_down.py, modules/ui/config/api_settings.py, modules/ui/config/audit_tools.py, modules/ui/config/backup_restore.py, modules/ui/config/category_management.py, modules/ui/config/config_dashboard.py, modules/ui/config/config_mode.py, modules/ui/config/data_operations.py, modules/ui/config/log_viewer.py, modules/ui/config/member_management.py, modules/ui/config/notifications.py, modules/ui/config/tags_rules.py, modules/ui/dashboard/ai_insights.py, modules/ui/dashboard/budget_tracker.py, modules/ui/dashboard/category_charts.py, modules/ui/dashboard/customizable_dashboard.py, modules/ui/dashboard/evolution_chart.py, modules/ui/dashboard/filters.py, modules/ui/dashboard/kpi_cards.py, modules/ui/dashboard/sections.py, modules/ui/dashboard/smart_recommendations.py, modules/ui/dashboard/top_expenses.py, modules/ui/enhanced_feedback.py, modules/ui/explorer/__init__.py, modules/ui/explorer/explorer_filters.py, modules/ui/explorer/explorer_launcher.py, modules/ui/explorer/explorer_main.py, modules/ui/explorer/explorer_results.py, modules/ui/feedback.py, modules/ui/global_search.py, modules/ui/notifications/README.md, modules/ui/notifications/__init__.py, modules/ui/notifications/center.py, modules/ui/notifications/components.py, modules/ui/notifications/manager.py, modules/ui/notifications/types.py, modules/ui/recurrence_manager.py, modules/ui/recurrence_tabs.py, modules/ui/rules/__init__.py, modules/ui/rules/budget_manager.py, modules/ui/rules/rule_audit.py, modules/ui/rules/rule_manager.py, modules/ui/rules/rule_validator.py, modules/ui/styles/global.css, modules/ui/validation/row_view.py, modules/update_manager.py, modules/utils.py, modules/validators.py, pages/12_Recherche.py, pages/1_Import.py, pages/2_Validation.py, pages/3_Synthese.py, pages/4_Recurrence.py, pages/4_Regles.py, pages/5_Assistant.py, pages/6_Explorer.py, pages/98_Tests.py, pages/99_Debug.py, pages/99_Notifications.py, pages/9_Configuration.py, requirements-ml.txt, requirements.txt, scripts/audit_codebase.py, scripts/budget_redesign_prototype.py, scripts/cleanup_backups.py, scripts/cleanup_duplicates.py, scripts/fix_dashboard_layouts.py, scripts/migrate_to_logging.py, scripts/profile_db.py, scripts/repair_hashes.py, scripts/versioning.py, tests/conftest.py, tests/conftest_enhanced.py, tests/db/test_categories.py, tests/db/test_rules.py, tests/db/test_stats.py, tests/test_cache_multitier.py, tests/test_components.py, tests/test_customizable_dashboard.py, tests/test_data_integrity.py, tests/test_email.py, tests/test_encryption.py, tests/test_global_search.py, tests/test_integration.py, tests/test_notifications.py, tests/test_onboarding.py, tests/test_update_manager.py, tests/test_validators.py, tests/ui/test_kpi_cards.py, tests/ui/test_ui_redesign.py, tests/unit/test_cleanup_backups.py, tests/unit/test_transaction_types.py
+
+---
+
+## [4.2.2] - 2026-02-06
+
+### Nouvelles fonctionnalités - 9 ajouts
+
+**✨ Ajouté**
+- - feat: implement offline mode for categorization, redesign the evolution chart, and reorganize project structure with new tests and scripts.
+- - feat: Implement clickable category buttons in the dashboard to launch the explorer, refactoring parameter passing to use session state.
+- - feat: Introduce new UI components for validation, including avatar and chip selectors, and refactor the notification system to V2.
+- - feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+- - fix: correction vue d'ensemble vide - ajout fallback et messages
+- - feat: Update project to version 4.1.0, incorporating new features, bug fixes, and performance enhancements.
+- - feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - feat: Implement comprehensive UI/UX redesign, introduce gamification and enhanced feedback, and update core database modules for improved tag, category, rule, and transaction management.
+- - ✨ feat: Amélioration feedback actions rapides (quick_actions)
+
+**🐛 Corrigé**
+- - feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+- - fix: déplacement de switch_to_tab avant son utilisation
+- - fix: correction clés dupliquées dans explorer_filters
+- - fix: correction import update_budget → set_budget
+- - fix: amélioration scroll-to-top et graphique évolution mensuelle
+- - fix: correction imports modules/ui et analyse auto changements
+
+*Fichiers modifiés* : .agents/skills/financeperso-specific/SKILL.md, .agents/skills/financeperso-specific/references/architecture.md, AGENTS.md, CHANGELOG.md, CONTRIBUTING.md, README.md, app.py, assets/style.css, docs/ARCHITECTURE_EXPLORER.md, docs/ASSISTANT_UX_WIREFRAME.md, docs/AUDIT_COHERENCE_360.md, docs/AUDIT_CORRECTIONS_IMMEDIATES.md, docs/AUDIT_FIXES_SUMMARY.md, docs/AUDIT_REVENUS_DEPENSES.md, docs/CHANGEMENTS_REVENUS_DEPENSES.md, docs/COMPLETE_AUDIT_REPORT.md, docs/DASHBOARD_CLEANUP_GUIDE.md, docs/EMAIL_TROUBLESHOOTING.md, docs/EXPLORER_INTEGRATION.md, docs/FINAL_AUDIT_SUMMARY.md
+
+---
+
 ## [4.2.1] - 2026-02-04
 
 ### Nouvelles fonctionnalités - 7 ajouts

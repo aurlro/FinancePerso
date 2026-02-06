@@ -195,37 +195,45 @@ def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     Returns DataFrame with columns ['Month', 'Revenus', 'Dépenses', 'Epargne', 'Taux'].
     """
     from modules.db.connection import get_db_connection
-    import datetime
+    from modules.transaction_types import calculate_true_income, calculate_true_expenses
     
     with get_db_connection() as conn:
-        # Get last 12 months data
-        # We exclude internal transfers and 'Hors Budget'
-        # Group by YYYY-MM
+        # Fetch raw data for the period
         query = """
-            SELECT strftime('%Y-%m', date) as month, 
-                   SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as income,
-                   SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END) as expense
-            FROM transactions 
-            WHERE category_validated NOT IN ('Virement Interne', 'Hors Budget') 
-              AND status = 'validated'
-            GROUP BY month 
-            ORDER BY month DESC 
-            LIMIT ?
+            SELECT * FROM transactions 
+            WHERE status = 'validated'
+              AND category_validated NOT IN ('Virement Interne', 'Hors Budget')
+            ORDER BY date DESC
         """
-        df = pd.read_sql(query, conn, params=(months,))
+        df_all = pd.read_sql(query, conn)
         
-        if df.empty:
+        if df_all.empty:
             return pd.DataFrame()
+        
+        df_all['date_dt'] = pd.to_datetime(df_all['date'])
+        df_all['month'] = df_all['date_dt'].dt.strftime('%Y-%m')
+        
+        # Get unique months to iterate (limité à N mois)
+        all_months = sorted(df_all['month'].unique(), reverse=True)[:months]
+        
+        monthly_data = []
+        for m in all_months:
+            g = df_all[df_all['month'] == m]
+            inc = calculate_true_income(g)
+            exp = calculate_true_expenses(g)
+            savings = inc - exp
+            rate = (savings / inc * 100) if inc > 0 else 0
             
-        df = df.sort_values('month') # Chronological order
+            monthly_data.append({
+                'month': m,
+                'Revenus': inc,
+                'Dépenses': exp,
+                'Epargne': savings,
+                'Taux': rate
+            })
+            
+        return pd.DataFrame(monthly_data).sort_values('month')
         
-        # Calculate derived metrics
-        df['Revenus'] = df['income']
-        df['Dépenses'] = df['expense'].abs()
-        df['Epargne'] = df['Revenus'] - df['Dépenses']
-        df['Taux'] = df.apply(lambda row: (row['Epargne'] / row['Revenus'] * 100) if row['Revenus'] > 0 else 0, axis=1)
-        
-        return df[['month', 'Revenus', 'Dépenses', 'Epargne', 'Taux']]
 
 
 def detect_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:

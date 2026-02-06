@@ -277,8 +277,8 @@ def render_onboarding_widget(user_id: str = "default", has_data: bool = False):
         
         with col3:
             if st.button("Démarrer →", type="primary", use_container_width=True):
-                st.session_state.onboarding_step = 1
-                st.switch_page("pages/1_Import.py")
+                st.session_state['active_op_tab'] = "📥 Importation"
+                st.switch_page("pages/1_Opérations.py")
         
         # Bouton pour fermer le widget
         if st.button("✕ Ignorer", key="dismiss_onboarding"):
@@ -291,7 +291,8 @@ def show_tour_button():
     if st.button("🎯 Relancer le tour guidé", type="secondary"):
         st.session_state.onboarding_completed = False
         st.session_state.onboarding_step = 1
-        st.switch_page("pages/1_Import.py")
+        st.session_state['active_op_tab'] = "📥 Importation"
+        st.switch_page("pages/1_Opérations.py")
 
 
 # Export pour compatibilité

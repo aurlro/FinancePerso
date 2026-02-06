@@ -103,7 +103,7 @@ def render_backup_restore():
     if backups:
         col_stats1, col_stats2, col_stats3 = st.columns(3)
         with col_stats1:
-            st.metric("Sauvegardes disponibles", len(backups), key='metric_106')
+            st.metric("Sauvegardes disponibles", len(backups))
         with col_stats2:
             latest = backups[0]['date'] if backups else None
             latest_str = latest.strftime('%d/%m/%Y %H:%M') if latest else "Aucune"
@@ -116,7 +116,7 @@ def render_backup_restore():
     
     col_b1, col_b2 = st.columns([1, 2])
     with col_b1:
-        if st.button("💾 Créer une sauvegarde maintenant", type="primary", use_container_width=True, key='button_119'):
+        if st.button("💾 Créer une sauvegarde maintenant", type="primary", use_container_width=True, key='backup_button_119'):
             with st.spinner("🔄 Création de la sauvegarde en cours..."):
                 result = create_backup(label="manual")
             
@@ -137,7 +137,7 @@ def render_backup_restore():
         if backups:
             # Option to clean old backups
             if len(backups) >= 5:
-                if st.button("🗑️ Nettoyer les vieilles sauvegardes (garder les 5 dernières)", use_container_width=True, key='button_140'):
+                if st.button("🗑️ Nettoyer les vieilles sauvegardes (garder les 5 dernières)", use_container_width=True, key='backup_button_140'):
                     deleted = 0
                     for b in backups[5:]:
                         if delete_backup(b['path']):
@@ -191,7 +191,7 @@ def render_backup_restore():
                                 help=f"Télécharger {b['filename']}"
                             )
                     except Exception as e:
-                        st.button("❌", disabled=True, help="Fichier inaccessible", key='button_194')
+                        st.button("❌", disabled=True, help="Fichier inaccessible", key='backup_button_194')
         
         # Footer info
         st.divider()

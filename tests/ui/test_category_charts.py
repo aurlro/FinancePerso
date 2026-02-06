@@ -39,11 +39,25 @@ class TestPrepareExpenseDataframe:
         
         # Should only have expenses (negative amounts)
         assert len(df_exp) == 2
-        assert all(df_exp['amount'] > 0)  # Converted to positive
+        assert all(df_exp['amount'] < 0)  # Keeps negative for internal math
         
         # Check categories with emojis
         assert '🛒 Alimentation' in df_exp['Catégorie'].values
         assert '🚗 Transport' in df_exp['Catégorie'].values
+
+    def test_prepare_expense_dataframe_netting_refunds(self):
+        """Test that expenses and refunds net out correctly."""
+        df = pd.DataFrame([
+            {'amount': -100.00, 'category_validated': 'Logement'},
+            {'amount': 40.00, 'category_validated': 'Logement'}, # Refund
+        ])
+        cat_emoji_map = {'Logement': '🏠'}
+        
+        df_exp = prepare_expense_dataframe(df, cat_emoji_map)
+        
+        # Both rows kept, sum should be -60
+        assert len(df_exp) == 2
+        assert df_exp['amount'].sum() == -60.00
     
     def test_prepare_expense_dataframe_uses_validated_category(self):
         """Test that validated category is preferred over original."""
@@ -118,5 +132,5 @@ class TestCategoryAggregation:
         
         # But if we aggregate manually
         grouped = df_exp.groupby('Catégorie')['amount'].sum()
-        assert grouped['🛒 Alimentation'] == 150.00
-        assert grouped['🚗 Transport'] == 80.00
+        assert grouped['🛒 Alimentation'] == -150.00
+        assert grouped['🚗 Transport'] == -80.00

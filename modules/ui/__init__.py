@@ -10,14 +10,22 @@ import streamlit as st
 def load_css():
     """Load custom CSS from assets/style.css and global styles"""
     # Load main CSS
-    with open("assets/style.css") as f:
-        main_css = f.read()
-        st.markdown(f"<style>{main_css}</style>", unsafe_allow_html=True)
+    import os
+    # Assuming this file is in modules/ui/, project root is two levels up
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
+    css_path = os.path.join(project_root, "assets", "style.css")
     
+    try:
+        with open(css_path) as f:
+            main_css = f.read()
+            st.markdown(f"<style>{main_css}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning(f"⚠️ CSS file not found at {css_path}")
+
     # Load global component styles
     try:
-        import os
-        global_css_path = os.path.join(os.path.dirname(__file__), "styles", "global.css")
+        global_css_path = os.path.join(current_dir, "styles", "global.css")
         with open(global_css_path) as f:
             global_css = f.read()
             st.markdown(f"<style>{global_css}</style>", unsafe_allow_html=True)

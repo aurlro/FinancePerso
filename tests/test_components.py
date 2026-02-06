@@ -3,7 +3,7 @@ Quick test script for new UI components.
 Run with: streamlit run test_components.py
 """
 import streamlit as st
-from modules.ui.components.tag_manager import render_tag_selector
+from modules.ui.components.tag_manager import render_smart_tag_selector
 from modules.ui.components.member_selector import render_member_selector
 
 st.set_page_config(page_title="Component Test", page_icon="🧪")
@@ -13,7 +13,7 @@ st.title("🧪 UI Component Tests")
 st.header("1. Tag Manager Test")
 st.markdown("Testing tag selection with creation and suggestions")
 
-selected_tags = render_tag_selector(
+selected_tags = render_smart_tag_selector(
     transaction_id=999,
     current_tags=["Courses", "Bio"],
     category="Alimentation",

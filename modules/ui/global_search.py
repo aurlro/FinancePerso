@@ -124,7 +124,8 @@ class GlobalSearch:
                         result_text = self.format_transaction_result(row)
                         if st.button(result_text, key=f"search_tx_{row['id']}", use_container_width=True):
                             st.session_state['selected_transaction_id'] = row['id']
-                            st.switch_page("pages/2_Validation.py")
+                            st.session_state['active_op_tab'] = "✅ Validation"
+                            st.switch_page("pages/1_Opérations.py")
                 
                 if cat_results:
                     st.caption(f"🏷️ {len(cat_results)} catégorie(s)")
@@ -133,7 +134,8 @@ class GlobalSearch:
                         name = cat.get('name', 'Inconnu')
                         if st.button(f"{emoji} {name}", key=f"search_cat_{name}", use_container_width=True):
                             st.session_state['filter_category'] = name
-                            st.switch_page("pages/2_Validation.py")
+                            st.session_state['active_op_tab'] = "✅ Validation"
+                            st.switch_page("pages/1_Opérations.py")
                 
                 if tx_results.empty and not cat_results:
                     st.caption("Aucun résultat")
@@ -207,7 +209,8 @@ class GlobalSearch:
                             
                             if st.button("Voir les transactions", key=f"cat_btn_{cat['name']}"):
                                 st.session_state['filter_category'] = cat['name']
-                                st.switch_page("pages/2_Validation.py")
+                                st.session_state['active_op_tab'] = "✅ Validation"
+                                st.switch_page("pages/1_Opérations.py")
 
 
 def render_global_search_compact():

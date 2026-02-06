@@ -268,7 +268,7 @@ def _handle_validated_transactions(
     
     with col_v2:
         if st.button(
-            "💾 Sauvegarder",
+            "💾 Enregistrer les corrections",
             key=f"{key_prefix}_save_validated",
             type="primary",
             use_container_width=True
@@ -369,7 +369,7 @@ def _handle_pending_transactions(df_pending: pd.DataFrame, key_prefix: str, cate
     
     with col_v2:
         if st.button(
-            "✅ Valider Tout",
+            "✅ Tout valider",
             key=f"{key_prefix}_validate_bulk",
             type="primary",
             use_container_width=True

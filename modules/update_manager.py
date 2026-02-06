@@ -438,8 +438,8 @@ class UpdateManager:
                     last_tag = tag_result.stdout.strip()
                     commit_range = f"{last_tag}..HEAD"
                 else:
-                    # No tags, get last 20 commits
-                    commit_range = "HEAD~20..HEAD"
+                    # No tags, get last 50 commits to be safe
+                    commit_range = "HEAD~50..HEAD"
                     
             except subprocess.CalledProcessError:
                 logger.warning("Git not available or not a git repository")
@@ -458,7 +458,8 @@ class UpdateManager:
                 result['files_modified'] = [
                     f for f in files 
                     if any(f.endswith(ext) for ext in relevant_extensions)
-                ][:20]  # Limit to 20 files
+                ] # No limit
+
             
             # Get commit messages
             commits_result = subprocess.run(

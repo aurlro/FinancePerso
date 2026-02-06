@@ -247,9 +247,65 @@ st.divider()
 st.header("🚀 Roadmap & Évolutions Futures")
 st.markdown("Idées et fonctionnalités envisagées pour les versions futures.")
 
-roadmap_tabs = st.tabs(["💡 Propositions", "🔬 R&D", "🎯 Priorisées", "⏸️ En attente"])
+roadmap_tabs = st.tabs(["🔮 Lab Magic Fix", "💡 Propositions", "🔬 R&D", "🎯 Priorisées", "⏸️ En attente"])
 
 with roadmap_tabs[0]:
+    st.subheader("🔮 Magic Fix Lab : Évolutions 5.x")
+    st.info("Stratégies d'optimisation prévues pour le nettoyage et l'enrichissement des données.")
+    
+    st.markdown("""
+    ### 1. Rapprochement Inter-Comptes (Matching)
+    - **Description** : Détecte automatiquement les paires Débit/Crédit (virements internes) entre vos comptes.
+    - **Priorité** : 🔴 **MUST HAVE**
+    - **Status** : ✅ Déployé (v5.1)
+
+    ### 2. Détection des Abonnements Fantômes
+    - **Description** : Identifie les prélèvements récurrents mensuels non encore identifiés comme abonnements.
+    - **Priorité** : 🟠 **SHOULD HAVE**
+    - **Status** : 📋 Planifié (v5.2)
+
+    ### 3. Nettoyage des Bénéficiaires (Normalisation)
+    - **Description** : Harmonise les noms des marchands (ex: "McDo 123" -> "McDonald's").
+    - **Priorité** : 🔴 **MUST HAVE**
+    - **Status** : ✅ Déployé (v5.1)
+
+    ### 4. Ajustement des Dates de Valeur
+    - **Description** : Recalage intelligent des transactions de fin de mois pour correspondre au budget réel.
+    - **Priorité** : 🔴 **MUST HAVE**
+    - **Status** : 📋 Planifié
+
+    ### 5. Détection des Doublons Flous
+    - **Description** : Repère les transactions de même montant/date avec des libellés légèrement différents.
+    - **Priorité** : 🟠 **SHOULD HAVE**
+    - **Status** : 📋 Planifié
+
+    ### 6. Analyse de la Fréquence (Habitudes)
+    - **Description** : Marque les marchands visités régulièrement avec un tag "Habitude".
+    - **Priorité** : 🟡 **COULD HAVE**
+    - **Status** : 💡 Idée
+
+    ### 7. Tagging Géographique
+    - **Description** : Extraction automatique des villes (Rennes, Paris...) pour un tag local.
+    - **Priorité** : 🟡 **COULD HAVE**
+    - **Status** : 💡 Idée
+
+    ### 8. Auto-Tagging de l'Importance
+    - **Description** : Signale les transactions aux montants exceptionnels pour une catégorie.
+    - **Priorité** : 🟡 **COULD HAVE**
+    - **Status** : 💡 Idée
+
+    ### 9. Suggestion de Scission (Split)
+    - **Description** : Alerte sur les gros tickets de supermarché nécessitant une ventilation.
+    - **Priorité** : 🟡 **COULD HAVE**
+    - **Status** : 💡 Idée
+
+    ### 10. Identification du Mode de Paiement
+    - **Description** : Détecte si la transaction provient d'Apple Pay ou d'une carte virtuelle.
+    - **Priorité** : ⚪ **WON'T HAVE** (pour l'instant)
+    - **Status** : ⏸️ Reporté
+    """)
+
+with roadmap_tabs[1]:
     st.subheader("💡 Idées proposées")
     st.markdown("""
     ### Comparatif anonymisé

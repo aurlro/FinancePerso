@@ -184,7 +184,7 @@ def render_category_management():
         
         with col_m3:
             st.markdown("<div style='height: 1.6rem;'></div>", unsafe_allow_html=True)
-            if st.button("🔀 Fusionner", type="primary", use_container_width=True, key='button_187'):
+            if st.button("🔀 Fusionner", type="primary", use_container_width=True, key='category_button_187'):
                 if not source_cat or not target_cat:
                     toast_warning("⚠️ Veuillez sélectionner les deux catégories", icon="⚠️")
                 elif source_cat == target_cat:

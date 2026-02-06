@@ -156,29 +156,8 @@ def render_config_dashboard():
     st.divider()
     
     # --- QUICK ACTIONS ---
-    st.subheader("⚡ Actions rapides")
-    
-    col_q1, col_q2, col_q3, col_q4 = st.columns(4)
-    
-    with col_q1:
-        if st.button("👥 Ajouter un membre", use_container_width=True, key='button_164'):
-            st.session_state['config_jump_to'] = 'Profil'
-            st.rerun()
-    
-    with col_q2:
-        if st.button("🏷️ Nouvelle catégorie", use_container_width=True, key='button_169'):
-            st.session_state['config_jump_to'] = 'Profil'
-            st.rerun()
-    
-    with col_q3:
-        if st.button("💰 Définir un budget", use_container_width=True, key='button_174'):
-            st.session_state['config_jump_to'] = 'Budgets'
-            st.rerun()
-    
-    with col_q4:
-        if st.button("🔔 Tester notifications", use_container_width=True, key='button_179'):
-            st.session_state['config_jump_to'] = 'Notifications'
-            st.rerun()
+    from modules.ui.components.quick_actions import render_quick_actions_grid
+    render_quick_actions_grid()
     
     st.divider()
     

@@ -27,7 +27,7 @@ def get_spending_insight() -> Dict[str, Any]:
             "type": "welcome",
             "title": "👋 Bienvenue !",
             "message": "Commencez par importer vos premières transactions.",
-            "action": "pages/1_Import.py",
+            "action": "pages/1_Opérations.py",
             "action_label": "Importer des transactions"
         }
     
@@ -68,7 +68,7 @@ def get_spending_insight() -> Dict[str, Any]:
                         "metric": f"{percentage:.0f}%",
                         "metric_label": "utilisé",
                         "progress": min(percentage / 100, 1.0),
-                        "action": "pages/3_Synthese.py",
+                        "action": "pages/4_Intelligence.py",
                         "action_label": "Ajuster le budget"
                     }
                 elif percentage >= 80:
@@ -79,7 +79,7 @@ def get_spending_insight() -> Dict[str, Any]:
                         "metric": f"{percentage:.0f}%",
                         "metric_label": "utilisé",
                         "progress": percentage / 100,
-                        "action": "pages/3_Synthese.py",
+                        "action": "pages/4_Intelligence.py",
                         "action_label": "Voir le budget"
                     }
     except Exception as e:
@@ -93,7 +93,7 @@ def get_spending_insight() -> Dict[str, Any]:
             "message": f"Vous avez dépensé {today_spending:.2f}€ aujourd'hui",
             "metric": f"{today_spending:.2f}€",
             "metric_label": "aujourd'hui",
-            "action": "pages/3_Synthese.py",
+            "action": "pages/1_Opérations.py",
             "action_label": "Voir les détails"
         }
     
@@ -113,7 +113,7 @@ def get_spending_insight() -> Dict[str, Any]:
                         "message": f"{cat_amount:.2f}€ ce mois",
                         "metric": f"{cat_amount:.2f}€",
                         "metric_label": cat_name,
-                        "action": "pages/3_Synthese.py",
+                        "action": "pages/6_Recherche.py",
                         "action_label": "Explorer"
                     }
     except Exception:

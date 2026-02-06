@@ -305,9 +305,119 @@ def get_unique_members() -> list[str]:
         return sorted(list(seen.values()))
 
 
+
 def update_transaction_member(tx_id: int, new_member: str) -> None:
     """Update the member for a specific transaction."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE transactions SET member = ? WHERE id = ?", (new_member, tx_id))
         conn.commit()
+
+
+def get_all_member_names() -> list[str]:
+    """Get all unique member names from the database."""
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM members")
+        return [row[0] for row in cursor.fetchall()]
+
+
+def detect_member_from_content(label: str, card_suffix: str = None, account_label: str = None) -> str:
+    """
+    Detect member based on label, card suffix, and account.
+    
+    Args:
+        label: Transaction label
+        card_suffix: Detected card suffix (e.g. 6759)
+        account_label: Bank account label
+        
+    Returns:
+        Member name or 'Inconnu'
+    """
+    label_upper = label.upper()
+    
+    # 1. Check card suffix mapping (highest priority)
+    if card_suffix:
+        mappings = get_member_mappings()
+        if card_suffix in mappings:
+            return mappings[card_suffix]
+            
+    # 2. Check for member names in label
+    # We fetch all member names
+    all_members = get_all_member_names()
+    for member in all_members:
+        # Search for exact name in label (with boundaries or common formats)
+        if member.upper() in label_upper:
+            return member
+            
+    # 3. Special cases / Heuristics
+    if "PAULINE" in label_upper:
+        return "Pauline" # Example from user feedback
+    if "LOLA ROSE" in label_upper:
+        return "Lola Rose"
+    if "AURELIEN" in label_upper:
+        return "Aurélien"
+        
+    # 4. Account-based defaults (if account belongs to one person)
+    if account_label:
+        account_upper = account_label.upper()
+        
+        # Check explicit mapping table first
+        account_maps = get_account_member_mappings()
+        if account_label in account_maps:
+             return account_maps[account_label]
+             
+        # Fallback to heuristics on account label
+        if "AURELIEN" in account_upper:
+            return "Aurélien"
+        # Add more account mappings here as needed
+        
+    return "Inconnu"
+
+
+# --- Account Mapping Functions ---
+
+def add_account_member_mapping(account_label: str, member_name: str) -> None:
+    """Map a bank account label to a default member name."""
+    from modules.cache_manager import invalidate_member_caches
+
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO account_member_mappings (account_label, member_name) VALUES (?, ?)",
+            (account_label, member_name)
+        )
+        conn.commit()
+        invalidate_member_caches()
+
+
+@st.cache_data(ttl=300)
+def get_account_member_mappings() -> dict[str, str]:
+    """Get all account-member mappings."""
+    with get_db_connection() as conn:
+        try:
+            df = pd.read_sql("SELECT account_label, member_name FROM account_member_mappings", conn)
+            return dict(zip(df['account_label'], df['member_name']))
+        except Exception:
+            # Fallback if table doesn't exist yet
+            return {}
+
+
+def get_account_member_mappings_df() -> pd.DataFrame:
+    """Get all account-member mappings as DataFrame."""
+    with get_db_connection() as conn:
+        try:
+            return pd.read_sql("SELECT * FROM account_member_mappings", conn)
+        except Exception:
+            return pd.DataFrame()
+
+
+def delete_account_member_mapping(mapping_id: int) -> None:
+    """Delete an account-member mapping by ID."""
+    from modules.cache_manager import invalidate_member_caches
+
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM account_member_mappings WHERE id = ?", (mapping_id,))
+        conn.commit()
+        invalidate_member_caches()

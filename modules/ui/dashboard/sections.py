@@ -92,7 +92,8 @@ def render_budget_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
         st.info("📝 **Aucun budget défini**")
         st.caption("Configurez vos budgets pour recevoir des alertes intelligentes")
         if st.button("➕ Créer un budget", type="primary", key="btn_create_budget"):
-            st.switch_page("pages/4_Regles.py")
+            st.session_state['intel_active_tab'] = "🎯 Budgets"
+            st.switch_page("pages/4_Intelligence.py")
     else:
         # Données du mois en cours
         import datetime
@@ -256,25 +257,32 @@ def render_analysis_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
         
         if 'beneficiary_display' in df_current.columns:
             household_members = official_list + ['Famille', 'Maison']
-            df_members = df_current[
-                (df_current['amount'] < 0) &
-                (df_current['beneficiary_display'].isin(household_members))
-            ].copy()
-            df_members['amount'] = df_members['amount'].abs()
+            # Utiliser la logique de catégorie net
+            from modules.transaction_types import filter_expense_transactions
+            df_members = filter_expense_transactions(df_current).copy()
+            df_members = df_members[df_members['beneficiary_display'].isin(household_members)]
             
             if not df_members.empty:
+                # Group and sum (netting refunds)
                 df_members_sum = df_members.groupby('beneficiary_display')['amount'].sum().reset_index()
                 df_members_sum.columns = ['Membre', 'Montant']
                 
-                fig = px.pie(
-                    df_members_sum,
-                    values='Montant',
-                    names='Membre',
-                    hole=0.4,
-                    color_discrete_sequence=px.colors.qualitative.Pastel
-                )
-                fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.2))
-                st.plotly_chart(fig, use_container_width=True)
+                # On ne montre que les membres ayant un net négatif (dépense)
+                df_members_sum['Montant'] = df_members_sum['Montant'].apply(lambda x: abs(x) if x < 0 else 0)
+                df_members_sum = df_members_sum[df_members_sum['Montant'] > 0]
+                
+                if not df_members_sum.empty:
+                    fig = px.pie(
+                        df_members_sum,
+                        values='Montant',
+                        names='Membre',
+                        hole=0.4,
+                        color_discrete_sequence=px.colors.qualitative.Pastel
+                    )
+                    fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.2))
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Le solde net des membres est positif (remboursements > dépenses).")
             else:
                 st.info("Aucune dépense affectée aux membres sur cette période.")
         
@@ -285,26 +293,32 @@ def render_analysis_tab(df_current: pd.DataFrame, df_full: pd.DataFrame,
         
         if 'beneficiary_display' in df_current.columns:
             household_exclude = official_list + ['Famille', 'Maison', 'Inconnu', 'Anonyme', '']
-            df_tiers = df_current[
-                (df_current['amount'] < 0) &
-                (~df_current['beneficiary_display'].isin(household_exclude))
-            ].copy()
-            df_tiers['amount'] = df_tiers['amount'].abs()
+            from modules.transaction_types import filter_expense_transactions
+            df_tiers = filter_expense_transactions(df_current).copy()
+            df_tiers = df_tiers[~df_tiers['beneficiary_display'].isin(household_exclude)]
             
             if not df_tiers.empty:
+                # Group and sum (netting refunds)
                 df_tiers_sum = df_tiers.groupby('beneficiary_display')['amount'].sum().reset_index()
                 df_tiers_sum.columns = ['Bénéficiaire', 'Montant']
+                
+                # Conversion en positif (dépenses nettes)
+                df_tiers_sum['Montant'] = df_tiers_sum['Montant'].apply(lambda x: abs(x) if x < 0 else 0)
+                df_tiers_sum = df_tiers_sum[df_tiers_sum['Montant'] > 0]
                 df_tiers_sum = df_tiers_sum.sort_values('Montant', ascending=False).head(15)
                 
-                fig = px.pie(
-                    df_tiers_sum,
-                    values='Montant',
-                    names='Bénéficiaire',
-                    hole=0.4,
-                    color_discrete_sequence=px.colors.qualitative.Set3
-                )
-                fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.3))
-                st.plotly_chart(fig, use_container_width=True)
+                if not df_tiers_sum.empty:
+                    fig = px.pie(
+                        df_tiers_sum,
+                        values='Montant',
+                        names='Bénéficiaire',
+                        hole=0.4,
+                        color_discrete_sequence=px.colors.qualitative.Set3
+                    )
+                    fig.update_layout(showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.3))
+                    st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("Le solde net des tiers est positif (remboursements > dépenses).")
             else:
                 st.info("Aucun bénéficiaire tiers détecté sur cette période.")
     
@@ -364,18 +378,19 @@ def render_ai_tab(df_current: pd.DataFrame, df_prev: pd.DataFrame,
         st.info("Sélectionnez une période avec des données pour générer un rapport.")
         return
     
-    # Info sur les données analysées
-    cur_inc = df_current[df_current['amount'] > 0]['amount'].sum()
-    cur_exp = abs(df_current[df_current['amount'] < 0]['amount'].sum())
+    # Info sur les données analysées - Utilisation de la nouvelle logique cohérente
+    from modules.transaction_types import calculate_true_income, calculate_true_expenses
+    cur_inc = calculate_true_income(df_current)
+    cur_exp = calculate_true_expenses(df_current)
     tx_count = len(df_current)
     
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Transactions analysées", tx_count)
     with col2:
-        st.metric("Revenus", f"{cur_inc:,.0f}€")
+        st.metric("Revenus nets", f"{cur_inc:,.0f}€")
     with col3:
-        st.metric("Dépenses", f"{cur_exp:,.0f}€")
+        st.metric("Dépenses nettes", f"{cur_exp:,.0f}€")
     
     st.markdown("---")
     

@@ -90,9 +90,10 @@ def get_primary_action(state):
             'icon': '📥',
             'label': 'Importer mon premier relevé',
             'description': 'Commencez par ajouter vos transactions bancaires',
-            'page': '1_Import',
+            'page': '1_Opérations',
             'priority': 'high',
-            'action_type': 'primary'
+            'action_type': 'primary',
+            'tab': '📥 Importation'
         }
     
     # Priority 2: Many uncategorized -> Validation
@@ -101,9 +102,10 @@ def get_primary_action(state):
             'icon': '🏷️',
             'label': 'Catégoriser ({} en attente)'.format(state['uncategorized_count']),
             'description': 'Validez vos transactions non catégorisées',
-            'page': '2_Validation',
+            'page': '1_Opérations',
             'priority': 'high',
-            'action_type': 'primary'
+            'action_type': 'primary',
+            'tab': '✅ Validation'
         }
     
     # Priority 3: No rules -> Create rules
@@ -112,9 +114,10 @@ def get_primary_action(state):
             'icon': '⚡',
             'label': 'Créer une règle auto',
             'description': 'Automatisez la catégorisation de vos dépenses',
-            'page': '4_Regles',
+            'page': '4_Intelligence',
             'priority': 'medium',
-            'action_type': 'primary'
+            'action_type': 'primary',
+            'tab': '📋 Règles'
         }
     
     # Priority 4: No budgets -> Set budgets
@@ -123,9 +126,10 @@ def get_primary_action(state):
             'icon': '🎯',
             'label': 'Définir un budget',
             'description': 'Suivez vos limites de dépenses par catégorie',
-            'page': '4_Regles',
+            'page': '4_Intelligence',
             'priority': 'medium',
-            'action_type': 'primary'
+            'action_type': 'primary',
+            'tab': '🎯 Budgets'
         }
     
     # Default: View dashboard
@@ -148,39 +152,43 @@ def get_secondary_actions(state, primary_page):
     actions = []
     
     # Suggest adding rules if has transactions but few/no rules
-    if state['has_transactions'] and state['rules_count'] < 3 and primary_page != '4_Regles':
+    if state['has_transactions'] and state['rules_count'] < 3 and primary_page != '4_Intelligence':
         actions.append({
             'icon': '⚡',
             'label': 'Règles auto',
-            'page': '4_Regles',
-            'help': 'Créer des règles de catégorisation'
+            'page': '4_Intelligence',
+            'help': 'Créer des règles de catégorisation',
+            'tab': '📋 Règles'
         })
     
     # Suggest budgets if has transactions but no budgets
-    if state['has_transactions'] and not state['has_budgets'] and primary_page != '4_Regles':
+    if state['has_transactions'] and not state['has_budgets'] and primary_page != '4_Intelligence':
         actions.append({
             'icon': '🎯',
             'label': 'Budgets',
-            'page': '4_Regles',
-            'help': 'Définir des limites de dépenses'
+            'page': '4_Intelligence',
+            'help': 'Définir des limites de dépenses',
+            'tab': '🎯 Budgets'
         })
     
     # Suggest import if has some transactions
-    if state['has_transactions'] and primary_page != '1_Import':
+    if state['has_transactions'] and primary_page != '1_Opérations':
         actions.append({
             'icon': '📥',
             'label': 'Importer',
-            'page': '1_Import',
-            'help': 'Ajouter de nouvelles transactions'
+            'page': '1_Opérations',
+            'help': 'Ajouter de nouvelles transactions',
+            'tab': '📥 Importation'
         })
     
     # Suggest validation if has transactions
-    if state['has_transactions'] and state['uncategorized_count'] > 0 and primary_page != '2_Validation':
+    if state['has_transactions'] and state['uncategorized_count'] > 0 and primary_page != '1_Opérations':
         actions.append({
             'icon': '✅',
             'label': 'Valider',
-            'page': '2_Validation',
-            'help': '{} à catégoriser'.format(state['uncategorized_count'])
+            'page': '1_Opérations',
+            'help': '{} à catégoriser'.format(state['uncategorized_count']),
+            'tab': '✅ Validation'
         })
     
     # Suggest AI assistant
@@ -220,6 +228,9 @@ def render_smart_actions():
         help=primary['description'],
         key='smart_action_primary'
     ):
+        if 'tab' in primary:
+            st.session_state['intel_active_tab'] = primary['tab'] # For Intelligence
+            st.session_state['active_op_tab'] = primary['tab']    # For Opérations
         st.switch_page("pages/{}.py".format(primary['page']))
     
     # Show description
@@ -239,6 +250,9 @@ def render_smart_actions():
                     help=action['help'],
                     key='smart_action_secondary_{}'.format(idx)
                 ):
+                    if 'tab' in action:
+                        st.session_state['intel_active_tab'] = action['tab']
+                        st.session_state['active_op_tab'] = action['tab']
                     st.switch_page("pages/{}.py".format(action['page']))
     
     # Show progress summary
@@ -284,6 +298,9 @@ def render_compact_tip():
         use_container_width=True,
         key='compact_smart_action'
     ):
+        if 'tab' in primary:
+            st.session_state['intel_active_tab'] = primary['tab']
+            st.session_state['active_op_tab'] = primary['tab']
         st.switch_page("pages/{}.py".format(primary['page']))
     
     # Show mini stats

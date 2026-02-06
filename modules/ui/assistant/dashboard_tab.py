@@ -73,7 +73,10 @@ def render_dashboard_tab(
             title="Bienvenue dans l'Assistant IA",
             description="Commencez par importer vos transactions pour découvrir toutes les fonctionnalités.",
             actions=[
-                ("📥 Importer des données", lambda: st.switch_page("pages/1_Import.py")),
+                ("📥 Importer des données", lambda: (
+                    st.session_state.update({'active_op_tab': '📥 Importation'}),
+                    st.switch_page("pages/1_Opérations.py")
+                )),
             ]
         )
         return

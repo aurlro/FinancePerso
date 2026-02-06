@@ -164,6 +164,13 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
     if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(t in label_upper for t in INTERNAL_TARGETS):
         return "Virement Interne", "rule", 1.0
     
+    # 2b. Heuristic: Peer-to-peer or external transfers
+    if any(k in label_upper for k in ["VIR INST", "VIR SEPA", "VIR RECU", "VRT "]):
+        # If it's a transfer but not internal, it's rarely a 'Subscription' (Abonnement)
+        # unless it's a known service. For now, let's keep it as 'Inconnu' if not internal,
+        # or suggest 'Services' if it's a business.
+        return "Inconnu", "rule_transfer_skeptic", 0.1
+    
     # 3. Local ML (if available and preferred)
     if prefer_local_ml and is_local_ml_available():
         cat, conf = predict_category_local(label, amount, date)

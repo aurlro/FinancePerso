@@ -1,5 +1,5 @@
 # 🤖 AGENTS.md - Guide pour Assistants IA
-> **Version du projet**: `v4.2.1`
+> **Version du projet**: `v5.0.0`
 >
 
 > Ce document est destiné aux agents IA (Gemini, Claude, etc.) travaillant sur le projet FinancePerso.
@@ -415,6 +415,6 @@ pytest tests/ai/test_anomaly_detector.py -v
 
 ---
 
-**Dernière mise à jour** : 2026-02-04
+**Dernière mise à jour** : 2026-02-06
 **Version du projet** : 3.1.0
 **Langue principale** : Français

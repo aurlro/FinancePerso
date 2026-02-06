@@ -152,12 +152,32 @@ def init_db() -> None:
                 (s_tags, name)
             )
         
-        # Member Mappings table
+        # Member Mappings table (Cards)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS member_mappings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 card_suffix TEXT UNIQUE,
                 member_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Account Member Mappings table (Defaults per account)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS account_member_mappings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                account_label TEXT UNIQUE,
+                member_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Beneficiary Aliases table (Magic Fix 5.1)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS beneficiary_aliases (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                alias TEXT UNIQUE,
+                normalized_name TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')

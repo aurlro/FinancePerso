@@ -81,14 +81,75 @@ def render_transactions_table(df: pd.DataFrame, key_prefix: str = "explorer"):
         display_cols.append('tags')
         column_config['tags'] = st.column_config.TextColumn("Tags", width="medium")
     
-    # Show table
-    st.dataframe(
-        display_df[display_cols],
-        column_config=column_config,
+    # Show table with multi-selection enabled
+    # We include 'id' but hide it
+    display_df = display_df.copy()
+    
+    selected = st.dataframe(
+        display_df[['id'] + display_cols],
+        column_config={
+            **column_config,
+            "id": None # Hide ID column
+        },
         use_container_width=True,
         hide_index=True,
+        selection_mode="multi-row",
+        on_select="rerun",
         key=f"{key_prefix}_table"
     )
+
+    # 4. Bulk Actions Bar
+    # If rows are selected, show a floating-style action bar
+    selected_indices = selected.get("selection", {}).get("rows", [])
+    
+    if selected_indices:
+        selected_ids = display_df.iloc[selected_indices]['id'].tolist()
+        _render_bulk_actions(selected_ids, key_prefix)
+        st.divider()
+
+
+def _render_bulk_actions(selected_ids: list[int], key_prefix: str):
+    """Render a dedicated action bar for bulk updates."""
+    from modules.db.categories import get_categories
+    from modules.db.members import get_members
+    from modules.db.transactions import bulk_update_transaction_status, update_transaction_member
+    
+    st.markdown(f"### 🛠️ Action groupée ({len(selected_ids)} transactions)")
+    
+    c1, c2, c3 = st.columns([2, 2, 1])
+    
+    with c1:
+        categories = get_categories()
+        new_cat = st.selectbox("Changer catégorie", options=[""] + categories, format_func=lambda x: "Choisir..." if x == "" else x, key=f"{key_prefix}_bulk_cat")
+        if new_cat and st.button("Appliquer Catégorie", type="primary", key=f"{key_prefix}_btn_cat", use_container_width=True):
+            bulk_update_transaction_status(selected_ids, new_cat)
+            st.toast(f"✅ {len(selected_ids)} transactions mises à jour !", icon="✅")
+            st.rerun()
+            
+    with c2:
+        members = get_members()['name'].tolist()
+        new_member = st.selectbox("Changer membre", options=[""] + members, format_func=lambda x: "Choisir..." if x == "" else x, key=f"{key_prefix}_bulk_mem")
+        if new_member and st.button("Appliquer Membre", type="primary", key=f"{key_prefix}_btn_mem", use_container_width=True):
+            with st.spinner("Mise à jour..."):
+                for tx_id in selected_ids:
+                    update_transaction_member(tx_id, new_member)
+            st.toast(f"✅ {len(selected_ids)} membres mis à jour !", icon="👤")
+            st.rerun()
+
+    with c3:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🧹 Réattribuer Auto", help="Ré-appliquer la détection intelligente (membres)", key=f"{key_prefix}_bulk_auto", use_container_width=True):
+             from modules.db.transactions import get_all_transactions, update_transaction_member
+             from modules.db.members import detect_member_from_content
+             all_tx = get_all_transactions(filters={'id': ('IN', tuple(selected_ids))})
+             count = 0
+             for _, row in all_tx.iterrows():
+                 new_m = detect_member_from_content(row['label'], row['card_suffix'], row['account_label'])
+                 if new_m != row['member']:
+                     update_transaction_member(row['id'], new_m)
+                     count += 1
+             st.toast(f"✅ {count} membres corrigés !", icon="🧠")
+             st.rerun()
 
 
 def render_charts(df: pd.DataFrame, explorer_type: str, explorer_value: str):

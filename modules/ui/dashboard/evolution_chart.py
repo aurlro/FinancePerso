@@ -23,11 +23,14 @@ def _compute_monthly_evolution(df_current: pd.DataFrame) -> pd.DataFrame:
         freq='MS'
     ).strftime('%Y-%m').tolist()
     
+    from modules.transaction_types import calculate_true_income, calculate_true_expenses
+    
     monthly_data = []
     for m in all_months:
         g = df_evol[df_evol['Mois'] == m]
-        inc = g[g['amount'] > 0]['amount'].sum()
-        exp = abs(g[g['amount'] < 0]['amount'].sum())
+        # Utiliser la logique unifiée (catégories et non signes)
+        inc = calculate_true_income(g)
+        exp = calculate_true_expenses(g)
         monthly_data.append({"Mois": m, "Revenus": inc, "Dépenses": exp})
     
     return pd.DataFrame(monthly_data)

@@ -14,8 +14,9 @@ def render_top_expenses(df_current: pd.DataFrame, cat_emoji_map: dict, limit: in
     """
     st.subheader("🔝 Top 10 Dépenses")
     
-    # Filter expenses only using categories
+    # Filter expenses only using categories AND only negative amounts for "Top Expenses"
     df_exp = filter_expense_transactions(df_current).copy()
+    df_exp = df_exp[df_exp['amount'] < 0]
     
     if df_exp.empty:
         st.info("Aucune dépense sur cette période.")

@@ -61,6 +61,13 @@ try:
 except Exception as e:
     logger.warning(f"Dashboard cleanup failed (non-critical): {e}")
 
+# --- AUTOMATED MAINTENANCE (Weekly Cleanup) ---
+try:
+    from modules.db.maintenance import check_and_perform_maintenance
+    check_and_perform_maintenance()
+except Exception as e:
+    logger.warning(f"Automated maintenance failed (non-critical): {e}")
+
 # Vérifier les notifications (budget alerts, daily digest, etc.)
 check_all_notifications()
 
@@ -134,9 +141,9 @@ if not is_app_initialized():
 
     if st.session_state.get('onboarding_complete'):
         show_success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
-        if st.button("Aller à l'import 📥", type="primary", key='button_116'):
-            toast_success("Redirection vers l'import...", icon="📥")
-            st.switch_page("pages/1_Import.py")
+        if st.button("Aller aux opérations 📥", type="primary", key='button_116'):
+            toast_success("Redirection vers les opérations...", icon="📥")
+            st.switch_page("pages/1_Opérations.py")
 
 else:
     # === DASHBOARD MODE ===
@@ -166,8 +173,8 @@ else:
         card_kpi("Épargne du Mois", f"{sav:+,.0f} €", trend=f"{stats.get('current_month_rate', 0):.1f}%", trend_color=color)
     with c4:
         st.write("")  # Placeholder or shortcut
-        if st.button("📥 Nouvel Import", use_container_width=True, type="primary", key='button_148'):
-            st.switch_page("pages/1_Import.py")
+        if st.button("📥 Nouvelles Opérations", use_container_width=True, type="primary", key='button_148'):
+            st.switch_page("pages/1_Opérations.py")
         if st.button("📊 Voir la Synthèse", use_container_width=True, key='button_150'):
             st.switch_page("pages/3_Synthese.py")
             

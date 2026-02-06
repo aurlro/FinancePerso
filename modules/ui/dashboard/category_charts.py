@@ -12,7 +12,8 @@ from modules.transaction_types import (
 def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> pd.DataFrame:
     """
     Prepare expense dataframe with category emojis.
-    Filtre les dépenses en utilisant les catégories (pas le signe du montant).
+    Filtre les dépenses en utilisant les catégories.
+    Les montants positifs (remboursements) sont déduits.
     
     Args:
         df_current: Current period transactions
@@ -27,7 +28,8 @@ def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> 
     if df_exp.empty:
         return pd.DataFrame()
     
-    df_exp['amount'] = df_exp['amount'].abs()
+    # IMPORTANTE: On ne fait plus d'abs() ici.
+    # On veut que SUM(amount) reflète le net (négatif pour une dépense nette).
     
     # Add display category with emoji
     df_exp['raw_cat'] = df_exp.apply(
@@ -41,10 +43,6 @@ def prepare_expense_dataframe(df_current: pd.DataFrame, cat_emoji_map: dict) -> 
 def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
     """
     Render horizontal bar chart of expenses by category with clickable buttons.
-    
-    Args:
-        df_current: Current period transactions
-        cat_emoji_map: Category to emoji mapping
     """
     st.subheader("📊 Répartition par Catégorie")
     
@@ -54,8 +52,14 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
         st.info("Aucune dépense sur cette période.")
         return
     
-    # Group by category and sum
+    # Group by category and sum (expenses are negative, so we use abs() on the RESULT)
     df_cat_sum = df_exp.groupby(['Catégorie', 'raw_cat'])['amount'].sum().reset_index()
+    
+    # Une catégorie n'est affichée que si le NET est une dépense (somme < 0)
+    # ou si on veut afficher l'impact net (quitte à ce qu'il soit à 0)
+    df_cat_sum['amount'] = df_cat_sum['amount'].apply(lambda x: abs(x) if x < 0 else 0) 
+    
+    df_cat_sum = df_cat_sum[df_cat_sum['amount'] > 0]
     df_cat_sum = df_cat_sum.sort_values('amount', ascending=True)
     
     # Create bar chart
@@ -101,7 +105,7 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
                         key=f"cat_btn_{raw_cat}_{idx}",
                         use_container_width=True
                     ):
-                        launch_explorer('category', raw_cat, '6_Explorer')
+                        launch_explorer('category', raw_cat, '6_Recherche')
 
 
 def render_category_pie_chart(df_current: pd.DataFrame, cat_emoji_map: dict, 

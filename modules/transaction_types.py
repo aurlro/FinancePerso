@@ -278,14 +278,16 @@ def calculate_true_income(df: pd.DataFrame, include_refunds: bool = False) -> fl
 
 def calculate_true_expenses(df: pd.DataFrame, include_refunds: bool = True) -> float:
     """
-    Calcule le vrai total des dépenses.
+    Calcule le total net des dépenses.
+    Une dépense (montant < 0) est compensée par tout montant positif (remboursement)
+    dans une catégorie de dépense ou de remboursement.
     
     Args:
         df: DataFrame avec transactions
-        include_refunds: Si True, déduit les remboursements des dépenses
+        include_refunds: Si True, déduit tous les montants positifs des dépenses
         
     Returns:
-        Montant total des dépenses (valeur absolue)
+        Montant total des dépenses nettes (valeur absolue)
     """
     if df.empty:
         return 0.0
@@ -295,16 +297,22 @@ def calculate_true_expenses(df: pd.DataFrame, include_refunds: bool = True) -> f
     if 'amount' not in expense_df.columns:
         return 0.0
     
-    total_expenses = abs(expense_df[expense_df['amount'] < 0]['amount'].sum())
+    # Calcul net pour les catégories de dépenses
+    # (Somme des montants négatifs + Somme des montants positifs dans ces catégories)
+    total_net = expense_df['amount'].sum()
     
+    # Si include_refunds, on déduit aussi les remboursements classés dans INCOME_CATEGORIES
     if include_refunds:
-        # Déduire les remboursements
+        # On cherche les transactions positives dans REFUND_CATEGORIES
+        # Note: REFUND_CATEGORIES est généralement exclu de expense_df (car dans INCOME_CATEGORIES)
         refund_df = df[df['category_validated'].isin(REFUND_CATEGORIES)]
-        total_refunds = refund_df[refund_df['amount'] > 0]['amount'].sum()
-        total_expenses = max(0, total_expenses - total_refunds)
-    
-    return total_expenses
+        if not refund_df.empty:
+            positive_refunds = refund_df[refund_df['amount'] > 0]['amount'].sum()
+            # On soustrait la valeur absolue des remboursements du total des dépenses
+            # Comme total_net est négatif (dépenses), on AJOUTE le montant positif
+            total_net += positive_refunds
 
+    return abs(total_net) if total_net < 0 else 0.0
 
 def calculate_savings_rate(df: pd.DataFrame) -> float:
     """

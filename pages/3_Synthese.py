@@ -37,6 +37,7 @@ from modules.notifications import check_budget_alerts
 # ============================================================================
 from modules.ui.dashboard.filters import (
     render_filter_sidebar,
+    render_filter_info,
     compute_previous_period,
 )
 from modules.ui.dashboard.sections import (
@@ -113,17 +114,40 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
     
     count = st.session_state.get(ONBOARDING_COUNT_KEY, 0)
     if count > 0:
-        with st.expander(f"🔔 Configuration Assistée - {count} suggestions détectées", expanded=False):
-            st.info(
-                f"J'ai détecté **{count}** éléments importants à configurer "
-                "(Salaire, Loyer, Factures...)."
-            )
+        suggestions = detect_financial_profile(df)
+        with st.expander(f"🔔 Configuration Assistée - {count} suggestions détectées", expanded=True):
+            st.markdown("##### J'ai détecté des opportunités de configuration")
+            st.caption("Ces éléments récurrents ont été trouvés dans vos transactions.")
+            
+            from modules.db.rules import add_learning_rule
+            from modules.ui.feedback import toast_success, toast_error
+            
+            for i, sug in enumerate(suggestions):
+                cols = st.columns([2, 1, 1, 1])
+                with cols[0]:
+                    st.write(f"**{sug['type']}**")
+                    st.caption(f"Pattern: `{sug['label']}`")
+                with cols[1]:
+                    st.write(f"{sug['amount']:.2f} €")
+                with cols[2]:
+                    st.write(f"Ref: {sug['default_category']}")
+                with cols[3]:
+                    if st.button("Valider ✅", key=f"sug_val_{i}", use_container_width=True):
+                        if add_learning_rule(sug['label'], sug['default_category']):
+                            toast_success(f"Règle créée pour {sug['label']}")
+                            st.session_state[ONBOARDING_COUNT_KEY] -= 1
+                            st.rerun()
+                        else:
+                            toast_error("Erreur lors de la création de la règle")
+            
+            st.divider()
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
-                if st.button("Configurer maintenant ➡️", type="primary", key="btn_config"):
-                    st.switch_page("pages/5_Assistant.py")
+                if st.button("Gérer toutes les règles ➡️", type="primary", key="btn_config"):
+                    st.session_state['intel_active_tab'] = "📋 Règles"
+                    st.switch_page("pages/4_Intelligence.py")
             with col2:
-                if st.button("Me rappeler plus tard", key="btn_remind"):
+                if st.button("Ignorer pour le moment", key="btn_remind"):
                     st.session_state[ONBOARDING_COUNT_KEY] = 0
                     st.rerun()
 
@@ -141,7 +165,7 @@ def render_data_health_notifications(df: pd.DataFrame) -> None:
                 f"🧹 **Nettoyage requis** : {len(orphans)} libellés incohérents "
                 f"(ex: {', '.join(orphans[:2])})..."
             )
-            if st.button("Aller au nettoyage 🛼", use_container_width=True, key="btn_cleanup"):
+            if st.button("Aller à la configuration ⚙️", use_container_width=True, key="btn_cleanup"):
                 st.switch_page("pages/9_Configuration.py")
 
 
@@ -172,8 +196,11 @@ def main():
     if df.empty:
         st.info("📭 Aucune donnée disponible. Commencez par importer des relevés.")
         st.button(
-            "➕ Importer des transactions",
-            on_click=lambda: st.switch_page("pages/1_Import.py"),
+            "➕ Nouvelles Opérations",
+            on_click=lambda: (
+                st.session_state.update({'active_op_tab': '📥 Importation'}),
+                st.switch_page("pages/1_Opérations.py")
+            ),
             type="primary"
         )
         return
@@ -187,6 +214,9 @@ def main():
     # =========================================================================
     filter_result = render_filter_sidebar(df)
     df_current = filter_result['df_filtered']
+    
+    # Affichage des infos de filtres et alertes d'exclusion
+    render_filter_info(df, filter_result)
     
     # Vérifier si des filtres actifs réduisent trop les données
     if df_current.empty:

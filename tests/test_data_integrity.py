@@ -53,7 +53,7 @@ def test_no_exact_duplicates_same_account():
         pytest.skip(f"Database not found at {DB_PATH}")
         
     with get_db_connection() as conn:
-        query = "SELECT tx_hash, COUNT(*) as c FROM transactions GROUP BY tx_hash HAVING c > 1"
+        query = "SELECT tx_hash, COUNT(*) as c FROM transactions WHERE tx_hash IS NOT NULL AND tx_hash != '' GROUP BY tx_hash HAVING c > 1"
         df = pd.read_sql(query, conn)
         
     assert df.empty, f"Found {len(df)} transactions with colliding hashes (strict duplicates)!"

@@ -112,11 +112,11 @@ def render_log_viewer():
     col_actions1, col_actions2 = st.columns(2)
     
     with col_actions1:
-        if st.button("🔄 Rafraîchir", use_container_width=True, key='button_115'):
+        if st.button("🔄 Rafraîchir", use_container_width=True, key='log_button_115'):
             st.rerun()
     
     with col_actions2:
-        if st.button("🗑️ Effacer les logs", use_container_width=True, type="secondary", key='button_119'):
+        if st.button("🗑️ Effacer les logs", use_container_width=True, type="secondary", key='log_button_119'):
             with open(LOG_FILE, "w", encoding='utf-8') as f:
                 f.write("")
             st.toast("Logs effacés !", icon="🗑️")

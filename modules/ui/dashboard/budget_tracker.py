@@ -22,7 +22,8 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
         col1, col2 = st.columns([1, 2])
         with col1:
             if st.button("➕ Créer mon premier budget", type="primary", use_container_width=True):
-                st.switch_page("pages/4_Regles.py")
+                st.session_state['intel_active_tab'] = "🎯 Budgets"
+                st.switch_page("pages/4_Intelligence.py")
         with col2:
             st.caption("💡 Conseil: Commencez par les catégories où vous dépensez le plus (Courses, Transport, Loisirs)")
         return
@@ -35,7 +36,7 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
     else:
         num_months = 1
     
-    # Calculate spending by category
+    # Calculate spending by category (amounts are now net, usually negative for expenses)
     spending_map = df_exp.groupby('Catégorie')['amount'].sum().to_dict()
     
     # Calculate historical spending for trends if df_full provided
@@ -52,27 +53,33 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
             
             df_prev = df_full[
                 (df_full['date_dt'] >= prev_start) & 
-                (df_full['date_dt'] <= prev_end) &
-                (df_full['amount'] < 0)
+                (df_full['date_dt'] <= prev_end)
             ].copy()
             
-            if not df_prev.empty:
-                df_prev['display_cat'] = df_prev.apply(
+            # Use same expense filtering as current
+            from modules.transaction_types import filter_expense_transactions
+            df_prev_exp = filter_expense_transactions(df_prev)
+            
+            if not df_prev_exp.empty:
+                df_prev_exp['display_cat'] = df_prev_exp.apply(
                     lambda x: f"{cat_emoji_map.get(x['category_validated'], '🏷️')} {x['category_validated']}", 
                     axis=1
                 )
-                historical_map = df_prev.groupby('display_cat')['amount'].sum().abs().to_dict()
+                # Sum and take abs for comparison
+                historical_map = df_prev_exp.groupby('display_cat')['amount'].sum().abs().to_dict()
         except Exception:
             pass
     
     # Summary metrics
-    total_budgets = len(budgets)
-    total_spent = sum(spending_map.values())
+    # spent is the absolute value of the sum of negative net amounts
+    # (if total is positive, it means we earned more refunds than we spent, spent = 0)
+    total_spent_raw = sum(spending_map.values())
+    total_spent = abs(total_spent_raw) if total_spent_raw < 0 else 0
     total_limit = budgets['amount'].sum() * num_months
     
     col_summary1, col_summary2, col_summary3 = st.columns(3)
     with col_summary1:
-        st.metric("Budgets actifs", total_budgets)
+        st.metric("Budgets actifs", len(budgets))
     with col_summary2:
         utilization = (total_spent / total_limit * 100) if total_limit > 0 else 0
         st.metric("Utilisation globale", f"{utilization:.0f}%", 
@@ -94,7 +101,10 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
         cat_name = row['category']
         display_cat = f"{cat_emoji_map.get(cat_name, '🏷️')} {cat_name}"
         limit = row['amount'] * num_months
-        spent = spending_map.get(display_cat, 0.0)
+        
+        spent_raw = spending_map.get(display_cat, 0.0)
+        spent = abs(spent_raw) if spent_raw < 0 else 0
+        
         percent = (spent / limit * 100) if limit > 0 else 0
         budget_list.append({
             'cat_name': cat_name,
@@ -152,4 +162,5 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
                             st.toast(f"Analyse de {budget['cat_name']}...", icon="💡")
                     with cols_action[1]:
                         if st.button("⚙️ Ajuster", key=f"adjust_{budget['cat_name']}", use_container_width=True):
-                            st.switch_page("pages/4_Regles.py")
+                            st.session_state['intel_active_tab'] = "🎯 Budgets"
+                            st.switch_page("pages/4_Intelligence.py")

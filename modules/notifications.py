@@ -264,7 +264,7 @@ def check_budget_alerts(force_check: bool = False):
                         level=level,
                         group="budget_alert",
                         persistent=(level == NotificationLevel.CRITICAL),
-                        actions=[NotificationAction(label="Voir Budgets", url="pages/4_Regles.py")]
+                        actions=[NotificationAction(label="Voir Budgets", url="pages/4_Intelligence.py")]
                     )
                     
                     alerts.append({'category': category, 'level': level})

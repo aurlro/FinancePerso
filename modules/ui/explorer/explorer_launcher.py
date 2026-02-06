@@ -24,7 +24,7 @@ def launch_explorer(
     st.session_state['_explorer_from'] = from_page
     
     # Navigate
-    st.switch_page("pages/6_Explorer.py")
+    st.switch_page("pages/6_Recherche.py")
 
 
 def render_explore_button(
@@ -93,7 +93,7 @@ def render_explore_link(
     # Use query params to pass data
     params = f"type={explorer_type}&value={value}&from={from_page}"
     
-    st.markdown(f"[➡️ {label}](/Explorer?{params})")
+    st.markdown(f"[➡️ {label}](/Recherche?{params})")
 
 
 def render_category_pill(
@@ -192,7 +192,7 @@ def get_explorer_url(explorer_type: str, value: str, from_page: str = "3_Synthes
     Returns:
         URL string
     """
-    return f"/Explorer?type={explorer_type}&value={value}&from={from_page}"
+    return f"/Recherche?type={explorer_type}&value={value}&from={from_page}"
 
 
 def render_back_button(from_page: str = "3_Synthese") -> None:
@@ -203,12 +203,11 @@ def render_back_button(from_page: str = "3_Synthese") -> None:
         from_page: Page to return to
     """
     page_names = {
-        '1_Import': 'Import',
-        '2_Validation': 'Validation',
+        '1_Opérations': 'Opérations',
         '3_Synthese': 'Synthèse',
-        '4_Recurrence': 'Récurrence',
-        '4_Regles': 'Règles',
+        '4_Intelligence': 'Intelligence',
         '5_Assistant': 'Assistant',
+        '6_Recherche': 'Recherche',
         'app': 'Accueil'
     }
     

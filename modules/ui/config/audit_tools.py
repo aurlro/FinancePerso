@@ -3,7 +3,7 @@ import pandas as pd
 import difflib
 import hashlib
 from modules.utils import clean_label
-from modules.db.audit import get_transfer_inconsistencies, get_suggested_mappings
+from modules.db.audit import get_transfer_inconsistencies, get_suggested_mappings, whitelist_transfer_label
 from modules.db.tags import learn_tags_from_history
 from modules.data_manager import auto_fix_common_inconsistencies
 from modules.db.members import (
@@ -14,6 +14,7 @@ from modules.db.categories import (
     get_categories, merge_categories, add_category,
     get_all_categories_including_ghosts
 )
+from modules.db.rules import add_learning_rule
 from modules.db.transactions import (
     get_transactions_by_criteria, delete_transaction_by_id,
     update_transaction_category, bulk_update_transaction_status,
@@ -35,15 +36,16 @@ def render_audit_tools():
     st.markdown("Outils pour maintenir la cohérence de vos données (membres, catégories, etc.)")
     
     # --- AUTOMATIC FIX ---
-    with st.expander("🪄 Corrections Automatiques (Magic Fix 2.0)", expanded=True):
+    with st.expander("🪄 Corrections Automatiques (Magic Fix 5.1)"):
         st.info("""
-            **Le Magic Fix 2.0 nettoie votre base en un clic :**
-            - 🛠️ Corrige les fautes de frappe et accents sur les membres.
-            - 🧹 Supprime automatiquement tous les doublons détectés.
-            - 🏷️ Normalise les tags (minuscules et dédoublonnage).
-            - 🧠 Ré-applique vos règles aux transactions en attente.
+            **Le Magic Fix 5.1 optimise vos flux et vos bénéficiaires :**
+            - 🔄 **Rapprochement Inter-Comptes** : Détecte et certifie automatiquement les virements entre vos comptes.
+            - 🏢 **Normalisation Bénéficiaires** : Harmonise les noms des marchands via vos alias personnalisés.
+            - 🧠 **Smart Tagging (IA)** : Remplit vos tags vides en apprenant de votre historique.
+            - 👤 **Ré-attribution Membres** : Corrige l'attribution des membres sur les transactions.
+            - 🧹 **Nettoyage Deep** : Supprime le bruit bancaire et les doublons universels.
         """)
-        if st.button("Lancer les corrections magiques ✨", type="primary", key='button_46'):
+        if st.button("Lancer les corrections magiques ✨", type="primary", key='audit_button_46'):
             with st.spinner("Analyse et correction des données..."):
                 # Créer une sauvegarde avant
                 backup_path = create_backup(label="pre_magic_fix")
@@ -243,6 +245,15 @@ def render_audit_tools():
             
             # Display groups
             with st.expander("Voir et corriger les groupes de virements", expanded=True):
+                # Global action for this section
+                if st.button("✅ Tout valider comme Virement", use_container_width=True, key="bulk_accept_all_missing"):
+                    tx_ids = missing_t['id'].tolist()
+                    bulk_update_transaction_status(tx_ids, "Virement Interne")
+                    toast_success(f"Corrigé ! {len(tx_ids)} transactions validées.", icon="🔄")
+                    st.rerun()
+                
+                st.divider()
+                
                 all_categories = get_categories()
                 default_cat = "Virement Interne" if "Virement Interne" in all_categories else all_categories[0]
                 
@@ -271,7 +282,7 @@ def render_audit_tools():
                             label_visibility="collapsed"
                         )
                         
-                        if c3.button(f"Tout corriger", key=f"bulk_fix_{safe_key}"):
+                        if c3.button(f"Confirmer ce groupe", key=f"bulk_fix_{safe_key}"):
                             tx_ids = group['id'].tolist()
                             bulk_update_transaction_status(tx_ids, target_cat)
                             toast_success(f"Corrigé ! {len(tx_ids)} tx en '{target_cat}'", icon="🔄")
@@ -284,9 +295,75 @@ def render_audit_tools():
         
         if not wrong_t.empty:
             st.info(f"**{len(wrong_t)}** transactions sont catégorisées 'Virement Interne' mais n'en ont pas l'air.")
-            with st.expander("Voir les virements douteux"):
-                for _, row in wrong_t.iterrows():
-                    st.write(f"❓ {row['date']} • **{row['label']}** • {row['amount']:.2f}€")
+            
+            # Grouping Logic for doubtful transfers
+            wrong_t['clean'] = wrong_t['label'].apply(clean_label)
+            exact_groups_w = wrong_t.groupby('clean')
+            final_groups_w = {}
+            
+            for label, group in exact_groups_w:
+                found_match = False
+                for existing_label in final_groups_w.keys():
+                    similarity = difflib.SequenceMatcher(None, label, existing_label).ratio()
+                    if similarity >= 0.8:
+                        final_groups_w[existing_label] = pd.concat([final_groups_w[existing_label], group])
+                        found_match = True
+                        break
+                if not found_match:
+                    final_groups_w[label] = group
+
+            with st.expander("Examiner les virements douteux", expanded=True):
+                # Global action for this section
+                if st.button("✅ Confirmer tous ces virements", use_container_width=True, key="bulk_whitelist_all"):
+                    unique_labels = wrong_t['label'].unique()
+                    for l in unique_labels:
+                        whitelist_transfer_label(l)
+                    toast_success(f"Connaissance enrichie ! {len(unique_labels)} libellés validés.", icon="🧠")
+                    st.rerun()
+                
+                st.divider()
+                
+                all_categories = get_categories()
+                
+                for label, group in final_groups_w.items():
+                    with st.container(border=True):
+                        c1, c2, c3 = st.columns([2, 1, 1])
+                        count = len(group)
+                        total_amount = group['amount'].sum()
+                        c1.markdown(f"❓ **{label}** ({count} tx)")
+                        c1.caption(f"Total : {total_amount:.2f}€")
+                        
+                        safe_key = hashlib.md5(f"wrong_{label}".encode()).hexdigest()[:12]
+                        
+                        # Option A: Whitelist (Knowledge Enrichment)
+                        if c2.button("✅ C'est un virement", key=f"whitelist_{safe_key}", help="Confirmer que c'est un virement interne (enrichit la connaissance)"):
+                            # We whitelist the groups labels (actually we should whitelist the specific unique labels in this group)
+                            unique_labels = group['label'].unique()
+                            for l in unique_labels:
+                                whitelist_transfer_label(l)
+                            toast_success(f"Connaissance enrichie ! '{label}' est désormais validé.", icon="🧠")
+                            st.rerun()
+                        
+                        # Option B: Bulk Re-attribute
+                        target_cat = c3.selectbox(
+                            "Ré-attribuer à...", 
+                            all_categories, 
+                            index=0, # Default to first
+                            key=f"bulk_re_cat_{safe_key}",
+                            label_visibility="collapsed"
+                        )
+                        
+                        if st.button(f"Changer de catégorie ({count})", key=f"bulk_re_fix_{safe_key}", use_container_width=True):
+                            tx_ids = group['id'].tolist()
+                            bulk_update_transaction_status(tx_ids, target_cat)
+                            # Knowledge enrichment: add a rule for the cleaned label
+                            add_learning_rule(label, target_cat, priority=2)
+                            toast_success(f"Déplacé ! {len(tx_ids)} tx en '{target_cat}' (Règle apprise 🧠)", icon="🔀")
+                            st.rerun()
+                        
+                        if st.checkbox(f"Détails", key=f"show_detail_w_{label}"):
+                            for _, row in group.iterrows():
+                                st.write(f"  • {row['date']} • {row['label']} • {row['amount']:.2f}€")
 
     # --- CARD SUGGESTIONS ---
     st.divider()

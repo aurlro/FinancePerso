@@ -227,6 +227,51 @@ def render_filter_sidebar(df: pd.DataFrame) -> Dict:
     }
 
 
+def render_filter_info(df_full: pd.DataFrame, filter_result: Dict):
+    """
+    Affiche un résumé des filtres actifs et des alertes sur les données exclues.
+    """
+    df_filtered = filter_result['df_filtered']
+    years = filter_result['selected_years']
+    months = filter_result['selected_months']
+    
+    if not years:
+        return
+
+    # 1. Résumé de la période
+    month_names = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"]
+    if len(months) == 12:
+        period_text = f"Année(s) : {', '.join(map(str, sorted(years)))}"
+    else:
+        month_text = ", ".join([month_names[m-1] for m in sorted(months)])
+        period_text = f"{month_text} {', '.join(map(str, sorted(years)))}"
+    
+    st.info(f"📅 **Période active** : {period_text}")
+
+    # 2. Alerte sur les grosses transactions exclues (Hors période ou filtres)
+    # On cherche des transactions > 500€ qui ne sont pas dans le df filtré
+    if not df_full.empty:
+        # Transactions importantes (> 500€) non présentes dans le filtre actuel
+        # mais présentes dans la base complète
+        important_threshold = -500
+        
+        # On ne compare que par ID pour être sûr
+        filtered_ids = set(df_filtered['id'].tolist()) if 'id' in df_filtered.columns else set()
+        
+        important_excluded = df_full[
+            (df_full['amount'] <= important_threshold) & 
+            (~df_full['id'].isin(filtered_ids)) &
+            (df_full['category_validated'] != 'Virement Interne')
+        ].copy()
+        
+        if not important_excluded.empty:
+            count = len(important_excluded)
+            latest = important_excluded.sort_values('date', ascending=False).iloc[0]
+            
+            with st.expander(f"⚠️ **{count} opérations majeures** sont exclues par vos filtres", expanded=False):
+                st.warning(f"Dernière exclue : **{latest['label']}** ({latest['amount']}€) le {latest['date']}.")
+                st.caption("Ajustez vos filtres (Année, Comptes, Hors Budget) pour les inclure dans vos analyses.")
+
 def compute_previous_period(
     df: pd.DataFrame,
     df_current: pd.DataFrame,

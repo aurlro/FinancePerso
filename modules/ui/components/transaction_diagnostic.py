@@ -210,4 +210,4 @@ def render_compact_diagnostic_card():
             st.caption("Certaines transactions ont un montant qui ne correspond pas à leur catégorie.")
             
             if st.button("🔍 Voir le diagnostic", use_container_width=True):
-                st.switch_page("pages/9_Configuration.py")  # Ou créer une page dédiée
+                st.switch_page("pages/99_Système.py")  # Diagnostics moved to Système/Debug

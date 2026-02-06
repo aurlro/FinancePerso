@@ -48,9 +48,8 @@ def temp_db():
             tags TEXT,
             notes TEXT,
             status TEXT DEFAULT 'pending',
-            import_date TEXT,
-            dedup_hash TEXT,
-            occurrence_index INTEGER DEFAULT 0,
+            import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            tx_hash TEXT,
             is_manually_ungrouped INTEGER DEFAULT 0
         )
     """)

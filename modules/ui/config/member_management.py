@@ -3,7 +3,8 @@ import pandas as pd
 from modules.db.members import (
     get_members, add_member, delete_member, rename_member,
     update_member_type, get_member_mappings_df,
-    add_member_mapping, delete_member_mapping
+    add_member_mapping, delete_member_mapping,
+    get_account_member_mappings_df, add_account_member_mapping, delete_account_member_mapping
 )
 from modules.impact_analyzer import analyze_member_rename_impact, render_impact_preview
 from modules.ui.feedback import (
@@ -35,7 +36,7 @@ def render_member_management():
             
             col_confirm, col_cancel = st.columns([1, 1])
             with col_confirm:
-                if st.button("✅ Confirmer le renommage", type="primary", use_container_width=True, key='button_38'):
+                if st.button("👤 Confirmer le nouveau nom", type="primary", use_container_width=True, key='member_button_38'):
                     try:
                         rename_member(pending['old_name'], pending['new_name'])
                         del st.session_state['pending_rename']
@@ -63,7 +64,7 @@ def render_member_management():
                         else:
                             toast_error(f"❌ Erreur lors du renommage : {error_msg[:50]}", icon="❌")
             with col_cancel:
-                if st.button("❌ Annuler", use_container_width=True, key='button_66'):
+                if st.button("❌ Annuler", use_container_width=True, key='member_button_66'):
                     del st.session_state['pending_rename']
                     toast_info("Renommage annulé", icon="🚫")
                     st.rerun()
@@ -131,7 +132,7 @@ def render_member_management():
                     else:
                         c1, c2, c3, c4 = st.columns([3, 1, 0.5, 0.5])
                         c1.write(f"👤 **{member_name}**")
-                        if c2.button("➡️ Tiers", key=f"to_ext_{member_id}", help="Déplacer vers Tiers"):
+                        if c2.button("➡️ Passer en Tiers", key=f"to_ext_{member_id}", help="Déplacer vers Tiers"):
                             try:
                                 update_member_type(member_id, 'EXTERNAL')
                                 toast_success(f"✅ '{member_name}' déplacé vers Tiers", icon="💼")
@@ -202,7 +203,7 @@ def render_member_management():
                     else:
                         c1, c2, c3, c4 = st.columns([3, 1, 0.5, 0.5])
                         c1.write(f"💼 **{member_name}**")
-                        if c2.button("⬅️ Foyer", key=f"to_hh_{member_id}", help="Déplacer vers Foyer"):
+                        if c2.button("⬅️ Passer au Foyer", key=f"to_hh_{member_id}", help="Déplacer vers Foyer"):
                             try:
                                 update_member_type(member_id, 'HOUSEHOLD')
                                 toast_success(f"✅ '{member_name}' déplacé vers Foyer", icon="🏘️")
@@ -344,3 +345,54 @@ def render_member_management():
                             toast_error(f"❌ La carte ...{clean_suffix} est déjà associée", icon="🚫")
                         else:
                             toast_error(f"❌ Erreur : {error_msg[:50]}", icon="❌")
+
+    # --- ACCOUNT MAPPINGS ---
+    st.divider()
+    st.subheader("🏦 Correspondances Comptes → Membres")
+    st.markdown("Définissez un membre par défaut pour toutes les transactions d'un compte spécifique (ex: votre compte personnel).")
+    
+    acc_mapping_df = get_account_member_mappings_df()
+    
+    col_a1, col_a2 = st.columns([1, 1])
+    with col_a1:
+        if acc_mapping_df.empty:
+            st.info("📭 Aucune correspondance par compte.")
+        else:
+            for index, row in acc_mapping_df.iterrows():
+                ca1, ca2 = st.columns([3, 1])
+                ca1.write(f"🏦 **{row['account_label']}** ➔ 👤 {row['member_name']}")
+                if ca2.button("🗑️", key=f"del_acc_map_{row['id']}", help="Supprimer cette règle"):
+                    delete_account_member_mapping(row['id'])
+                    toast_success(f"🗑️ Règle supprimée pour {row['account_label']}", icon="🗑️")
+                    st.rerun()
+    
+    with col_a2:
+        with st.form("add_acc_mapping_form"):
+            # Fetch existing account labels to help
+            from modules.db.transactions import get_all_transactions
+            df_temp = get_all_transactions(limit=1000)
+            acc_list = sorted(df_temp['account_label'].dropna().unique().tolist()) if not df_temp.empty else []
+            
+            acc_label = st.selectbox(
+                "Libellé du compte", 
+                options=[""] + acc_list if acc_list else [""],
+                help="Sélectionnez un compte existant ou tapez-en un nouveau ci-dessous"
+            )
+            
+            manual_acc = st.text_input("Ou saisir manuellement", placeholder="Ex: Compte Perso Aurélien")
+            final_acc = manual_acc if manual_acc else acc_label
+            
+            m_name_acc = st.selectbox(
+                "Membre par défaut", 
+                members_df['name'].tolist() if not members_df.empty else ["Anonyme"],
+                key="sel_m_acc"
+            )
+            
+            submitted_acc = st.form_submit_button("➕ Ajouter la règle", use_container_width=True)
+            if submitted_acc:
+                if not final_acc:
+                    toast_warning("⚠️ Veuillez spécifier un compte", icon="🏦")
+                else:
+                    add_account_member_mapping(final_acc, m_name_acc)
+                    toast_success(f"✅ Compte {final_acc} associé à {m_name_acc}", icon="🏦")
+                    st.rerun()
