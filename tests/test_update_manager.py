@@ -5,6 +5,7 @@ Tests for update manager module.
 import pytest
 import os
 import tempfile
+import subprocess
 from datetime import datetime
 
 from modules.update_manager import (
@@ -199,3 +200,185 @@ class TestRecentChanges:
         assert len(recent) <= 5  # We wrote 5 versions
         # Check that we got some versions
         assert len(recent) > 0
+
+
+class TestGitChangeAnalysis:
+    """Test git change detection and analysis."""
+    
+    @pytest.fixture
+    def git_repo(self, tmp_path):
+        """Create a temporary git repository with commits."""
+        # Initialize git repo
+        subprocess.run(['git', 'init'], cwd=tmp_path, capture_output=True, check=True)
+        subprocess.run(['git', 'config', 'user.email', 'test@test.com'], cwd=tmp_path, capture_output=True)
+        subprocess.run(['git', 'config', 'user.name', 'Test'], cwd=tmp_path, capture_output=True)
+        
+        # Create initial commit
+        init_file = tmp_path / "initial.py"
+        init_file.write_text("# initial")
+        subprocess.run(['git', 'add', '.'], cwd=tmp_path, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', 'Initial commit'], cwd=tmp_path, capture_output=True)
+        
+        return tmp_path
+    
+    def test_detect_committed_changes_since_tag(self, git_repo):
+        """Test detection of committed changes since last tag."""
+        # Create a tag
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Create a committed change after tag
+        new_file = git_repo / "feature.py"
+        new_file.write_text("# new feature")
+        subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', 'feat: add new feature'], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['has_committed_changes'] is True
+        assert 'feature.py' in result['committed_files']
+        assert len(result['added']) == 1
+        assert 'new feature' in result['added'][0].lower()
+    
+    def test_detect_uncommitted_changes(self, git_repo):
+        """Test detection of unstaged and staged uncommitted changes."""
+        # Create a tag first
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Create unstaged file (untracked)
+        unstaged_file = git_repo / "unstaged.py"
+        unstaged_file.write_text("# unstaged change")
+        
+        # Create staged file
+        staged_file = git_repo / "staged.py"
+        staged_file.write_text("# staged change")
+        subprocess.run(['git', 'add', 'staged.py'], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['has_uncommitted_changes'] is True
+        assert 'unstaged.py' in result['uncommitted_files']
+        assert 'staged.py' in result['uncommitted_files']
+        assert result['uncommitted_status']['unstaged.py'] == 'untracked'
+        assert 'staged' in result['uncommitted_status']['staged.py']
+    
+    def test_detect_both_committed_and_uncommitted(self, git_repo):
+        """Test detection when both committed and uncommitted changes exist."""
+        # Create tag
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Create committed change
+        committed_file = git_repo / "committed.py"
+        committed_file.write_text("# committed")
+        subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', 'feat: committed change'], cwd=git_repo, capture_output=True)
+        
+        # Create uncommitted change
+        uncommitted_file = git_repo / "uncommitted.py"
+        uncommitted_file.write_text("# uncommitted")
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['has_committed_changes'] is True
+        assert result['has_uncommitted_changes'] is True
+        assert 'committed.py' in result['committed_files']
+        assert 'uncommitted.py' in result['uncommitted_files']
+        assert 'committed.py' in result['files_modified']
+        assert 'uncommitted.py' in result['files_modified']
+        assert '(commits + local)' in result['suggested_title']
+    
+    def test_no_tags_uses_recent_commits(self, git_repo):
+        """Test that recent commits are used when no tags exist."""
+        # Create multiple commits without tags
+        for i in range(3):
+            f = git_repo / f"file{i}.py"
+            f.write_text(f"# content {i}")
+            subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+            subprocess.run(['git', 'commit', '-m', f'feat: commit {i}'], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['has_committed_changes'] is True
+        assert len(result['committed_files']) >= 3  # Should include all new files
+    
+    def test_commit_categorization(self, git_repo):
+        """Test categorization of commits by type."""
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Create various commit types
+        commits = [
+            ('feat: add new feature', 'added'),
+            ('fix: resolve bug', 'fixed'),
+            ('perf: optimize speed', 'performance'),
+            ('docs: update readme', 'other'),
+        ]
+        
+        for msg, _ in commits:
+            f = git_repo / f"{msg.replace(' ', '_')}.py"
+            f.write_text("# content")
+            subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+            subprocess.run(['git', 'commit', '-m', msg], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert len(result['added']) == 1
+        assert len(result['fixed']) == 1
+        assert len(result['performance']) == 1
+        assert len(result['other']) == 1
+    
+    def test_bump_type_suggestion(self, git_repo):
+        """Test version bump type suggestion based on changes."""
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Feature commit should suggest minor
+        f = git_repo / "feature.py"
+        f.write_text("# feature")
+        subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', 'feat: new feature'], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['suggested_bump'] == 'minor'
+    
+    def test_major_bump_detection(self, git_repo):
+        """Test detection of major/breaking changes."""
+        subprocess.run(['git', 'tag', 'v1.0.0'], cwd=git_repo, capture_output=True)
+        
+        # Breaking change commit should suggest major
+        f = git_repo / "breaking.py"
+        f.write_text("# breaking")
+        subprocess.run(['git', 'add', '.'], cwd=git_repo, capture_output=True)
+        subprocess.run(['git', 'commit', '-m', 'breaking: remove old api'], cwd=git_repo, capture_output=True)
+        
+        manager = UpdateManager(project_root=str(git_repo))
+        result = manager.analyze_git_changes()
+        
+        assert result['suggested_bump'] == 'major'
+    
+    def test_parse_git_status_code(self):
+        """Test parsing of git status porcelain codes."""
+        manager = UpdateManager()
+        
+        assert manager._parse_git_status_code('??') == 'untracked'
+        assert manager._parse_git_status_code('M ') == 'staged (modified)'
+        assert manager._parse_git_status_code('A ') == 'staged (added)'
+        assert manager._parse_git_status_code(' M') == 'unstaged (modified)'
+        assert manager._parse_git_status_code(' D') == 'unstaged (deleted)'
+        assert manager._parse_git_status_code('MM') == 'staged + unstaged changes'
+    
+    def test_empty_repo_no_errors(self, tmp_path):
+        """Test that empty git repos are handled gracefully."""
+        subprocess.run(['git', 'init'], cwd=tmp_path, capture_output=True, check=True)
+        
+        manager = UpdateManager(project_root=str(tmp_path))
+        result = manager.analyze_git_changes()
+        
+        # Should return empty result without errors
+        assert isinstance(result, dict)
+        assert result['has_committed_changes'] is False
+        assert result['has_uncommitted_changes'] is False

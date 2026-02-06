@@ -395,141 +395,329 @@ class UpdateManager:
         """
         Analyze git changes since last version tag.
         
+        Includes both committed changes (since last tag) and uncommitted changes
+        (staged and unstaged) to reflect the most recent "live" work.
+        
         Returns:
             Dict with detected changes:
             {
-                'files_modified': List[str],
-                'added': List[str],
-                'fixed': List[str],
-                'performance': List[str],
+                'files_modified': List[str],           # All relevant files changed
+                'committed_files': List[str],          # Files changed in commits
+                'uncommitted_files': List[str],        # Local unstaged/staged files
+                'uncommitted_status': Dict[str, str],  # File -> status mapping
+                'added': List[str],                    # Features added (from commits)
+                'fixed': List[str],                    # Bugs fixed (from commits)
+                'performance': List[str],              # Performance improvements
+                'other': List[str],                    # Other commits
                 'suggested_title': str,
-                'suggested_bump': str
+                'suggested_bump': str,
+                'has_committed_changes': bool,         # True if commits since tag
+                'has_uncommitted_changes': bool,       # True if local modifications exist
             }
         """
         import subprocess
         
         result = {
             'files_modified': [],
+            'committed_files': [],
+            'uncommitted_files': [],
+            'uncommitted_status': {},
             'added': [],
             'fixed': [],
             'performance': [],
             'other': [],
             'suggested_title': '',
-            'suggested_bump': 'patch'
+            'suggested_bump': 'patch',
+            'has_committed_changes': False,
+            'has_uncommitted_changes': False,
         }
         
         try:
-            # Get current version and find last tag
-            current_version = self.get_current_version()
+            # Check if we're in a git repo first
+            git_check = subprocess.run(
+                ['git', 'rev-parse', '--git-dir'],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            if git_check.returncode != 0:
+                logger.warning("Not a git repository")
+                return result
             
-            # Try to get commits since last tag
-            try:
-                # Check if we're in a git repo
-                subprocess.run(['git', 'rev-parse', '--git-dir'], 
-                             capture_output=True, check=True, cwd=self.project_root)
+            # ==========================================
+            # 1. Get uncommitted changes (staged + unstaged)
+            # ==========================================
+            status_result = subprocess.run(
+                ['git', 'status', '--porcelain'],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            uncommitted_files = []
+            uncommitted_status = {}
+            
+            if status_result.returncode == 0 and status_result.stdout.strip():
+                for line in status_result.stdout.strip().split('\n'):
+                    if len(line) < 3:
+                        continue
+                    
+                    # Porcelain format: "XY path" or "XY orig_path -> new_path" for renames
+                    status_code = line[:2]
+                    file_path = line[3:].strip()
+                    
+                    # Handle renamed files (format: "R  old -> new")
+                    if status_code[0] == 'R' or status_code[1] == 'R':
+                        # Extract the new path after " -> "
+                        if ' -> ' in file_path:
+                            file_path = file_path.split(' -> ')[-1].strip()
+                    
+                    uncommitted_files.append(file_path)
+                    uncommitted_status[file_path] = self._parse_git_status_code(status_code)
                 
-                # Get last tag
-                tag_result = subprocess.run(
-                    ['git', 'describe', '--tags', '--abbrev=0'],
+                result['uncommitted_files'] = self._filter_relevant_files(uncommitted_files)
+                result['uncommitted_status'] = {k: v for k, v in uncommitted_status.items() 
+                                                 if k in result['uncommitted_files']}
+                result['has_uncommitted_changes'] = len(result['uncommitted_files']) > 0
+            
+            # ==========================================
+            # 2. Get committed changes since last tag
+            # ==========================================
+            commit_range = self._get_commit_range_since_last_tag()
+            
+            committed_files = []
+            if commit_range:
+                files_result = subprocess.run(
+                    ['git', 'diff', '--name-only', commit_range],
+                    capture_output=True, text=True, cwd=self.project_root
+                )
+                if files_result.returncode == 0:
+                    committed_files = [f.strip() for f in files_result.stdout.split('\n') if f.strip()]
+                    result['committed_files'] = self._filter_relevant_files(committed_files)
+                    result['has_committed_changes'] = len(result['committed_files']) > 0
+                
+                # Get commit messages for categorization
+                commits_result = subprocess.run(
+                    ['git', 'log', '--pretty=format:%s', commit_range],
                     capture_output=True, text=True, cwd=self.project_root
                 )
                 
-                if tag_result.returncode == 0:
-                    last_tag = tag_result.stdout.strip()
-                    commit_range = f"{last_tag}..HEAD"
-                else:
-                    # No tags, get last 50 commits to be safe
-                    commit_range = "HEAD~50..HEAD"
-                    
-            except subprocess.CalledProcessError:
-                logger.warning("Git not available or not a git repository")
-                return result
+                if commits_result.returncode == 0:
+                    commits = commits_result.stdout.strip().split('\n') if commits_result.stdout.strip() else []
+                    self._categorize_commits(commits, result)
             
-            # Get modified files
-            files_result = subprocess.run(
-                ['git', 'diff', '--name-only', commit_range],
-                capture_output=True, text=True, cwd=self.project_root
-            )
+            # ==========================================
+            # 3. Merge all files and generate suggestions
+            # ==========================================
+            all_files = list(set(committed_files + uncommitted_files))
+            result['files_modified'] = self._filter_relevant_files(all_files)
             
-            if files_result.returncode == 0:
-                files = [f.strip() for f in files_result.stdout.split('\n') if f.strip()]
-                # Filter relevant files
-                relevant_extensions = ['.py', '.md', '.toml', '.txt', '.css', '.js', '.html']
-                result['files_modified'] = [
-                    f for f in files 
-                    if any(f.endswith(ext) for ext in relevant_extensions)
-                ] # No limit
-
+            # Generate title based on all changes (committed + uncommitted context)
+            result['suggested_title'] = self._generate_suggested_title(result)
             
-            # Get commit messages
-            commits_result = subprocess.run(
-                ['git', 'log', '--pretty=format:%s', commit_range],
-                capture_output=True, text=True, cwd=self.project_root
-            )
-            
-            if commits_result.returncode == 0:
-                commits = commits_result.stdout.strip().split('\n')
-                
-                # Categorize commits
-                add_patterns = [
-                    r'add', r'new', r'feature', r'implement', r'ajout', r'nouveau',
-                    r'création', r'crée', r'implémente', r'✨'
-                ]
-                fix_patterns = [
-                    r'fix', r'bug', r'correct', r'resolve', r'repair', r'corrig',
-                    r'résolu', r'résolution', r'🐛', r'🩹'
-                ]
-                perf_patterns = [
-                    r'perf', r'optimiz', r'speed', r'fast', r'cache', r'memory',
-                    r'optimis', r'rapid', r'performance', r'⚡'
-                ]
-                major_patterns = [
-                    r'break', r'remov', r'delet', r'refactor', r'rewrite',
-                    r'refacto', r'suppress', r'🗑️', r'💥'
-                ]
-                
-                for commit in commits:
-                    commit_lower = commit.lower()
-                    
-                    # Skip merge commits
-                    if commit_lower.startswith('merge'):
-                        continue
-                    
-                    categorized = False
-                    
-                    # Check patterns
-                    if any(re.search(p, commit_lower) for p in add_patterns):
-                        result['added'].append(commit)
-                        categorized = True
-                    elif any(re.search(p, commit_lower) for p in fix_patterns):
-                        result['fixed'].append(commit)
-                        categorized = True
-                    elif any(re.search(p, commit_lower) for p in perf_patterns):
-                        result['performance'].append(commit)
-                        categorized = True
-                    else:
-                        result['other'].append(commit)
-                    
-                    # Check for major changes
-                    if any(re.search(p, commit_lower) for p in major_patterns):
-                        result['suggested_bump'] = 'major'
-                    elif result['suggested_bump'] != 'major' and result['added']:
-                        result['suggested_bump'] = 'minor'
-                
-                # Suggest title based on most common type
-                if result['added']:
-                    result['suggested_title'] = f"Nouvelles fonctionnalités - {len(result['added'])} ajouts"
-                elif result['fixed']:
-                    result['suggested_title'] = f"Corrections - {len(result['fixed'])} bugs résolus"
-                elif result['performance']:
-                    result['suggested_title'] = f"Optimisations - {len(result['performance'])} améliorations"
-                else:
-                    result['suggested_title'] = "Mise à jour diverses"
+            # Adjust bump type if uncommitted changes suggest major work
+            if result['has_uncommitted_changes']:
+                # Check uncommitted file names for major change indicators
+                major_indicators = ['refactor', 'rewrite', 'breaking', 'api', 'arch']
+                for f in result['uncommitted_files']:
+                    if any(ind in f.lower() for ind in major_indicators):
+                        if result['suggested_bump'] != 'major':
+                            result['suggested_bump'] = 'minor'
+                        break
                     
         except Exception as e:
             logger.error(f"Failed to analyze git changes: {e}")
         
         return result
+    
+    def _get_commit_range_since_last_tag(self) -> str:
+        """
+        Determine the commit range since the last version tag.
+        
+        Returns:
+            Commit range string (e.g., "v3.5.0..HEAD") or empty string if no range.
+        """
+        import subprocess
+        
+        try:
+            # Try to get the last version tag
+            tag_result = subprocess.run(
+                ['git', 'describe', '--tags', '--abbrev=0', '--match', 'v*'],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            if tag_result.returncode == 0 and tag_result.stdout.strip():
+                last_tag = tag_result.stdout.strip()
+                return f"{last_tag}..HEAD"
+            
+            # No version tags found, try any tag
+            tag_result = subprocess.run(
+                ['git', 'describe', '--tags', '--abbrev=0'],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            if tag_result.returncode == 0 and tag_result.stdout.strip():
+                last_tag = tag_result.stdout.strip()
+                return f"{last_tag}..HEAD"
+            
+            # No tags at all - get last N commits safely
+            count_result = subprocess.run(
+                ['git', 'rev-list', '--count', 'HEAD'],
+                capture_output=True, text=True, cwd=self.project_root
+            )
+            
+            if count_result.returncode == 0:
+                total_commits = int(count_result.stdout.strip())
+                if total_commits == 0:
+                    return ""  # Empty repo
+                elif total_commits == 1:
+                    return "HEAD"  # Single commit
+                else:
+                    window = min(total_commits - 1, 20)  # Up to 20 commits
+                    if window > 0:
+                        return f"HEAD~{window}..HEAD"
+            
+            return ""
+            
+        except Exception as e:
+            logger.warning(f"Could not determine commit range: {e}")
+            return ""
+    
+    def _parse_git_status_code(self, code: str) -> str:
+        """
+        Parse git status porcelain code to human-readable status.
+        
+        Args:
+            code: Two-character status code (e.g., 'M ', ' M', '??')
+            
+        Returns:
+            Human-readable status description.
+        """
+        # X = index status, Y = worktree status
+        index_status = code[0] if len(code) > 0 else ' '
+        worktree_status = code[1] if len(code) > 1 else ' '
+        
+        status_map = {
+            ' ': 'unchanged',
+            'M': 'modified',
+            'A': 'added',
+            'D': 'deleted',
+            'R': 'renamed',
+            'C': 'copied',
+            'U': 'updated',
+            '?': 'untracked',
+            '!': 'ignored',
+        }
+        
+        index_desc = status_map.get(index_status, 'unknown')
+        worktree_desc = status_map.get(worktree_status, 'unknown')
+        
+        # Build description
+        if index_status == '?' and worktree_status == '?':
+            return 'untracked'
+        elif index_status != ' ' and worktree_status == ' ':
+            return f'staged ({index_desc})'
+        elif index_status == ' ' and worktree_status != ' ':
+            return f'unstaged ({worktree_desc})'
+        elif index_status != ' ' and worktree_status != ' ':
+            return f'staged + unstaged changes'
+        else:
+            return 'unknown'
+    
+    def _categorize_commits(self, commits: List[str], result: Dict):
+        """
+        Categorize commit messages into added/fixed/performance/other.
+        
+        Args:
+            commits: List of commit message strings
+            result: Result dict to populate
+        """
+        add_patterns = [
+            r'add', r'new', r'feature', r'implement', r'ajout', r'nouveau',
+            r'création', r'crée', r'implémente', r'✨'
+        ]
+        fix_patterns = [
+            r'fix', r'bug', r'correct', r'resolve', r'repair', r'corrig',
+            r'résolu', r'résolution', r'🐛', r'🩹'
+        ]
+        perf_patterns = [
+            r'perf', r'optimiz', r'speed', r'fast', r'cache', r'memory',
+            r'optimis', r'rapid', r'performance', r'⚡'
+        ]
+        major_patterns = [
+            r'break', r'remov', r'delet', r'refactor', r'rewrite',
+            r'refacto', r'suppress', r'🗑️', r'💥'
+        ]
+        
+        for commit in commits:
+            commit_lower = commit.lower()
+            
+            # Skip merge commits
+            if commit_lower.startswith('merge'):
+                continue
+            
+            # Check patterns
+            if any(re.search(p, commit_lower) for p in add_patterns):
+                result['added'].append(commit)
+            elif any(re.search(p, commit_lower) for p in fix_patterns):
+                result['fixed'].append(commit)
+            elif any(re.search(p, commit_lower) for p in perf_patterns):
+                result['performance'].append(commit)
+            else:
+                result['other'].append(commit)
+            
+            # Check for major changes
+            if any(re.search(p, commit_lower) for p in major_patterns):
+                result['suggested_bump'] = 'major'
+        
+        # Adjust bump type based on categories
+        if result['suggested_bump'] != 'major' and result['added']:
+            result['suggested_bump'] = 'minor'
+    
+    def _generate_suggested_title(self, result: Dict) -> str:
+        """
+        Generate a suggested title based on detected changes.
+        
+        Args:
+            result: Analysis result dict
+            
+        Returns:
+            Suggested title string
+        """
+        has_committed = result.get('has_committed_changes', False)
+        has_uncommitted = result.get('has_uncommitted_changes', False)
+        
+        # Count all changes
+        added_count = len(result.get('added', []))
+        fixed_count = len(result.get('fixed', []))
+        perf_count = len(result.get('performance', []))
+        other_count = len(result.get('other', []))
+        uncommitted_count = len(result.get('uncommitted_files', []))
+        
+        # Build context prefix
+        context = ""
+        if has_committed and has_uncommitted:
+            context = " (commits + local)"
+        elif has_uncommitted and not has_committed:
+            context = " (local changes)"
+        
+        # Determine title based on dominant change type
+        if added_count > 0:
+            if added_count == 1:
+                return f"Nouvelle fonctionnalité{context}"
+            return f"Nouvelles fonctionnalités - {added_count} ajouts{context}"
+        elif fixed_count > 0:
+            if fixed_count == 1:
+                return f"Correction de bug{context}"
+            return f"Corrections - {fixed_count} bugs résolus{context}"
+        elif perf_count > 0:
+            if perf_count == 1:
+                return f"Optimisation{context}"
+            return f"Optimisations - {perf_count} améliorations{context}"
+        elif uncommitted_count > 0:
+            if uncommitted_count == 1:
+                return f"Modification en cours{context}"
+            return f"Modifications en cours - {uncommitted_count} fichiers{context}"
+        elif other_count > 0:
+            return f"Mise à jour diverses{context}"
+        else:
+            return "Mise à jour"
     
     def get_module_changes(self) -> Dict:
         """
@@ -588,7 +776,13 @@ class UpdateManager:
         except Exception as e:
             logger.error(f"Failed to scan module changes: {e}")
         
-        return result
+    def _filter_relevant_files(self, files: List[str]) -> List[str]:
+        """Filter list of files to keep only relevant extensions."""
+        relevant_extensions = ['.py', '.md', '.toml', '.txt', '.css', '.js', '.html']
+        return [
+            f for f in files 
+            if any(f.endswith(ext) for f in [f.lower()] for ext in relevant_extensions)
+        ]
 
 
 # Convenience functions

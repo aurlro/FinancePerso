@@ -43,7 +43,8 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
         with st.spinner("Analyse en cours..."):
             # Try git analysis first, fallback to file scanning
             git_changes = manager.analyze_git_changes()
-            if not git_changes['files_modified']:
+            # Only fallback to module changes if no git changes at all (committed or uncommitted)
+            if not git_changes.get('files_modified') and not git_changes.get('has_committed_changes') and not git_changes.get('has_uncommitted_changes'):
                 git_changes = manager.get_module_changes()
             st.session_state.detected_changes = git_changes
             st.success("✅ Changements détectés !")
@@ -52,15 +53,62 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
     if st.session_state.detected_changes:
         changes = st.session_state.detected_changes
         with col_auto2:
-            cols_summary = st.columns(4)
-            with cols_summary[0]:
-                st.metric("Fichiers", len(changes['files_modified']))
-            with cols_summary[1]:
-                st.metric("✨ Ajouts", len(changes['added']))
-            with cols_summary[2]:
-                st.metric("🐛 Corrections", len(changes['fixed']))
-            with cols_summary[3]:
-                st.metric("⚡ Perf", len(changes['performance']))
+            # Show both committed and uncommitted stats
+            has_committed = changes.get('has_committed_changes', False)
+            has_uncommitted = changes.get('has_uncommitted_changes', False)
+            
+            if has_committed and has_uncommitted:
+                cols_summary = st.columns(5)
+                cols_summary[0].metric("📁 Commits", len(changes.get('committed_files', [])))
+                cols_summary[1].metric("💻 Local", len(changes.get('uncommitted_files', [])))
+                cols_summary[2].metric("✨ Ajouts", len(changes.get('added', [])))
+                cols_summary[3].metric("🐛 Corrections", len(changes.get('fixed', [])))
+                cols_summary[4].metric("⚡ Perf", len(changes.get('performance', [])))
+            elif has_uncommitted and not has_committed:
+                cols_summary = st.columns(4)
+                cols_summary[0].metric("💻 Fichiers locaux", len(changes.get('uncommitted_files', [])))
+                cols_summary[1].metric("✨ Ajouts", len(changes.get('added', [])))
+                cols_summary[2].metric("🐛 Corrections", len(changes.get('fixed', [])))
+                cols_summary[3].metric("⚡ Perf", len(changes.get('performance', [])))
+            else:
+                cols_summary = st.columns(4)
+                cols_summary[0].metric("📁 Fichiers", len(changes.get('files_modified', [])))
+                cols_summary[1].metric("✨ Ajouts", len(changes.get('added', [])))
+                cols_summary[2].metric("🐛 Corrections", len(changes.get('fixed', [])))
+                cols_summary[3].metric("⚡ Perf", len(changes.get('performance', [])))
+        
+        # Show detailed breakdown if there are uncommitted changes
+        if changes.get('has_uncommitted_changes'):
+            with st.expander("📋 Détails des changements locaux", expanded=True):
+                uncommitted_files = changes.get('uncommitted_files', [])
+                uncommitted_status = changes.get('uncommitted_status', {})
+                
+                if uncommitted_files:
+                    st.markdown("**Fichiers avec modifications locales non commitées :**")
+                    for f in sorted(uncommitted_files)[:20]:  # Limit to 20 files
+                        status = uncommitted_status.get(f, 'modified')
+                        status_emoji = {
+                            'untracked': '🆕',
+                            'staged (added)': '➕',
+                            'staged (modified)': '📝',
+                            'staged (deleted)': '🗑️',
+                            'unstaged (modified)': '✏️',
+                            'unstaged (deleted)': '❌',
+                            'staged + unstaged changes': '🔄',
+                        }.get(status, '📝')
+                        st.caption(f"{status_emoji} `{f}` _({status})_")
+                    
+                    if len(uncommitted_files) > 20:
+                        st.caption(f"... et {len(uncommitted_files) - 20} autres fichiers")
+                
+                if changes.get('has_committed_changes'):
+                    st.divider()
+                    st.markdown("**Fichiers modifiés dans les commits :**")
+                    committed_files = changes.get('committed_files', [])
+                    for f in sorted(committed_files)[:10]:
+                        st.caption(f"📦 `{f}`")
+                    if len(committed_files) > 10:
+                        st.caption(f"... et {len(committed_files) - 10} autres fichiers")
     
     st.divider()
     
