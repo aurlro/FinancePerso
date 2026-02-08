@@ -148,8 +148,10 @@ def test_notification_settings() -> Dict[str, Any]:
                     results['errors'].append(f"Erreur SMTP: {str(e)}")
                 finally:
                     if server:
-                        try: server.quit() 
-                        except: pass
+                        try:
+                            server.quit()
+                        except (OSError, ConnectionError):
+                            pass
         except Exception as e:
             results['errors'].append(f"Email: {str(e)}")
     

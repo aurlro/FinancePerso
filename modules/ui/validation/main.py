@@ -40,7 +40,7 @@ def render_validation_tab():
     all_members = members_raw['name'].tolist()
     
     if not all_members:
-        all_members = ["Aurélien", "Élise", "Compte Joint"]
+        all_members = ["Moi", "Conjoint", "Famille"]
 
     if df.empty:
         st.success("Toutes les transactions sont validées ! 🎉")

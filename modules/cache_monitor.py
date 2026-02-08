@@ -3,10 +3,13 @@ Cache Monitor for Streamlit @st.cache_data functions.
 Tracks cache hit rates and provides analytics.
 """
 import time
+import logging
 from functools import wraps
 from collections import defaultdict
 from typing import Callable, Any
 import threading
+
+logger = logging.getLogger(__name__)
 
 
 class CacheMonitor:
@@ -87,13 +90,15 @@ class CacheMonitor:
     
     def print_report(self):
         """Print a formatted cache performance report."""
-        print("\n" + "="*70)
-        print("CACHE PERFORMANCE REPORT")
-        print("="*70)
+        lines = []
+        lines.append("\n" + "="*70)
+        lines.append("CACHE PERFORMANCE REPORT")
+        lines.append("="*70)
         
         with self.lock:
             if not self.stats:
-                print("\nNo cache statistics available.")
+                lines.append("\nNo cache statistics available.")
+                logger.info("\n".join(lines))
                 return
             
             # Sort by total calls
@@ -103,36 +108,38 @@ class CacheMonitor:
                 reverse=True
             )
             
-            print(f"\n{'Function':<40} {'Calls':>8} {'Hit Rate':>10} {'Avg Time':>12}")
-            print("-"*70)
+            lines.append(f"\n{'Function':<40} {'Calls':>8} {'Hit Rate':>10} {'Avg Time':>12}")
+            lines.append("-"*70)
             
             for func_name, s in sorted_stats:
                 hit_rate = (s['hits'] / s['total_calls'] * 100) if s['total_calls'] > 0 else 0
                 avg_time = s['avg_compute_time_ms']
                 
-                print(f"{func_name:<40} {s['total_calls']:>8} {hit_rate:>9.1f}% {avg_time:>10.2f}ms")
+                lines.append(f"{func_name:<40} {s['total_calls']:>8} {hit_rate:>9.1f}% {avg_time:>10.2f}ms")
             
             # Summary
             total_calls = sum(s['total_calls'] for s in self.stats.values())
             total_hits = sum(s['hits'] for s in self.stats.values())
             overall_hit_rate = (total_hits / total_calls * 100) if total_calls > 0 else 0
             
-            print("-"*70)
-            print(f"{'OVERALL':<40} {total_calls:>8} {overall_hit_rate:>9.1f}%")
+            lines.append("-"*70)
+            lines.append(f"{'OVERALL':<40} {total_calls:>8} {overall_hit_rate:>9.1f}%")
             
             # Recommendations
-            print("\n💡 Recommendations:")
+            lines.append("\n💡 Recommendations:")
             
             for func_name, s in sorted_stats:
                 hit_rate = (s['hits'] / s['total_calls'] * 100) if s['total_calls'] > 0 else 0
                 
                 if hit_rate < 50 and s['total_calls'] > 10:
-                    print(f"  ⚠️  {func_name}: Low hit rate ({hit_rate:.1f}%)")
-                    print(f"      Consider increasing TTL or reviewing invalidation logic")
+                    lines.append(f"  ⚠️  {func_name}: Low hit rate ({hit_rate:.1f}%)")
+                    lines.append(f"      Consider increasing TTL or reviewing invalidation logic")
                 
                 if s['avg_compute_time_ms'] > 100 and s['misses'] > 5:
-                    print(f"  ⚠️  {func_name}: Slow computation ({s['avg_compute_time_ms']:.1f}ms avg)")
-                    print(f"      Cache is valuable here - hit rate of {hit_rate:.1f}% is good")
+                    lines.append(f"  ⚠️  {func_name}: Slow computation ({s['avg_compute_time_ms']:.1f}ms avg)")
+                    lines.append(f"      Cache is valuable here - hit rate of {hit_rate:.1f}% is good")
+        
+        logger.info("\n".join(lines))
 
 
 # Global monitor instance
@@ -189,7 +196,8 @@ def reset_cache_stats(func_name: str = None):
 
 # Example usage
 if __name__ == "__main__":
-    print("Cache Monitor Example")
+    logging.basicConfig(level=logging.INFO)
+    logger.info("Cache Monitor Example")
     
     # Simulate some cache activity
     _monitor.record_hit("get_categories")

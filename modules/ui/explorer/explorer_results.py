@@ -210,12 +210,12 @@ def render_export_section(df: pd.DataFrame):
         )
     
     with col2:
-        if st.button("📋 Copier dans le presse-papier", use_container_width=True):
+        if st.button("📋 Copier dans le presse-papier", use_container_width=True, key="explore_copy_clipboard"):
             df.to_clipboard(index=False)
             st.toast("📋 Copié !", icon="✅")
     
     with col3:
-        if st.button("📧 Partager par email", use_container_width=True, disabled=True):
+        if st.button("📧 Partager par email", use_container_width=True, disabled=True, key="explore_share_email"):
             st.info("Fonctionnalité à venir")
 
 

@@ -222,32 +222,30 @@ def init_db() -> None:
         if 'member_type' not in columns_mem:
             cursor.execute("ALTER TABLE members ADD COLUMN member_type TEXT DEFAULT 'HOUSEHOLD'")
 
-        # Initialize default members
+        # Initialize default members (generic names)
         default_members = [
-            ("Aurélien", "HOUSEHOLD"),
-            ("Elise", "HOUSEHOLD"),
+            ("Moi", "HOUSEHOLD"),
+            ("Conjoint", "HOUSEHOLD"),
             ("Famille", "HOUSEHOLD"),
-            ("Maison", "HOUSEHOLD"),
-            ("Elise Carraud", "EXTERNAL")
+            ("Maison", "HOUSEHOLD")
         ]
         cursor.executemany("INSERT OR IGNORE INTO members (name, member_type) VALUES (?, ?)", default_members)
         
-        # Initialize default rules for internal transfers
+        # Initialize default rules for internal transfers (generic patterns)
         default_rules = [
-            ("VIR INST CARRAUD ELISE", "Virement Interne", 5),
-            ("VIR VRT de Elise CARRAUD", "Virement Interne", 5),
-            ("VIR SEPA CARRAUD ELISE", "Virement Interne", 5)
+            ("VIR INST", "Virement Interne", 5),
+            ("VIR VRT", "Virement Interne", 5),
+            ("VIR SEPA", "Virement Interne", 5)
         ]
         cursor.executemany(
             "INSERT OR IGNORE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)",
             default_rules
         )
 
-        # Initialize default card mappings
+        # Initialize default card mappings (generic)
         default_mappings = [
-            ("6759", "Aurélien"),
-            ("7238", "Duo"),
-            ("9533", "Aurélien")
+            ("0000", "Moi"),
+            ("0001", "Conjoint")
         ]
         cursor.executemany(
             "INSERT OR IGNORE INTO member_mappings (card_suffix, member_name) VALUES (?, ?)",

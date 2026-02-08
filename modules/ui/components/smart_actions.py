@@ -69,9 +69,11 @@ def get_user_progress_state():
             (state['has_transactions'] and not state['has_budgets'])
         )
         
-    except Exception:
-        # Silent fail - return default state
-        pass
+    except Exception as e:
+        # Log error but don't break UI - return default state
+        from modules.logger import logger
+        logger.warning(f"Could not compute user progress state: {e}")
+        # State remains with default values
     
     return state
 

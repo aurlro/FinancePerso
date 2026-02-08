@@ -393,8 +393,9 @@ def render_smart_tag_selector(
                         
                         # Batch propagate button
                         if len(missing_tags_tx) > 1:
-                            if st.button(f"🏷️ Taguer toutes les {len(missing_tags_tx)} transactions", 
-                                       type="primary", use_container_width=True):
+                            if st.button(f"🏷️ Taguer toutes les {len(missing_tags_tx)} transactions",
+                                       type="primary", use_container_width=True,
+                                       key=f"batch_tag_{transaction_id}_{key_suffix}"):
                                 for tx_info in missing_tags_tx:
                                     if tx_info['id'] not in st.session_state.get('pending_tag_additions', {}):
                                         st.session_state['pending_tag_additions'][tx_info['id']] = []

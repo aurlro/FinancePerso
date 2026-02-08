@@ -3,6 +3,7 @@ from modules.ui import load_css, render_scroll_to_top
 from modules.db.migrations import init_db
 from modules.ui.importing.main import render_import_tab
 from modules.ui.validation.main import render_validation_tab
+from modules.ui.components.tooltips import render_contextual_help, IMPORT_HELP, VALIDATION_HELP
 
 st.set_page_config(page_title="Opérations", page_icon="🧾", layout="wide")
 load_css()
@@ -51,8 +52,12 @@ if selected_tab and selected_tab != st.session_state['active_op_tab']:
 # Render selected content
 if st.session_state['active_op_tab'] == "📥 Importation":
     render_import_tab()
+    # Contextual help
+    render_contextual_help({"📥 Guide d'importation": IMPORT_HELP})
 else:
     render_validation_tab()
+    # Contextual help
+    render_contextual_help({"✅ Conseils de validation": VALIDATION_HELP})
 
 render_scroll_to_top()
 

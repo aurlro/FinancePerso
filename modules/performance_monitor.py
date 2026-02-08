@@ -210,7 +210,7 @@ def render_performance_dashboard():
         st.info("Aucune métrique de performance disponible")
     
     # Bouton de clear cache
-    if st.button("🗑️ Vider tous les caches"):
+    if st.button("🗑️ Vider tous les caches", key="perf_clear_caches"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.success("Caches vidés !")

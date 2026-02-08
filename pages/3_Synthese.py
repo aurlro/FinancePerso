@@ -29,6 +29,7 @@ from modules.db.migrations import init_db
 from modules.db.categories import get_categories_with_emojis
 from modules.db.members import get_orphan_labels, get_unique_members
 from modules.ui import load_css, render_scroll_to_top
+from modules.ui.feedback import toast_success, toast_info
 from modules.analytics import detect_financial_profile
 from modules.notifications import check_budget_alerts
 
@@ -144,10 +145,12 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
                 if st.button("Gérer toutes les règles ➡️", type="primary", key="btn_config"):
+                    toast_success("Ouverture de la configuration des règles...", icon="⚡")
                     st.session_state['intel_active_tab'] = "📋 Règles"
                     st.switch_page("pages/4_Intelligence.py")
             with col2:
                 if st.button("Ignorer pour le moment", key="btn_remind"):
+                    toast_info("Vous pourrez configurer les règles plus tard dans l'onglet Intelligence", icon="💡")
                     st.session_state[ONBOARDING_COUNT_KEY] = 0
                     st.rerun()
 
@@ -166,6 +169,7 @@ def render_data_health_notifications(df: pd.DataFrame) -> None:
                 f"(ex: {', '.join(orphans[:2])})..."
             )
             if st.button("Aller à la configuration ⚙️", use_container_width=True, key="btn_cleanup"):
+                toast_success("Ouverture de la configuration...", icon="⚙️")
                 st.switch_page("pages/9_Configuration.py")
 
 

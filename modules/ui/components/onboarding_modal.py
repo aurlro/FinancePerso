@@ -2,6 +2,7 @@
 Onboarding modal for first-time users.
 Guides users through initial configuration.
 """
+import os
 import streamlit as st
 from modules.db.members import get_members
 from modules.db.categories import get_categories
@@ -219,7 +220,7 @@ def render_onboarding_modal():
             
             has_api_key = bool(st.secrets.get("GEMINI_API_KEY") or 
                              st.secrets.get("OPENAI_API_KEY") or
-                             __import__('os').getenv("GEMINI_API_KEY"))
+                             os.getenv("GEMINI_API_KEY"))
             
             if has_api_key:
                 st.success("✅ Clé API détectée ! L'IA est active.")

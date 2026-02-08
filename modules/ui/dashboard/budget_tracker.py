@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from modules.db.budgets import get_budgets
+from modules.ui.feedback import toast_success
 
 def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd.DataFrame = None):
     """
@@ -22,6 +23,7 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
         col1, col2 = st.columns([1, 2])
         with col1:
             if st.button("➕ Créer mon premier budget", type="primary", use_container_width=True):
+                toast_success("Ouverture de la configuration des budgets...", icon="🎯")
                 st.session_state['intel_active_tab'] = "🎯 Budgets"
                 st.switch_page("pages/4_Intelligence.py")
         with col2:

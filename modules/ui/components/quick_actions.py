@@ -38,10 +38,8 @@ def render_quick_validation_popover():
         df = get_pending_transactions()
         
         if df.empty:
-            st.success("✅ Toutes les transactions sont déjà validées !")
-            if st.button("Aller à la validation complète →", use_container_width=True, key='button_41'):
-                st.session_state['active_op_tab'] = "✅ Validation"
-                st.switch_page("pages/1_Opérations.py")
+            from modules.ui.components.empty_states import render_no_transactions_state
+            render_no_transactions_state(key="quick_actions_no_pending")
             return
         
         # Show count

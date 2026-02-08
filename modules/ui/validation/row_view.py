@@ -88,7 +88,7 @@ def render_validation_row(
             # We need a callback or just read the key on validate
             render_avatar_selector(
                 label="", # No label to save space
-                options=["Aurélien", "Élise", "Maison", "Famille"], # Top options
+                options=["Moi", "Conjoint", "Maison", "Famille"], # Top options
                 current_value=current_mem,
                 key=mem_key
             )

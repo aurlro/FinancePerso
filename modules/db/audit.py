@@ -37,8 +37,8 @@ def auto_fix_common_inconsistencies() -> int:
     with get_db_connection() as conn:
         cursor = conn.cursor()
         
-        # 1. Member Consistency
-        fixes = {"Élise": "Elise", "Aurelien": "Aurélien", "Anonyme": "Inconnu"}
+        # 1. Member Consistency (common typo fixes)
+        fixes = {"Anonyme": "Inconnu"}
         for wrong, right in fixes.items():
             cursor.execute("UPDATE transactions SET member = ? WHERE member = ?", (right, wrong))
             total_fixed += cursor.rowcount
@@ -116,13 +116,17 @@ def auto_fix_common_inconsistencies() -> int:
         # 4. ALIAS NORMALIZATION (Version 5.1 New)
         cursor.execute("SELECT alias, normalized_name FROM beneficiary_aliases")
         aliases = cursor.fetchall()
-        for alias, normalized in aliases:
-            cursor.execute("""
+        
+        # Batch alias updates
+        alias_updates = [(normalized, alias, f'%{alias}%') for alias, normalized in aliases]
+        if alias_updates:
+            cursor.executemany("""
                 UPDATE transactions 
                 SET beneficiary = ? 
                 WHERE (beneficiary = ? OR label LIKE ?)
-            """, (normalized, alias, f'%{alias}%'))
-            total_fixed += cursor.rowcount
+            """, alias_updates)
+            # executemany doesn't return rowcount for each, so we estimate
+            total_fixed += len(alias_updates)
 
         # 5. SMART TAGGING & Keywords
         cursor.execute("SELECT id, label, amount, tags, category_validated FROM transactions")
@@ -182,11 +186,17 @@ def auto_fix_common_inconsistencies() -> int:
             GROUP BY tx_hash
             HAVING COUNT(*) > 1
         """)
+        # Collect all duplicate IDs to delete (keep the first one)
+        ids_to_delete = []
         for row in cursor.fetchall():
             ids = [int(x) for x in row[1].split(',')]
-            for i in range(1, len(ids)):
-                cursor.execute("DELETE FROM transactions WHERE id = ?", (ids[i],))
-                total_fixed += 1
+            ids_to_delete.extend(ids[1:])  # Keep first, delete rest
+        
+        # Batch delete duplicates
+        if ids_to_delete:
+            placeholders = ','.join(['?'] * len(ids_to_delete))
+            cursor.execute(f"DELETE FROM transactions WHERE id IN ({placeholders})", ids_to_delete)
+            total_fixed += len(ids_to_delete)
 
         conn.commit()
 
@@ -196,14 +206,21 @@ def auto_fix_common_inconsistencies() -> int:
         with get_db_connection() as conn:
             pending_df = pd.read_sql("SELECT id, label FROM transactions WHERE status='pending'", conn)
             cursor = conn.cursor()
+            
+            # Collect updates for batch execution
+            rule_updates = []
             for _, row in pending_df.iterrows():
                 cat, conf = apply_rules(row['label'])
                 if cat and cat != 'Inconnu':
-                    cursor.execute(
-                        "UPDATE transactions SET category_validated = ?, status = 'validated' WHERE id = ?",
-                        (cat, row['id'])
-                    )
-                    total_fixed += cursor.rowcount
+                    rule_updates.append((cat, row['id']))
+            
+            # Batch update
+            if rule_updates:
+                cursor.executemany(
+                    "UPDATE transactions SET category_validated = ?, status = 'validated' WHERE id = ?",
+                    rule_updates
+                )
+                total_fixed += len(rule_updates)
             conn.commit()
     except Exception as e:
         logger.error(f"Error re-applying rules in magic fix: {e}")
@@ -264,36 +281,57 @@ def get_transfer_inconsistencies() -> tuple[pd.DataFrame, pd.DataFrame]:
         targets = get_internal_transfer_targets()
         all_patterns = sorted(list(set(keywords + targets)))
         
-        likes_clause = " OR ".join([f"upper(label) LIKE '%{k}%'" for k in all_patterns])
+        # Build parameterized LIKE clauses
+        likes_placeholders = " OR ".join(["upper(label) LIKE ?" for _ in all_patterns])
+        # Add wildcards to patterns for SQL parameters
+        pattern_params = [f"%{k}%" for k in all_patterns]
         
         # 2. Get whitelist
         whitelist = get_verified_transfer_labels()
         whitelist_clause = ""
+        whitelist_params = []
         if whitelist:
             placeholders = ", ".join(["?"] * len(whitelist))
             whitelist_clause = f"AND label NOT IN ({placeholders})"
+            whitelist_params = list(whitelist)
         
         # 3. Missing transfers: have keywords but wrong category
-        query_missing = f"""
-            SELECT * FROM transactions 
-            WHERE ({likes_clause})
-            AND category_validated NOT IN ('Virement Interne', 'Hors Budget') 
-            AND (
-                status = 'pending'
-                OR category_validated IN ('Virements', 'Virements reçus', 'Inconnu')
-            )
-        """
+        if likes_placeholders:
+            query_missing = f"""
+                SELECT * FROM transactions 
+                WHERE ({likes_placeholders})
+                AND category_validated NOT IN ('Virement Interne', 'Hors Budget') 
+                AND (
+                    status = 'pending'
+                    OR category_validated IN ('Virements', 'Virements reçus', 'Inconnu')
+                )
+            """
+            missing_params = pattern_params
+        else:
+            # No patterns configured - return empty
+            query_missing = "SELECT * FROM transactions WHERE 1=0"
+            missing_params = []
         
         # 4. Wrong transfers: categorized as transfer but no keywords AND not whitelisted
-        query_wrong = f"""
-            SELECT * FROM transactions 
-            WHERE category_validated = 'Virement Interne' 
-            AND NOT ({likes_clause})
-            {whitelist_clause}
-        """
+        if likes_placeholders:
+            query_wrong = f"""
+                SELECT * FROM transactions 
+                WHERE category_validated = 'Virement Interne' 
+                AND NOT ({likes_placeholders})
+                {whitelist_clause}
+            """
+            wrong_params = pattern_params + whitelist_params
+        else:
+            # No patterns configured - all transfers might be wrong
+            query_wrong = f"""
+                SELECT * FROM transactions 
+                WHERE category_validated = 'Virement Interne'
+                {whitelist_clause}
+            """
+            wrong_params = whitelist_params
         
-        missing = pd.read_sql(query_missing, conn)
-        wrong = pd.read_sql(query_wrong, conn, params=whitelist if whitelist else None)
+        missing = pd.read_sql(query_missing, conn, params=missing_params if missing_params else None)
+        wrong = pd.read_sql(query_wrong, conn, params=wrong_params if wrong_params else None)
         return missing, wrong
 
 def verify_link_integrity() -> list[dict]:

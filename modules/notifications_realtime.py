@@ -454,6 +454,6 @@ def _render_alerts_list(alerts: List[RealTimeAlert], manager: RealTimeNotificati
                     manager.dismiss_alert(alert.id)
                     st.rerun()
     
-    if st.button("🗑️ Tout marquer comme lu"):
+    if st.button("🗑️ Tout marquer comme lu", key="notif_rt_dismiss_all"):
         manager.dismiss_all()
         st.rerun()

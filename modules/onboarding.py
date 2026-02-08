@@ -129,11 +129,11 @@ class OnboardingManager:
         
         col_skip, col_next = st.columns([1, 1])
         with col_skip:
-            if st.button("⏭️ Passer cette étape", type="secondary"):
+            if st.button("⏭️ Passer cette étape", type="secondary", key="onboarding_skip_step1"):
                 st.session_state.onboarding_step = 2
                 st.rerun()
         with col_next:
-            if st.button("Continuer →", type="primary"):
+            if st.button("Continuer →", type="primary", key="onboarding_next_step1"):
                 st.session_state.onboarding_step = 2
                 st.rerun()
     
@@ -227,7 +227,7 @@ class OnboardingManager:
         
         st.divider()
         
-        if st.button("✅ Terminer l'onboarding", type="primary"):
+        if st.button("✅ Terminer l'onboarding", type="primary", key="onboarding_finish"):
             st.session_state.onboarding_completed = True
             st.rerun()
     
@@ -276,7 +276,7 @@ def render_onboarding_widget(user_id: str = "default", has_data: bool = False):
             st.caption("Commencez par importer vos relevés bancaires pour visualiser vos finances.")
         
         with col3:
-            if st.button("Démarrer →", type="primary", use_container_width=True):
+            if st.button("Démarrer →", type="primary", use_container_width=True, key="onboarding_widget_start"):
                 st.session_state['active_op_tab'] = "📥 Importation"
                 st.switch_page("pages/1_Opérations.py")
         
@@ -288,7 +288,7 @@ def render_onboarding_widget(user_id: str = "default", has_data: bool = False):
 
 def show_tour_button():
     """Affiche un bouton pour relancer le tour guidé."""
-    if st.button("🎯 Relancer le tour guidé", type="secondary"):
+    if st.button("🎯 Relancer le tour guidé", type="secondary", key="onboarding_restart_tour"):
         st.session_state.onboarding_completed = False
         st.session_state.onboarding_step = 1
         st.session_state['active_op_tab'] = "📥 Importation"

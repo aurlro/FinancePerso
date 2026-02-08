@@ -102,8 +102,20 @@ def parse_bourso_csv(file) -> Optional[pd.DataFrame]:
         final_cols = ['date', 'label', 'amount', 'original_category', 'account_id', 'status', 'category_validated', 'account_label', 'member', 'card_suffix']
         return generate_tx_hash(df_clean[final_cols])
         
+    except pd.errors.EmptyDataError:
+        return None, "Le fichier CSV est vide"
+    except pd.errors.ParserError as e:
+        return None, f"Format CSV invalide: {str(e)[:100]}. Vérifiez l'encodage et le séparateur."
+    except ValueError as e:
+        error_msg = str(e).lower()
+        if "date" in error_msg:
+            return None, f"Format de date invalide: {str(e)[:100]}. Le format attendu est YYYY-MM-DD."
+        elif "amount" in error_msg or "montant" in error_msg:
+            return None, f"Format de montant invalide: {str(e)[:100]}. Vérifiez le séparateur décimal."
+        else:
+            return None, f"Erreur de valeur: {str(e)[:100]}"
     except Exception as e:
-        return None, f"Erreur Bourso: {str(e)}"
+        return None, f"Erreur lors de l'import: {str(e)[:150]}"
 
 def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optional[pd.DataFrame]:
     """
@@ -202,11 +214,27 @@ def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optiona
                 
         return generate_tx_hash(df_clean[final_cols])
         
+    except pd.errors.EmptyDataError:
+        return None, "Le fichier CSV est vide"
+    except pd.errors.ParserError as e:
+        return None, f"Format CSV invalide: {str(e)[:100]}. Vérifiez le séparateur ({config.get('sep', ';')}) et l'encodage."
+    except UnicodeDecodeError as e:
+        return None, f"Encodage de fichier non supporté: {str(e)[:100]}. Essayez de sauvegarder le fichier en UTF-8."
+    except KeyError as e:
+        return None, f"Colonne requise manquante: {str(e)}. Vérifiez le mapping des colonnes."
+    except ValueError as e:
+        error_msg = str(e).lower()
+        if "date" in error_msg:
+            return None, f"Format de date invalide: {str(e)[:100]}. Vérifiez la colonne date."
+        elif "amount" in error_msg or "montant" in error_msg:
+            return None, f"Format de montant invalide: {str(e)[:100]}. Vérifiez le séparateur décimal ({config.get('decimal', ',')})."
+        else:
+            return None, f"Erreur de conversion: {str(e)[:100]}"
     except Exception as e:
-        return None, f"Erreur Générique: {str(e)}"
+        return None, f"Erreur lors de l'import: {str(e)[:150]}"
 
 def load_transaction_file(uploaded_file, mode: str = "auto",
-                         config: Optional[Dict[str, Union[str, int, Dict]]] = None) -> Optional[pd.DataFrame]:
+                         config: Optional[Dict[str, Union[str, int, Dict]]] = None):
     """
     Load and parse a transaction file based on specified mode.
 
@@ -216,21 +244,35 @@ def load_transaction_file(uploaded_file, mode: str = "auto",
         config: Configuration dict for custom mode (see parse_generic_csv)
 
     Returns:
-        DataFrame with parsed transactions, or None if file is None or parsing fails
+        Union[pd.DataFrame, Tuple[None, str]]: DataFrame with parsed transactions, 
+        or (None, error_message) if parsing fails, or None if file is None
 
     Example:
-        df = load_transaction_file(uploaded_file, mode="bourso_preset")
+        result = load_transaction_file(uploaded_file, mode="bourso_preset")
+        if isinstance(result, tuple):
+            st.error(f"Import failed: {result[1]}")
+        else:
+            df = result
     """
     if uploaded_file is None:
         return None
 
-    # Reset file pointer if it was read for preview
-    uploaded_file.seek(0)
+    try:
+        # Reset file pointer if it was read for preview
+        uploaded_file.seek(0)
 
-    if mode == "bourso_preset":
-        return parse_bourso_csv(uploaded_file)
-    elif mode == "custom" and config:
-        return parse_generic_csv(uploaded_file, config)
-    else:
-        # Default/Auto: Try Bourso
-        return parse_bourso_csv(uploaded_file)
+        if mode == "bourso_preset":
+            result = parse_bourso_csv(uploaded_file)
+        elif mode == "custom" and config:
+            result = parse_generic_csv(uploaded_file, config)
+        else:
+            # Default/Auto: Try Bourso
+            result = parse_bourso_csv(uploaded_file)
+        
+        # Check if result is an error tuple
+        if isinstance(result, tuple) and result[0] is None:
+            return result
+        return result
+        
+    except Exception as e:
+        return None, f"Erreur inattendue lors de l'import: {str(e)[:150]}"

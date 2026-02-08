@@ -120,7 +120,7 @@ def render_notification_center_full():
     
     with col4:
         with st.container(border=True):
-            if st.button("🔄 Actualiser", use_container_width=True):
+            if st.button("🔄 Actualiser", use_container_width=True, key="notif_refresh"):
                 st.rerun()
     
     st.divider()
@@ -129,14 +129,14 @@ def render_notification_center_full():
     col_actions1, col_actions2, col_actions3 = st.columns([1, 1, 3])
     
     with col_actions1:
-        if st.button("✓ Tout marquer comme lu", use_container_width=True, type="secondary"):
+        if st.button("✓ Tout marquer comme lu", use_container_width=True, type="secondary", key="notif_mark_all_read"):
             count = manager.mark_all_as_read()
             if count > 0:
                 st.success(f"✅ {count} notification(s) marquée(s) comme lue(s)")
                 st.rerun()
     
     with col_actions2:
-        if st.button("🗑️ Vider l'historique", use_container_width=True, type="secondary"):
+        if st.button("🗑️ Vider l'historique", use_container_width=True, type="secondary", key="notif_clear_history"):
             if len(manager.notification_history) > 0:
                 st.session_state['show_clear_confirm'] = True
     
@@ -146,13 +146,13 @@ def render_notification_center_full():
             st.warning("⚠️ Êtes-vous sûr de vouloir supprimer tout l'historique ?")
             col_yes, col_no = st.columns(2)
             with col_yes:
-                if st.button("Oui, supprimer", type="primary"):
+                if st.button("Oui, supprimer", type="primary", key="notif_confirm_clear"):
                     deleted = manager.clear_history()
                     st.session_state['show_clear_confirm'] = False
                     st.success(f"🗑️ {deleted} notification(s) supprimée(s)")
                     st.rerun()
             with col_no:
-                if st.button("Annuler"):
+                if st.button("Annuler", key="notif_cancel_clear"):
                     st.session_state['show_clear_confirm'] = False
                     st.rerun()
     
@@ -319,7 +319,7 @@ def render_notification_settings():
         
         if not enabled:
             st.info("🔕 Les notifications sont désactivées")
-            if st.button("💾 Sauvegarder", type="primary"):
+            if st.button("💾 Sauvegarder", type="primary", key="notif_save_disabled"):
                 manager.update_preferences(enabled=False)
                 st.success("✅ Paramètres sauvegardés")
             return
@@ -431,7 +431,7 @@ def render_notification_settings():
         col_save, col_reset = st.columns([1, 1])
         
         with col_save:
-            if st.button("💾 Sauvegarder les préférences", type="primary", use_container_width=True):
+            if st.button("💾 Sauvegarder les préférences", type="primary", use_container_width=True, key="notif_save_prefs"):
                 manager.update_preferences(
                     enabled=enabled,
                     show_critical=show_critical,
@@ -447,7 +447,7 @@ def render_notification_settings():
                 st.rerun()
         
         with col_reset:
-            if st.button("🔄 Réinitialiser", use_container_width=True):
+            if st.button("🔄 Réinitialiser", use_container_width=True, key="notif_reset_prefs"):
                 manager.reset_preferences()
                 st.success("✅ Préférences réinitialisées")
                 st.rerun()
@@ -459,22 +459,22 @@ def render_notification_settings():
     col_test1, col_test2, col_test3, col_test4 = st.columns(4)
     
     with col_test1:
-        if st.button("✅ Test Succès", use_container_width=True):
+        if st.button("✅ Test Succès", use_container_width=True, key="notif_test_success"):
             manager.success("Ceci est une notification de test !")
             st.rerun()
     
     with col_test2:
-        if st.button("⚠️ Test Avertissement", use_container_width=True):
+        if st.button("⚠️ Test Avertissement", use_container_width=True, key="notif_test_warning"):
             manager.warning("Ceci est un avertissement de test")
             st.rerun()
     
     with col_test3:
-        if st.button("ℹ️ Test Info", use_container_width=True):
+        if st.button("ℹ️ Test Info", use_container_width=True, key="notif_test_info"):
             manager.info("Ceci est une information de test")
             st.rerun()
     
     with col_test4:
-        if st.button("🏆 Test Achievement", use_container_width=True):
+        if st.button("🏆 Test Achievement", use_container_width=True, key="notif_test_achievement"):
             manager.achievement("Test débloqué !")
             st.rerun()
 

@@ -55,8 +55,17 @@ class FieldEncryption:
         Returns:
             Fernet cipher instance
         """
-        # Use a fixed salt (in production, store salt separately)
-        salt = b'financeperso_salt_v1'
+        # Use salt from environment variable for production, fallback to default for compatibility
+        # IMPORTANT: For production, set ENCRYPTION_SALT to a unique value and keep it secure
+        salt_str = os.getenv('ENCRYPTION_SALT', 'financeperso_salt_v1')
+        salt = salt_str.encode('utf-8')
+        
+        # Warn if using default salt in production
+        if salt_str == 'financeperso_salt_v1' and os.getenv('ENVIRONMENT') == 'production':
+            logger.warning(
+                "Using default encryption salt in production. "
+                "Set ENCRYPTION_SALT environment variable for better security."
+            )
         
         # Derive 32-byte key using PBKDF2
         kdf = PBKDF2HMAC(
@@ -287,19 +296,22 @@ def migrate_to_encryption(db_connection, fields_to_encrypt=None):
             logger.info(f"No values to encrypt for field: {field}")
             continue
         
-        # Encrypt each value
-        updated = 0
+        # Encrypt each value - batch update
+        updates = []
         for row_id, value in rows:
             encrypted = encryption.encrypt(value)
             if encrypted != value:  # Only update if actually encrypted
-                cursor.execute(
-                    f"UPDATE transactions SET {field} = ? WHERE id = ?",
-                    (encrypted, row_id)
-                )
-                updated += 1
+                updates.append((encrypted, row_id))
+        
+        # Batch update
+        if updates:
+            cursor.executemany(
+                f"UPDATE transactions SET {field} = ? WHERE id = ?",
+                updates
+            )
         
         db_connection.commit()
-        logger.info(f"Encrypted {updated} values for field: {field}")
+        logger.info(f"Encrypted {len(updates)} values for field: {field}")
 
 
 __all__ = [

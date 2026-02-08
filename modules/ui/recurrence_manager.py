@@ -359,13 +359,13 @@ def render_batch_validation_actions(
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("✅ Tout confirmer", type="primary", use_container_width=True):
+        if st.button("✅ Tout confirmer", type="primary", use_container_width=True, key="rec_confirm_all"):
             for label in selected_labels:
                 set_recurrence_feedback(label, is_recurring=True)
             on_batch_confirm()
     
     with col2:
-        if st.button("❌ Tout rejeter", use_container_width=True):
+        if st.button("❌ Tout rejeter", use_container_width=True, key="rec_reject_all"):
             for label in selected_labels:
                 set_recurrence_feedback(label, is_recurring=False)
             on_batch_reject()

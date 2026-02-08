@@ -190,12 +190,12 @@ def render_bulk_actions(audit_results: list):
         selected_count = len(get_assistant_state('audit_bulk_selection') or [])
         if selected_count > 0:
             if st.button(f"🧠 Créer règles ({selected_count})", 
-                        use_container_width=True, type="primary", key="bulk_rules"):
+                        use_container_width=True, type="primary", key="bulk_rules_active"):
                 set_assistant_state('confirm_bulk_rules', True)
                 st.rerun()
         else:
             st.button("🧠 Créer règles", use_container_width=True, type="primary",
-                     disabled=True, key="bulk_rules")
+                     disabled=True, key="bulk_rules_disabled")
     
     # Confirmation dialog
     if get_assistant_state('confirm_bulk_rules'):

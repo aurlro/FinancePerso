@@ -177,21 +177,25 @@ def apply_member_mappings_to_pending() -> int:
         cursor.execute("SELECT id, label, card_suffix, account_label, member FROM transactions WHERE status = 'pending'")
         rows = cursor.fetchall()
         
-        count = 0
+        # Collect updates for batch execution
+        updates = []
         for tx_id, label, suffix, account, current_member in rows:
             detected_member = detect_member_from_content(label, suffix, account)
             
             # Only update if changed and not previously set to something else than Inconnu
             # unless forced? Let's say we update if it was Inconnu or starts with "Carte "
             if detected_member != current_member and (current_member == "Inconnu" or str(current_member).startswith("Carte ")):
-                cursor.execute(
-                    "UPDATE transactions SET member = ? WHERE id = ?",
-                    (detected_member, tx_id)
-                )
-                count += 1
+                updates.append((detected_member, tx_id))
+        
+        # Batch update
+        if updates:
+            cursor.executemany(
+                "UPDATE transactions SET member = ? WHERE id = ?",
+                updates
+            )
                 
         conn.commit()
-        return count
+        return len(updates)
 
 
 @st.cache_data(ttl='1h')
@@ -308,6 +312,8 @@ def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
         cursor.execute(f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})", list(tx_ids))
         rows = cursor.fetchall()
         
+        # Collect updates for batch execution
+        updates = []
         for tx_id, current_tags in rows:
             new_tags = tag
             if current_tags:
@@ -315,11 +321,14 @@ def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
                     continue # Already tagged
                 new_tags = f"{current_tags},{tag}"
             
-            cursor.execute(
+            updates.append((new_tags, tx_id))
+        
+        # Batch update
+        if updates:
+            cursor.executemany(
                 "UPDATE transactions SET tags = ? WHERE id = ?",
-                (new_tags, tx_id)
+                updates
             )
-            updated += 1
 
         conn.commit()
 
@@ -461,14 +470,20 @@ def bulk_update_transaction_status(
         )
         rows = cursor.fetchall()
         
-        for r in rows:
-            cursor.execute(
+        # Prepare batch inserts
+        history_records = [
+            (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6])
+            for r in rows
+        ]
+        
+        if history_records:
+            cursor.executemany(
                 """
                 INSERT INTO transaction_history 
                 (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary, prev_notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6])
+                history_records
             )
         
         # 2. Apply Update
@@ -525,16 +540,20 @@ def undo_last_action() -> tuple[bool, str]:
         cursor.execute("SELECT * FROM transaction_history WHERE action_group_id = ?", (action_id,))
         entries = cursor.fetchall()
         
-        for e in entries:
-            # e: (id, group_id, tx_id_str, status, cat, mem, tags, benef, ts)
-            tx_id = int(e[2])
-            cursor.execute(
+        # Prepare batch updates
+        undo_updates = [
+            (e[3], e[4], e[5], e[6], e[7], int(e[2]))
+            for e in entries
+        ]
+        
+        if undo_updates:
+            cursor.executemany(
                 """
                 UPDATE transactions 
                 SET status = ?, category_validated = ?, member = ?, tags = ?, beneficiary = ?
                 WHERE id = ?
                 """,
-                (e[3], e[4], e[5], e[6], e[7], tx_id)
+                undo_updates
             )
         
         # Delete history for this action

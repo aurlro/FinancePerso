@@ -81,7 +81,7 @@ class CodebaseAuditor:
                 imports = re.findall(r'from modules\.(\w+)\.', content)
                 for imp in imports:
                     imports_map[py_file.stem].append(imp)
-            except:
+            except (IOError, OSError, UnicodeDecodeError):
                 continue
         
         # Chercher les cycles simples A -> B -> A
@@ -108,7 +108,7 @@ class CodebaseAuditor:
                 keys = re.findall(r"session_state\[['\"]([^'\"]+)['\"]\]", content)
                 keys.extend(re.findall(r"session_state\.get\(['\"]([^'\"]+)['\"]", content))
                 session_keys.update(keys)
-            except:
+            except (IOError, OSError, UnicodeDecodeError):
                 continue
         
         self.metrics['session_state_keys'] = len(session_keys)
@@ -132,7 +132,7 @@ class CodebaseAuditor:
                 lines = len(py_file.read_text(encoding='utf-8').splitlines())
                 if lines > MAX_FILE_LINES:
                     large_files.append((py_file.relative_to(PROJECT_ROOT), lines))
-            except:
+            except (IOError, OSError, UnicodeDecodeError):
                 continue
         
         self.metrics['large_files'] = len(large_files)

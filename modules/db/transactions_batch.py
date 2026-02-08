@@ -65,10 +65,10 @@ def batch_update_transactions_with_rule(
         
     Example:
         count, created = batch_update_transactions_with_rule(
-            [1, 2, 3], 
+            [1, 2, 3],
             category="Alimentation",
             pattern="CARREFOUR",
-            member="Aurélien"
+            member="Moi"
         )
     """
     with atomic_transaction() as conn:

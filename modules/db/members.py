@@ -352,11 +352,8 @@ def detect_member_from_content(label: str, card_suffix: str = None, account_labe
             
     # 3. Special cases / Heuristics
     if "PAULINE" in label_upper:
-        return "Pauline" # Example from user feedback
-    if "LOLA ROSE" in label_upper:
-        return "Lola Rose"
-    if "AURELIEN" in label_upper:
-        return "Aurélien"
+        # Add more specific patterns here as needed
+        pass
         
     # 4. Account-based defaults (if account belongs to one person)
     if account_label:
@@ -368,9 +365,7 @@ def detect_member_from_content(label: str, card_suffix: str = None, account_labe
              return account_maps[account_label]
              
         # Fallback to heuristics on account label
-        if "AURELIEN" in account_upper:
-            return "Aurélien"
-        # Add more account mappings here as needed
+        # Add account-specific mappings here as needed
         
     return "Inconnu"
 

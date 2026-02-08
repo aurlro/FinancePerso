@@ -375,7 +375,7 @@ def render_dashboard_configurator():
     
     with col3:
         st.markdown("**🔄 Actions**")
-        if st.button("Réinit. défaut", use_container_width=True):
+        if st.button("Réinit. défaut", use_container_width=True, key="dash_reset_default"):
             manager.reset_to_default()
             manager.start_preview()
             st.rerun()
@@ -422,22 +422,22 @@ def render_dashboard_configurator():
     col_preview1, col_preview2, col_preview3 = st.columns([1, 1, 2])
     
     with col_preview1:
-        if st.button("✅ Appliquer les changements", type="primary", use_container_width=True):
+        if st.button("✅ Appliquer les changements", type="primary", use_container_width=True, key="dash_apply_changes"):
             if manager.apply_preview(layout_name):
                 st.success(f"✅ Layout '{layout_name}' sauvegardé et appliqué !")
                 st.session_state['show_dashboard_config'] = False
                 st.rerun()
             else:
                 st.error("❌ Erreur lors de la sauvegarde")
-    
+
     with col_preview2:
-        if st.button("❌ Annuler", use_container_width=True):
+        if st.button("❌ Annuler", use_container_width=True, key="dash_cancel_changes"):
             manager.cancel_preview()
             st.session_state['show_dashboard_config'] = False
             st.rerun()
-    
+
     with col_preview3:
-        if st.button("💾 Sauvegarder sans appliquer", use_container_width=True):
+        if st.button("💾 Sauvegarder sans appliquer", use_container_width=True, key="dash_save_only"):
             preview = st.session_state.get(manager.preview_key)
             if preview and save_layout(layout_name, preview, set_active=False):
                 st.success(f"💾 Layout '{layout_name}' sauvegardé !")

@@ -151,45 +151,60 @@ else:
     
     st.title("🏠 Accueil")
     
-    # 🆕 DAILY WIDGET - Crée l'habitude quotidienne
-    render_daily_widget()
-    
-    # 🆕 QUICK STATS ROW
-    render_quick_stats_row()
-    
-    st.divider()
-    
-    # 1. Global KPIs
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        card_kpi("Transactions Totales", f"{stats.get('total_transactions', 0)}", trend="Données", trend_color="positive")
-    with c2:
-        last_date = stats.get('last_import')
-        last_str = last_date if last_date else "Jamais"
-        card_kpi("Dernier Import", last_str, trend="Date", trend_color="positive")
-    with c3:
-        sav = stats.get('current_month_savings', 0)
-        color = "positive" if sav >= 0 else "negative"
-        card_kpi("Épargne du Mois", f"{sav:+,.0f} €", trend=f"{stats.get('current_month_rate', 0):.1f}%", trend_color=color)
-    with c4:
-        st.write("")  # Placeholder or shortcut
-        if st.button("📥 Nouvelles Opérations", use_container_width=True, type="primary", key='button_148'):
-            st.switch_page("pages/1_Opérations.py")
-        if st.button("📊 Voir la Synthèse", use_container_width=True, key='button_150'):
-            st.switch_page("pages/3_Synthese.py")
-            
-    st.divider()
-    
-    # 2. Key Actions & Status
-    c_left, c_right = st.columns([2, 1])
-    
-    with c_left:
-        # Nouvelles actions rapides avec popups
-        render_quick_actions_grid()
+    # Check if user has data
+    if stats.get('total_transactions', 0) == 0:
+        # Empty state for new users
+        from modules.ui.components.empty_states import render_no_transactions_state
+        from modules.ui.components.tooltips import render_info_box
+        
+        render_info_box(
+            title="Bienvenue sur MyFinance Companion !",
+            content="Commencez par importer vos relevés bancaires pour visualiser vos finances et suivre vos dépenses.",
+            type="info"
+        )
+        render_no_transactions_state(key="dashboard_empty")
+    else:
+        # 🆕 DAILY WIDGET - Crée l'habitude quotidienne
+        render_daily_widget()
+        
+        # 🆕 QUICK STATS ROW
+        render_quick_stats_row()
+        
+        st.divider()
+        
+        # 1. Global KPIs
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            card_kpi("Transactions Totales", f"{stats.get('total_transactions', 0)}", trend="Données", trend_color="positive")
+        with c2:
+            last_date = stats.get('last_import')
+            last_str = last_date if last_date else "Jamais"
+            card_kpi("Dernier Import", last_str, trend="Date", trend_color="positive")
+        with c3:
+            sav = stats.get('current_month_savings', 0)
+            color = "positive" if sav >= 0 else "negative"
+            card_kpi("Épargne du Mois", f"{sav:+,.0f} €", trend=f"{stats.get('current_month_rate', 0):.1f}%", trend_color=color)
+        with c4:
+            st.write("")  # Placeholder or shortcut
+            if st.button("📥 Nouvelles Opérations", use_container_width=True, type="primary", key='button_148'):
+                toast_success("Ouverture de la page Opérations...", icon="📥")
+                st.switch_page("pages/1_Opérations.py")
+            if st.button("📊 Voir la Synthèse", use_container_width=True, key='button_150'):
+                toast_success("Ouverture du tableau de bord...", icon="📊")
+                st.switch_page("pages/3_Synthese.py")
+                
+        st.divider()
+        
+        # 2. Key Actions & Status
+        c_left, c_right = st.columns([2, 1])
+        
+        with c_left:
+            # Nouvelles actions rapides avec popups
+            render_quick_actions_grid()
 
-    with c_right:
-        # 🆕 SMART ACTIONS - remplace le bouton "Revoir le guide" inutile
-        render_smart_actions()
+        with c_right:
+            # 🆕 SMART ACTIONS - remplace le bouton "Revoir le guide" inutile
+            render_smart_actions()
     
     st.sidebar.success("✅ Application Initialisée")
     

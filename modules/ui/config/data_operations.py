@@ -213,7 +213,7 @@ def render_data_operations():
     st.subheader("🚀 Mise à jour de Version")
     st.markdown("Analyse les derniers commits Git pour mettre à jour la version et générer le Changelog.")
     
-    if st.button("🔄 Lancer la mise à jour (Git commits)", use_container_width=True):
+    if st.button("🔄 Lancer la mise à jour (Git commits)", use_container_width=True, key="config_run_versioning"):
         import subprocess
         with st.spinner("🔄 Analyse des commits Git en cours..."):
             try:

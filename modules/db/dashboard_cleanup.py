@@ -375,6 +375,10 @@ def reset_dashboard() -> CleanupResult:
 if __name__ == "__main__":
     import sys
     
+    # Setup logging for CLI usage
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+    cli_logger = logging.getLogger(__name__)
+    
     scenario_map = {
         'repair': CleanupScenario.AUTO_REPAIR,
         'reset': CleanupScenario.RESET_DEFAULT,
@@ -385,19 +389,19 @@ if __name__ == "__main__":
     scenario_name = sys.argv[1] if len(sys.argv) > 1 else 'repair'
     scenario = scenario_map.get(scenario_name, CleanupScenario.AUTO_REPAIR)
     
-    print(f"Running dashboard cleanup: {scenario.value}")
-    print("=" * 60)
+    cli_logger.info(f"Running dashboard cleanup: {scenario.value}")
+    cli_logger.info("=" * 60)
     
     manager = DashboardCleanupManager()
     result = manager.run_cleanup(scenario)
     
-    print(f"Success: {result.success}")
-    print(f"Widgets checked: {result.widgets_checked}")
-    print(f"Widgets fixed: {result.widgets_fixed}")
-    print(f"Widgets removed: {result.widgets_removed}")
-    print(f"Message: {result.message}")
+    cli_logger.info(f"Success: {result.success}")
+    cli_logger.info(f"Widgets checked: {result.widgets_checked}")
+    cli_logger.info(f"Widgets fixed: {result.widgets_fixed}")
+    cli_logger.info(f"Widgets removed: {result.widgets_removed}")
+    cli_logger.info(f"Message: {result.message}")
     
     if result.errors:
-        print("\nErrors:")
+        cli_logger.info("\nErrors:")
         for error in result.errors:
-            print(f"  - {error}")
+            cli_logger.info(f"  - {error}")
