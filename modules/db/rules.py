@@ -2,6 +2,7 @@
 Learning rules management.
 Handles pattern-based categorization rules.
 """
+
 import pandas as pd
 import re
 import streamlit as st
@@ -14,15 +15,15 @@ from modules.utils import validate_regex_pattern
 def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
     """
     Add or update a learning rule for automatic categorization.
-    
+
     Args:
         pattern: Text pattern to match in transaction labels
         category: Category to assign when pattern matches
         priority: Rule priority (higher = more important). Default: 1
-        
+
     Returns:
         True if rule was added successfully, False otherwise
-        
+
     Example:
         add_learning_rule("CARREFOUR", "Alimentation", priority=5)
     """
@@ -31,13 +32,13 @@ def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
     if not is_valid:
         logger.error(f"Invalid rule pattern: {error_msg}")
         return False
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "INSERT OR REPLACE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)", 
-                (pattern, category, priority)
+                "INSERT OR REPLACE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)",
+                (pattern, category, priority),
             )
             conn.commit()
             logger.info(f"Learning rule added: '{pattern}' → {category} (priority={priority})")
@@ -47,7 +48,7 @@ def add_learning_rule(pattern: str, category: str, priority: int = 1) -> bool:
             return False
 
 
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_learning_rules() -> pd.DataFrame:
     """
     Retrieve all learning rules.
@@ -63,8 +64,7 @@ def get_learning_rules() -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql(
-            "SELECT * FROM learning_rules ORDER BY priority DESC, created_at DESC",
-            conn
+            "SELECT * FROM learning_rules ORDER BY priority DESC, created_at DESC", conn
         )
 
 
@@ -96,15 +96,15 @@ def get_compiled_learning_rules() -> List[Tuple[Optional[re.Pattern], str, int, 
 
     compiled_rules = []
     for _, row in df_rules.iterrows():
-        pattern_str = row['pattern']
+        pattern_str = row["pattern"]
         try:
             # Pre-compile with IGNORECASE flag for case-insensitive matching
             compiled = re.compile(pattern_str, re.IGNORECASE)
-            compiled_rules.append((compiled, row['category'], row['priority'], pattern_str))
+            compiled_rules.append((compiled, row["category"], row["priority"], pattern_str))
         except re.error as e:
             # If regex compilation fails, store None and rely on fallback string matching
             logger.warning(f"Invalid regex pattern '{pattern_str}': {e}")
-            compiled_rules.append((None, row['category'], row['priority'], pattern_str))
+            compiled_rules.append((None, row["category"], row["priority"], pattern_str))
 
     return compiled_rules
 
@@ -112,10 +112,10 @@ def get_compiled_learning_rules() -> List[Tuple[Optional[re.Pattern], str, int, 
 def delete_learning_rule(rule_id: int) -> bool:
     """
     Delete a learning rule by ID.
-    
+
     Args:
         rule_id: ID of the rule to delete
-        
+
     Returns:
         True if rule was deleted, False if it didn't exist
     """
@@ -130,14 +130,14 @@ def delete_learning_rule(rule_id: int) -> bool:
         return deleted
 
 
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_rules_for_category(category: str) -> pd.DataFrame:
     """
     Get all learning rules for a specific category.
-    
+
     Args:
         category: Category name
-        
+
     Returns:
         DataFrame with matching rules
     """
@@ -145,5 +145,5 @@ def get_rules_for_category(category: str) -> pd.DataFrame:
         return pd.read_sql(
             "SELECT * FROM learning_rules WHERE category = ? ORDER BY priority DESC",
             conn,
-            params=(category,)
+            params=(category,),
         )

@@ -4,36 +4,49 @@ Merci de votre intérêt pour contribuer à MyFinance Companion !
 
 ## 🚀 Workflow de développement
 
-### 1. Configuration locale
+### 1. Configuration locale (Automatisée)
 
 ```bash
 # Cloner le repo
 git clone <repository-url>
 cd FinancePerso
 
-# Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate  # ou venv\Scripts\activate sur Windows
+# Setup automatique (environnement virtuel + dépendances + hooks)
+make setup
+# ou: ./scripts/setup_dev_env.sh
 
-# Installer les dépendances
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # outils de dev
+# Activer l'environnement
+source .venv/bin/activate  # ou .venv\Scripts\activate sur Windows
 ```
 
-### 2. Avant de commit
+**Prérequis :** Python 3.12+
 
-Les tests tournent automatiquement sur GitHub Actions, mais vous pouvez les lancer localement :
+### 2. Workflow Quotidien
 
 ```bash
-# Linter
-ruff check modules/ app.py pages/
+# Lancer l'application
+make run
 
-# Tests
-pytest --cov=modules -v
+# Avant chaque commit (rapide - 10s)
+make test
 
-# Ou tout en un (avant push)
-./scripts/pre-push.sh  # si vous créez ce script
+# Avant push (complet - 1min)
+make check
+
+# CI complet (comme GitHub Actions)
+make ci
 ```
+
+**Commandes disponibles :**
+
+| Commande | Description | Temps |
+|----------|-------------|-------|
+| `make test` | Tests essentiels uniquement | ~5s |
+| `make test-all` | Tous les tests + coverage | ~30s |
+| `make lint` | Vérification Ruff | ~2s |
+| `make format` | Formatage Black | ~3s |
+| `make check` | Lint + Test essentiels | ~10s |
+| `make clean` | Nettoyage cache | ~1s |
 
 ### 3. Créer une Pull Request
 

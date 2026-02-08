@@ -16,6 +16,7 @@ import time
 
 class FeedbackType(Enum):
     """Types de feedback disponibles."""
+
     SUCCESS = "success"
     ERROR = "error"
     WARNING = "warning"
@@ -25,6 +26,7 @@ class FeedbackType(Enum):
 # ============================================================================
 # TOAST NOTIFICATIONS (brefs messages en haut à droite)
 # ============================================================================
+
 
 def toast_success(message: str, icon: str = "✅"):
     """Affiche un toast de succès."""
@@ -50,6 +52,7 @@ def toast_info(message: str, icon: str = "ℹ️"):
 # BANNERS (messages persistants dans la page)
 # ============================================================================
 
+
 def show_success(message: str, icon: str = "✅"):
     """Affiche un message de succès persistant."""
     st.success(f"{icon} {message}")
@@ -74,18 +77,19 @@ def show_info(message: str, icon: str = "ℹ️"):
 # CONFIRMATION DIALOGS
 # ============================================================================
 
+
 def confirm_dialog(
     title: str,
     message: str,
     confirm_label: str = "Confirmer",
     cancel_label: str = "Annuler",
     confirm_type: str = "primary",
-    danger: bool = False
+    danger: bool = False,
 ) -> bool:
     """
     Affiche une boîte de dialogue de confirmation.
     Retourne True si confirmé, False sinon.
-    
+
     Usage:
         if confirm_dialog("Supprimer ?", "Cette action est irréversible"):
             delete_item()
@@ -96,13 +100,23 @@ def confirm_dialog(
         else:
             st.warning(f"⚠️ {title}")
         st.write(message)
-        
+
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button(confirm_label, type="primary" if not danger else "secondary", use_container_width=True, key='button_100'):
+            if st.button(
+                confirm_label,
+                type="primary" if not danger else "secondary",
+                use_container_width=True,
+                key="button_100",
+            ):
                 return True
         with col2:
-            if st.button(cancel_label, type="secondary" if not danger else "primary", use_container_width=True, key='button_103'):
+            if st.button(
+                cancel_label,
+                type="secondary" if not danger else "primary",
+                use_container_width=True,
+                key="button_103",
+            ):
                 return False
         return None
 
@@ -111,16 +125,17 @@ def confirm_dialog(
 # RICH FEEDBACK (Toast + Banner + Timer)
 # ============================================================================
 
+
 def show_rich_success(
-    message: str, 
-    key_prefix: str, 
+    message: str,
+    key_prefix: str,
     keep_open: bool = False,
     auto_close_delay: int = 3,
-    on_close_callback: Optional[Callable] = None
+    on_close_callback: Optional[Callable] = None,
 ):
     """
     Affiche un feedback riche : Toast immédiat + Banner optionnel + Auto-close.
-    
+
     Args:
         message: Message de succès
         key_prefix: Préfixe unique pour les clés de session state
@@ -130,7 +145,7 @@ def show_rich_success(
     """
     # 1. Toast immédiat
     toast_success(message, icon="✅")
-    
+
     # Gestion des clés d'état
     keep_open_key = f"{key_prefix}_keep_open"
     if keep_open_key not in st.session_state:
@@ -139,7 +154,7 @@ def show_rich_success(
     # 2. Conteneur persistant (Banner)
     # On utilise un conteneur pour pouvoir le vider ou le cacher
     container = st.empty()
-    
+
     # Si l'utilisateur a demandé de garder ouvert ou qu'on est dans le délai
     with container.container():
         col1, col2 = st.columns([5, 1])
@@ -148,7 +163,9 @@ def show_rich_success(
         with col2:
             # Bouton pour garder ouvert / fermer
             if not st.session_state[keep_open_key]:
-                if st.button("📌 Fixer", key=f"{key_prefix}_pin_btn", help="Garder ce message affiché"):
+                if st.button(
+                    "📌 Fixer", key=f"{key_prefix}_pin_btn", help="Garder ce message affiché"
+                ):
                     st.session_state[keep_open_key] = True
                     st.rerun()
             else:
@@ -164,8 +181,9 @@ def show_rich_success(
         # Note: Streamlit ne permet pas facilement de supprimer un élément après délai sans rerun.
         # Mais on peut utiliser setTimeout pour appeler un callback Streamlit si on avait des custom components.
         # Ici, on utilise l'astuce du postMessage pour les expanders, ou rien si c'est top-level.
-        
-        st.markdown(f"""
+
+        st.markdown(
+            f"""
             <script>
                 setTimeout(function() {{
                     const keepOpen = {str(st.session_state.get(keep_open_key, False)).lower()};
@@ -176,29 +194,35 @@ def show_rich_success(
                     }}
                 }}, {auto_close_delay * 1000});
             </script>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         # Optionnel: Callback Python (ne marchera qu'au prochain rerun malheureusement)
         if on_close_callback:
             # On ne peut pas appeler le callback "dans le futur" ici sans blocage.
             pass
 
+
 def with_spinner(message: str = "Chargement..."):
     """
     Décorateur pour afficher un spinner pendant l'exécution d'une fonction.
-    
+
     Usage:
         @with_spinner("Traitement en cours...")
         def long_operation():
             time.sleep(2)
             return result
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs) -> Any:
             with st.spinner(message):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -206,15 +230,16 @@ def with_spinner(message: str = "Chargement..."):
 # ACTION FEEDBACK (toast + banner combinés)
 # ============================================================================
 
+
 def action_feedback(
     success: bool,
     success_message: str,
     error_message: Optional[str] = None,
-    show_banner: bool = False
+    show_banner: bool = False,
 ):
     """
     Affiche un feedback d'action (toast + banner optionnel).
-    
+
     Args:
         success: Si l'action a réussi
         success_message: Message en cas de succès
@@ -235,7 +260,7 @@ def action_feedback(
 def save_feedback(entity_name: str, success: bool = True, created: bool = True):
     """
     Feedback standard pour opérations de sauvegarde.
-    
+
     Args:
         entity_name: Nom de l'entité (ex: "Membre", "Catégorie")
         success: Si l'opération a réussi
@@ -251,7 +276,7 @@ def save_feedback(entity_name: str, success: bool = True, created: bool = True):
 def delete_feedback(entity_name: str, success: bool = True):
     """
     Feedback standard pour opérations de suppression.
-    
+
     Args:
         entity_name: Nom de l'entité (ex: "Membre", "Catégorie")
         success: Si l'opération a réussi
@@ -265,6 +290,7 @@ def delete_feedback(entity_name: str, success: bool = True):
 # ============================================================================
 # NOTIFICATIONS CONTEXTUELLES
 # ============================================================================
+
 
 def notify_no_data(message: str = "Aucune donnée disponible"):
     """Affiche une notification quand il n'y a pas de données."""
@@ -285,10 +311,11 @@ def notify_completed(message: str = "Opération terminée !"):
 # VALIDATION FEEDBACK
 # ============================================================================
 
+
 def validation_feedback(count: int, entity_name: str = "élément"):
     """
     Feedback pour validation en masse.
-    
+
     Args:
         count: Nombre d'éléments validés
         entity_name: Nom de l'entité (ex: "transaction", "groupe")
@@ -304,7 +331,7 @@ def validation_feedback(count: int, entity_name: str = "élément"):
 def import_feedback(count: int, skipped: int = 0, account_name: str = ""):
     """
     Feedback pour import de transactions.
-    
+
     Args:
         count: Nombre de transactions importées
         skipped: Nombre de doublons ignorés
@@ -327,6 +354,7 @@ def import_feedback(count: int, skipped: int = 0, account_name: str = ""):
 # CONFIGURATION FEEDBACK
 # ============================================================================
 
+
 def config_saved_feedback(section: Optional[str] = None):
     """Feedback quand une configuration est sauvegardée."""
     msg = "Configuration sauvegardée"
@@ -347,10 +375,11 @@ def api_config_feedback(provider: str, success: bool = True):
 # ANIMATIONS DE CÉLÉBRATION
 # ============================================================================
 
+
 def celebrate_completion(min_items: int = 10, actual_items: int = 0):
     """
     Déclenche des animations de célébration pour les grandes opérations.
-    
+
     Args:
         min_items: Nombre minimum d'items pour déclencher la célébration
         actual_items: Nombre réel d'items traités
@@ -369,90 +398,89 @@ def celebrate_all_done():
 # SESSION STATE HELPERS
 # ============================================================================
 
+
 def set_flash_message(message: str, msg_type: FeedbackType = FeedbackType.SUCCESS):
     """
     Stocke un message flash dans le session state pour affichage après rerun.
-    
+
     Usage:
         set_flash_message("Opération réussie !")
         st.rerun()
-        
+
         # Au début de la page:
         display_flash_messages()
     """
-    if 'flash_messages' not in st.session_state:
+    if "flash_messages" not in st.session_state:
         st.session_state.flash_messages = []
-    st.session_state.flash_messages.append({
-        'message': message,
-        'type': msg_type.value,
-        'timestamp': time.time()
-    })
+    st.session_state.flash_messages.append(
+        {"message": message, "type": msg_type.value, "timestamp": time.time()}
+    )
 
 
 def display_flash_messages():
     """Affiche et nettoie les messages flash en attente."""
-    if 'flash_messages' not in st.session_state:
+    if "flash_messages" not in st.session_state:
         return
-    
+
     current_time = time.time()
     messages_to_display = []
     messages_to_keep = []
-    
+
     for msg in st.session_state.flash_messages:
         # Messages de moins de 5 secondes
-        if current_time - msg['timestamp'] < 5:
+        if current_time - msg["timestamp"] < 5:
             messages_to_display.append(msg)
         else:
             messages_to_keep.append(msg)
-    
+
     # Afficher les messages
     for msg in messages_to_display:
-        if msg['type'] == 'success':
-            show_success(msg['message'])
-        elif msg['type'] == 'error':
-            show_error(msg['message'])
-        elif msg['type'] == 'warning':
-            show_warning(msg['message'])
-        elif msg['type'] == 'info':
-            show_info(msg['message'])
-    
+        if msg["type"] == "success":
+            show_success(msg["message"])
+        elif msg["type"] == "error":
+            show_error(msg["message"])
+        elif msg["type"] == "warning":
+            show_warning(msg["message"])
+        elif msg["type"] == "info":
+            show_info(msg["message"])
+
     # Mettre à jour le session state
     st.session_state.flash_messages = messages_to_keep
 
 
 def clear_flash_messages():
     """Nettoie tous les messages flash."""
-    if 'flash_messages' in st.session_state:
+    if "flash_messages" in st.session_state:
         st.session_state.flash_messages = []
 
 
 def display_flash_toasts():
     """Affiche et nettoie les messages flash en attente (toasts)."""
-    if 'flash_messages' not in st.session_state:
+    if "flash_messages" not in st.session_state:
         return
-    
+
     current_time = time.time()
     messages_to_display = []
     messages_to_keep = []
-    
+
     for msg in st.session_state.flash_messages:
         # Messages de moins de 5 secondes
-        if current_time - msg['timestamp'] < 5:
+        if current_time - msg["timestamp"] < 5:
             messages_to_display.append(msg)
         else:
             messages_to_keep.append(msg)
-    
+
     # Afficher les messages sous forme de toasts
     for msg in messages_to_display:
-        if msg['type'] == 'success':
-            toast_success(msg['message'])
-        elif msg['type'] == 'error':
-            toast_error(msg['message'])
-        elif msg['type'] == 'warning':
-            toast_warning(msg['message'])
-        elif msg['type'] == 'info':
-            toast_info(msg['message'])
-    
+        if msg["type"] == "success":
+            toast_success(msg["message"])
+        elif msg["type"] == "error":
+            toast_error(msg["message"])
+        elif msg["type"] == "warning":
+            toast_warning(msg["message"])
+        elif msg["type"] == "info":
+            toast_info(msg["message"])
+
     # Mettre à jour le session state
     st.session_state.flash_messages = messages_to_keep
 
@@ -461,32 +489,28 @@ def display_flash_toasts():
 # COMPOSANTS AVANCÉS
 # ============================================================================
 
+
 def show_operation_status(
     operation_name: str,
     status: str,  # 'pending', 'running', 'success', 'error'
     progress: Optional[float] = None,
-    message: Optional[str] = None
+    message: Optional[str] = None,
 ):
     """
     Affiche le statut d'une opération longue.
-    
+
     Usage:
         show_operation_status("Import", "running", 0.5, "Traitement...")
     """
-    icons = {
-        'pending': '⏳',
-        'running': '🔄',
-        'success': '✅',
-        'error': '❌'
-    }
-    
-    icon = icons.get(status, '❓')
-    
-    if status == 'running' and progress is not None:
+    icons = {"pending": "⏳", "running": "🔄", "success": "✅", "error": "❌"}
+
+    icon = icons.get(status, "❓")
+
+    if status == "running" and progress is not None:
         st.progress(progress, text=f"{icon} {operation_name}: {message or 'En cours...'}")
-    elif status == 'success':
+    elif status == "success":
         toast_success(f"{operation_name} terminé", icon="✅")
-    elif status == 'error':
+    elif status == "error":
         toast_error(f"{operation_name} échoué", icon="❌")
     else:
         st.info(f"{icon} {operation_name}: {message or 'En attente...'}")
@@ -495,23 +519,24 @@ def show_operation_status(
 def show_count_badge(count: int, label: str, color: str = "blue"):
     """
     Affiche un badge avec un compteur.
-    
+
     Args:
         count: Nombre à afficher
         label: Texte du label
         color: Couleur du badge (blue, green, red, orange)
     """
     colors = {
-        'blue': '#3b82f6',
-        'green': '#22c55e',
-        'red': '#ef4444',
-        'orange': '#f97316',
-        'gray': '#6b7280'
+        "blue": "#3b82f6",
+        "green": "#22c55e",
+        "red": "#ef4444",
+        "orange": "#f97316",
+        "gray": "#6b7280",
     }
-    
-    bg_color = colors.get(color, colors['blue'])
-    
-    st.markdown(f"""
+
+    bg_color = colors.get(color, colors["blue"])
+
+    st.markdown(
+        f"""
         <div style="
             display: inline-flex;
             align-items: center;
@@ -529,12 +554,15 @@ def show_count_badge(count: int, label: str, color: str = "blue"):
             </span>
             {label}
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 # ============================================================================
 # SHORTCUTS STREAMLIT NATIVE
 # ============================================================================
+
 
 def show_progress(label: str = "Chargement..."):
     """Retourne un context manager pour st.status."""
@@ -550,39 +578,48 @@ def show_expanded_status(label: str):
 # SCROLL TO TOP BUTTON
 # ============================================================================
 
+
 def render_scroll_to_top(anchor_id: str = "top"):
     """
     Render a floating scroll-to-top button at the bottom right of the page.
     Uses an anchor-based approach for reliable navigation.
-    
+
     Args:
         anchor_id: ID de l'ancre cible (défaut: "top")
     """
     import streamlit.components.v1 as components
-    
+
     # Créer l'ancre en haut de la page (invisible)
     st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
-    
+
     # Bouton en bas à droite (pas centré)
     st.markdown("---")
-    
+
     # Layout avec le bouton aligné à droite
     cols = st.columns([6, 1])
     with cols[1]:
-        page_key = st.session_state.get('current_page', 'default')
-        if st.button("⬆️ Haut", key=f"scroll_top_{page_key}_{anchor_id}", 
-                    use_container_width=True, type="secondary"):
+        page_key = st.session_state.get("current_page", "default")
+        if st.button(
+            "⬆️ Haut",
+            key=f"scroll_top_{page_key}_{anchor_id}",
+            use_container_width=True,
+            type="secondary",
+        ):
             # Redirection vers l'ancre avec JavaScript
-            components.html(f"""
+            components.html(
+                f"""
                 <script>
                     window.parent.location.hash = "#{anchor_id}";
                     window.parent.scrollTo({{top: 0, behavior: 'smooth'}});
                 </script>
-            """, height=0)
+            """,
+                height=0,
+            )
             st.rerun()
-    
+
     # Bouton flottant permanent en bas à droite
-    components.html("""
+    components.html(
+        """
         <style>
         .scroll-to-top-floating {
             position: fixed;
@@ -614,7 +651,9 @@ def render_scroll_to_top(anchor_id: str = "top"):
         <button class="scroll-to-top-floating" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Haut de page">
             ⬆️
         </button>
-    """, height=0)
+    """,
+        height=0,
+    )
 
 
 def render_scroll_to_top_simple():
@@ -625,5 +664,7 @@ def render_scroll_to_top_simple():
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("⬆️ Retour en haut de page", use_container_width=True, type="secondary", key='button_548'):
+        if st.button(
+            "⬆️ Retour en haut de page", use_container_width=True, type="secondary", key="button_548"
+        ):
             st.markdown("<script>window.scrollTo(0, 0);</script>", unsafe_allow_html=True)

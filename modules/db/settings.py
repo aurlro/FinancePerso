@@ -2,6 +2,7 @@
 Settings management for user configuration.
 Provides functions to get and set application settings stored in the database.
 """
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 from typing import Optional, List
@@ -55,7 +56,7 @@ def set_setting(key: str, value: str, description: Optional[str] = None) -> bool
                         description = excluded.description,
                         updated_at = CURRENT_TIMESTAMP
                     """,
-                    (key, value, description)
+                    (key, value, description),
                 )
             else:
                 cursor.execute(
@@ -66,7 +67,7 @@ def set_setting(key: str, value: str, description: Optional[str] = None) -> bool
                         value = excluded.value,
                         updated_at = CURRENT_TIMESTAMP
                     """,
-                    (key, value)
+                    (key, value),
                 )
 
             conn.commit()
@@ -112,7 +113,7 @@ def set_internal_transfer_targets(targets: List[str]) -> bool:
     return set_setting(
         "internal_transfer_targets",
         targets_str,
-        "Mots-clés pour détecter les virements internes (séparés par des virgules)"
+        "Mots-clés pour détecter les virements internes (séparés par des virgules)",
     )
 
 
@@ -125,13 +126,19 @@ def get_internal_transfer_keywords() -> List[str]:
 def set_internal_transfer_keywords(keywords: List[str]) -> bool:
     """Set the keywords that identify a transaction as a transfer."""
     val = ",".join([t.strip().upper() for t in keywords if t.strip()])
-    return set_setting("internal_transfer_keywords", val, "Mots-clés d'identification des virements (VIR, VRT, etc.)")
+    return set_setting(
+        "internal_transfer_keywords",
+        val,
+        "Mots-clés d'identification des virements (VIR, VRT, etc.)",
+    )
 
 
 def get_verified_transfer_labels() -> List[str]:
     """Get the list of verified labels that are known to be correct as internal transfers."""
     val = get_setting("internal_transfer_verified_labels", "")
-    return [t.strip() for t in val.split("|") if t.strip()] # Use | as separator to allow commas in labels
+    return [
+        t.strip() for t in val.split("|") if t.strip()
+    ]  # Use | as separator to allow commas in labels
 
 
 def add_verified_transfer_label(label: str) -> bool:
@@ -141,7 +148,9 @@ def add_verified_transfer_label(label: str) -> bool:
         return True
     current.append(label)
     val = "|".join(current)
-    return set_setting("internal_transfer_verified_labels", val, "Liste blanche des libellés de virement vérifiés")
+    return set_setting(
+        "internal_transfer_verified_labels", val, "Liste blanche des libellés de virement vérifiés"
+    )
 
 
 def get_all_settings() -> dict:
@@ -166,14 +175,15 @@ def get_all_settings() -> dict:
 # MEMBER DETECTION SETTINGS
 # ============================================================================
 
+
 def get_default_member() -> str:
     """
     Get the default member name for transactions that cannot be attributed.
-    
+
     This is typically the primary account holder. When a transaction's member
     cannot be determined through card suffix, label patterns, or account mapping,
     this default member is used instead of 'Inconnu'.
-    
+
     Returns:
         Default member name, or 'Inconnu' if not configured
     """
@@ -183,28 +193,28 @@ def get_default_member() -> str:
 def set_default_member(member_name: str) -> bool:
     """
     Set the default member for unattributed transactions.
-    
+
     Args:
         member_name: Name of the default member (e.g., "Aurélien Rodier")
-        
+
     Returns:
         True if successful, False otherwise
     """
     return set_setting(
         "default_member",
         member_name,
-        "Membre par défaut pour les transactions non attribuables (remplace 'Inconnu')"
+        "Membre par défaut pour les transactions non attribuables (remplace 'Inconnu')",
     )
 
 
 def get_force_member_identification() -> bool:
     """
     Check if force member identification is enabled.
-    
+
     When enabled, the system will NEVER use 'Inconnu' as a member value.
     Instead, it will always use the default member. This ensures 100%
     identified members but may require more manual corrections.
-    
+
     Returns:
         True if force identification is enabled, False otherwise
     """
@@ -215,27 +225,27 @@ def get_force_member_identification() -> bool:
 def set_force_member_identification(enabled: bool) -> bool:
     """
     Enable or disable forced member identification.
-    
+
     Args:
         enabled: True to force identification (no 'Inconnu'), False to allow unknown
-        
+
     Returns:
         True if successful, False otherwise
     """
     return set_setting(
         "force_member_identification",
         "true" if enabled else "false",
-        "Force l'identification: utilise toujours le membre par défaut, jamais 'Inconnu'"
+        "Force l'identification: utilise toujours le membre par défaut, jamais 'Inconnu'",
     )
 
 
 def get_primary_account_holder() -> str:
     """
     Get the primary account holder name.
-    
+
     This is a convenience alias for get_default_member(), using more
     explicit naming for financial context.
-    
+
     Returns:
         Primary account holder name
     """

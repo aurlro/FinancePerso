@@ -2,6 +2,7 @@
 Cache management utilities for selective invalidation.
 Provides targeted cache clearing instead of global st.cache_data.clear().
 """
+
 import streamlit as st
 from functools import wraps
 
@@ -12,11 +13,7 @@ def invalidate_transaction_caches():
     Call this after any transaction modification.
     """
     # Clear specific cached functions
-    from modules.db.transactions import (
-        get_all_transactions,
-        get_all_hashes,
-        get_transactions_count
-    )
+    from modules.db.transactions import get_all_transactions, get_all_hashes, get_transactions_count
 
     try:
         get_all_transactions.clear()
@@ -66,7 +63,7 @@ def invalidate_category_caches():
         get_categories.clear()
     except AttributeError:
         pass
-    
+
     try:
         get_categories_with_emojis.clear()
     except AttributeError:
@@ -131,13 +128,16 @@ def cache_with_key(key_prefix: str):
         def get_user_transactions(user_id):
             ...
     """
+
     def decorator(func):
         @wraps(func)
         @st.cache_data
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
+
         wrapper._cache_key_prefix = key_prefix
         return wrapper
+
     return decorator
 
 

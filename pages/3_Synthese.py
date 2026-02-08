@@ -49,7 +49,7 @@ from modules.ui.dashboard.sections import (
 from modules.ui.dashboard.customizable_dashboard import (
     render_customizable_overview,
     render_dashboard_configurator,
-    DashboardLayoutManager
+    DashboardLayoutManager,
 )
 
 # ============================================================================
@@ -62,8 +62,8 @@ init_db()
 # ============================================================================
 # CONSTANTES
 # ============================================================================
-ONBOARDING_KEY = 'onboarding_checked'
-ONBOARDING_COUNT_KEY = 'onboarding_suggestions_count'
+ONBOARDING_KEY = "onboarding_checked"
+ONBOARDING_COUNT_KEY = "onboarding_suggestions_count"
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
@@ -78,10 +78,10 @@ def get_cached_transactions() -> pd.DataFrame:
     """
     # Import différé pour éviter les imports circulaires au niveau module
     from modules.data_manager import get_all_transactions
-    
+
     df = get_all_transactions()
     if not df.empty:
-        df['date_dt'] = pd.to_datetime(df['date'])
+        df["date_dt"] = pd.to_datetime(df["date"])
     return df
 
 
@@ -92,6 +92,7 @@ def get_cached_categories() -> tuple:
     """
     cat_emoji_map = get_categories_with_emojis()
     from modules.data_manager import get_categories_df
+
     cat_df = get_categories_df()
     return cat_emoji_map, cat_df
 
@@ -106,23 +107,25 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
     """
     if ONBOARDING_KEY not in st.session_state:
         st.session_state[ONBOARDING_KEY] = False
-    
+
     if not st.session_state[ONBOARDING_KEY] and not df.empty:
         suggestions = detect_financial_profile(df)
         if suggestions:
             st.session_state[ONBOARDING_COUNT_KEY] = len(suggestions)
             st.session_state[ONBOARDING_KEY] = True
-    
+
     count = st.session_state.get(ONBOARDING_COUNT_KEY, 0)
     if count > 0:
         suggestions = detect_financial_profile(df)
-        with st.expander(f"🔔 Configuration Assistée - {count} suggestions détectées", expanded=True):
+        with st.expander(
+            f"🔔 Configuration Assistée - {count} suggestions détectées", expanded=True
+        ):
             st.markdown("##### J'ai détecté des opportunités de configuration")
             st.caption("Ces éléments récurrents ont été trouvés dans vos transactions.")
-            
+
             from modules.db.rules import add_learning_rule
             from modules.ui.feedback import toast_success, toast_error
-            
+
             for i, sug in enumerate(suggestions):
                 cols = st.columns([2, 1, 1, 1])
                 with cols[0]:
@@ -134,23 +137,26 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
                     st.write(f"Ref: {sug['default_category']}")
                 with cols[3]:
                     if st.button("Valider ✅", key=f"sug_val_{i}", use_container_width=True):
-                        if add_learning_rule(sug['label'], sug['default_category']):
+                        if add_learning_rule(sug["label"], sug["default_category"]):
                             toast_success(f"Règle créée pour {sug['label']}")
                             st.session_state[ONBOARDING_COUNT_KEY] -= 1
                             st.rerun()
                         else:
                             toast_error("Erreur lors de la création de la règle")
-            
+
             st.divider()
             col1, col2, _ = st.columns([1, 1, 2])
             with col1:
                 if st.button("Gérer toutes les règles ➡️", type="primary", key="btn_config"):
                     toast_success("Ouverture de la configuration des règles...", icon="⚡")
-                    st.session_state['intel_active_tab'] = "📋 Règles"
+                    st.session_state["intel_active_tab"] = "📋 Règles"
                     st.switch_page("pages/4_Intelligence.py")
             with col2:
                 if st.button("Ignorer pour le moment", key="btn_remind"):
-                    toast_info("Vous pourrez configurer les règles plus tard dans l'onglet Intelligence", icon="💡")
+                    toast_info(
+                        "Vous pourrez configurer les règles plus tard dans l'onglet Intelligence",
+                        icon="💡",
+                    )
                     st.session_state[ONBOARDING_COUNT_KEY] = 0
                     st.rerun()
 
@@ -178,74 +184,74 @@ def render_data_health_notifications(df: pd.DataFrame) -> None:
 # ============================================================================
 def main():
     """Point d'entrée principal de la page."""
-    
+
     # Titre de la page
     st.title("📊 Tableau de bord")
-    
+
     # Vérifier les alertes budget (notifications système)
     check_budget_alerts()
-    
+
     # PHASE 3: Notifications temps réel
     from modules.notifications_realtime import render_notification_banner
+
     render_notification_banner()
-    
+
     # Charger les données (avec cache)
     df = get_cached_transactions()
-    
+
     # Notifications (compactes)
     render_onboarding_notification(df)
     render_data_health_notifications(df)
-    
+
     # État vide
     if df.empty:
         st.info("📭 Aucune donnée disponible. Commencez par importer des relevés.")
         st.button(
             "➕ Nouvelles Opérations",
             on_click=lambda: (
-                st.session_state.update({'active_op_tab': '📥 Importation'}),
-                st.switch_page("pages/1_Opérations.py")
+                st.session_state.update({"active_op_tab": "📥 Importation"}),
+                st.switch_page("pages/1_Opérations.py"),
             ),
-            type="primary"
+            type="primary",
         )
         return
-    
+
     # Charger les catégories (avec cache)
     cat_emoji_map, _ = get_cached_categories()
     official_members = get_unique_members()
-    
+
     # =========================================================================
     # FILTRES (Sidebar)
     # =========================================================================
     filter_result = render_filter_sidebar(df)
-    df_current = filter_result['df_filtered']
-    
+    df_current = filter_result["df_filtered"]
+
     # Affichage des infos de filtres et alertes d'exclusion
     render_filter_info(df, filter_result)
-    
+
     # Vérifier si des filtres actifs réduisent trop les données
     if df_current.empty:
         st.warning("⚠️ Aucune donnée ne correspond aux filtres sélectionnés.")
         st.caption("Essayez d'élargir votre sélection de période ou de filtres.")
         return
-    
+
     # Calcul de la période précédente pour comparaison
     df_prev = compute_previous_period(
-        df,
-        df_current,
-        filter_result['show_internal'],
-        filter_result['show_hors_budget']
+        df, df_current, filter_result["show_internal"], filter_result["show_hors_budget"]
     )
-    
+
     # =========================================================================
     # ONGLETS ORGANISÉS
     # =========================================================================
-    tab_overview, tab_budget, tab_analysis, tab_ai = st.tabs([
-        "📈 **Vue d'ensemble**",
-        "🎯 **Budgets & Prévisions**",
-        "👥 **Analyses**",
-        "🔮 **IA & Rapports**"
-    ])
-    
+    tab_overview, tab_budget, tab_analysis, tab_ai = st.tabs(
+        [
+            "📈 **Vue d'ensemble**",
+            "🎯 **Budgets & Prévisions**",
+            "👥 **Analyses**",
+            "🔮 **IA & Rapports**",
+        ]
+    )
+
     # -------------------------------------------------------------------------
     # Onglet 1: Vue d'ensemble personnalisable
     # -------------------------------------------------------------------------
@@ -253,20 +259,22 @@ def main():
         # Bouton de configuration dans la sidebar
         with st.sidebar:
             st.divider()
-            if st.button("🎛️ Personnaliser le dashboard", use_container_width=True, key="btn_customize"):
-                st.session_state['show_dashboard_config'] = True
-        
+            if st.button(
+                "🎛️ Personnaliser le dashboard", use_container_width=True, key="btn_customize"
+            ):
+                st.session_state["show_dashboard_config"] = True
+
         # Afficher le configurateur si demandé
-        if st.session_state.get('show_dashboard_config', False):
+        if st.session_state.get("show_dashboard_config", False):
             with st.expander("Configuration du dashboard", expanded=True):
                 render_dashboard_configurator()
                 if st.button("Fermer", key="close_config"):
-                    st.session_state['show_dashboard_config'] = False
+                    st.session_state["show_dashboard_config"] = False
                     st.rerun()
-        
+
         # Rendre la vue d'ensemble personnalisée
         render_customizable_overview(df_current, df_prev, cat_emoji_map, df)
-    
+
     # -------------------------------------------------------------------------
     # Onglet 2: Budgets & Prévisions
     # -------------------------------------------------------------------------
@@ -274,17 +282,17 @@ def main():
         render_budget_tab(
             df_current,
             df,
-            filter_result['selected_years'],
-            filter_result['selected_months'],
-            cat_emoji_map
+            filter_result["selected_years"],
+            filter_result["selected_months"],
+            cat_emoji_map,
         )
-    
+
     # -------------------------------------------------------------------------
     # Onglet 3: Analyses (Membres, Bénéficiaires, Tags)
     # -------------------------------------------------------------------------
     with tab_analysis:
         render_analysis_tab(df_current, df, official_members, cat_emoji_map)
-    
+
     # -------------------------------------------------------------------------
     # Onglet 4: IA & Rapports
     # -------------------------------------------------------------------------
@@ -293,16 +301,17 @@ def main():
             df_current,
             df_prev,
             df,
-            filter_result['selected_years'],
-            filter_result['selected_months']
+            filter_result["selected_years"],
+            filter_result["selected_months"],
         )
-    
+
     # =========================================================================
     # PIED DE PAGE
     # =========================================================================
     render_scroll_to_top()
-    
+
     from modules.ui.layout import render_app_info
+
     render_app_info()
 
 

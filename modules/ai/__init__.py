@@ -16,12 +16,12 @@ from modules.ai.trend_analyzer import analyze_spending_trends, get_top_categorie
 from modules.ai.conversational_assistant import chat_with_assistant
 
 __all__ = [
-    'detect_amount_anomalies',
-    'suggest_tags_for_transaction',
-    'suggest_tags_batch',
-    'predict_budget_overruns',
-    'get_budget_alerts_summary',
-    'analyze_spending_trends',
-    'get_top_categories_comparison',
-    'chat_with_assistant',
+    "detect_amount_anomalies",
+    "suggest_tags_for_transaction",
+    "suggest_tags_batch",
+    "predict_budget_overruns",
+    "get_budget_alerts_summary",
+    "analyze_spending_trends",
+    "get_top_categories_comparison",
+    "chat_with_assistant",
 ]

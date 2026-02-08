@@ -1,4 +1,5 @@
 import streamlit as st
+
 """
 Database connection management.
 Provides context manager for SQLite connections.
@@ -86,5 +87,5 @@ def clear_db_cache():
         st.cache_data.clear()
     except Exception as e:
         from modules.logger import logger
-        logger.warning(f"Cache clear failed: {e}")
 
+        logger.warning(f"Cache clear failed: {e}")

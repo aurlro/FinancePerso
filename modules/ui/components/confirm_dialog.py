@@ -2,6 +2,7 @@
 Confirmation Dialog Component - For destructive actions.
 Prevents accidental data loss.
 """
+
 import streamlit as st
 from typing import Optional, Callable
 
@@ -14,11 +15,11 @@ def confirm_dialog(
     cancel_label: str = "Annuler",
     cancel_icon: str = "✕",
     danger: bool = True,
-    key: str = "confirm_dialog"
+    key: str = "confirm_dialog",
 ) -> bool:
     """
     Show a confirmation dialog.
-    
+
     Args:
         title: Dialog title
         message: Warning message
@@ -28,25 +29,26 @@ def confirm_dialog(
         cancel_icon: Icon for cancel button
         danger: Whether this is a dangerous action (red confirm button)
         key: Unique key
-        
+
     Returns:
         True if confirmed, False otherwise
     """
     # Use session state to track confirmation
     confirm_key = f"{key}_confirmed"
     show_key = f"{key}_show_dialog"
-    
+
     if confirm_key not in st.session_state:
         st.session_state[confirm_key] = False
-    
+
     if show_key not in st.session_state:
         st.session_state[show_key] = False
-    
+
     # Show dialog if requested
     if st.session_state[show_key]:
         with st.container(border=True):
             # Warning header
-            st.markdown(f"""
+            st.markdown(
+                f"""
             <div style="
                 background: {'#fef2f2' if danger else '#fffbeb'};
                 border-left: 4px solid {'#ef4444' if danger else '#f59e0b'};
@@ -57,30 +59,34 @@ def confirm_dialog(
                 <h4 style="margin: 0; color: {'#dc2626' if danger else '#d97706'};">⚠️ {title}</h4>
                 <p style="margin: 0.5rem 0 0 0; color: {'#7f1d1d' if danger else '#92400e'};">{message}</p>
             </div>
-            """, unsafe_allow_html=True)
-            
+            """,
+                unsafe_allow_html=True,
+            )
+
             col1, col2 = st.columns(2)
-            
+
             with col1:
-                if st.button(f"{cancel_icon} {cancel_label}", 
-                            use_container_width=True, 
-                            key=f"{key}_cancel"):
+                if st.button(
+                    f"{cancel_icon} {cancel_label}", use_container_width=True, key=f"{key}_cancel"
+                ):
                     st.session_state[show_key] = False
                     st.session_state[confirm_key] = False
                     st.rerun()
-            
+
             with col2:
                 button_type = "primary" if danger else "secondary"
-                if st.button(f"{confirm_icon} {confirm_label}", 
-                            use_container_width=True, 
-                            type=button_type,
-                            key=f"{key}_confirm"):
+                if st.button(
+                    f"{confirm_icon} {confirm_label}",
+                    use_container_width=True,
+                    type=button_type,
+                    key=f"{key}_confirm",
+                ):
                     st.session_state[show_key] = False
                     st.session_state[confirm_key] = True
                     st.rerun()
-        
+
         return st.session_state[confirm_key]
-    
+
     return st.session_state[confirm_key]
 
 
@@ -103,11 +109,11 @@ def with_confirmation(
     action: Callable,
     title: str = "Confirmer l'action",
     message: str = "Êtes-vous sûr ?",
-    key: str = "confirm_action"
+    key: str = "confirm_action",
 ):
     """
     Wrapper to require confirmation before executing an action.
-    
+
     Args:
         action: Function to execute if confirmed
         title: Dialog title
@@ -116,19 +122,19 @@ def with_confirmation(
     """
     confirm_key = f"{key}_confirmed"
     show_key = f"{key}_show_dialog"
-    
+
     # Initialize
     if confirm_key not in st.session_state:
         st.session_state[confirm_key] = False
     if show_key not in st.session_state:
         st.session_state[show_key] = False
-    
+
     # If confirmed, execute and reset
     if st.session_state[confirm_key]:
         st.session_state[confirm_key] = False
         action()
         return
-    
+
     # If showing dialog, render it
     if st.session_state[show_key]:
         confirmed = confirm_dialog(title, message, key=key)
@@ -137,19 +143,15 @@ def with_confirmation(
             action()
 
 
-def confirm_delete(
-    item_name: str,
-    item_type: str = "élément",
-    key: str = "delete_confirm"
-) -> bool:
+def confirm_delete(item_name: str, item_type: str = "élément", key: str = "delete_confirm") -> bool:
     """
     Specialized confirmation for delete operations.
-    
+
     Args:
         item_name: Name of the item being deleted
         item_type: Type of item (category, transaction, etc.)
         key: Unique key
-        
+
     Returns:
         True if confirmed
     """
@@ -159,15 +161,15 @@ def confirm_delete(
         confirm_label="Supprimer",
         confirm_icon="🗑️",
         danger=True,
-        key=key
+        key=key,
     )
 
 
 # Export
 __all__ = [
-    'confirm_dialog',
-    'trigger_confirmation',
-    'reset_confirmation',
-    'with_confirmation',
-    'confirm_delete',
+    "confirm_dialog",
+    "trigger_confirmation",
+    "reset_confirmation",
+    "with_confirmation",
+    "confirm_delete",
 ]

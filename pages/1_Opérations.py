@@ -10,7 +10,8 @@ load_css()
 init_db()
 
 # --- CSS FOR TABS-LIKE RADIO ---
-st.markdown("""
+st.markdown(
+    """
 <style>
     div[data-testid="stHorizontalBlock"] {
         background-color: #f8fafc;
@@ -19,38 +20,40 @@ st.markdown("""
         margin-bottom: 20px;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # State management for tab switching
-if 'active_op_tab' not in st.session_state:
-    st.session_state['active_op_tab'] = "📥 Importation"
+if "active_op_tab" not in st.session_state:
+    st.session_state["active_op_tab"] = "📥 Importation"
 
 # Auto-switch to Validation if just imported
-if st.session_state.get('just_imported'):
-    st.session_state['active_op_tab'] = "✅ Validation"
-    st.session_state['just_imported'] = False
+if st.session_state.get("just_imported"):
+    st.session_state["active_op_tab"] = "✅ Validation"
+    st.session_state["just_imported"] = False
 
 st.title("🧾 Opérations")
 
 # Navigation
 tabs = ["📥 Importation", "✅ Validation"]
-idx = tabs.index(st.session_state['active_op_tab'])
+idx = tabs.index(st.session_state["active_op_tab"])
 
 selected_tab = st.segmented_control(
-    "Flux de travail", 
-    tabs, 
-    default=st.session_state['active_op_tab'],
+    "Flux de travail",
+    tabs,
+    default=st.session_state["active_op_tab"],
     key="ops_navigation",
-    label_visibility="collapsed"
+    label_visibility="collapsed",
 )
 
 # Update state if changed
-if selected_tab and selected_tab != st.session_state['active_op_tab']:
-    st.session_state['active_op_tab'] = selected_tab
+if selected_tab and selected_tab != st.session_state["active_op_tab"]:
+    st.session_state["active_op_tab"] = selected_tab
     st.rerun()
 
 # Render selected content
-if st.session_state['active_op_tab'] == "📥 Importation":
+if st.session_state["active_op_tab"] == "📥 Importation":
     render_import_tab()
     # Contextual help
     render_contextual_help({"📥 Guide d'importation": IMPORT_HELP})
@@ -62,4 +65,5 @@ else:
 render_scroll_to_top()
 
 from modules.ui.layout import render_app_info
+
 render_app_info()

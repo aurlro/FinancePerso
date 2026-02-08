@@ -2,6 +2,7 @@
 Empty States Component - Engaging empty states for better UX.
 Prevents user abandonment by providing clear next steps.
 """
+
 import streamlit as st
 from typing import Optional, Callable
 
@@ -16,11 +17,11 @@ def render_empty_state(
     action_callback: Optional[Callable] = None,
     help_text: Optional[str] = None,
     illustration: Optional[str] = None,
-    key: str = "empty_state"
+    key: str = "empty_state",
 ):
     """
     Render an engaging empty state with clear CTA.
-    
+
     Args:
         icon: Emoji icon for the empty state
         title: Title text
@@ -37,35 +38,51 @@ def render_empty_state(
     with st.container(border=True):
         # Centered content
         col1, col2, col3 = st.columns([1, 3, 1])
-        
+
         with col2:
             # Large icon
-            st.markdown(f"<div style='text-align: center; font-size: 4rem; margin-bottom: 1rem;'>{icon}</div>", 
-                       unsafe_allow_html=True)
-            
+            st.markdown(
+                f"<div style='text-align: center; font-size: 4rem; margin-bottom: 1rem;'>{icon}</div>",
+                unsafe_allow_html=True,
+            )
+
             # Title
-            st.markdown(f"<h3 style='text-align: center; color: #475569; margin-bottom: 0.5rem;'>{title}</h3>", 
-                       unsafe_allow_html=True)
-            
+            st.markdown(
+                f"<h3 style='text-align: center; color: #475569; margin-bottom: 0.5rem;'>{title}</h3>",
+                unsafe_allow_html=True,
+            )
+
             # Message
-            st.markdown(f"<p style='text-align: center; color: #64748b; margin-bottom: 1.5rem;'>{message}</p>", 
-                       unsafe_allow_html=True)
-            
+            st.markdown(
+                f"<p style='text-align: center; color: #64748b; margin-bottom: 1.5rem;'>{message}</p>",
+                unsafe_allow_html=True,
+            )
+
             # Action button
             if action_label:
                 if action_callback:
-                    if st.button(f"{action_icon} {action_label}", type="primary", 
-                                use_container_width=True, key=f"{key}_action"):
+                    if st.button(
+                        f"{action_icon} {action_label}",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"{key}_action",
+                    ):
                         action_callback()
                 elif action_page:
-                    if st.button(f"{action_icon} {action_label}", type="primary", 
-                                use_container_width=True, key=f"{key}_action"):
+                    if st.button(
+                        f"{action_icon} {action_label}",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"{key}_action",
+                    ):
                         st.switch_page(action_page)
-            
+
             # Help text
             if help_text:
-                st.markdown(f"<p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-top: 1rem;'>{help_text}</p>", 
-                           unsafe_allow_html=True)
+                st.markdown(
+                    f"<p style='text-align: center; color: #94a3b8; font-size: 0.9rem; margin-top: 1rem;'>{help_text}</p>",
+                    unsafe_allow_html=True,
+                )
 
 
 def render_no_transactions_state(key: str = "no_transactions"):
@@ -78,7 +95,7 @@ def render_no_transactions_state(key: str = "no_transactions"):
         action_icon="📥",
         action_page="pages/1_Opérations.py",
         help_text="💡 Vous pouvez importer des fichiers CSV de votre banque (BoursoBank, etc.)",
-        key=key
+        key=key,
     )
 
 
@@ -92,7 +109,7 @@ def render_no_budgets_state(key: str = "no_budgets"):
         action_icon="➕",
         action_page="pages/4_Intelligence.py",
         help_text="💡 Commencez par les catégories où vous dépensez le plus",
-        key=key
+        key=key,
     )
 
 
@@ -106,7 +123,7 @@ def render_no_rules_state(key: str = "no_rules"):
         action_icon="⚡",
         action_page="pages/4_Intelligence.py",
         help_text="💡 Les règles apprennent de vos habitudes de validation",
-        key=key
+        key=key,
     )
 
 
@@ -120,7 +137,7 @@ def render_no_categories_state(key: str = "no_categories"):
         action_icon="⚙️",
         action_page="pages/9_Configuration.py",
         help_text="💡 Les catégories par défaut suffisent pour commencer",
-        key=key
+        key=key,
     )
 
 
@@ -129,32 +146,31 @@ def render_no_search_results(query: str = "", key: str = "no_results"):
     render_empty_state(
         icon="🔍",
         title="Aucun résultat",
-        message=f"Aucune transaction ne correspond à '{query}'." if query else "Aucune transaction ne correspond à vos critères.",
+        message=(
+            f"Aucune transaction ne correspond à '{query}'."
+            if query
+            else "Aucune transaction ne correspond à vos critères."
+        ),
         action_label="Effacer les filtres",
         action_icon="🔄",
         help_text="💡 Essayez avec des termes plus généraux ou vérifiez l'orthographe",
-        key=key
+        key=key,
     )
 
 
 def render_no_data_state(
     title: str = "Aucune donnée",
     message: str = "Les données ne sont pas encore disponibles.",
-    key: str = "no_data"
+    key: str = "no_data",
 ):
     """Generic empty state for missing data."""
-    render_empty_state(
-        icon="📭",
-        title=title,
-        message=message,
-        key=key
-    )
+    render_empty_state(icon="📭", title=title, message=message, key=key)
 
 
 def render_error_state(
     error_message: str = "Une erreur s'est produite",
     retry_callback: Optional[Callable] = None,
-    key: str = "error_state"
+    key: str = "error_state",
 ):
     """Error state with retry option."""
     render_empty_state(
@@ -165,7 +181,7 @@ def render_error_state(
         action_icon="🔄",
         action_callback=retry_callback,
         help_text="💡 Si le problème persiste, contactez le support",
-        key=key
+        key=key,
     )
 
 
@@ -182,13 +198,13 @@ def render_loading_state(message: str = "Chargement...", key: str = "loading"):
 
 # Export
 __all__ = [
-    'render_empty_state',
-    'render_no_transactions_state',
-    'render_no_budgets_state',
-    'render_no_rules_state',
-    'render_no_categories_state',
-    'render_no_search_results',
-    'render_no_data_state',
-    'render_error_state',
-    'render_loading_state',
+    "render_empty_state",
+    "render_no_transactions_state",
+    "render_no_budgets_state",
+    "render_no_rules_state",
+    "render_no_categories_state",
+    "render_no_search_results",
+    "render_no_data_state",
+    "render_error_state",
+    "render_loading_state",
 ]

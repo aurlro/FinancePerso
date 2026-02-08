@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from modules.ui import load_css
@@ -17,18 +16,20 @@ load_css()
 st.title("Test Validation Row UI")
 
 row_data = {
-    'id': 123,
-    'label': "CARREFOUR HYPERMARCHE",
-    'date': "04/02/2026",
-    'total_amount': -154.30,
-    'count': 1,
-    'category': "Inconnu",
-    'member': "Aurélien"
+    "id": 123,
+    "label": "CARREFOUR HYPERMARCHE",
+    "date": "04/02/2026",
+    "total_amount": -154.30,
+    "count": 1,
+    "category": "Inconnu",
+    "member": "Aurélien",
 }
+
 
 def on_validate(row_id, cat, mem):
     st.toast(f"Validated {row_id}: {cat} by {mem}")
     st.balloons()
+
 
 st.subheader("Single Row Render")
 render_validation_row(
@@ -37,7 +38,7 @@ render_validation_row(
     all_categories=all_categories,
     cat_emoji_map=cat_emoji_map,
     on_validate=on_validate,
-    key_prefix="test_row"
+    key_prefix="test_row",
 )
 
 st.subheader("Avatar Selector Test")

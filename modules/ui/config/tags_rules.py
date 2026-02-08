@@ -3,8 +3,13 @@ from modules.db.tags import get_all_tags, remove_tag_from_all_transactions
 from modules.db.rules import get_learning_rules, delete_learning_rule
 from modules.db.settings import get_internal_transfer_targets, set_internal_transfer_targets
 from modules.ui.feedback import (
-    toast_success, toast_error, toast_warning, toast_info,
-    delete_feedback, show_success, show_error
+    toast_success,
+    toast_error,
+    toast_warning,
+    toast_info,
+    delete_feedback,
+    show_success,
+    show_error,
 )
 
 
@@ -14,40 +19,55 @@ def render_tags_rules():
     Manage tags and auto-categorization learning rules.
     """
     col_tr1, col_tr2 = st.columns([1, 1])
-    
+
     # --- TAGS ---
     with col_tr1:
         st.header("🏷️ Gestion des Tags")
         st.markdown("Liste des tags utilisés dans vos transactions.")
-        
+
         all_tags = get_all_tags()
         if len(all_tags) == 0:
-            st.info("📭 Aucun tag trouvé. Les tags apparaissent quand vous les ajoutez aux transactions.")
+            st.info(
+                "📭 Aucun tag trouvé. Les tags apparaissent quand vous les ajoutez aux transactions."
+            )
         else:
             st.caption(f"{len(all_tags)} tag(s) utilisé(s)")
             with st.container(height=500):
                 for tag in all_tags:
                     c1, c2 = st.columns([3, 1])
                     c1.write(f"🔹 **{tag}**")
-                    if c2.button("🗑️", key=f"del_tag_{tag}", help=f"Supprimer le tag '{tag}' de toutes les transactions"):
+                    if c2.button(
+                        "🗑️",
+                        key=f"del_tag_{tag}",
+                        help=f"Supprimer le tag '{tag}' de toutes les transactions",
+                    ):
                         try:
                             count = remove_tag_from_all_transactions(tag)
                             if count > 0:
-                                toast_success(f"🗑️ Tag '{tag}' supprimé de {count} transaction(s)", icon="🏷️")
+                                toast_success(
+                                    f"🗑️ Tag '{tag}' supprimé de {count} transaction(s)", icon="🏷️"
+                                )
                             else:
-                                toast_info(f"ℹ️ Tag '{tag}' supprimé (aucune transaction affectée)", icon="🏷️")
+                                toast_info(
+                                    f"ℹ️ Tag '{tag}' supprimé (aucune transaction affectée)",
+                                    icon="🏷️",
+                                )
                             st.rerun()
                         except Exception as e:
-                            toast_error(f"❌ Erreur suppression tag '{tag}' : {str(e)[:50]}", icon="❌")
+                            toast_error(
+                                f"❌ Erreur suppression tag '{tag}' : {str(e)[:50]}", icon="❌"
+                            )
 
     # --- LEARNING RULES ---
     with col_tr2:
         st.header("🧠 Règles d'apprentissage")
         st.markdown("Associations automatiques (Mot-clé ➔ Catégorie) apprises par le système.")
-        
+
         rules_df = get_learning_rules()
         if rules_df.empty:
-            st.info("📭 Aucune règle apprise. Le système crée des règles quand vous catégorisez des transactions.")
+            st.info(
+                "📭 Aucune règle apprise. Le système crée des règles quand vous catégorisez des transactions."
+            )
         else:
             st.caption(f"{len(rules_df)} règle(s) de catégorisation")
             with st.container(height=500):
@@ -57,8 +77,10 @@ def render_tags_rules():
                     c2.markdown(f"➔ {r['category']}")
                     if c3.button("🗑️", key=f"del_rule_{r['id']}", help="Supprimer cette règle"):
                         try:
-                            delete_learning_rule(r['id'])
-                            toast_success(f"🗑️ Règle '{r['pattern']} ➔ {r['category']}' supprimée", icon="🧠")
+                            delete_learning_rule(r["id"])
+                            toast_success(
+                                f"🗑️ Règle '{r['pattern']} ➔ {r['category']}' supprimée", icon="🧠"
+                            )
                             st.rerun()
                         except Exception as e:
                             error_msg = str(e)
@@ -70,13 +92,16 @@ def render_tags_rules():
     # --- INTERNAL TRANSFER TARGETS ---
     st.divider()
     st.header("🔄 Détection des Virements Internes")
-    st.markdown("""
+    st.markdown(
+        """
     Configurez les mots-clés utilisés pour détecter automatiquement les virements internes.
     Ces mots-clés sont recherchés dans les libellés des transactions contenant "VIREMENT".
-    """)
+    """
+    )
 
     with st.expander("ℹ️ Comment ça marche ?", expanded=False):
-        st.markdown("""
+        st.markdown(
+            """
         Lorsqu'une transaction contient un mot-clé de virement (`VIR`, `VIREMENT`, etc.)
         **ET** un de vos mots-clés personnalisés ci-dessous, elle sera automatiquement
         catégorisée comme **Virement Interne**.
@@ -88,7 +113,8 @@ def render_tags_rules():
 
         **Note de sécurité :** Ces données sont stockées dans votre base de données
         et ne sont plus exposées dans le code source.
-        """)
+        """
+        )
 
     # Get current targets
     current_targets = get_internal_transfer_targets()
@@ -112,16 +138,20 @@ def render_tags_rules():
         new_target = st.text_input(
             "Nouveau mot-clé",
             placeholder="Ex: LIVRET, EPARGNE, etc.",
-            help="Le mot-clé sera automatiquement converti en majuscules"
+            help="Le mot-clé sera automatiquement converti en majuscules",
         )
 
         col_add, col_reset = st.columns([1, 1])
 
         with col_add:
-            add_clicked = st.form_submit_button("➕ Ajouter", type="primary", use_container_width=True)
+            add_clicked = st.form_submit_button(
+                "➕ Ajouter", type="primary", use_container_width=True
+            )
 
         with col_reset:
-            reset_clicked = st.form_submit_button("🔄 Réinitialiser aux valeurs par défaut", use_container_width=True)
+            reset_clicked = st.form_submit_button(
+                "🔄 Réinitialiser aux valeurs par défaut", use_container_width=True
+            )
 
         if add_clicked:
             if not new_target or not new_target.strip():
@@ -163,7 +193,9 @@ def render_tags_rules():
         deleted_any = False
         for idx, target in enumerate(current_targets):
             with cols_delete[idx % 4]:
-                if st.button(f"🗑️ {target}", key=f"del_target_{target}", help=f"Supprimer '{target}'"):
+                if st.button(
+                    f"🗑️ {target}", key=f"del_target_{target}", help=f"Supprimer '{target}'"
+                ):
                     try:
                         updated_targets = [t for t in current_targets if t != target]
                         if set_internal_transfer_targets(updated_targets):

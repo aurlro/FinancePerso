@@ -9,20 +9,20 @@ Ce module fournit une expérience de notification complète et cohérente :
 
 Usage basique:
     from modules.ui.notifications import notify, success, warning, error
-    
+
     success("Opération réussie !")
     warning("Budget presque atteint")
     error("Une erreur est survenue", persistent=True)
 
 Dans chaque page:
     from modules.ui.notifications import render_notifications_auto
-    
+
     # En début de page
     render_notifications_auto()
 
 Dans la sidebar:
     from modules.ui.notifications import render_notification_center_compact
-    
+
     render_notification_center_compact()
 """
 
@@ -76,22 +76,20 @@ __all__ = [
     # Types
     "Notification",
     "NotificationLevel",
-    "NotificationAction", 
+    "NotificationAction",
     "NotificationPosition",
     "NotificationPreferences",
     "NotificationSound",
-    
     # Manager
     "NotificationManager",
     "get_notification_manager",
     "notify",
     "success",
-    "warning", 
+    "warning",
     "error",
     "info",
     "achievement",
     "loading",
-    
     # Composants
     "render_notifications_auto",
     "render_toast_container",
@@ -102,7 +100,6 @@ __all__ = [
     "render_empty_state",
     "show_confirmation",
     "show_native_toast",
-    
     # Centre
     "render_notification_center_compact",
     "render_notification_center_full",
@@ -117,8 +114,8 @@ def init_notification_system():
     À appeler au démarrage de l'application.
     """
     manager = get_notification_manager()
-    
+
     # Nettoyer les notifications expirées au démarrage
     manager.cleanup_expired()
-    
+
     return manager

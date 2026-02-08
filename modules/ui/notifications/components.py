@@ -8,13 +8,18 @@ import streamlit.components.v1 as components
 from typing import List, Optional, Callable
 
 from .types import (
-    Notification, NotificationLevel, NotificationAction,
-    LEVEL_COLORS, LEVEL_BG_COLORS, DEFAULT_ICONS
+    Notification,
+    NotificationLevel,
+    NotificationAction,
+    LEVEL_COLORS,
+    LEVEL_BG_COLORS,
+    DEFAULT_ICONS,
 )
 from .manager import get_notification_manager
 
 
 # ==================== Composants Toast ====================
+
 
 def render_toast_container():
     """
@@ -22,7 +27,8 @@ def render_toast_container():
     À appeler une fois par page, idéalement dans la sidebar ou en début de page.
     """
     # CSS pour le conteneur de toasts
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         /* Conteneur de toasts */
         .fp-toast-container {
@@ -182,13 +188,15 @@ def render_toast_container():
             }
         }
         </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_notification_toast(notification: Notification, on_dismiss: Optional[Callable] = None):
     """
     Rend une notification au format toast.
-    
+
     Args:
         notification: La notification à afficher
         on_dismiss: Callback appelé lors de la fermeture
@@ -196,14 +204,14 @@ def render_notification_toast(notification: Notification, on_dismiss: Optional[C
     color = LEVEL_COLORS.get(notification.level, "#3b82f6")
     bg_color = LEVEL_BG_COLORS.get(notification.level, "#eff6ff")
     icon = notification.icon or DEFAULT_ICONS.get(notification.level, "ℹ️")
-    
+
     # Calculer le temps restant
     progress = 100
     if notification.duration and notification.duration > 0:
         elapsed = notification.age_seconds
         remaining = max(0, notification.duration - elapsed)
         progress = (remaining / notification.duration) * 100
-    
+
     # HTML du toast
     html = f"""
     <div class="fp-toast" id="toast-{notification.id}" style="
@@ -221,32 +229,32 @@ def render_notification_toast(notification: Notification, on_dismiss: Optional[C
         
         <div class="fp-toast-message">{notification.message}</div>
     """
-    
+
     # Ajouter les actions
     if notification.actions:
         html += '<div class="fp-toast-actions">'
         for action in notification.actions:
             btn_class = "primary" if action.primary else "secondary"
             icon_html = f"{action.icon} " if action.icon else ""
-            html += f'''
+            html += f"""
                 <button class="fp-toast-action {btn_class}" 
                         onclick="handleAction('{notification.id}', '{action.label}')">
                     {icon_html}{action.label}
                 </button>
-            '''
-        html += '</div>'
-    
+            """
+        html += "</div>"
+
     # Ajouter la barre de progression
     if notification.show_progress and notification.duration and notification.duration > 0:
-        html += f'''
+        html += f"""
             <div class="fp-toast-progress" style="
                 width: {progress}%;
                 color: {color};
             "></div>
-        '''
-    
-    html += '</div>'
-    
+        """
+
+    html += "</div>"
+
     st.markdown(html, unsafe_allow_html=True)
 
 
@@ -254,19 +262,20 @@ def render_all_active_toasts():
     """Affiche toutes les notifications actives sous forme de toasts."""
     manager = get_notification_manager()
     notifications = manager.active_notifications
-    
+
     if not notifications:
         return
-    
+
     # Rendre le conteneur une seule fois
     render_toast_container()
-    
+
     # Rendre chaque notification
     for notif in notifications:
         render_notification_toast(notif, on_dismiss=lambda nid=notif.id: manager.dismiss(nid))
 
 
 # ==================== Composants Inline ====================
+
 
 def render_inline_notification(
     message: str,
@@ -275,11 +284,11 @@ def render_inline_notification(
     icon: Optional[str] = None,
     actions: Optional[List[NotificationAction]] = None,
     dismissible: bool = False,
-    key: Optional[str] = None
+    key: Optional[str] = None,
 ) -> bool:
     """
     Affiche une notification inline dans le flux de la page.
-    
+
     Args:
         message: Contenu du message
         level: Niveau de notification
@@ -288,25 +297,26 @@ def render_inline_notification(
         actions: Actions associées
         dismissible: Si True, affiche un bouton pour fermer
         key: Clé unique pour le composant
-    
+
     Returns:
         True si fermé par l'utilisateur
     """
     color = LEVEL_COLORS.get(level, "#3b82f6")
     bg_color = LEVEL_BG_COLORS.get(level, "#eff6ff")
     icon = icon or DEFAULT_ICONS.get(level, "ℹ️")
-    
+
     component_key = key or f"inline_notif_{hash(message)}"
-    
+
     # Initialiser l'état de fermeture
     if f"{component_key}_dismissed" not in st.session_state:
         st.session_state[f"{component_key}_dismissed"] = False
-    
+
     if st.session_state[f"{component_key}_dismissed"]:
         return True
-    
+
     with st.container():
-        st.markdown(f"""
+        st.markdown(
+            f"""
             <div style="
                 background: linear-gradient(135deg, {bg_color} 0%, white 100%);
                 border: 1px solid {color}30;
@@ -323,12 +333,14 @@ def render_inline_notification(
                     </div>
                 </div>
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         # Actions
         if actions or dismissible:
             cols = st.columns([1] * (len(actions or [])) + ([1] if dismissible else []))
-            
+
             for i, action in enumerate(actions or []):
                 with cols[i]:
                     btn_type = "primary" if action.primary else "secondary"
@@ -336,33 +348,31 @@ def render_inline_notification(
                         f"{action.icon or ''} {action.label}".strip(),
                         key=f"{component_key}_action_{i}",
                         type=btn_type,
-                        use_container_width=True
+                        use_container_width=True,
                     ):
                         if action.callback:
                             action.callback()
                         if action.url:
                             st.switch_page(action.url)
-            
+
             if dismissible:
                 with cols[-1]:
                     if st.button("✕ Fermer", key=f"{component_key}_dismiss", type="secondary"):
                         st.session_state[f"{component_key}_dismissed"] = True
                         st.rerun()
-    
+
     return False
 
 
 # ==================== Composants Spéciaux ====================
 
+
 def render_achievement_unlock(
-    title: str,
-    description: str,
-    icon: str = "🏆",
-    reward: Optional[str] = None
+    title: str, description: str, icon: str = "🏆", reward: Optional[str] = None
 ):
     """
     Affiche une célébration pour un achievement débloqué.
-    
+
     Args:
         title: Nom de l'achievement
         description: Description de ce qui a été accompli
@@ -371,8 +381,9 @@ def render_achievement_unlock(
     """
     # Animation de célébration
     st.balloons()
-    
-    st.markdown(f"""
+
+    st.markdown(
+        f"""
         <div style="
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
             border-radius: 16px;
@@ -407,26 +418,29 @@ def render_achievement_unlock(
             50% {{ transform: scale(1.02); }}
         }}
         </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_loading_state(
     message: str = "Chargement en cours...",
     submessage: Optional[str] = None,
-    progress: Optional[float] = None
+    progress: Optional[float] = None,
 ):
     """
     Affiche un état de chargement amélioré.
-    
+
     Args:
         message: Message principal
         submessage: Message secondaire détaillé
         progress: Progression entre 0 et 1 (None = indéterminé)
     """
     col1, col2, col3 = st.columns([1, 2, 1])
-    
+
     with col2:
-        st.markdown(f"""
+        st.markdown(
+            f"""
             <div style="
                 text-align: center;
                 padding: 40px 20px;
@@ -454,8 +468,10 @@ def render_loading_state(
                 50% {{ transform: translateY(-10px) rotate(180deg); }}
             }}
             </style>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         if progress is not None:
             st.progress(progress, text=f"{progress*100:.0f}%")
         else:
@@ -467,11 +483,11 @@ def render_empty_state(
     title: str,
     description: str,
     action_label: Optional[str] = None,
-    action_callback: Optional[Callable] = None
+    action_callback: Optional[Callable] = None,
 ):
     """
     Affiche un état vide engageant.
-    
+
     Args:
         icon: Emoji représentatif
         title: Titre de l'état vide
@@ -479,7 +495,8 @@ def render_empty_state(
         action_label: Label du bouton d'action
         action_callback: Fonction appelée au clic
     """
-    st.markdown(f"""
+    st.markdown(
+        f"""
         <div style="
             text-align: center;
             padding: 60px 20px;
@@ -499,8 +516,10 @@ def render_empty_state(
                 {description}
             </div>
         </div>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     if action_label and action_callback:
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
@@ -510,6 +529,7 @@ def render_empty_state(
 
 # ==================== Helpers ====================
 
+
 def show_confirmation(
     title: str,
     message: str,
@@ -518,29 +538,30 @@ def show_confirmation(
     confirm_label: str = "Confirmer",
     cancel_label: str = "Annuler",
     danger: bool = False,
-    key: str = "confirm"
+    key: str = "confirm",
 ) -> bool:
     """
     Affiche une boîte de confirmation.
-    
+
     Returns:
         True si l'utilisateur a fait un choix
     """
     state_key = f"{key}_shown"
     result_key = f"{key}_result"
-    
+
     if state_key not in st.session_state:
         st.session_state[state_key] = True
         st.session_state[result_key] = None
-    
+
     if not st.session_state[state_key]:
         return True
-    
+
     color = "#dc2626" if danger else "#f59e0b"
     icon = "⚠️" if danger else "🤔"
-    
+
     with st.container():
-        st.markdown(f"""
+        st.markdown(
+            f"""
             <div style="
                 background: linear-gradient(135deg, #fef2f2 0%, white 100%) if {danger} else linear-gradient(135deg, #fffbeb 0%, white 100%);
                 border: 1px solid {color}40;
@@ -555,31 +576,38 @@ def show_confirmation(
                 </div>
                 <div style="color: #4b5563; margin-left: 36px;">{message}</div>
             </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         col1, col2, col3 = st.columns([1, 1, 3])
-        
+
         with col1:
             btn_type = "primary" if not danger else "secondary"
-            if st.button(cancel_label, key=f"{key}_cancel", type=btn_type, use_container_width=True):
+            if st.button(
+                cancel_label, key=f"{key}_cancel", type=btn_type, use_container_width=True
+            ):
                 st.session_state[state_key] = False
                 st.session_state[result_key] = False
                 if on_cancel:
                     on_cancel()
                 st.rerun()
-        
+
         with col2:
             btn_type = "primary" if danger else "secondary"
-            if st.button(confirm_label, key=f"{key}_confirm", type=btn_type, use_container_width=True):
+            if st.button(
+                confirm_label, key=f"{key}_confirm", type=btn_type, use_container_width=True
+            ):
                 st.session_state[state_key] = False
                 st.session_state[result_key] = True
                 on_confirm()
                 st.rerun()
-    
+
     return False
 
 
 # ==================== Intégration Streamlit Native ====================
+
 
 def show_native_toast(notification: Notification):
     """
@@ -588,7 +616,7 @@ def show_native_toast(notification: Notification):
     """
     icon = notification.icon or DEFAULT_ICONS.get(notification.level, "ℹ️")
     message = f"{icon} {notification.message}"
-    
+
     if notification.level == NotificationLevel.SUCCESS:
         st.toast(message, icon="✅")
     elif notification.level == NotificationLevel.CRITICAL:
@@ -607,13 +635,13 @@ def render_notifications_auto():
     Affiche automatiquement toutes les notifications actives.
     """
     manager = get_notification_manager()
-    
+
     # Nettoyer les notifications expirées
     manager.cleanup_expired()
-    
+
     # Afficher les notifications
     notifications = manager.active_notifications
-    
+
     for notif in notifications:
         # Utiliser le système natif pour l'instant (plus stable)
         show_native_toast(notif)

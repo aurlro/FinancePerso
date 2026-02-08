@@ -1,7 +1,10 @@
 """
 UI Layout Components.
 """
+
 import streamlit as st
+
+
 def render_app_info():
     """
     Renders the application version and changelog link in the sidebar directly.
@@ -12,8 +15,9 @@ def render_app_info():
     except ImportError:
         # Fallback if the name is somehow missing during reload
         import modules.constants
-        APP_VERSION = getattr(modules.constants, 'APP_VERSION', '0.x.x')
-    
+
+        APP_VERSION = getattr(modules.constants, "APP_VERSION", "0.x.x")
+
     with st.sidebar:
         st.divider()
         c1, c2 = st.columns([3, 1])

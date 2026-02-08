@@ -119,8 +119,9 @@ from modules.db.stats import (
 
 # Show deprecation warning on import
 import warnings
+
 warnings.warn(
     "modules.data_manager is deprecated. Please update imports to use modules.db.*",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )

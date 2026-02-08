@@ -19,23 +19,26 @@ from modules.db.rules import get_learning_rules
 from modules.db.audit import auto_fix_common_inconsistencies
 from modules.ai.rules_auditor import analyze_rules_integrity
 from modules.ui.feedback import (
-    toast_success, toast_error, toast_warning, toast_info,
-    show_success, show_error, show_warning, show_info
+    toast_success,
+    toast_error,
+    toast_warning,
+    toast_info,
+    show_success,
+    show_error,
+    show_warning,
+    show_info,
 )
 
 # Recurrence module imports
 from modules.db.transactions import get_all_transactions
 from modules.db.categories import get_categories_with_emojis
-from modules.db.recurrence_feedback import (
-    init_recurrence_feedback_table,
-    get_all_feedback
-)
+from modules.db.recurrence_feedback import init_recurrence_feedback_table, get_all_feedback
 from modules.analytics_v2 import detect_recurring_payments_v2
 from modules.ui.recurrence_tabs import (
     render_dashboard_tab,
     render_validation_tab,
     render_subscriptions_tab,
-    render_trash_tab
+    render_trash_tab,
 )
 
 # Page configuration
@@ -45,34 +48,36 @@ init_db()
 init_recurrence_feedback_table()
 
 st.title("🧠 Intelligence & Automations")
-st.markdown("Centralisation de l'IA, des règles de catégorisation, des budgets et de la détection des récurrences.")
+st.markdown(
+    "Centralisation de l'IA, des règles de catégorisation, des budgets et de la détection des récurrences."
+)
 
 # --- SHARED STATE & NAVIGATION ---
-if 'intel_active_tab' not in st.session_state:
-    st.session_state['intel_active_tab'] = "📋 Règles"
+if "intel_active_tab" not in st.session_state:
+    st.session_state["intel_active_tab"] = "📋 Règles"
 
 # Auto-jump from other pages if needed
-jump_to = st.query_params.get('tab')
+jump_to = st.query_params.get("tab")
 if jump_to:
-    st.session_state['intel_active_tab'] = jump_to
+    st.session_state["intel_active_tab"] = jump_to
 
 tabs_list = ["💡 Suggestions", "📋 Règles", "🔁 Récurrences", "🎯 Budgets", "🕵️ Audit IA"]
 
 selected_tab = st.segmented_control(
     "Navigation",
     tabs_list,
-    default=st.session_state['intel_active_tab'],
+    default=st.session_state["intel_active_tab"],
     key="intel_nav",
-    label_visibility="collapsed"
+    label_visibility="collapsed",
 )
 
-if selected_tab and selected_tab != st.session_state['intel_active_tab']:
-    st.session_state['intel_active_tab'] = selected_tab
+if selected_tab and selected_tab != st.session_state["intel_active_tab"]:
+    st.session_state["intel_active_tab"] = selected_tab
     st.rerun()
 
 st.divider()
 
-active_tab = st.session_state['intel_active_tab']
+active_tab = st.session_state["intel_active_tab"]
 
 # =============================================================================
 # TAB: SUGGESTIONS
@@ -80,12 +85,12 @@ active_tab = st.session_state['intel_active_tab']
 if active_tab == "💡 Suggestions":
     from modules.db.budgets import get_budgets
     from modules.db.members import get_members
-    
+
     df_all = get_all_transactions()
     rules_df = get_learning_rules()
     budgets_df = get_budgets()
     members_df = get_members()
-    
+
     render_smart_suggestions_panel(df_all, rules_df, budgets_df, members_df)
 
 # =============================================================================
@@ -103,7 +108,7 @@ elif active_tab == "📋 Règles":
                     toast_success(f"✅ {count} transactions mises à jour !", icon="🪄")
                 else:
                     toast_info("Toutes les transactions sont déjà à jour")
-    
+
     st.markdown("### Ajouter une nouvelle règle")
     render_add_rule_form()
     st.divider()
@@ -118,24 +123,28 @@ elif active_tab == "🔁 Récurrences":
     if df.empty:
         st.info("Aucune donnée disponible pour l'analyse des récurrences.")
     else:
-        validated_df = df[df['status'] == 'validated']
+        validated_df = df[df["status"] == "validated"]
         if validated_df.empty:
             st.warning("Veuillez valider quelques transactions pour permettre l'analyse.")
         else:
             with st.spinner("Analyse des tendances..."):
                 recurring_df = detect_recurring_payments_v2(validated_df)
-                
+
                 # Enrich with feedback (copying logic from original page)
                 feedback = get_all_feedback()
-                feedback_map = {(f['label_pattern'], f['category']): f['user_feedback'] for f in feedback}
+                feedback_map = {
+                    (f["label_pattern"], f["category"]): f["user_feedback"] for f in feedback
+                }
+
                 def get_status(row):
-                    key = (row['label'], row.get('category', ''))
+                    key = (row["label"], row.get("category", ""))
                     return feedback_map.get(key, None)
-                recurring_df['user_feedback'] = recurring_df.apply(get_status, axis=1)
+
+                recurring_df["user_feedback"] = recurring_df.apply(get_status, axis=1)
 
             rec_tabs = st.tabs(["📊 Synthèse", "✅ À Valider", "💳 Abonnements", "🗑️ Corbeille"])
             cat_emoji_map = get_categories_with_emojis()
-            
+
             with rec_tabs[0]:
                 render_dashboard_tab(recurring_df, validated_df)
             with rec_tabs[1]:

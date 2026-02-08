@@ -2,6 +2,7 @@
 Transaction management operations.
 Handles CRUD operations for transactions, the core entity of the application.
 """
+
 import uuid
 import pandas as pd
 import streamlit as st
@@ -13,14 +14,14 @@ from modules.logger import logger
 def transaction_exists(cursor, tx_hash: str) -> bool:
     """
     Check if a transaction exists based on tx_hash.
-    
+
     Note: Pas de cache car cursor n'est pas hashable.
     La requête est déjà rapide (index sur tx_hash).
-    
+
     Args:
         cursor: Database cursor
         tx_hash: Transaction hash to check
-        
+
     Returns:
         True if transaction exists, False otherwise
     """
@@ -56,8 +57,9 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         return 0, 0
 
     # Ensure tx_hash exists (Magic Fix 5.1 Enhancement for robust deduplication)
-    if 'tx_hash' not in df.columns or df['tx_hash'].isna().any():
+    if "tx_hash" not in df.columns or df["tx_hash"].isna().any():
         from modules.ingestion import generate_tx_hash
+
         df = generate_tx_hash(df)
 
     with get_db_connection() as conn:
@@ -70,15 +72,15 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         card_maps = get_member_mappings()
 
         # Ensure date is string for consistent grouping/querying
-        df['date_str'] = df['date'].astype(str)
-        
+        df["date_str"] = df["date"].astype(str)
+
         # Ensure account_label exists for grouping
-        if 'account_label' not in df.columns:
-            df['account_label'] = 'Unknown'
+        if "account_label" not in df.columns:
+            df["account_label"] = "Unknown"
 
         # Group by signature (date, label, amount) - Account REMOVED from signature for global deduplication
         # This prevents importing the same transaction twice if the account name changes.
-        grouped = df.groupby(['date_str', 'label', 'amount'])
+        grouped = df.groupby(["date_str", "label", "amount"])
 
         # OPTIMIZATION #1: Batch COUNT query instead of N+1 queries
         # Extract all unique (date, label, amount) tuples
@@ -87,7 +89,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         # Build batch query for all signatures
         if len(unique_sigs) > 0:
             # Create placeholders for IN clause
-            placeholders = ','.join(['(?,?,?)'] * len(unique_sigs))
+            placeholders = ",".join(["(?,?,?)"] * len(unique_sigs))
             batch_query = f"""
                 SELECT date, label, amount, COUNT(*) as cnt
                 FROM transactions
@@ -116,7 +118,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
             # Calculate Delta
             to_insert_count = max(0, input_count - db_count)
-            skipped_count += (input_count - to_insert_count)
+            skipped_count += input_count - to_insert_count
 
             if to_insert_count > 0:
                 # Take the last N rows from the group
@@ -126,17 +128,15 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
                     row_dict = row.to_dict()
 
                     # Cleanup temp columns
-                    if 'date_str' in row_dict:
-                        del row_dict['date_str']
+                    if "date_str" in row_dict:
+                        del row_dict["date_str"]
 
                     # Apply member mapping (Smart Detection) - ONLY if not provided or Inconnu
-                    if row_dict.get('member') in [None, '', 'Inconnu']:
-                        suffix = row_dict.get('card_suffix')
-                        account = row_dict.get('account_label')
-                        row_dict['member'] = detect_member_from_content(
-                            label=row_dict['label'],
-                            card_suffix=suffix,
-                            account_label=account
+                    if row_dict.get("member") in [None, "", "Inconnu"]:
+                        suffix = row_dict.get("card_suffix")
+                        account = row_dict.get("account_label")
+                        row_dict["member"] = detect_member_from_content(
+                            label=row_dict["label"], card_suffix=suffix, account_label=account
                         )
 
                     # Store column order on first row
@@ -147,8 +147,8 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
         # Batch insert with executemany()
         if rows_to_insert and insert_columns:
-            cols = ', '.join(insert_columns)
-            placeholders = ', '.join(['?'] * len(insert_columns))
+            cols = ", ".join(insert_columns)
+            placeholders = ", ".join(["?"] * len(insert_columns))
             query = f"INSERT INTO transactions ({cols}) VALUES ({placeholders})"
             cursor.executemany(query, rows_to_insert)
             new_count = len(rows_to_insert)
@@ -156,6 +156,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         conn.commit()
 
     from modules.cache_manager import invalidate_transaction_caches
+
     invalidate_transaction_caches()
     clear_db_cache()
 
@@ -166,59 +167,60 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 def apply_member_mappings_to_pending() -> int:
     """
     Update all pending transactions based on current smart member detection logic.
-    
+
     Returns:
         Number of transactions updated
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Fetch all pending transactions
-        cursor.execute("SELECT id, label, card_suffix, account_label, member FROM transactions WHERE status = 'pending'")
+        cursor.execute(
+            "SELECT id, label, card_suffix, account_label, member FROM transactions WHERE status = 'pending'"
+        )
         rows = cursor.fetchall()
-        
+
         # Collect updates for batch execution
         updates = []
         for tx_id, label, suffix, account, current_member in rows:
             detected_member = detect_member_from_content(label, suffix, account)
-            
+
             # Only update if changed and not previously set to something else than Inconnu
             # unless forced? Let's say we update if it was Inconnu or starts with "Carte "
-            if detected_member != current_member and (current_member == "Inconnu" or str(current_member).startswith("Carte ")):
+            if detected_member != current_member and (
+                current_member == "Inconnu" or str(current_member).startswith("Carte ")
+            ):
                 updates.append((detected_member, tx_id))
-        
+
         # Batch update
         if updates:
-            cursor.executemany(
-                "UPDATE transactions SET member = ? WHERE id = ?",
-                updates
-            )
-                
+            cursor.executemany("UPDATE transactions SET member = ? WHERE id = ?", updates)
+
         conn.commit()
         return len(updates)
 
 
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_transaction_count(date: str, label: str, amount: float) -> int:
     """
     Count existing transactions matching criteria.
-    
+
     Used to generate stable hashes for duplicate detection.
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT COUNT(*) FROM transactions WHERE date = ? AND label = ? AND amount = ?",
-            (str(date), label, amount)
+            (str(date), label, amount),
         )
         return cursor.fetchone()[0]
 
 
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_duplicates_report() -> pd.DataFrame:
     """
     Find transactions with identical date, label, and amount.
-    
+
     Returns:
         DataFrame with columns: date, label, amount, count
     """
@@ -232,17 +234,17 @@ def get_duplicates_report() -> pd.DataFrame:
         return pd.read_sql(query, conn)
 
 
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_transactions_by_criteria(
-    date: str = None, 
-    label: str = None, 
+    date: str = None,
+    label: str = None,
     amount: float = None,
     period: str = None,
-    label_contains: str = None
+    label_contains: str = None,
 ) -> pd.DataFrame:
     """
     Retrieve transactions matching specific criteria (exact or partial).
-    
+
     Args:
         date: Exact date match (YYYY-MM-DD)
         label: Exact label match
@@ -253,7 +255,7 @@ def get_transactions_by_criteria(
     with get_db_connection() as conn:
         query = "SELECT * FROM transactions WHERE 1=1"
         params = []
-        
+
         if date:
             query += " AND date = ?"
             params.append(str(date))
@@ -264,19 +266,19 @@ def get_transactions_by_criteria(
             query += " AND amount = ?"
             params.append(amount)
         if period:
-             query += " AND strftime('%Y-%m', date) = ?"
-             params.append(period)
+            query += " AND strftime('%Y-%m', date) = ?"
+            params.append(period)
         if label_contains:
-             query += " AND label LIKE ?"
-             params.append(f"%{label_contains}%")
-             
+            query += " AND label LIKE ?"
+            params.append(f"%{label_contains}%")
+
         return pd.read_sql(query, conn, params=params)
 
 
 def delete_transaction_by_id(tx_id: int) -> int:
     """
     Delete a specific transaction.
-    
+
     Returns:
         Number of rows deleted (0 or 1)
     """
@@ -285,6 +287,7 @@ def delete_transaction_by_id(tx_id: int) -> int:
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
         return cursor.rowcount
 
@@ -292,57 +295,56 @@ def delete_transaction_by_id(tx_id: int) -> int:
 def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
     """
     Add a tag to existing tags for multiple transactions without overwriting.
-    
+
     Args:
         tx_ids: List of transaction IDs
         tag: Tag to add
-        
+
     Returns:
         Number of transactions updated
     """
     if not tx_ids:
         return 0
-        
+
     updated = 0
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Get current tags
-        placeholders = ', '.join(['?'] * len(tx_ids))
-        cursor.execute(f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})", list(tx_ids))
+        placeholders = ", ".join(["?"] * len(tx_ids))
+        cursor.execute(
+            f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})", list(tx_ids)
+        )
         rows = cursor.fetchall()
-        
+
         # Collect updates for batch execution
         updates = []
         for tx_id, current_tags in rows:
             new_tags = tag
             if current_tags:
-                if tag in current_tags.split(','):
-                    continue # Already tagged
+                if tag in current_tags.split(","):
+                    continue  # Already tagged
                 new_tags = f"{current_tags},{tag}"
-            
+
             updates.append((new_tags, tx_id))
-        
+
         # Batch update
         if updates:
-            cursor.executemany(
-                "UPDATE transactions SET tags = ? WHERE id = ?",
-                updates
-            )
+            cursor.executemany("UPDATE transactions SET tags = ? WHERE id = ?", updates)
 
         conn.commit()
 
     from modules.cache_manager import invalidate_transaction_caches
+
     invalidate_transaction_caches()
     return updated
 
 
-
-@st.cache_data(ttl='1h')
+@st.cache_data(ttl="1h")
 def get_pending_transactions() -> pd.DataFrame:
     """
     Get all pending (unvalidated) transactions.
-    
+
     Returns:
         DataFrame with all pending transactions
     """
@@ -354,21 +356,18 @@ def get_pending_transactions() -> pd.DataFrame:
 def get_all_hashes() -> set[str]:
     """
     Retrieve all transaction hashes for fast duplicate detection.
-    
+
     Returns:
         Set of all tx_hash values
     """
     with get_db_connection() as conn:
         df = pd.read_sql("SELECT tx_hash FROM transactions WHERE tx_hash IS NOT NULL", conn)
-        return set(df['tx_hash'].tolist())
+        return set(df["tx_hash"].tolist())
 
 
 @st.cache_data(show_spinner="Chargement des données...")
 def get_all_transactions(
-    limit: int = None,
-    offset: int = 0,
-    filters: dict = None,
-    order_by: str = "date DESC"
+    limit: int = None, offset: int = 0, filters: dict = None, order_by: str = "date DESC"
 ) -> pd.DataFrame:
     """
     Get transactions with optional pagination and filtering.
@@ -423,30 +422,32 @@ def get_transactions_count(filters: dict = None) -> int:
 
     with get_db_connection() as conn:
         result = pd.read_sql(query, conn, params=params if params else None)
-        return result['count'].iloc[0]
+        return result["count"].iloc[0]
 
 
-def update_transaction_category(tx_id: int, new_category: str, tags: str = None, beneficiary: str = None, notes: str = None) -> None:
+def update_transaction_category(
+    tx_id: int, new_category: str, tags: str = None, beneficiary: str = None, notes: str = None
+) -> None:
     """
     Update a single transaction's category.
-    
+
     Delegates to bulk_update_transaction_status for consistency.
     """
     bulk_update_transaction_status([tx_id], new_category, tags, beneficiary, notes)
 
 
 def bulk_update_transaction_status(
-    tx_ids: list[int], 
-    new_category: str, 
-    tags: str = None, 
+    tx_ids: list[int],
+    new_category: str,
+    tags: str = None,
     beneficiary: str = None,
-    notes: str = None
+    notes: str = None,
 ) -> None:
     """
     Update multiple transactions at once and log for undo.
-    
+
     Creates a single action group that can be reverted using undo_last_action().
-    
+
     Args:
         tx_ids: List of transaction IDs to update
         new_category: New category to assign
@@ -455,27 +456,24 @@ def bulk_update_transaction_status(
     """
     if not tx_ids:
         return
-    
+
     action_id = str(uuid.uuid4())[:8]
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # 1. Capture Previous State for Undo
-        placeholders = ', '.join(['?'] * len(tx_ids))
+        placeholders = ", ".join(["?"] * len(tx_ids))
         cursor.execute(
             f"SELECT id, status, category_validated, member, tags, beneficiary, notes "
             f"FROM transactions WHERE id IN ({placeholders})",
-            list(tx_ids)
+            list(tx_ids),
         )
         rows = cursor.fetchall()
-        
+
         # Prepare batch inserts
-        history_records = [
-            (action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6])
-            for r in rows
-        ]
-        
+        history_records = [(action_id, str(r[0]), r[1], r[2], r[3], r[4], r[5], r[6]) for r in rows]
+
         if history_records:
             cursor.executemany(
                 """
@@ -483,69 +481,64 @@ def bulk_update_transaction_status(
                 (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary, prev_notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                history_records
+                history_records,
             )
-        
+
         # 2. Apply Update
-        set_clauses = [
-            "category_validated = ?", 
-            "status = 'validated'"
-        ]
+        set_clauses = ["category_validated = ?", "status = 'validated'"]
         params = [new_category]
-        
+
         if tags is not None:
             set_clauses.append("tags = ?")
             params.append(tags)
-            
+
         if beneficiary is not None:
             set_clauses.append("beneficiary = ?")
             params.append(beneficiary)
-            
+
         if notes is not None:
             set_clauses.append("notes = ?")
             params.append(notes)
-            
+
         query = f"""
             UPDATE transactions 
             SET {', '.join(set_clauses)} 
             WHERE id IN ({placeholders})
         """
         params.extend(list(tx_ids))
-        
+
         cursor.execute(query, params)
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
 
 
 def undo_last_action() -> tuple[bool, str]:
     """
     Revert the last validation action group.
-    
+
     Returns:
         Tuple of (success, message)
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Get last action ID
         cursor.execute("SELECT action_group_id FROM transaction_history ORDER BY id DESC LIMIT 1")
         row = cursor.fetchone()
         if not row:
             return False, "Aucune action à annuler."
-        
+
         action_id = row[0]
-        
+
         # Get all entries for this action
         cursor.execute("SELECT * FROM transaction_history WHERE action_group_id = ?", (action_id,))
         entries = cursor.fetchall()
-        
+
         # Prepare batch updates
-        undo_updates = [
-            (e[3], e[4], e[5], e[6], e[7], int(e[2]))
-            for e in entries
-        ]
-        
+        undo_updates = [(e[3], e[4], e[5], e[6], e[7], int(e[2])) for e in entries]
+
         if undo_updates:
             cursor.executemany(
                 """
@@ -553,13 +546,14 @@ def undo_last_action() -> tuple[bool, str]:
                 SET status = ?, category_validated = ?, member = ?, tags = ?, beneficiary = ?
                 WHERE id = ?
                 """,
-                undo_updates
+                undo_updates,
             )
-        
+
         # Delete history for this action
         cursor.execute("DELETE FROM transaction_history WHERE action_group_id = ?", (action_id,))
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
         return True, f"Action {action_id} annulée ({len(entries)} transactions rétablies)."
 
@@ -571,6 +565,7 @@ def mark_transaction_as_ungrouped(tx_id: int) -> None:
         cursor.execute("UPDATE transactions SET is_manually_ungrouped = 1 WHERE id = ?", (tx_id,))
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
 
 
@@ -581,16 +576,17 @@ def delete_transaction(tx_id: int) -> None:
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
 
 
 def delete_transactions_by_period(month_str: str) -> int:
     """
     Delete all transactions for a specific month (YYYY-MM).
-    
+
     Args:
         month_str: Month in format 'YYYY-MM'
-        
+
     Returns:
         Number of transactions deleted
     """
@@ -600,6 +596,7 @@ def delete_transactions_by_period(month_str: str) -> int:
         deleted_count = cursor.rowcount
         conn.commit()
         from modules.cache_manager import invalidate_transaction_caches
+
         invalidate_transaction_caches()
         logger.info(f"Deleted {deleted_count} transactions for period {month_str}")
         return deleted_count

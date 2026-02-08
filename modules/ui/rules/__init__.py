@@ -17,9 +17,9 @@ from .rule_audit import render_audit_section
 from .budget_manager import render_budget_section
 
 __all__ = [
-    'render_rule_list',
-    'render_add_rule_form',
-    'test_pattern_against_transactions',
-    'render_audit_section',
-    'render_budget_section',
+    "render_rule_list",
+    "render_add_rule_form",
+    "test_pattern_against_transactions",
+    "render_audit_section",
+    "render_budget_section",
 ]

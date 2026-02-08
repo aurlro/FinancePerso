@@ -3,8 +3,13 @@ import os
 import stat
 from dotenv import load_dotenv, set_key, find_dotenv
 from modules.ui.feedback import (
-    toast_success, toast_error, toast_warning, toast_info,
-    api_config_feedback, show_success, show_error
+    toast_success,
+    toast_error,
+    toast_warning,
+    toast_info,
+    api_config_feedback,
+    show_success,
+    show_error,
 )
 
 
@@ -72,95 +77,101 @@ def render_api_settings():
     """
     st.header("🤖 Cerveau IA")
     st.markdown("Choisissez quel moteur d'intelligence artificielle pilote votre assistant.")
-    
+
     env_vars = load_env_vars()
-    
+
     # Provider Selection
     PROVIDERS = ["Gemini", "Ollama", "DeepSeek", "OpenAI"]
     # Check current provider from env
     current_provider_env = env_vars.get("AI_PROVIDER", "Gemini")
     # Handle case where env var might be lowercase
     current_provider = current_provider_env.capitalize()
-    
+
     if current_provider not in PROVIDERS:
         current_provider = "Gemini"
-    
+
     # Show current provider badge
     st.caption(f"Fournisseur actuel : **{current_provider}**")
-        
+
     selected_provider = st.selectbox(
         "Fournisseur IA",
         PROVIDERS,
         index=PROVIDERS.index(current_provider),
-        help="Sélectionnez le service d'IA à utiliser"
+        help="Sélectionnez le service d'IA à utiliser",
     )
-    
+
     st.divider()
-    
+
     # Form based on selection
     with st.form("ai_config"):
         new_env = env_vars.copy()
         new_env["AI_PROVIDER"] = selected_provider.lower()
-        
+
         if selected_provider == "Gemini":
             st.info("📝 Le modèle standard : Rapide, performant et gratuit/pas cher.")
             val = st.text_input(
                 "Clé API Google Gemini",
                 value=env_vars.get("GEMINI_API_KEY", ""),
                 type="password",
-                help="Commence par 'AIzaSy...' - Obtenez-la sur makersuite.google.com"
+                help="Commence par 'AIzaSy...' - Obtenez-la sur makersuite.google.com",
             )
             new_env["GEMINI_API_KEY"] = val
-            
+
         elif selected_provider == "Ollama":
             st.info("🔒 100% Local & Privé. Assurez-vous qu'Ollama tourne sur votre machine.")
             url = st.text_input(
                 "URL du serveur Ollama",
                 value=env_vars.get("OLLAMA_URL", "http://localhost:11434"),
-                help="URL par défaut : http://localhost:11434"
+                help="URL par défaut : http://localhost:11434",
             )
             new_env["OLLAMA_URL"] = url
-            
+
         elif selected_provider == "DeepSeek":
             st.info("📝 Performance coût/efficacité redoutable.")
             val = st.text_input(
                 "Clé API DeepSeek",
                 value=env_vars.get("DEEPSEEK_API_KEY", ""),
                 type="password",
-                help="Obtenez-la sur platform.deepseek.com"
+                help="Obtenez-la sur platform.deepseek.com",
             )
             new_env["DEEPSEEK_API_KEY"] = val
-            
+
         elif selected_provider == "OpenAI":
             st.info("📝 Le standard de l'industrie (GPT-4 / GPT-3.5).")
             val = st.text_input(
                 "Clé API OpenAI",
                 value=env_vars.get("OPENAI_API_KEY", ""),
                 type="password",
-                help="Commence par 'sk-...' - Obtenez-la sur platform.openai.com"
+                help="Commence par 'sk-...' - Obtenez-la sur platform.openai.com",
             )
             new_env["OPENAI_API_KEY"] = val
-            
+
         # Common: Model Name Override
         st.subheader("⚙️ Options Avancées")
         model_val = st.text_input(
             "Nom du modèle (laisser vide pour défaut)",
             value=env_vars.get("AI_MODEL_NAME", ""),
-            help="Ex: llama3, gpt-4o, gemini-1.5-pro"
+            help="Ex: llama3, gpt-4o, gemini-1.5-pro",
         )
         new_env["AI_MODEL_NAME"] = model_val
 
-        submitted = st.form_submit_button("💾 Sauvegarder et Appliquer", type="primary", use_container_width=True)
-        
+        submitted = st.form_submit_button(
+            "💾 Sauvegarder et Appliquer", type="primary", use_container_width=True
+        )
+
         if submitted:
             # Validate API key if applicable
             validation_error = None
             if selected_provider == "Gemini" and new_env.get("GEMINI_API_KEY"):
                 if not validate_api_key(new_env["GEMINI_API_KEY"], "Gemini"):
-                    validation_error = "La clé API Gemini semble invalide (doit commencer par 'AIzaSy')"
+                    validation_error = (
+                        "La clé API Gemini semble invalide (doit commencer par 'AIzaSy')"
+                    )
             elif selected_provider == "OpenAI" and new_env.get("OPENAI_API_KEY"):
                 if not validate_api_key(new_env["OPENAI_API_KEY"], "OpenAI"):
-                    validation_error = "La clé API OpenAI semble invalide (doit commencer par 'sk-')"
+                    validation_error = (
+                        "La clé API OpenAI semble invalide (doit commencer par 'sk-')"
+                    )
 
             if validation_error:
                 show_error(validation_error, icon="🔑")
@@ -168,10 +179,10 @@ def render_api_settings():
             else:
                 try:
                     env_file = ".env"
-                    
+
                     # Create file if doesn't exist
                     if not os.path.exists(env_file):
-                        open(env_file, 'a').close()
+                        open(env_file, "a").close()
 
                     # Write .env securely using set_key from python-dotenv
                     keys_written = 0
@@ -190,16 +201,18 @@ def render_api_settings():
 
                     # Feedback visuel amélioré
                     api_config_feedback(selected_provider, success=True)
-                    
+
                     # Toast détaillé
                     config_msg = f"✅ Configuration {selected_provider} enregistrée"
                     if model_val:
                         config_msg += f" (modèle: {model_val})"
                     toast_success(config_msg, icon="🤖")
-                    
-                    show_success(f"🤖 Configuration IA mise à jour ! Fournisseur : {selected_provider}")
+
+                    show_success(
+                        f"🤖 Configuration IA mise à jour ! Fournisseur : {selected_provider}"
+                    )
                     toast_info("🔒 Permissions sécurisées appliquées au fichier .env", icon="🔒")
-                    
+
                     # Afficher un récapitulatif
                     with st.expander("📋 Récapitulatif de la configuration", expanded=False):
                         st.write(f"**Fournisseur** : {selected_provider}")
@@ -218,11 +231,12 @@ def render_api_settings():
                     api_config_feedback(selected_provider, success=False)
                     show_error(f"Erreur lors de la sauvegarde : {e}", icon="❌")
                     toast_error(f"❌ Échec de la sauvegarde : {error_msg[:80]}", icon="❌")
-    
+
     # Info section
     st.divider()
     with st.expander("📖 Guide de configuration", expanded=False):
-        st.markdown("""
+        st.markdown(
+            """
         ### 🔑 Comment obtenir une clé API
         
         **Google Gemini (Recommandé)**
@@ -247,4 +261,5 @@ def render_api_settings():
         1. Installez Ollama : [ollama.com](https://ollama.com)
         2. Lancez Ollama localement
         3. Aucune clé requise !
-        """)
+        """
+        )

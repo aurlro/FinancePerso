@@ -34,8 +34,18 @@ FREQUENCY_ANNUAL_LABEL = "Annuel"
 
 # Energy/utility provider keywords for variable bill detection
 ENERGY_KEYWORDS = [
-    "EDF", "ENGIE", "TOTAL", "EAU", "SUEZ", "VEOLIA",
-    "OHM", "MINT", "VATTEN", "ENI", "TOTALENERGIE", "VATTENFALL"
+    "EDF",
+    "ENGIE",
+    "TOTAL",
+    "EAU",
+    "SUEZ",
+    "VEOLIA",
+    "OHM",
+    "MINT",
+    "VATTEN",
+    "ENI",
+    "TOTALENERGIE",
+    "VATTENFALL",
 ]
 
 # ============================================================================
@@ -53,21 +63,41 @@ RENT_LOAN_MIN_AMOUNT = -600
 
 # Financial category keywords for auto-classification
 CATEGORY_KEYWORDS = {
-    "Logement": [
-        "LOYER", "IMMO", "PROPRIETAIRE", "QUITTANCE", "BAIL", "CAUTION"
-    ],
-    "Emprunt immobilier": [
-        "PRET", "CREDIT", "ECHEANCE"
-    ],
+    "Logement": ["LOYER", "IMMO", "PROPRIETAIRE", "QUITTANCE", "BAIL", "CAUTION"],
+    "Emprunt immobilier": ["PRET", "CREDIT", "ECHEANCE"],
     "Assurances": [
-        "ASSURANCE", "MACIF", "MAIF", "AXA", "ALLIANZ", "MUTUELLE",
-        "PREVOYANCE", "GENERALI", "SWISSLIFE", "MGEN", "MALAKOFF", "ALAN"
+        "ASSURANCE",
+        "MACIF",
+        "MAIF",
+        "AXA",
+        "ALLIANZ",
+        "MUTUELLE",
+        "PREVOYANCE",
+        "GENERALI",
+        "SWISSLIFE",
+        "MGEN",
+        "MALAKOFF",
+        "ALAN",
     ],
     "Abonnements": [
-        "EDF", "ENGIE", "TOTALENERGIE", "EAU", "SUEZ", "VEOLIA",
-        "ORANGE", "SFR", "BOUYGUES", "FREE", "NETFLIX", "SPOTIFY",
-        "AMAZON PRIME", "ENI", "VATTENFALL", "OHM", "MINT"
-    ]
+        "EDF",
+        "ENGIE",
+        "TOTALENERGIE",
+        "EAU",
+        "SUEZ",
+        "VEOLIA",
+        "ORANGE",
+        "SFR",
+        "BOUYGUES",
+        "FREE",
+        "NETFLIX",
+        "SPOTIFY",
+        "AMAZON PRIME",
+        "ENI",
+        "VATTENFALL",
+        "OHM",
+        "MINT",
+    ],
 }
 
 # ============================================================================
@@ -89,5 +119,5 @@ INTERNAL_TRANSFER_PATTERNS = [
     "VIREMENT",
     "VIR ",
     "ALIMENTATION",
-    "TRANSFERT"
+    "TRANSFERT",
 ]

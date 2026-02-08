@@ -19,13 +19,15 @@ def reset_encryption_singleton():
     """
     # Reset the singleton instance before test
     import modules.encryption as enc_module
+
     original_instance = enc_module._encryption_instance
     enc_module._encryption_instance = None
-    
+
     yield
-    
+
     # Reset again after test to clean up
     enc_module._encryption_instance = None
+
 
 @pytest.fixture
 def temp_db():
@@ -33,25 +35,26 @@ def temp_db():
     Create a temporary test database and clean it up after test.
     """
     # Create temp file
-    fd, db_path = tempfile.mkstemp(suffix='.db')
+    fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
-    
+
     # Set env var
-    os.environ['DB_PATH'] = db_path
-    
+    os.environ["DB_PATH"] = db_path
+
     # Clear Streamlit cache to ensure test isolation
     # This prevents get_all_transactions() from returning stale data from previous tests
     try:
         st.cache_data.clear()
     except Exception:
         pass
-    
+
     # Initialize schema
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
+
     # Create all tables
-    cursor.execute("""
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT NOT NULL,
@@ -70,9 +73,11 @@ def temp_db():
             tx_hash TEXT,
             is_manually_ungrouped INTEGER DEFAULT 0
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS transaction_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             action_group_id TEXT NOT NULL,
@@ -86,9 +91,11 @@ def temp_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
 
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS categories (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE NOT NULL,
@@ -96,25 +103,31 @@ def temp_db():
             is_fixed INTEGER DEFAULT 0,
             suggested_tags TEXT
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE NOT NULL,
             member_type TEXT DEFAULT 'HOUSEHOLD'
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS budgets (
             category TEXT PRIMARY KEY,
             amount REAL NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS learning_rules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             pattern TEXT NOT NULL,
@@ -122,25 +135,31 @@ def temp_db():
             priority INTEGER DEFAULT 1,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             label TEXT UNIQUE NOT NULL,
             type TEXT DEFAULT 'CHECKING'
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS member_mappings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             card_suffix TEXT UNIQUE NOT NULL,
             member_name TEXT NOT NULL
         )
-    """)
-    
-    cursor.execute("""
+    """
+    )
+
+    cursor.execute(
+        """
         CREATE TABLE IF NOT EXISTS import_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             account_label TEXT NOT NULL,
@@ -148,54 +167,49 @@ def temp_db():
             num_lines INTEGER,
             file_hash TEXT
         )
-    """)
-    
+    """
+    )
+
     # Insert default categories
     default_categories = [
-        ('Alimentation', '🛒', 0, ''),
-        ('Transport', '🚗', 0, ''),
-        ('Logement', '🏠', 1, ''),
-        ('Revenus', '💰', 1, ''),
-        ('Virement Interne', '🔄', 0, ''),
-        ('Hors Budget', '🚫', 0, ''),
-        ('Inconnu', '❓', 0, '')
+        ("Alimentation", "🛒", 0, ""),
+        ("Transport", "🚗", 0, ""),
+        ("Logement", "🏠", 1, ""),
+        ("Revenus", "💰", 1, ""),
+        ("Virement Interne", "🔄", 0, ""),
+        ("Hors Budget", "🚫", 0, ""),
+        ("Inconnu", "❓", 0, ""),
     ]
     cursor.executemany(
         "INSERT INTO categories (name, emoji, is_fixed, suggested_tags) VALUES (?, ?, ?, ?)",
-        default_categories
+        default_categories,
     )
-    
+
     # Insert default members
-    default_members = [
-        ('Maison', 'HOUSEHOLD'),
-        ('Famille', 'HOUSEHOLD'),
-        ('Inconnu', 'EXTERNAL')
-    ]
-    cursor.executemany(
-        "INSERT INTO members (name, member_type) VALUES (?, ?)",
-        default_members
-    )
-    
+    default_members = [("Maison", "HOUSEHOLD"), ("Famille", "HOUSEHOLD"), ("Inconnu", "EXTERNAL")]
+    cursor.executemany("INSERT INTO members (name, member_type) VALUES (?, ?)", default_members)
+
     conn.commit()
     conn.close()
-    
+
     # Set as test database
-    original_db = os.environ.get('DB_PATH')
-    os.environ['DB_PATH'] = db_path
-    
+    original_db = os.environ.get("DB_PATH")
+    os.environ["DB_PATH"] = db_path
+
     yield db_path
-    
+
     # Cleanup
     if original_db:
-        os.environ['DB_PATH'] = original_db
+        os.environ["DB_PATH"] = original_db
     else:
-        os.environ.pop('DB_PATH', None)
-    
+        os.environ.pop("DB_PATH", None)
+
     try:
         os.unlink(db_path)
     except (FileNotFoundError, PermissionError, OSError) as e:
         # Ignore cleanup errors in tests
         pass
+
 
 @pytest.fixture
 def sample_transactions():
@@ -205,43 +219,44 @@ def sample_transactions():
     today = date.today().isoformat()
     return [
         {
-            'date': '2024-01-15',
-            'label': 'CARREFOUR MARKET',
-            'amount': -45.50,
-            'account_label': 'Compte Courant',
-            'original_category': 'Alimentation',
-            'category_validated': 'Alimentation',
-            'member': 'Maison',
-            'beneficiary': 'Carrefour',
-            'tags': 'courses,alimentaire',
-            'notes': 'Test note',
-            'status': 'validated'
+            "date": "2024-01-15",
+            "label": "CARREFOUR MARKET",
+            "amount": -45.50,
+            "account_label": "Compte Courant",
+            "original_category": "Alimentation",
+            "category_validated": "Alimentation",
+            "member": "Maison",
+            "beneficiary": "Carrefour",
+            "tags": "courses,alimentaire",
+            "notes": "Test note",
+            "status": "validated",
         },
         {
-            'date': '2024-01-16',
-            'label': 'SALAIRE JANVIER',
-            'amount': 2500.00,
-            'account_label': 'Compte Courant',
-            'original_category': 'Revenus',
-            'category_validated': 'Revenus',
-            'member': 'Maison',
-            'beneficiary': 'Employeur',
-            'tags': 'salaire',
-            'status': 'validated'
+            "date": "2024-01-16",
+            "label": "SALAIRE JANVIER",
+            "amount": 2500.00,
+            "account_label": "Compte Courant",
+            "original_category": "Revenus",
+            "category_validated": "Revenus",
+            "member": "Maison",
+            "beneficiary": "Employeur",
+            "tags": "salaire",
+            "status": "validated",
         },
         {
-            'date': '2024-01-17',
-            'label': 'TOTAL STATION',
-            'amount': -60.00,
-            'account_label': 'Compte Courant',
-            'original_category': 'Transport',
-            'category_validated': 'Inconnu',
-            'member': 'Inconnu',
-            'beneficiary': 'Total',
-            'tags': '',
-            'status': 'pending'
-        }
+            "date": "2024-01-17",
+            "label": "TOTAL STATION",
+            "amount": -60.00,
+            "account_label": "Compte Courant",
+            "original_category": "Transport",
+            "category_validated": "Inconnu",
+            "member": "Inconnu",
+            "beneficiary": "Total",
+            "tags": "",
+            "status": "pending",
+        },
     ]
+
 
 @pytest.fixture
 def sample_categories():
@@ -249,10 +264,11 @@ def sample_categories():
     Sample category data for testing (beyond defaults).
     """
     return [
-        {'name': 'Loisirs', 'emoji': '🎮', 'is_fixed': 0, 'suggested_tags': 'fun,divertissement'},
-        {'name': 'Santé', 'emoji': '⚕️', 'is_fixed': 0, 'suggested_tags': 'médical,pharmacie'},
-        {'name': 'Éducation', 'emoji': '📚', 'is_fixed': 0, 'suggested_tags': 'école,formation'}
+        {"name": "Loisirs", "emoji": "🎮", "is_fixed": 0, "suggested_tags": "fun,divertissement"},
+        {"name": "Santé", "emoji": "⚕️", "is_fixed": 0, "suggested_tags": "médical,pharmacie"},
+        {"name": "Éducation", "emoji": "📚", "is_fixed": 0, "suggested_tags": "école,formation"},
     ]
+
 
 @pytest.fixture
 def sample_members():
@@ -260,10 +276,11 @@ def sample_members():
     Sample member data for testing (beyond defaults).
     """
     return [
-        {'name': 'Alice', 'type': 'HOUSEHOLD'},
-        {'name': 'Bob', 'type': 'HOUSEHOLD'},
-        {'name': 'Amazon', 'type': 'EXTERNAL'}
+        {"name": "Alice", "type": "HOUSEHOLD"},
+        {"name": "Bob", "type": "HOUSEHOLD"},
+        {"name": "Amazon", "type": "EXTERNAL"},
     ]
+
 
 @pytest.fixture
 def db_connection(temp_db):

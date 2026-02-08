@@ -2,6 +2,7 @@
 Data quality audit and cleanup operations.
 Handles data integrity checks, duplicate detection, and automatic fixes.
 """
+
 import pandas as pd
 import os
 import re
@@ -13,7 +14,7 @@ from modules.logger import logger
 def auto_fix_common_inconsistencies() -> int:
     """
     Magic Fix 5.1: Rapprochement & Alias Normalization.
-    
+
     Performs:
     1. Member fixes (accents, re-attribution)
     2. SMART TAGGING: Refunds, keyword heuristics
@@ -22,7 +23,7 @@ def auto_fix_common_inconsistencies() -> int:
     5. ALIAS NORMALIZATION: Apply beneficiary aliases (Version 5.1 New)
     6. WITHDRAWAL & LABEL FIXES: Retraits DAB, normalization
     7. Deduplication & Integrity
-    
+
     Returns:
         Number of fixes applied
     """
@@ -30,27 +31,31 @@ def auto_fix_common_inconsistencies() -> int:
     from modules.db.members import detect_member_from_content
     from modules.utils import clean_label
     from modules.db.tags import learn_tags_from_history
-    
+
     # 0. Boostrap learning
     learn_tags_from_history()
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # 1. Member Consistency (common typo fixes)
         fixes = {"Anonyme": "Inconnu"}
         for wrong, right in fixes.items():
             cursor.execute("UPDATE transactions SET member = ? WHERE member = ?", (right, wrong))
             total_fixed += cursor.rowcount
-            cursor.execute("UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (right, wrong))
+            cursor.execute(
+                "UPDATE transactions SET beneficiary = ? WHERE beneficiary = ?", (right, wrong)
+            )
             total_fixed += cursor.rowcount
 
         # Smart Re-attribution
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, label, card_suffix, account_label, member 
             FROM transactions 
             WHERE member = 'Inconnu' OR member LIKE 'Carte %' OR member IS NULL
-        """)
+        """
+        )
         rows = cursor.fetchall()
         member_updates = []
         for tx_id, label, suffix, account, current_m in rows:
@@ -62,13 +67,15 @@ def auto_fix_common_inconsistencies() -> int:
             total_fixed += len(member_updates)
 
         # 2. COLLECTIVE INTELLIGENCE: Propagate tags
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT label, tags, COUNT(*) as count
             FROM transactions 
             WHERE tags IS NOT NULL AND tags != ''
             GROUP BY label, tags
             ORDER BY label, count DESC
-        """)
+        """
+        )
         tag_clouds = cursor.fetchall()
         label_to_best_tags = {}
         processed_labels = set()
@@ -76,7 +83,7 @@ def auto_fix_common_inconsistencies() -> int:
             if label not in processed_labels:
                 label_to_best_tags[label] = tags
                 processed_labels.add(label)
-        
+
         cursor.execute("SELECT id, label FROM transactions WHERE (tags IS NULL OR tags = '')")
         untagged = cursor.fetchall()
         propagate_updates = []
@@ -89,7 +96,8 @@ def auto_fix_common_inconsistencies() -> int:
 
         # 3. RAPPROCHEMENT INTER-COMPTES (Version 5.1 New)
         # Find transactions with same amount, opposite sign, different accounts, within ±2 days
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT t1.id, t2.id, t1.tags
             FROM transactions t1
             JOIN transactions t2 ON abs(t1.amount) = abs(t2.amount)
@@ -97,34 +105,41 @@ def auto_fix_common_inconsistencies() -> int:
               AND t1.account_label != t2.account_label
               AND abs(julianday(t1.date) - julianday(t2.date)) <= 2
               AND t1.id < t2.id
-        """)
+        """
+        )
         match_rows = cursor.fetchall()
         match_updates = []
         for id1, id2, current_tags in match_rows:
-            tags = set([t.strip().lower() for t in (current_tags or "").split(',') if t.strip()])
+            tags = set([t.strip().lower() for t in (current_tags or "").split(",") if t.strip()])
             if "rapproché" not in tags:
                 tags.add("rapproché")
                 new_tags = ", ".join(sorted(list(tags)))
                 match_updates.append((new_tags, id1))
                 match_updates.append((new_tags, id2))
-        
+
         if match_updates:
             # We use redundant updates but it's okay for consistency
-            cursor.executemany("UPDATE transactions SET tags = ?, category_validated = 'Virement Interne', status = 'validated' WHERE id = ?", match_updates)
+            cursor.executemany(
+                "UPDATE transactions SET tags = ?, category_validated = 'Virement Interne', status = 'validated' WHERE id = ?",
+                match_updates,
+            )
             total_fixed += len(match_updates) // 2
 
         # 4. ALIAS NORMALIZATION (Version 5.1 New)
         cursor.execute("SELECT alias, normalized_name FROM beneficiary_aliases")
         aliases = cursor.fetchall()
-        
+
         # Batch alias updates
-        alias_updates = [(normalized, alias, f'%{alias}%') for alias, normalized in aliases]
+        alias_updates = [(normalized, alias, f"%{alias}%") for alias, normalized in aliases]
         if alias_updates:
-            cursor.executemany("""
+            cursor.executemany(
+                """
                 UPDATE transactions 
                 SET beneficiary = ? 
                 WHERE (beneficiary = ? OR label LIKE ?)
-            """, alias_updates)
+            """,
+                alias_updates,
+            )
             # executemany doesn't return rowcount for each, so we estimate
             total_fixed += len(alias_updates)
 
@@ -132,30 +147,57 @@ def auto_fix_common_inconsistencies() -> int:
         cursor.execute("SELECT id, label, amount, tags, category_validated FROM transactions")
         tag_updates = []
         keywords = {
-            "PAYPAL": "achat en ligne", "AMAZON": "online", "SNCF": "train", "TRAIN": "train",
-            "RETRAIT DAB": "espèces", "UBER": "vTC", "DELIVEROO": "repas midi",
-            "LECLERC": "courses", "SUPER U": "courses", "CARREFOUR": "courses",
-            "BOULANGERIE": "boulangerie", "DARTY": "équipement", "FNAC": "culture"
+            "PAYPAL": "achat en ligne",
+            "AMAZON": "online",
+            "SNCF": "train",
+            "TRAIN": "train",
+            "RETRAIT DAB": "espèces",
+            "UBER": "vTC",
+            "DELIVEROO": "repas midi",
+            "LECLERC": "courses",
+            "SUPER U": "courses",
+            "CARREFOUR": "courses",
+            "BOULANGERIE": "boulangerie",
+            "DARTY": "équipement",
+            "FNAC": "culture",
         }
-        expense_cats = ['Alimentation', 'Transport', 'Logement', 'Santé', 'Loisirs', 'Achats', 'Restaurants', 'Auto', 'Enfants', 'Cadeaux', 'Assurances', 'Impôts', 'Services', 'Abonnements']
-        
+        expense_cats = [
+            "Alimentation",
+            "Transport",
+            "Logement",
+            "Santé",
+            "Loisirs",
+            "Achats",
+            "Restaurants",
+            "Auto",
+            "Enfants",
+            "Cadeaux",
+            "Assurances",
+            "Impôts",
+            "Services",
+            "Abonnements",
+        ]
+
         for tx_id, label, amount, tags, cat in cursor.fetchall():
             label_upper = label.upper()
-            current_tags = set([t.strip().lower() for t in (tags or "").split(',') if t.strip()])
+            current_tags = set([t.strip().lower() for t in (tags or "").split(",") if t.strip()])
             orig_len = len(current_tags)
             for kw, tag in keywords.items():
-                if kw in label_upper: current_tags.add(tag)
+                if kw in label_upper:
+                    current_tags.add(tag)
             if "AVOIR" in label_upper or (cat in expense_cats and amount > 0):
                 current_tags.add("remboursement")
             if len(current_tags) > orig_len:
                 tag_updates.append((", ".join(sorted(list(current_tags))), tx_id))
-        
+
         if tag_updates:
             cursor.executemany("UPDATE transactions SET tags = ? WHERE id = ?", tag_updates)
             total_fixed += len(tag_updates)
 
         # 6. WITHDRAWAL & LABEL FIXES
-        cursor.execute("UPDATE transactions SET category_validated = 'Loisirs' WHERE category_validated = 'Inconnu' AND UPPER(label) LIKE '%RETRAIT DAB%'")
+        cursor.execute(
+            "UPDATE transactions SET category_validated = 'Loisirs' WHERE category_validated = 'Inconnu' AND UPPER(label) LIKE '%RETRAIT DAB%'"
+        )
         total_fixed += cursor.rowcount
 
         cursor.execute("SELECT id, label FROM transactions")
@@ -171,30 +213,32 @@ def auto_fix_common_inconsistencies() -> int:
         # 7. Integrity & Deduplication
         cursor.execute("DELETE FROM learning_rules WHERE pattern = '' OR pattern IS NULL")
         total_fixed += cursor.rowcount
-        
+
         # Link Integrity Reporting
         broken = verify_link_integrity()
         if broken:
             logger.warning(f"⚠️  {len(broken)} broken links detected during audit!")
             for b in broken:
                 logger.error(f"   - In {b['file']}: target '{b['target']}' is missing")
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT tx_hash, GROUP_CONCAT(id) as ids
             FROM transactions
             WHERE tx_hash IS NOT NULL AND tx_hash != ''
             GROUP BY tx_hash
             HAVING COUNT(*) > 1
-        """)
+        """
+        )
         # Collect all duplicate IDs to delete (keep the first one)
         ids_to_delete = []
         for row in cursor.fetchall():
-            ids = [int(x) for x in row[1].split(',')]
+            ids = [int(x) for x in row[1].split(",")]
             ids_to_delete.extend(ids[1:])  # Keep first, delete rest
-        
+
         # Batch delete duplicates
         if ids_to_delete:
-            placeholders = ','.join(['?'] * len(ids_to_delete))
+            placeholders = ",".join(["?"] * len(ids_to_delete))
             cursor.execute(f"DELETE FROM transactions WHERE id IN ({placeholders})", ids_to_delete)
             total_fixed += len(ids_to_delete)
 
@@ -203,22 +247,25 @@ def auto_fix_common_inconsistencies() -> int:
     # Final refresh: Re-apply valid rules
     try:
         from modules.categorization import apply_rules
+
         with get_db_connection() as conn:
-            pending_df = pd.read_sql("SELECT id, label FROM transactions WHERE status='pending'", conn)
+            pending_df = pd.read_sql(
+                "SELECT id, label FROM transactions WHERE status='pending'", conn
+            )
             cursor = conn.cursor()
-            
+
             # Collect updates for batch execution
             rule_updates = []
             for _, row in pending_df.iterrows():
-                cat, conf = apply_rules(row['label'])
-                if cat and cat != 'Inconnu':
-                    rule_updates.append((cat, row['id']))
-            
+                cat, conf = apply_rules(row["label"])
+                if cat and cat != "Inconnu":
+                    rule_updates.append((cat, row["id"]))
+
             # Batch update
             if rule_updates:
                 cursor.executemany(
                     "UPDATE transactions SET category_validated = ?, status = 'validated' WHERE id = ?",
-                    rule_updates
+                    rule_updates,
                 )
                 total_fixed += len(rule_updates)
             conn.commit()
@@ -227,6 +274,7 @@ def auto_fix_common_inconsistencies() -> int:
 
     if total_fixed > 0:
         from modules.cache_manager import invalidate_all_caches
+
         invalidate_all_caches()
 
     logger.info(f"Magic Fix 5.1 applied {total_fixed} corrections")
@@ -236,7 +284,7 @@ def auto_fix_common_inconsistencies() -> int:
 def get_suggested_mappings() -> pd.DataFrame:
     """
     Identify recurring card suffixes that are not yet mapped.
-    
+
     Returns:
         DataFrame with columns: card_suffix, occurrence, example_label
         Sorted by frequency (most common first)
@@ -257,35 +305,36 @@ def get_suggested_mappings() -> pd.DataFrame:
 def whitelist_transfer_label(label: str) -> bool:
     """Whitelist a label to prevent it from appearing in transfer audit inconsistencies."""
     from modules.db.settings import add_verified_transfer_label
+
     return add_verified_transfer_label(label)
 
 
 def get_transfer_inconsistencies() -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Identify potentially miscategorized internal transfers.
-    
+
     Returns:
         Tuple of (missing_transfers, wrong_transfers)
         - missing_transfers: Transactions with transfer keywords but not categorized as such
         - wrong_transfers: Transactions categorized as transfers but lacking transfer keywords
     """
     from modules.db.settings import (
-        get_internal_transfer_keywords, 
-        get_internal_transfer_targets, 
-        get_verified_transfer_labels
+        get_internal_transfer_keywords,
+        get_internal_transfer_targets,
+        get_verified_transfer_labels,
     )
-    
+
     with get_db_connection() as conn:
         # 1. Build detection pattern from keywords and targets
         keywords = get_internal_transfer_keywords()
         targets = get_internal_transfer_targets()
         all_patterns = sorted(list(set(keywords + targets)))
-        
+
         # Build parameterized LIKE clauses
         likes_placeholders = " OR ".join(["upper(label) LIKE ?" for _ in all_patterns])
         # Add wildcards to patterns for SQL parameters
         pattern_params = [f"%{k}%" for k in all_patterns]
-        
+
         # 2. Get whitelist
         whitelist = get_verified_transfer_labels()
         whitelist_clause = ""
@@ -294,7 +343,7 @@ def get_transfer_inconsistencies() -> tuple[pd.DataFrame, pd.DataFrame]:
             placeholders = ", ".join(["?"] * len(whitelist))
             whitelist_clause = f"AND label NOT IN ({placeholders})"
             whitelist_params = list(whitelist)
-        
+
         # 3. Missing transfers: have keywords but wrong category
         if likes_placeholders:
             query_missing = f"""
@@ -311,7 +360,7 @@ def get_transfer_inconsistencies() -> tuple[pd.DataFrame, pd.DataFrame]:
             # No patterns configured - return empty
             query_missing = "SELECT * FROM transactions WHERE 1=0"
             missing_params = []
-        
+
         # 4. Wrong transfers: categorized as transfer but no keywords AND not whitelisted
         if likes_placeholders:
             query_wrong = f"""
@@ -329,10 +378,13 @@ def get_transfer_inconsistencies() -> tuple[pd.DataFrame, pd.DataFrame]:
                 {whitelist_clause}
             """
             wrong_params = whitelist_params
-        
-        missing = pd.read_sql(query_missing, conn, params=missing_params if missing_params else None)
+
+        missing = pd.read_sql(
+            query_missing, conn, params=missing_params if missing_params else None
+        )
         wrong = pd.read_sql(query_wrong, conn, params=wrong_params if wrong_params else None)
         return missing, wrong
+
 
 def verify_link_integrity() -> list[dict]:
     """
@@ -341,34 +393,37 @@ def verify_link_integrity() -> list[dict]:
     """
     base_dir = Path(__file__).parent.parent.parent
     pages_dir = base_dir / "pages"
-    
+
     # Regex for finding Streamlit page navigation
-    page_nav_regex = re.compile(r'st\.(?:switch_page|page_link)\(\s*(?:f?["\'](pages\/[^"\']+)["\']|["\'](pages\/[^"\']+)["\']\.format)')
-    
+    page_nav_regex = re.compile(
+        r'st\.(?:switch_page|page_link)\(\s*(?:f?["\'](pages\/[^"\']+)["\']|["\'](pages\/[^"\']+)["\']\.format)'
+    )
+
     existing_pages = {f"pages/{p.name}" for p in pages_dir.glob("*.py")}
     broken_links = []
-    
+
     # Scan app.py, modules/ and pages/
     search_paths = [base_dir / "app.py", base_dir / "modules", base_dir / "pages"]
-    
+
     for search_path in search_paths:
-        if not search_path.exists(): continue
-        
+        if not search_path.exists():
+            continue
+
         files = [search_path] if search_path.is_file() else list(search_path.rglob("*.py"))
-        
+
         for file_path in files:
             try:
-                content = file_path.read_text(encoding='utf-8')
+                content = file_path.read_text(encoding="utf-8")
                 matches = [m[0] or m[1] for m in page_nav_regex.findall(content)]
-                
+
                 for target in matches:
-                    if "{" in target or "%" in target: continue # Skip dynamic
+                    if "{" in target or "%" in target:
+                        continue  # Skip dynamic
                     if target not in existing_pages:
-                        broken_links.append({
-                            "file": str(file_path.relative_to(base_dir)),
-                            "target": target
-                        })
+                        broken_links.append(
+                            {"file": str(file_path.relative_to(base_dir)), "target": target}
+                        )
             except Exception:
                 continue
-                
+
     return broken_links

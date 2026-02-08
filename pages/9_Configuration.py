@@ -3,7 +3,9 @@ from modules.ui import load_css, render_scroll_to_top
 from modules.db.migrations import init_db
 from modules.ui.config.config_dashboard import render_config_dashboard
 from modules.ui.config.config_mode import (
-    render_mode_toggle, is_advanced_mode, render_simple_mode_help
+    render_mode_toggle,
+    is_advanced_mode,
+    render_simple_mode_help,
 )
 from modules.ui.config.api_settings import render_api_settings
 from modules.ui.config.member_management import render_member_management
@@ -34,31 +36,22 @@ render_simple_mode_help()
 st.divider()
 
 # Handle jump-to from dashboard
-jump_to = st.session_state.get('config_jump_to', None)
+jump_to = st.session_state.get("config_jump_to", None)
 
 # Create tabs based on mode
 if is_advanced_mode():
     # Full tabs in advanced mode
-    tab_labels = [
-        "🏠 Vue d'ensemble",
-        "👤 Profil",
-        "🤖 IA & Services", 
-        "🔧 Maintenance"
-    ]
+    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "🤖 IA & Services", "🔧 Maintenance"]
 else:
     # Simplified tabs in simple mode
-    tab_labels = [
-        "🏠 Vue d'ensemble",
-        "👤 Profil",
-        "🤖 IA & Services"
-    ]
+    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "🤖 IA & Services"]
 
 # Set default tab if jump requested
 default_index = 0
 if jump_to:
     try:
         default_index = tab_labels.index(jump_to)
-        del st.session_state['config_jump_to']
+        del st.session_state["config_jump_to"]
     except ValueError:
         pass
 
@@ -71,14 +64,14 @@ with tabs[0]:
 # --- TAB 2: PROFILE (Members + Categories) ---
 with tabs[1]:
     st.header("👤 Configuration du Profil")
-    
+
     # Members Section
     st.subheader("Membres du foyer", divider="blue")
     render_member_management()
-    
+
     st.divider()
-    
-    # Categories Section  
+
+    # Categories Section
     st.subheader("Catégories de dépenses", divider="blue")
     render_category_management()
 
@@ -86,45 +79,52 @@ with tabs[1]:
 with tabs[2]:
     st.header("🤖 Intelligence Artificielle")
     st.markdown("Configurez les services de catégorisation et notifications.")
-    
+
     # ML Mode Selector
     st.subheader("Mode de catégorisation", divider="blue")
-    
+
     # Offline Mode Toggle
     from modules.feature_flags import get_feature_manager, FeatureFlag
+
     fm = get_feature_manager()
-    is_offline = fm.is_enabled('FORCE_OFFLINE_MODE')
-    
+    is_offline = fm.is_enabled("FORCE_OFFLINE_MODE")
+
     col_off, col_help = st.columns([1, 2])
     with col_off:
-        if st.checkbox("🚫 Mode Hors-ligne Forcé", value=is_offline, help="Interdit tout appel aux APIs externes (IA Cloud). L'application utilisera uniquement les règles et le modèle local."):
+        if st.checkbox(
+            "🚫 Mode Hors-ligne Forcé",
+            value=is_offline,
+            help="Interdit tout appel aux APIs externes (IA Cloud). L'application utilisera uniquement les règles et le modèle local.",
+        ):
             if not is_offline:
-                fm.enable('FORCE_OFFLINE_MODE', "User forced offline mode")
+                fm.enable("FORCE_OFFLINE_MODE", "User forced offline mode")
                 st.rerun()
         else:
             if is_offline:
-                fm.disable('FORCE_OFFLINE_MODE')
+                fm.disable("FORCE_OFFLINE_MODE")
                 st.rerun()
-                
+
     if is_offline:
-        st.warning("⚠️ Mode Hors-ligne activé : Aucune donnée ne sera envoyée vers les services d'IA externe.")
-    
+        st.warning(
+            "⚠️ Mode Hors-ligne activé : Aucune donnée ne sera envoyée vers les services d'IA externe."
+        )
+
     ml_mode = render_ml_mode_selector()
-    
+
     st.divider()
-    
+
     # Local ML Section
     st.subheader("🧠 Modèle ML Local (Offline)", divider="blue")
     render_local_ml_section()
-    
+
     st.divider()
-    
+
     # API Settings (Cloud AI)
     st.subheader("☁️ IA Cloud (API Externe)", divider="blue")
     render_api_settings()
-    
+
     st.divider()
-    
+
     # Notifications
     st.header("🔔 Notifications")
     st.markdown("Recevez des alertes pour les dépassements de budget.")
@@ -135,30 +135,31 @@ with tabs[2]:
 if is_advanced_mode():
     with tabs[3]:
         st.header("🔧 Maintenance et Outils")
-        
+
         # Export Section (extracted from data_operations)
         st.subheader("📤 Export des données", divider="blue")
         render_export_section()
-        
+
         st.divider()
-        
+
         # Audit Tools
         st.subheader("🧹 Audit & Nettoyage", divider="blue")
         render_audit_tools()
-        
+
         st.divider()
-        
+
         # Backups
         col_back1, col_back2 = st.columns([1, 1])
-        
+
         with col_back1:
             st.subheader("💾 Sauvegardes", divider="blue")
             render_backup_restore()
-        
+
         with col_back2:
             st.subheader("📑 Logs système", divider="blue")
             render_log_viewer()
 
 render_scroll_to_top()
 from modules.ui.layout import render_app_info
+
 render_app_info()

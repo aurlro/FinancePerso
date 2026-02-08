@@ -11,11 +11,12 @@ def load_css():
     """Load custom CSS from assets/style.css and global styles"""
     # Load main CSS
     import os
+
     # Assuming this file is in modules/ui/, project root is two levels up
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(current_dir))
     css_path = os.path.join(project_root, "assets", "style.css")
-    
+
     try:
         with open(css_path) as f:
             main_css = f.read()
@@ -31,7 +32,7 @@ def load_css():
             st.markdown(f"<style>{global_css}</style>", unsafe_allow_html=True)
     except FileNotFoundError:
         pass  # Global CSS is optional
-    
+
     # Inject PWA support and manifest
     _inject_pwa_support()
 
@@ -54,14 +55,20 @@ def _inject_pwa_support():
 
 # Import commonly used UI functions for convenience
 from .feedback import (
-    toast_success, toast_error, toast_warning, toast_info,
-    show_success, show_error, show_warning, show_info,
+    toast_success,
+    toast_error,
+    toast_warning,
+    toast_info,
+    show_success,
+    show_error,
+    show_warning,
+    show_info,
     show_rich_success,
     validation_feedback,
     celebrate_all_done,
     confirm_dialog,
     render_scroll_to_top,
-    display_flash_messages
+    display_flash_messages,
 )
 from .layout import render_app_info
 
@@ -70,9 +77,9 @@ try:
     import importlib.util
     import sys
     import os
-    
+
     # Load card_kpi from the legacy ui.py file (not the package)
-    legacy_ui_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ui.py')
+    legacy_ui_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui.py")
     if os.path.exists(legacy_ui_path):
         spec = importlib.util.spec_from_file_location("legacy_ui", legacy_ui_path)
         legacy_ui = importlib.util.module_from_spec(spec)
@@ -90,8 +97,14 @@ __all__ = [
     # CSS
     "load_css",
     # Feedback
-    "toast_success", "toast_error", "toast_warning", "toast_info",
-    "show_success", "show_error", "show_warning", "show_info",
+    "toast_success",
+    "toast_error",
+    "toast_warning",
+    "toast_info",
+    "show_success",
+    "show_error",
+    "show_warning",
+    "show_info",
     "show_rich_success",
     "validation_feedback",
     "celebrate_all_done",

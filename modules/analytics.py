@@ -22,7 +22,7 @@ from modules.analytics_constants import (
     RENT_LOAN_MIN_AMOUNT,
     CATEGORY_KEYWORDS,
     DEFAULT_MONTHS_TREND,
-    INTERNAL_TRANSFER_PATTERNS
+    INTERNAL_TRANSFER_PATTERNS,
 )
 
 
@@ -61,21 +61,21 @@ def detect_recurring_payments(df):
         return pd.DataFrame()
 
     # Work on a copy and exclude internal transfers
-    data = df[~df['category_validated'].isin(['Virement Interne', 'Hors Budget'])].copy()
-    
+    data = df[~df["category_validated"].isin(["Virement Interne", "Hors Budget"])].copy()
+
     # 1. Clean labels for grouping
     # We use a stricter cleaning here to ensure slight variations (dates) don't break grouping
-    data['clean_label_strict'] = data['label'].apply(clean_label)
-    
+    data["clean_label_strict"] = data["label"].apply(clean_label)
+
     # 2. Group analysis
     recurring_items = []
-    
+
     # Filter only relevant columns for speed
     # We need date, amount, clean_label_strict
-    data['date'] = pd.to_datetime(data['date'])
-    
-    grouped = data.groupby('clean_label_strict')
-    
+    data["date"] = pd.to_datetime(data["date"])
+
+    grouped = data.groupby("clean_label_strict")
+
     for label, group in grouped:
         if len(group) < MIN_OCCURRENCES_FOR_RECURRING:
             continue
@@ -83,19 +83,21 @@ def detect_recurring_payments(df):
         # Check amounts consistency
         # Subscriptions usually have exact same amount
         # Utilities might vary slightly (Electricity, Water, etc.)
-        amounts = group['amount'].tolist()
-        amounts_std = group['amount'].std()
-        avg_amount = group['amount'].mean()
+        amounts = group["amount"].tolist()
+        amounts_std = group["amount"].std()
+        avg_amount = group["amount"].mean()
 
         # Determine variability
         # Higher tolerance for utilities/energy (usually negative amounts between -30 and -300)
         is_energy = any(k in label.upper() for k in ENERGY_KEYWORDS)
         tolerance = AMOUNT_TOLERANCE_ENERGY if is_energy else AMOUNT_TOLERANCE_STANDARD
 
-        is_consistent_amount = (amounts_std / abs(avg_amount)) < tolerance if avg_amount != 0 else (amounts_std == 0)
+        is_consistent_amount = (
+            (amounts_std / abs(avg_amount)) < tolerance if avg_amount != 0 else (amounts_std == 0)
+        )
 
         # Check Periodicity
-        dates = group['date'].sort_values()
+        dates = group["date"].sort_values()
         diffs = dates.diff().dropna()
         avg_diff_days = diffs.dt.days.mean()
 
@@ -105,24 +107,42 @@ def detect_recurring_payments(df):
         if is_consistent_amount and is_recurring:
             # It's a candidate
             # Determine category if known
-            current_cat = group.iloc[0]['category_validated']
+            current_cat = group.iloc[0]["category_validated"]
 
-            recurring_items.append({
-                "label": label,
-                "avg_amount": round(avg_amount, 2),
-                "frequency_days": round(avg_diff_days, 1),
-                "frequency_label": freq_label,
-                "count": len(group),
-                "last_date": group['date'].max().date(),
-                "category": current_cat,
-                "is_subscription_candidate": True,
-                "variability": "Variable" if (amounts_std / abs(avg_amount)) > AMOUNT_TOLERANCE_FIXED_THRESHOLD else "Fixe"
-            })
-            
+            recurring_items.append(
+                {
+                    "label": label,
+                    "avg_amount": round(avg_amount, 2),
+                    "frequency_days": round(avg_diff_days, 1),
+                    "frequency_label": freq_label,
+                    "count": len(group),
+                    "last_date": group["date"].max().date(),
+                    "category": current_cat,
+                    "is_subscription_candidate": True,
+                    "variability": (
+                        "Variable"
+                        if (amounts_std / abs(avg_amount)) > AMOUNT_TOLERANCE_FIXED_THRESHOLD
+                        else "Fixe"
+                    ),
+                }
+            )
+
     if not recurring_items:
-        return pd.DataFrame(columns=["label", "avg_amount", "frequency_days", "frequency_label", "count", "last_date", "category", "is_subscription_candidate", "variability"])
-        
-    return pd.DataFrame(recurring_items).sort_values(by='avg_amount')
+        return pd.DataFrame(
+            columns=[
+                "label",
+                "avg_amount",
+                "frequency_days",
+                "frequency_label",
+                "count",
+                "last_date",
+                "category",
+                "is_subscription_candidate",
+                "variability",
+            ]
+        )
+
+    return pd.DataFrame(recurring_items).sort_values(by="avg_amount")
 
 
 def detect_financial_profile(df):
@@ -131,42 +151,47 @@ def detect_financial_profile(df):
     Filters out items that already have a learning rule.
     """
     candidates = []
-    
+
     # Get existing rules to avoid redundancy
     rules = get_learning_rules()
-    existing_patterns = rules['pattern'].unique().tolist() if not rules.empty else []
-    
+    existing_patterns = rules["pattern"].unique().tolist() if not rules.empty else []
+
     def is_new(label_clean):
         # Simple exact match check. Could be fuzzier.
         return label_clean not in existing_patterns
-    
+
     # 1. Salary: Positives > threshold
-    incomes = df[df['amount'] > SALARY_MIN_AMOUNT].copy()
+    incomes = df[df["amount"] > SALARY_MIN_AMOUNT].copy()
     if not incomes.empty:
-        incomes['clean'] = incomes['label'].apply(clean_label)
-        grouped = incomes.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
+        incomes["clean"] = incomes["label"].apply(clean_label)
+        grouped = incomes.groupby("clean").agg({"amount": "mean", "date": "count"}).reset_index()
         for _, row in grouped.iterrows():
-            if is_new(row['clean']):
-                candidates.append({
-                    "type": "Salaire (estimé)",
-                    "label": row['clean'],
-                    "amount": row['amount'],
-                    "confidence": "Haute" if row['date'] > HIGH_CONFIDENCE_MIN_COUNT else "Moyenne",
-                    "default_category": "Revenus"
-                })
+            if is_new(row["clean"]):
+                candidates.append(
+                    {
+                        "type": "Salaire (estimé)",
+                        "label": row["clean"],
+                        "amount": row["amount"],
+                        "confidence": (
+                            "Haute" if row["date"] > HIGH_CONFIDENCE_MIN_COUNT else "Moyenne"
+                        ),
+                        "default_category": "Revenus",
+                    }
+                )
 
     # 2. Fixed Expenses & Bills (using categories, not amount sign!)
     from modules.transaction_types import filter_expense_transactions
+
     expenses = filter_expense_transactions(df).copy()
     if not expenses.empty:
-        expenses['clean'] = expenses['label'].apply(clean_label)
-        grouped = expenses.groupby('clean').agg({'amount': 'mean', 'date': 'count'}).reset_index()
+        expenses["clean"] = expenses["label"].apply(clean_label)
+        grouped = expenses.groupby("clean").agg({"amount": "mean", "date": "count"}).reset_index()
 
         for _, row in grouped.iterrows():
-            if not is_new(row['clean']):
+            if not is_new(row["clean"]):
                 continue
 
-            label_upper = row['clean'].upper()
+            label_upper = row["clean"].upper()
             found_cat = None
 
             # Check keywords
@@ -176,19 +201,22 @@ def detect_financial_profile(df):
                     break
 
             # Heuristics for Big Amounts (likely Rent/Loan if not matched)
-            if not found_cat and row['amount'] < RENT_LOAN_MIN_AMOUNT:
+            if not found_cat and row["amount"] < RENT_LOAN_MIN_AMOUNT:
                 found_cat = "Logement"
 
             if found_cat:
-                candidates.append({
-                    "type": f"Dépense Récurrente ({found_cat})",
-                    "label": row['clean'],
-                    "amount": row['amount'],
-                    "confidence": "Haute",
-                    "default_category": found_cat
-                })
-    
+                candidates.append(
+                    {
+                        "type": f"Dépense Récurrente ({found_cat})",
+                        "label": row["clean"],
+                        "amount": row["amount"],
+                        "confidence": "Haute",
+                        "default_category": found_cat,
+                    }
+                )
+
     return candidates
+
 
 def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     """
@@ -197,7 +225,7 @@ def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     """
     from modules.db.connection import get_db_connection
     from modules.transaction_types import calculate_true_income, calculate_true_expenses
-    
+
     with get_db_connection() as conn:
         # Fetch raw data for the period
         query = """
@@ -207,34 +235,29 @@ def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
             ORDER BY date DESC
         """
         df_all = pd.read_sql(query, conn)
-        
+
         if df_all.empty:
             return pd.DataFrame()
-        
-        df_all['date_dt'] = pd.to_datetime(df_all['date'])
-        df_all['month'] = df_all['date_dt'].dt.strftime('%Y-%m')
-        
+
+        df_all["date_dt"] = pd.to_datetime(df_all["date"])
+        df_all["month"] = df_all["date_dt"].dt.strftime("%Y-%m")
+
         # Get unique months to iterate (limité à N mois)
-        all_months = sorted(df_all['month'].unique(), reverse=True)[:months]
-        
+        all_months = sorted(df_all["month"].unique(), reverse=True)[:months]
+
         monthly_data = []
         for m in all_months:
-            g = df_all[df_all['month'] == m]
+            g = df_all[df_all["month"] == m]
             inc = calculate_true_income(g)
             exp = calculate_true_expenses(g)
             savings = inc - exp
             rate = (savings / inc * 100) if inc > 0 else 0
-            
-            monthly_data.append({
-                'month': m,
-                'Revenus': inc,
-                'Dépenses': exp,
-                'Epargne': savings,
-                'Taux': rate
-            })
-            
-        return pd.DataFrame(monthly_data).sort_values('month')
-        
+
+            monthly_data.append(
+                {"month": m, "Revenus": inc, "Dépenses": exp, "Epargne": savings, "Taux": rate}
+            )
+
+        return pd.DataFrame(monthly_data).sort_values("month")
 
 
 def detect_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:
@@ -258,48 +281,49 @@ def detect_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.Dat
     # Default patterns for internal transfers
     if patterns is None:
         patterns = INTERNAL_TRANSFER_PATTERNS
-    
+
     # Method 1: Pattern matching on labels
     df_transfers = df.copy()
-    df_transfers['label_upper'] = df_transfers['label'].str.upper()
-    
-    pattern_mask = df_transfers['label_upper'].str.contains('|'.join(patterns), na=False, regex=True)
-    
+    df_transfers["label_upper"] = df_transfers["label"].str.upper()
+
+    pattern_mask = df_transfers["label_upper"].str.contains(
+        "|".join(patterns), na=False, regex=True
+    )
+
     # Method 2: Already categorized as "Virement Interne"
-    category_mask = df_transfers['category_validated'] == 'Virement Interne'
-    
+    category_mask = df_transfers["category_validated"] == "Virement Interne"
+
     # Method 3: Heuristic - same amount on same day or next day between different accounts
     # (More complex, skip for MVP but document)
-    
+
     # Combine masks
     combined_mask = pattern_mask | category_mask
-    
+
     detected = df_transfers[combined_mask].copy()
-    
+
     return detected
 
 
 def exclude_internal_transfers(df: pd.DataFrame, patterns: list = None) -> pd.DataFrame:
     """
     Return a DataFrame with internal transfers excluded.
-    
+
     Args:
         df: DataFrame with transactions
         patterns: List of label patterns to detect (default: common patterns)
-        
+
     Returns:
         DataFrame without internal transfers
-        
+
     Example:
         df_clean = exclude_internal_transfers(df)
     """
     if df.empty:
         return df
-    
+
     internal = detect_internal_transfers(df, patterns)
-    
+
     if internal.empty:
         return df
-    
-    return df[~df['id'].isin(internal['id'])].copy()
 
+    return df[~df["id"].isin(internal["id"])].copy()
