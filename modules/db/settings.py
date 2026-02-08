@@ -160,3 +160,83 @@ def get_all_settings() -> dict:
     except Exception as e:
         logger.error(f"Error getting all settings: {e}")
         return {}
+
+
+# ============================================================================
+# MEMBER DETECTION SETTINGS
+# ============================================================================
+
+def get_default_member() -> str:
+    """
+    Get the default member name for transactions that cannot be attributed.
+    
+    This is typically the primary account holder. When a transaction's member
+    cannot be determined through card suffix, label patterns, or account mapping,
+    this default member is used instead of 'Inconnu'.
+    
+    Returns:
+        Default member name, or 'Inconnu' if not configured
+    """
+    return get_setting("default_member", "Inconnu")
+
+
+def set_default_member(member_name: str) -> bool:
+    """
+    Set the default member for unattributed transactions.
+    
+    Args:
+        member_name: Name of the default member (e.g., "Aurélien Rodier")
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    return set_setting(
+        "default_member",
+        member_name,
+        "Membre par défaut pour les transactions non attribuables (remplace 'Inconnu')"
+    )
+
+
+def get_force_member_identification() -> bool:
+    """
+    Check if force member identification is enabled.
+    
+    When enabled, the system will NEVER use 'Inconnu' as a member value.
+    Instead, it will always use the default member. This ensures 100%
+    identified members but may require more manual corrections.
+    
+    Returns:
+        True if force identification is enabled, False otherwise
+    """
+    val = get_setting("force_member_identification", "false")
+    return val.lower() in ("true", "1", "yes", "on")
+
+
+def set_force_member_identification(enabled: bool) -> bool:
+    """
+    Enable or disable forced member identification.
+    
+    Args:
+        enabled: True to force identification (no 'Inconnu'), False to allow unknown
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    return set_setting(
+        "force_member_identification",
+        "true" if enabled else "false",
+        "Force l'identification: utilise toujours le membre par défaut, jamais 'Inconnu'"
+    )
+
+
+def get_primary_account_holder() -> str:
+    """
+    Get the primary account holder name.
+    
+    This is a convenience alias for get_default_member(), using more
+    explicit naming for financial context.
+    
+    Returns:
+        Primary account holder name
+    """
+    return get_default_member()

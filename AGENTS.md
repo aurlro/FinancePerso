@@ -1,5 +1,5 @@
 # 🤖 AGENTS.md - Guide pour Assistants IA
-> **Version du projet**: `5.1.1`
+> **Version du projet**: `v5.2.0`
 > **Langue**: Français (interface utilisateur)
 
 Ce document est destiné aux agents IA travaillant sur le projet **FinancePerso** (alias MyFinance Companion). Il décrit l'architecture, les conventions et les bonnes pratiques du projet.
@@ -25,7 +25,10 @@ Ce document est destiné aux agents IA travaillant sur le projet **FinancePerso*
 
 ## 🏗️ Architecture technique
 
-### Stack technologique
+
+- - fix: Ajoute fixture pour réinitialiser le singleton encryption entre tests
+- - ci: Ajoute debug et timeout au workflow de test
+- - feat: Introduce comprehensive UI feedback, error handling, and new components for empty states, tooltips, loading, and confirmation dialogs.### Stack technologique
 
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
@@ -63,6 +66,7 @@ FinancePerso/
 │   │   ├── category_insights.py   # Insights par catégorie
 │   │   ├── conversational_assistant.py  # Chat IA
 │   │   ├── rules_auditor.py       # Audit des règles d'apprentissage
+│   │   ├── smart_suggestions.py   # Suggestions intelligentes (12+ types d'analyses)
 │   │   ├── smart_tagger.py        # Suggestion intelligente de tags
 │   │   └── trend_analyzer.py      # Analyse de tendances
 │   ├── ai_manager.py              # Abstraction multi-provider IA (gestion erreurs améliorée)
@@ -120,6 +124,8 @@ FinancePerso/
 │       ├── validation/            # UI de validation
 │       ├── assistant/             # UI de l'assistant IA
 │       ├── explorer/              # UI de l'explorateur
+│       ├── intelligence/          # UI Intelligence (suggestions)
+│       │   └── suggestions_panel.py  # Panel suggestions intelligentes
 │       └── notifications/         # UI des notifications
 ├── tests/                          # Tests unitaires et d'intégration
 │   ├── ai/                        # Tests IA

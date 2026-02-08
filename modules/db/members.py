@@ -326,14 +326,22 @@ def detect_member_from_content(label: str, card_suffix: str = None, account_labe
     """
     Detect member based on label, card suffix, and account.
     
+    Uses a cascading detection strategy:
+    1. Card suffix mapping (highest priority - most reliable)
+    2. Member names found in transaction label
+    3. Account-based mappings
+    4. Default member (configurable, replaces 'Inconnu')
+    
     Args:
         label: Transaction label
         card_suffix: Detected card suffix (e.g. 6759)
         account_label: Bank account label
         
     Returns:
-        Member name or 'Inconnu'
+        Member name. Never returns 'Inconnu' if force_member_identification is enabled.
     """
+    from modules.db.settings import get_default_member, get_force_member_identification
+    
     label_upper = label.upper()
     
     # 1. Check card suffix mapping (highest priority)
@@ -366,6 +374,13 @@ def detect_member_from_content(label: str, card_suffix: str = None, account_labe
              
         # Fallback to heuristics on account label
         # Add account-specific mappings here as needed
+    
+    # 5. Default member (replaces 'Inconnu' if configured)
+    default_member = get_default_member()
+    force_id = get_force_member_identification()
+    
+    if force_id or default_member != "Inconnu":
+        return default_member
         
     return "Inconnu"
 
@@ -416,3 +431,222 @@ def delete_account_member_mapping(mapping_id: int) -> None:
         cursor.execute("DELETE FROM account_member_mappings WHERE id = ?", (mapping_id,))
         conn.commit()
         invalidate_member_caches()
+
+
+# ============================================================================
+# UNKNOWN MEMBER ANALYSIS & REPAIR
+# ============================================================================
+
+def get_unknown_member_stats() -> dict:
+    """
+    Get statistics about transactions with unknown members.
+    
+    Returns:
+        Dict with:
+        - count: Total number of 'Inconnu' transactions
+        - percentage: Percentage of total transactions
+        - by_account: Breakdown by account label
+        - by_label: Most common labels with unknown members
+    """
+    from modules.db.settings import get_default_member
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Total unknown count
+        cursor.execute("SELECT COUNT(*) FROM transactions WHERE member = 'Inconnu'")
+        unknown_count = cursor.fetchone()[0]
+        
+        # Total transactions
+        cursor.execute("SELECT COUNT(*) FROM transactions")
+        total_count = cursor.fetchone()[0]
+        
+        percentage = (unknown_count / total_count * 100) if total_count > 0 else 0
+        
+        # Breakdown by account
+        cursor.execute("""
+            SELECT account_label, COUNT(*) as cnt 
+            FROM transactions 
+            WHERE member = 'Inconnu' 
+            GROUP BY account_label 
+            ORDER BY cnt DESC
+        """)
+        by_account = {row[0] or 'Unknown': row[1] for row in cursor.fetchall()}
+        
+        # Most common labels
+        cursor.execute("""
+            SELECT label, COUNT(*) as cnt 
+            FROM transactions 
+            WHERE member = 'Inconnu' 
+            GROUP BY label 
+            ORDER BY cnt DESC 
+            LIMIT 10
+        """)
+        by_label = [{"label": row[0], "count": row[1]} for row in cursor.fetchall()]
+        
+        return {
+            "count": unknown_count,
+            "total": total_count,
+            "percentage": round(percentage, 2),
+            "by_account": by_account,
+            "by_label": by_label,
+            "default_member": get_default_member()
+        }
+
+
+def repair_unknown_members(dry_run: bool = False) -> dict:
+    """
+    Repair transactions with 'Inconnu' member by applying the default member.
+    
+    Args:
+        dry_run: If True, only returns what would be changed without making changes
+        
+    Returns:
+        Dict with repair results:
+        - repaired_count: Number of transactions repaired
+        - default_member: The member used for repair
+        - sample_repaired: Sample of repaired transaction IDs
+    """
+    from modules.db.settings import get_default_member, get_force_member_identification
+    from modules.cache_manager import invalidate_transaction_caches
+    
+    default_member = get_default_member()
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Get count and sample
+        cursor.execute("""
+            SELECT id, label, account_label 
+            FROM transactions 
+            WHERE member = 'Inconnu'
+            ORDER BY date DESC
+        """)
+        rows = cursor.fetchall()
+        
+        if not rows:
+            return {
+                "repaired_count": 0,
+                "default_member": default_member,
+                "sample_repaired": [],
+                "message": "Aucune transaction 'Inconnu' à réparer"
+            }
+        
+        tx_ids = [row[0] for row in rows]
+        sample = [{"id": row[0], "label": row[1], "account": row[2]} for row in rows[:5]]
+        
+        if not dry_run:
+            # Perform the repair
+            placeholders = ','.join(['?' for _ in tx_ids])
+            cursor.execute(f"""
+                UPDATE transactions 
+                SET member = ? 
+                WHERE id IN ({placeholders})
+            """, [default_member] + tx_ids)
+            
+            conn.commit()
+            invalidate_transaction_caches()
+            
+            logger.info(f"Repaired {len(tx_ids)} transactions: 'Inconnu' → '{default_member}'")
+        
+        return {
+            "repaired_count": len(tx_ids),
+            "default_member": default_member,
+            "sample_repaired": sample,
+            "dry_run": dry_run,
+            "message": f"{'Simulé' if dry_run else 'Réparé'}: {len(tx_ids)} transactions 'Inconnu' → '{default_member}'"
+        }
+
+
+def analyze_unknown_patterns() -> list[dict]:
+    """
+    Analyze patterns in transactions with unknown members to suggest improvements.
+    
+    This helps identify:
+    - Common card suffixes not mapped
+    - Account labels that could have default mappings
+    - Label patterns that could indicate specific members
+    
+    Returns:
+        List of suggestions for improving member detection
+    """
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        
+        suggestions = []
+        
+        # 1. Find common card suffixes in unknown transactions
+        cursor.execute("""
+            SELECT card_suffix, COUNT(*) as cnt 
+            FROM transactions 
+            WHERE member = 'Inconnu' 
+            AND card_suffix IS NOT NULL 
+            AND card_suffix != ''
+            GROUP BY card_suffix 
+            ORDER BY cnt DESC 
+            LIMIT 5
+        """)
+        
+        for row in cursor.fetchall():
+            suggestions.append({
+                "type": "card_suffix",
+                "value": row[0],
+                "count": row[1],
+                "action": f"Mapper le suffixe de carte '{row[0]}' à un membre",
+                "sql_check": f"SELECT label FROM transactions WHERE card_suffix = '{row[0]}' LIMIT 3"
+            })
+        
+        # 2. Find account labels with many unknowns
+        cursor.execute("""
+            SELECT account_label, COUNT(*) as cnt 
+            FROM transactions 
+            WHERE member = 'Inconnu' 
+            AND account_label IS NOT NULL 
+            AND account_label != ''
+            GROUP BY account_label 
+            HAVING cnt > 5
+            ORDER BY cnt DESC
+        """)
+        
+        for row in cursor.fetchall():
+            suggestions.append({
+                "type": "account",
+                "value": row[0],
+                "count": row[1],
+                "action": f"Créer un mapping compte→membre pour '{row[0]}'",
+                "example": f"add_account_member_mapping('{row[0]}', 'VOTRE_NOM')"
+            })
+        
+        return suggestions
+
+
+def ensure_no_unknown_members() -> dict:
+    """
+    Ensure no transactions have 'Inconnu' as member.
+    
+    This is a comprehensive function that:
+    1. Enables force_member_identification
+    2. Repairs all existing unknown transactions
+    3. Returns a summary of actions taken
+    
+    Returns:
+        Summary of actions taken
+    """
+    from modules.db.settings import set_force_member_identification, get_default_member
+    
+    # Step 1: Enable force identification
+    set_force_member_identification(True)
+    
+    # Step 2: Repair existing
+    repair_result = repair_unknown_members(dry_run=False)
+    
+    return {
+        "force_identification_enabled": True,
+        "default_member": get_default_member(),
+        "repaired_count": repair_result["repaired_count"],
+        "message": (
+            f"✅ Identification forcée activée\n"
+            f"✅ {repair_result['repaired_count']} transactions réparées\n"
+            f"✅ Toutes les nouvelles transactions utiliseront '{get_default_member()}' par défaut"
+        )
+    }

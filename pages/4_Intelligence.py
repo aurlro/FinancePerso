@@ -14,6 +14,7 @@ from modules.ui.rules import (
     render_audit_section,
     render_budget_section,
 )
+from modules.ui.intelligence import render_smart_suggestions_panel
 from modules.db.rules import get_learning_rules
 from modules.db.audit import auto_fix_common_inconsistencies
 from modules.ai.rules_auditor import analyze_rules_integrity
@@ -55,7 +56,7 @@ jump_to = st.query_params.get('tab')
 if jump_to:
     st.session_state['intel_active_tab'] = jump_to
 
-tabs_list = ["📋 Règles", "🔁 Récurrences", "🎯 Budgets", "🕵️ Audit IA"]
+tabs_list = ["💡 Suggestions", "📋 Règles", "🔁 Récurrences", "🎯 Budgets", "🕵️ Audit IA"]
 
 selected_tab = st.segmented_control(
     "Navigation",
@@ -74,9 +75,23 @@ st.divider()
 active_tab = st.session_state['intel_active_tab']
 
 # =============================================================================
+# TAB: SUGGESTIONS
+# =============================================================================
+if active_tab == "💡 Suggestions":
+    from modules.db.budgets import get_budgets
+    from modules.db.members import get_members
+    
+    df_all = get_all_transactions()
+    rules_df = get_learning_rules()
+    budgets_df = get_budgets()
+    members_df = get_members()
+    
+    render_smart_suggestions_panel(df_all, rules_df, budgets_df, members_df)
+
+# =============================================================================
 # TAB: RULES
 # =============================================================================
-if active_tab == "📋 Règles":
+elif active_tab == "📋 Règles":
     col_a, col_b = st.columns([2, 1])
     with col_a:
         st.subheader("Règles de catégorisation")

@@ -4,7 +4,12 @@ from modules.db.members import (
     get_members, add_member, delete_member, rename_member,
     update_member_type, get_member_mappings_df,
     add_member_mapping, delete_member_mapping,
-    get_account_member_mappings_df, add_account_member_mapping, delete_account_member_mapping
+    get_account_member_mappings_df, add_account_member_mapping, delete_account_member_mapping,
+    get_unknown_member_stats, repair_unknown_members, analyze_unknown_patterns, ensure_no_unknown_members
+)
+from modules.db.settings import (
+    get_default_member, set_default_member,
+    get_force_member_identification, set_force_member_identification
 )
 from modules.impact_analyzer import analyze_member_rename_impact, render_impact_preview
 from modules.ui.feedback import (
@@ -396,3 +401,108 @@ def render_member_management():
                     add_account_member_mapping(final_acc, m_name_acc)
                     toast_success(f"✅ Compte {final_acc} associé à {m_name_acc}", icon="🏦")
                     st.rerun()
+    
+    # --- DEFAULT MEMBER CONFIGURATION ---
+    st.divider()
+    st.subheader("🎯 Membre par Défaut & Identification Forcée")
+    st.markdown("""
+    Configurez le membre utilisé par défaut lorsque l'attribution automatique échoue.
+    Cela remplace les transactions 'Inconnu' par un membre identifié.
+    """)
+    
+    col_def1, col_def2 = st.columns([1, 1])
+    
+    with col_def1:
+        current_default = get_default_member()
+        force_enabled = get_force_member_identification()
+        
+        with st.form("default_member_form"):
+            st.caption("Configuration actuelle" if current_default != "Inconnu" else "⚠️ Pas de membre par défaut configuré")
+            
+            default_member_input = st.selectbox(
+                "Membre par défaut",
+                options=members_df['name'].tolist() if not members_df.empty else ["Inconnu"],
+                index=members_df['name'].tolist().index(current_default) if current_default in members_df['name'].tolist() else 0,
+                help="Ce membre sera utilisé quand aucune autre attribution n'est possible"
+            )
+            
+            force_identification = st.toggle(
+                "Forcer l'identification (jamais 'Inconnu')",
+                value=force_enabled,
+                help="Si activé, toutes les transactions auront un membre identifié. Jamais 'Inconnu'."
+            )
+            
+            submitted_def = st.form_submit_button("💾 Sauvegarder", use_container_width=True)
+            if submitted_def:
+                set_default_member(default_member_input)
+                set_force_member_identification(force_identification)
+                toast_success(f"✅ Configuration sauvegardée: '{default_member_input}' est le membre par défaut", icon="🎯")
+                st.rerun()
+    
+    with col_def2:
+        # Show statistics
+        stats = get_unknown_member_stats()
+        
+        st.metric(
+            label="Transactions 'Inconnu'",
+            value=f"{stats['count']} ({stats['percentage']}%)",
+            delta=f"sur {stats['total']} total" if stats['total'] > 0 else None
+        )
+        
+        if stats['count'] > 0:
+            st.caption("Répartition par compte:")
+            for account, count in list(stats['by_account'].items())[:3]:
+                st.progress(count / stats['count'], text=f"{account}: {count}")
+    
+    # --- UNKNOWN MEMBER ACTIONS ---
+    if stats['count'] > 0:
+        st.divider()
+        st.subheader("🔧 Actions sur les Transactions 'Inconnu'")
+        
+        col_act1, col_act2, col_act3 = st.columns([1, 1, 1])
+        
+        with col_act1:
+            if st.button("📊 Analyser les Patterns", use_container_width=True, key="btn_analyze_patterns"):
+                suggestions = analyze_unknown_patterns()
+                if suggestions:
+                    st.info("💡 Suggestions d'amélioration:")
+                    for s in suggestions:
+                        with st.expander(f"{s['type']}: {s['value']} ({s['count']} transactions)"):
+                            st.write(s['action'])
+                            if 'sql_check' in s:
+                                st.code(s['sql_check'])
+                            if 'example' in s:
+                                st.code(s['example'])
+                else:
+                    toast_info("Aucune suggestion automatique disponible", icon="ℹ️")
+        
+        with col_act2:
+            if st.button("🔍 Simuler Réparation", use_container_width=True, key="btn_simulate_repair"):
+                result = repair_unknown_members(dry_run=True)
+                st.info(result['message'])
+                if result['sample_repaired']:
+                    st.caption("Exemples de transactions qui seraient modifiées:")
+                    for sample in result['sample_repaired'][:3]:
+                        st.write(f"- {sample['label'][:40]}... ({sample['account']})")
+        
+        with col_act3:
+            if st.button("✅ Tout Réparer Maintenant", type="primary", use_container_width=True, key="btn_repair_all"):
+                result = repair_unknown_members(dry_run=False)
+                toast_success(result['message'], icon="✅")
+                st.rerun()
+        
+        # Ultimate solution
+        st.divider()
+        st.subheader("🚀 Solution Ultime: Zéro 'Inconnu'")
+        st.markdown("""
+        Activez l'**identification forcée** pour garantir que toutes les transactions passées et futures 
+        auront un membre identifié. Cela:
+        1. Active le mode forcé
+        2. Répare toutes les transactions existantes
+        3. Garantit l'attribution pour les imports futurs
+        """)
+        
+        if st.button("🚀 Activer l'Identification Forcée", type="primary", use_container_width=True, key="btn_force_id"):
+            result = ensure_no_unknown_members()
+            toast_success(result['message'], icon="🚀")
+            st.rerun()

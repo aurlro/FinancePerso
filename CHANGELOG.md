@@ -6,6 +6,28 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [5.1.0] - 2026-02-08
+
+### Nouvelles fonctionnalités - 4 ajouts
+
+**✨ Ajouté**
+- - feat: Introduce comprehensive UI feedback, error handling, and new components for empty states, tooltips, loading, and confirmation dialogs.
+- - ci: Ajoute debug et timeout au workflow de test
+- - fix: Ajoute fixture pour réinitialiser le singleton encryption entre tests
+- - feat: Implement comprehensive Git change analysis in UpdateManager to detect committed and uncommitted changes, categorize commits, and suggest version bumps, accompanied by new tests.
+
+**🐛 Corrigé**
+- - feat(étape 5 - audit final): Correction des derniers fichiers UI et modules
+- - fix: Lancement rapide si déjà installé - évite la réinstallation
+- - fix: Sépare test_is_enabled en deux tests distincts
+- - fix: Améliore test_is_enabled avec meilleur message d'erreur
+- - fix: Déplace la fixture reset_encryption_singleton dans conftest.py global
+- - fix: Corrige test_is_enabled qui échouait en CI à cause de ENCRYPTION_KEY définie
+
+*Fichiers modifiés* : tests/ui/test_kpi_cards.py, modules/ai/trend_analyzer.py, modules/db/transactions.py, CHANGELOG.md, modules/constants.py, modules/ui/components/empty_states.py, modules/ui/config/data_operations.py, tests/unit/test_cleanup_backups.py, tests/test_analytics.py, tests/test_email.py, modules/ui/dashboard/customizable_dashboard.py, modules/ui/dashboard/sections.py, modules/ai/budget_predictor.py, tests/conftest_enhanced.py, modules/ui/dashboard/budget_tracker.py, tests/test_customizable_dashboard.py, modules/ui/dashboard/smart_recommendations.py, modules/ui/components/onboarding_modal.py, scripts/audit_codebase.py, modules/analytics_v2.py, modules/ui/components/smart_actions.py, modules/ai/category_insights.py, tests/test_notifications.py, tests/conftest.py, tests/ui/test_progress_tracker.py, AGENTS.md, modules/ui/dashboard/category_charts.py, modules/import_analyzer.py, modules/ui/recurrence_tabs.py, modules/ui/assistant/audit_tab.py, modules/ui/components/loading_states.py, tests/test_link_integrity.py, tests/ai/test_conversational_assistant.py, tests/ui/test_member_selector.py, modules/onboarding.py, pages/3_Synthese.py, modules/ui/dashboard/top_expenses.py, modules/ai_manager.py, tests/test_global_search.py, tests/test_validators.py, modules/ui/feedback_wrapper.py, modules/budgets_dynamic.py, tests/README.md, modules/transaction_types.py, modules/ui/validation/main.py, modules/ui/global_search.py, modules/ui/notifications/center.py, tests/test_components.py, modules/notifications.py, modules/ui/components/confirm_dialog.py, tests/test_cache_multitier.py, modules/ui/validation/row_view.py, tests/test_onboarding.py, modules/analytics.py, modules/ui/explorer/explorer_results.py, modules/ui/explorer/explorer_filters.py, modules/ui/rules/rule_validator.py, tests/test_utils.py, tests/test_essential.py, modules/encryption.py, modules/ai/anomaly_detector.py, tests/test_encryption.py, modules/cache_monitor.py, tests/test_data_integrity.py, tests/ui/validation/test_sorting.py, app.py, modules/ui/components/transaction_diagnostic.py, modules/ui/components/tooltips.py, modules/error_handlers.py, modules/impact_analyzer.py, tests/test_update_manager.py, modules/performance_monitor.py, modules/notifications_realtime.py, modules/ui/components/quick_actions.py, modules/update_manager.py, tests/ui/test_tag_manager.py, modules/db/audit.py, modules/db/migrations.py, AUDIT_DEPENSES_REVENUS.md, modules/ui/dashboard/ai_insights.py, modules/db/dashboard_cleanup.py, modules/ui/recurrence_manager.py, tests/ui/test_filters.py, modules/db/members.py, tests/ui/test_category_charts.py, modules/ingestion.py, modules/db/transactions_batch.py, modules/ui/components/tag_manager.py, modules/ai/conversational_assistant.py
+
+---
+
 ## [5.0.2] - 2026-02-07
 
 ### Nouvelles fonctionnalités - 8 ajouts
