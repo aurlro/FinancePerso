@@ -32,6 +32,31 @@ def render_import_tab():
     render_onboarding_widget("default", has_data=not df_check.empty)
 
     st.header("📥 Importation des relevés")
+    
+    # WIZARD PROGRESS INDICATOR
+    steps = ["📁 Fichier", "⚙️ Paramètres", "👁️ Preview", "✅ Import"]
+    
+    # Déterminer l'étape actuelle basée sur l'état
+    if "import_step" not in st.session_state:
+        st.session_state.import_step = 0
+    
+    current_step = st.session_state.import_step
+    
+    # Progress bar
+    st.progress((current_step + 1) / len(steps))
+    
+    # Indicateur visuel des étapes
+    cols = st.columns(len(steps))
+    for i, (col, step) in enumerate(zip(cols, steps)):
+        with col:
+            if i < current_step:
+                st.success(f"✓ {step}")  # Terminé
+            elif i == current_step:
+                st.info(f"→ **{step}**")  # Actif
+            else:
+                st.caption(f"○ {step}")   # À venir
+    
+    st.divider()
 
     # Quick guide
     with st.expander("📖 Guide rapide d'import", expanded=False):
@@ -89,6 +114,9 @@ def render_import_tab():
     )
 
     if uploaded_file is not None:
+        # Passer à l'étape 1 (Fichier sélectionné)
+        st.session_state.import_step = 1
+        
         # Validate file
         is_valid, error_msg = validate_csv_file(uploaded_file)
         if not is_valid:
@@ -129,6 +157,9 @@ def render_import_tab():
             ready_to_import = True
 
         if ready_to_import:
+            # Passer à l'étape 2 (Paramètres)
+            st.session_state.import_step = 2
+            
             # --- STEP 2: QUESTIONNAIRE ---
             st.divider()
             st.subheader("2️⃣ Paramètres d'import")
@@ -187,6 +218,9 @@ def render_import_tab():
                 ]
                 selected_month = st.selectbox("Mois (optionnel)", months, key="selectbox_op_month")
 
+            # Passer à l'étape 3 (Preview)
+            st.session_state.import_step = 3
+            
             # Parse file
             st.divider()
             st.subheader("3️⃣ Prévisualisation & Doublons")
@@ -242,6 +276,9 @@ def render_import_tab():
                     # Preview
                     st.dataframe(df.head(5)[["date", "label", "amount"]])
 
+                    # Passer à l'étape 4 (Import)
+                    st.session_state.import_step = 3  # Stay at 3 until click
+                    
                     # --- STEP 4: IMPORT ---
                     st.divider()
                     st.subheader("4️⃣ Import des données")

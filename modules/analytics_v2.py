@@ -241,8 +241,8 @@ def _analyze_group(
         "sample_labels": sample_labels,
         "is_income": is_income
         or is_income_category(
-            group_df["category_validated"].iloc[0]
-            if "category_validated" in group_df.columns
+            group["category_validated"].iloc[0]
+            if "category_validated" in group.columns
             else ""
         ),
     }

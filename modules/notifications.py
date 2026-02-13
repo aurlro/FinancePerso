@@ -331,7 +331,7 @@ def generate_daily_digest() -> bool:
         message=message,
         level=NotificationLevel.INFO,
         group="daily_digest",
-        actions=[NotificationAction(label="Synthèse", url="pages/3_Synthese.py")],
+        actions=[NotificationAction(label="Synthèse", url="pages/3_Synthèse.py")],
     )
     return True
 
@@ -733,7 +733,7 @@ Continuez à suivre vos objectifs ! 📊"""
         message=message,
         priority="low",
         created_at=today.isoformat(),
-        action_url="pages/3_Synthese.py",
+        action_url="pages/3_Synthèse.py",
     )
 
     return notif

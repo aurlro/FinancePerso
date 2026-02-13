@@ -143,7 +143,7 @@ def get_primary_action(state):
         "description": "{} transactions • {} règles • {} budgets".format(
             state["tx_count"], state["rules_count"], state["budgets_count"]
         ),
-        "page": "3_Synthese",
+        "page": "3_Synthèse",
         "priority": "normal",
         "action_type": "secondary",
     }

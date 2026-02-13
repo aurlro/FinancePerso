@@ -170,6 +170,10 @@ def render_smart_suggestions_panel(
         st.info("📭 Ajoutez des transactions pour recevoir des suggestions personnalisées.")
         return
 
+    # Initialize session state for dismissed suggestions (safeguard)
+    if "suggestions_dismissed" not in st.session_state:
+        st.session_state["suggestions_dismissed"] = set()
+
     # Get suggestions
     with st.spinner("Analyse en cours..."):
         suggestions = get_smart_suggestions(transactions_df, rules_df, budgets_df, members_df)
@@ -180,6 +184,10 @@ def render_smart_suggestions_panel(
     if not suggestions:
         st.success("🎉 Tout semble bien configuré ! Aucune suggestion pour le moment.")
         return
+
+    # Initialize filter session state (safeguard)
+    if "suggestions_filter" not in st.session_state:
+        st.session_state["suggestions_filter"] = "all"
 
     # Filter controls
     col_filter, col_count = st.columns([2, 1])

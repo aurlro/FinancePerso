@@ -16,9 +16,15 @@ def render_notification_center_compact():
     """
     Affiche le badge de notification compact pour la sidebar.
     À placer en haut de la sidebar.
+    Limite l'affichage à 5 notifications max pour éviter l'anxiété.
     """
     manager = get_notification_manager()
-    count = manager.unread_count
+    raw_count = manager.unread_count
+    
+    # Limiter l'affichage à 5 pour éviter l'anxiété
+    MAX_DISPLAY_COUNT = 5
+    display_count = min(raw_count, MAX_DISPLAY_COUNT)
+    has_more = raw_count > MAX_DISPLAY_COUNT
 
     # CSS pour le badge
     st.markdown(
@@ -62,11 +68,13 @@ def render_notification_center_compact():
         unsafe_allow_html=True,
     )
 
-    if count > 0:
+    if raw_count > 0:
+        # Afficher "5+" si plus de 5 notifications
+        count_display = f"{display_count}+" if has_more else str(display_count)
         badge_html = f"""
             <div class="fp-notif-badge" onclick="window.location.href='?page=notifications'">
                 🔔 Notifications
-                <span class="fp-notif-count">{count}</span>
+                <span class="fp-notif-count">{count_display}</span>
             </div>
         """
     else:

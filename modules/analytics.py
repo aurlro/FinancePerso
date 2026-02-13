@@ -164,13 +164,17 @@ def detect_financial_profile(df):
     incomes = df[df["amount"] > SALARY_MIN_AMOUNT].copy()
     if not incomes.empty:
         incomes["clean"] = incomes["label"].apply(clean_label)
-        grouped = incomes.groupby("clean").agg({"amount": "mean", "date": "count"}).reset_index()
+        grouped = incomes.groupby("clean").agg({"amount": "mean", "date": "count", "label": "first"}).reset_index()
         for _, row in grouped.iterrows():
+            # Skip empty or too short labels
+            if not row["clean"] or len(row["clean"]) < 3:
+                continue
             if is_new(row["clean"]):
                 candidates.append(
                     {
                         "type": "Salaire (estimé)",
                         "label": row["clean"],
+                        "original_label": row["label"],
                         "amount": row["amount"],
                         "confidence": (
                             "Haute" if row["date"] > HIGH_CONFIDENCE_MIN_COUNT else "Moyenne"
@@ -185,9 +189,12 @@ def detect_financial_profile(df):
     expenses = filter_expense_transactions(df).copy()
     if not expenses.empty:
         expenses["clean"] = expenses["label"].apply(clean_label)
-        grouped = expenses.groupby("clean").agg({"amount": "mean", "date": "count"}).reset_index()
+        grouped = expenses.groupby("clean").agg({"amount": "mean", "date": "count", "label": "first"}).reset_index()
 
         for _, row in grouped.iterrows():
+            # Skip empty or too short labels
+            if not row["clean"] or len(row["clean"]) < 3:
+                continue
             if not is_new(row["clean"]):
                 continue
 
@@ -209,6 +216,7 @@ def detect_financial_profile(df):
                     {
                         "type": f"Dépense Récurrente ({found_cat})",
                         "label": row["clean"],
+                        "original_label": row["label"],
                         "amount": row["amount"],
                         "confidence": "Haute",
                         "default_category": found_cat,

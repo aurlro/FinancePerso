@@ -18,6 +18,34 @@ import pandas as pd
 def get_spending_insight() -> Dict[str, Any]:
     """Génère un insight pertinent sur les dépenses."""
     today = datetime.now()
+    
+    # PRIORITÉ 1: Objectif d'épargne le plus proche
+    try:
+        from modules.savings_goals import get_closest_savings_goal
+        closest = get_closest_savings_goal()
+        if closest and not closest.is_achieved():
+            progress = closest.progress_pct
+            
+            # Messages motivants selon la progression
+            if progress >= 90:
+                message = f"🎉 Presque là ! Plus que {closest.remaining_amount:.0f}€ pour atteindre votre objectif"
+            elif progress >= 50:
+                message = f"💪 Plus de la moitié atteinte ! Continuez comme ça"
+            else:
+                message = f"🌱 Objectif: {closest.target_amount:.0f}€ | Actuel: {closest.current_amount:.0f}€"
+            
+            return {
+                "type": "success",
+                "title": f"{closest.emoji} {closest.name}",
+                "message": message,
+                "metric": f"{progress:.0f}%",
+                "metric_label": "atteint",
+                "progress": progress / 100,
+                "action": "pages/3_Synthèse.py",
+                "action_label": "Contribuer",
+            }
+    except Exception:
+        pass  # Module pas encore disponible
 
     # Récupérer les stats globales
     stats = get_global_stats()
@@ -134,7 +162,7 @@ def get_spending_insight() -> Dict[str, Any]:
         "type": "info",
         "title": "💰 Récap du jour",
         "message": f"{total} transactions • {savings:+.2f}€ ce mois",
-        "action": "pages/3_Synthese.py",
+        "action": "pages/3_Synthèse.py",
         "action_label": "Voir la synthèse",
     }
 

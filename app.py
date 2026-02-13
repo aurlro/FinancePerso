@@ -220,7 +220,7 @@ else:
                 st.switch_page("pages/1_Opérations.py")
             if st.button("📊 Voir la Synthèse", use_container_width=True, key="button_150"):
                 toast_success("Ouverture du tableau de bord...", icon="📊")
-                st.switch_page("pages/3_Synthese.py")
+                st.switch_page("pages/3_Synthèse.py")
 
         st.divider()
 

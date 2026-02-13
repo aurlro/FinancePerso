@@ -117,6 +117,57 @@ def render_validation_tab():
 
         if len(group_stats) > 40:
             st.info(f"Affichage des 40 premiers groupes (sur {len(group_stats)}).")
+        
+        # BULK VALIDATION - Header avec checkbox "Tout sélectionner"
+        selected_in_session = st.session_state.get("bulk_selected_groups", set())
+        all_group_names = set(display_groups)
+        
+        col_header, col_select_all = st.columns([6, 1])
+        with col_header:
+            if selected_in_session:
+                st.write(f"**{len(selected_in_session)}** groupe(s) sélectionné(s)")
+        with col_select_all:
+            select_all = st.checkbox("Tout", key=f"select_all{key_suffix}")
+            if select_all:
+                st.session_state["bulk_selected_groups"] = all_group_names.copy()
+            elif not select_all and selected_in_session == all_group_names:
+                # Décocher tout si c'était tout sélectionné
+                st.session_state["bulk_selected_groups"] = set()
+        
+        # Barre d'action groupée (sticky en haut)
+        if selected_in_session:
+            with st.container(border=True):
+                st.write(f"🎯 **{len(selected_in_session)}** groupe(s) sélectionné(s)")
+                cols = st.columns([2, 2, 1])
+                
+                with cols[0]:
+                    bulk_category = st.selectbox(
+                        "Catégorie",
+                        available_categories,
+                        key=f"bulk_cat{key_suffix}"
+                    )
+                with cols[1]:
+                    bulk_member = st.selectbox(
+                        "Membre",
+                        all_members,
+                        key=f"bulk_mem{key_suffix}"
+                    )
+                with cols[2]:
+                    st.write("")
+                    st.write("")
+                    if st.button(f"✅ Valider tout", type="primary", use_container_width=True, key=f"bulk_val{key_suffix}"):
+                        # Valider tous les groupes sélectionnés
+                        total_validated = 0
+                        for group_name in selected_in_session:
+                            if group_name in display_groups:
+                                g_df = local_df[local_df["clean_group"] == group_name]
+                                g_ids = g_df["id"].tolist()
+                                validate_with_memory(g_ids, g_df.iloc[0]["label"], bulk_category, True, bulk_member)
+                                total_validated += len(g_ids)
+                        
+                        validation_feedback(total_validated, "opération")
+                        st.session_state["bulk_selected_groups"] = set()
+                        st.rerun()
 
         def handle_row_validation(row_id, category, member):
             target_group = next(
@@ -140,7 +191,23 @@ def render_validation_tab():
         for group_name in display_groups:
             group_df = local_df[local_df["clean_group"] == group_name]
             row = group_df.iloc[0]
-
+            
+            # Checkbox pour sélection en masse
+            is_selected = group_name in st.session_state.get("bulk_selected_groups", set())
+            new_selected = st.checkbox(
+                "",
+                value=is_selected,
+                key=f"chk{key_suffix}_{group_name}",
+                label_visibility="collapsed"
+            )
+            
+            if new_selected != is_selected:
+                if new_selected:
+                    st.session_state["bulk_selected_groups"].add(group_name)
+                else:
+                    st.session_state["bulk_selected_groups"].discard(group_name)
+                st.rerun(scope="fragment")
+            
             row_data = {
                 "id": row["id"],
                 "label": row["label"],

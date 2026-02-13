@@ -123,11 +123,18 @@ def render_filter_sidebar(df: pd.DataFrame) -> Dict:
         "Années", available_years, default=default_years, key="filter_years"
     )
 
-    # Mois
+    # Mois - Par défaut: uniquement le mois courant (UX améliorée)
+    from datetime import datetime
     month_names = options["months"]
     month_to_int = {name: i + 1 for i, name in enumerate(month_names)}
+    
+    # Déterminer le mois courant pour le sélectionner par défaut
+    current_month_idx = datetime.now().month - 1  # 0-indexed
+    current_month_name = month_names[current_month_idx] if current_month_idx < len(month_names) else month_names[0]
+    default_months = [current_month_name] if current_month_name in month_names else month_names[:1]
+    
     selected_month_names = st.sidebar.multiselect(
-        "Mois", month_names, default=month_names, key="filter_months"
+        "Mois", month_names, default=default_months, key="filter_months"
     )
     selected_months = [month_to_int[m] for m in selected_month_names]
 

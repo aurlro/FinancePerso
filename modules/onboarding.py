@@ -234,7 +234,7 @@ class OnboardingManager:
             st.metric("📊 Dashboard", "Disponible")
             st.caption("Visualisez vos finances en un coup d'œil")
             if st.button("Voir le Dashboard", key="goto_dashboard"):
-                st.switch_page("pages/3_Synthese.py")
+                st.switch_page("pages/3_Synthèse.py")
 
         with col2:
             st.metric("🤖 Assistant IA", "Actif")
