@@ -2,28 +2,28 @@
 Audit Tab - Contrôle qualité des données et correction d'anomalies.
 """
 
-import streamlit as st
 import time
-from typing import Callable
-from modules.db.transactions import get_all_transactions, update_transaction_category
-from modules.db.rules import add_learning_rule
+
+import streamlit as st
+
+from modules.ai.audit_engine import get_audit_summary, run_full_audit
 from modules.categorization import clean_label
-from modules.ai.audit_engine import run_full_audit, get_audit_summary
-from modules.ui.assistant.state import (
-    get_assistant_state,
-    set_assistant_state,
-    add_to_corrected,
-    remove_from_corrected,
-    add_to_hidden,
-    remove_from_hidden,
-    toggle_bulk_selection,
-    clear_bulk_selection,
-)
+from modules.db.rules import add_learning_rule
+from modules.db.transactions import get_all_transactions, update_transaction_category
 from modules.ui.assistant.components import (
-    render_progress_card,
-    render_empty_state,
     render_anomaly_card,
     render_audit_summary_cards,
+    render_empty_state,
+)
+from modules.ui.assistant.state import (
+    add_to_corrected,
+    add_to_hidden,
+    clear_bulk_selection,
+    get_assistant_state,
+    remove_from_corrected,
+    remove_from_hidden,
+    set_assistant_state,
+    toggle_bulk_selection,
 )
 
 
@@ -317,7 +317,7 @@ def on_anomaly_apply(index: int):
     add_to_corrected(index)
 
     # Invalidate caches
-    from modules.cache_manager import invalidate_transaction_caches, invalidate_rule_caches
+    from modules.cache_manager import invalidate_rule_caches, invalidate_transaction_caches
 
     invalidate_transaction_caches()
     invalidate_rule_caches()

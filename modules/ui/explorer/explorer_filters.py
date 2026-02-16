@@ -2,16 +2,17 @@
 Explorer Filters - Filtres avancés pour l'explorateur.
 """
 
-import streamlit as st
+from datetime import date
+
 import pandas as pd
-from datetime import date, datetime
-from typing import Tuple, Optional, List
-from modules.transaction_types import is_expense_category, is_income_category, is_excluded_category
+import streamlit as st
+
+from modules.transaction_types import is_excluded_category, is_expense_category, is_income_category
 
 
 def render_date_filter(
     df: pd.DataFrame, key_prefix: str = "explorer"
-) -> Tuple[Optional[date], Optional[date]]:
+) -> tuple[date | None, date | None]:
     """Render date range filter."""
     if df.empty or "date" not in df.columns:
         return None, None
@@ -43,13 +44,13 @@ def render_date_filter(
     return start_date, end_date
 
 
-def render_amount_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> Tuple[float, float]:
+def render_amount_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> tuple[float, float]:
     """Render amount range filter."""
     if df.empty or "amount" not in df.columns:
         return 0.0, 0.0
 
     amounts = df["amount"].astype(float)
-    min_val = abs(amounts.min()) if amounts.min() < 0 else 0.0
+    abs(amounts.min()) if amounts.min() < 0 else 0.0
     max_val = abs(amounts.max()) if amounts.max() > 0 else 1000.0
 
     col1, col2 = st.columns(2)
@@ -82,7 +83,7 @@ def render_type_filter(key_prefix: str = "explorer") -> str:
     )
 
 
-def render_account_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> List[str]:
+def render_account_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> list[str]:
     """Render account multi-select filter."""
     if df.empty or "account_label" not in df.columns:
         return []
@@ -100,7 +101,7 @@ def render_account_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> Lis
     )
 
 
-def render_member_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> List[str]:
+def render_member_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> list[str]:
     """Render member multi-select filter."""
     if df.empty or "member" not in df.columns:
         return []
@@ -118,7 +119,7 @@ def render_member_filter(df: pd.DataFrame, key_prefix: str = "explorer") -> List
     )
 
 
-def render_status_filter(key_prefix: str = "explorer") -> List[str]:
+def render_status_filter(key_prefix: str = "explorer") -> list[str]:
     """Render status filter."""
     return st.multiselect(
         "📋 Statut",
@@ -129,7 +130,7 @@ def render_status_filter(key_prefix: str = "explorer") -> List[str]:
     )
 
 
-def render_tag_filter(available_tags: List[str], key_prefix: str = "explorer") -> List[str]:
+def render_tag_filter(available_tags: list[str], key_prefix: str = "explorer") -> list[str]:
     """Render tag filter."""
     if not available_tags:
         return []
@@ -152,15 +153,15 @@ def render_search_filter(key_prefix: str = "explorer") -> str:
 
 def apply_filters(
     df: pd.DataFrame,
-    start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
+    start_date: date | None = None,
+    end_date: date | None = None,
     min_amount: float = 0.0,
     max_amount: float = float("inf"),
     tx_type: str = "Tous",
-    accounts: List[str] = None,
-    members: List[str] = None,
-    statuses: List[str] = None,
-    tags: List[str] = None,
+    accounts: list[str] = None,
+    members: list[str] = None,
+    statuses: list[str] = None,
+    tags: list[str] = None,
     search: str = "",
 ) -> pd.DataFrame:
     """

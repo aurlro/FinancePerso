@@ -2,38 +2,38 @@
 Widget du jour - Affiché sur la page d'accueil pour créer l'habitude quotidienne.
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from datetime import datetime
+from typing import Any
 
+import pandas as pd
 import streamlit as st
-import pandas as pd
 
-from modules.logger import logger
-from modules.db.stats import get_global_stats
 from modules.db.budgets import get_budgets
+from modules.db.stats import get_global_stats
 from modules.db.transactions import get_all_transactions
-import pandas as pd
+from modules.logger import logger
 
 
-def get_spending_insight() -> Dict[str, Any]:
+def get_spending_insight() -> dict[str, Any]:
     """Génère un insight pertinent sur les dépenses."""
     today = datetime.now()
-    
+
     # PRIORITÉ 1: Objectif d'épargne le plus proche
     try:
         from modules.savings_goals import get_closest_savings_goal
+
         closest = get_closest_savings_goal()
         if closest and not closest.is_achieved():
             progress = closest.progress_pct
-            
+
             # Messages motivants selon la progression
             if progress >= 90:
                 message = f"🎉 Presque là ! Plus que {closest.remaining_amount:.0f}€ pour atteindre votre objectif"
             elif progress >= 50:
-                message = f"💪 Plus de la moitié atteinte ! Continuez comme ça"
+                message = "💪 Plus de la moitié atteinte ! Continuez comme ça"
             else:
                 message = f"🌱 Objectif: {closest.target_amount:.0f}€ | Actuel: {closest.current_amount:.0f}€"
-            
+
             return {
                 "type": "success",
                 "title": f"{closest.emoji} {closest.name}",

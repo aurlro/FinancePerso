@@ -1,13 +1,12 @@
 import streamlit as st
-from modules.ui.components.avatar_selector import render_avatar_selector
-from modules.ui.components.chip_selector import render_chip_selector
-from modules.utils import clean_label
-from modules.db.categories import get_categories_with_emojis
+
 from modules.transaction_types import (
-    get_transaction_icon,
     get_color_for_transaction,
+    get_transaction_icon,
     get_transaction_label,
 )
+from modules.ui.components.avatar_selector import render_avatar_selector
+from modules.utils import clean_label
 
 
 def render_validation_row(
@@ -75,7 +74,7 @@ def render_validation_row(
             if current_cat in all_categories:
                 idx = all_categories.index(current_cat)
 
-            new_cat = st.selectbox(
+            st.selectbox(
                 "Catégorie",
                 all_categories,
                 index=idx,

@@ -1,15 +1,15 @@
-# -*- coding: utf-8 -*-
 """
 Barre de recherche globale pour FinancePerso.
 Permet de rechercher des transactions, catégories, membres rapidement.
 """
 
-import streamlit as st
+from typing import Any
+
 import pandas as pd
-from typing import Optional, List, Dict, Any
-from datetime import datetime
-from modules.db.transactions import get_all_transactions
+import streamlit as st
+
 from modules.db.categories import get_categories_with_emojis
+from modules.db.transactions import get_all_transactions
 from modules.logger import logger
 from modules.transaction_types import get_color_for_transaction
 
@@ -66,7 +66,7 @@ class GlobalSearch:
             logger.error(f"Erreur recherche transactions: {e}")
             return pd.DataFrame()
 
-    def search_categories(self, query: str) -> List[Dict[str, Any]]:
+    def search_categories(self, query: str) -> list[dict[str, Any]]:
         """Recherche dans les catégories."""
         if not query or len(query) < 2:
             return []

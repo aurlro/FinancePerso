@@ -5,9 +5,9 @@ Handles changelog updates, version management, and agent file synchronization.
 
 import os
 import re
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime
+
 from modules.logger import logger
 
 
@@ -18,15 +18,15 @@ class VersionEntry:
     version: str
     date: str
     title: str
-    categories: Dict[str, List[str]]  # category -> list of changes
-    files_modified: List[str]
-    breaking_changes: List[str]
+    categories: dict[str, list[str]]  # category -> list of changes
+    files_modified: list[str]
+    breaking_changes: list[str]
 
 
 class UpdateManager:
     """Manages application updates and documentation synchronization."""
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: str | None = None):
         """
         Initialize update manager.
 
@@ -49,7 +49,7 @@ class UpdateManager:
         # Try constants.py first
         if os.path.exists(self.constants_path):
             try:
-                with open(self.constants_path, "r", encoding="utf-8") as f:
+                with open(self.constants_path, encoding="utf-8") as f:
                     content = f.read()
                     match = re.search(r'APP_VERSION\s*=\s*["\']([^"\']+)["\']', content)
                     if match:
@@ -59,7 +59,7 @@ class UpdateManager:
 
         # Fallback to changelog
         try:
-            with open(self.changelog_path, "r", encoding="utf-8") as f:
+            with open(self.changelog_path, encoding="utf-8") as f:
                 content = f.read()
                 match = re.search(r"## \[?([0-9]+\.[0-9]+\.[0-9]+)\]?", content)
                 if match:
@@ -108,7 +108,7 @@ class UpdateManager:
         try:
             # Read existing content
             if os.path.exists(self.changelog_path):
-                with open(self.changelog_path, "r", encoding="utf-8") as f:
+                with open(self.changelog_path, encoding="utf-8") as f:
                     content = f.read()
             else:
                 content = "# Changelog\n\nToutes les modifications notables...\n"
@@ -192,7 +192,7 @@ class UpdateManager:
                 logger.warning("AGENTS.md not found")
                 return False
 
-            with open(self.agents_path, "r", encoding="utf-8") as f:
+            with open(self.agents_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Update version in header if present
@@ -260,13 +260,13 @@ class UpdateManager:
             if not os.path.exists(self.constants_path):
                 # Create constants.py if not exists
                 with open(self.constants_path, "w", encoding="utf-8") as f:
-                    f.write(f'"""Application constants."""\n\n')
+                    f.write('"""Application constants."""\n\n')
                     f.write(f'APP_VERSION = "{version}"\n')
-                    f.write(f'APP_NAME = "MyFinance Companion"\n')
+                    f.write('APP_NAME = "MyFinance Companion"\n')
                 logger.info(f"Created constants.py with v{version}")
                 return True
 
-            with open(self.constants_path, "r", encoding="utf-8") as f:
+            with open(self.constants_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Update version
@@ -290,12 +290,12 @@ class UpdateManager:
     def create_update(
         self,
         title: str,
-        changes: Dict[str, List[str]],
+        changes: dict[str, list[str]],
         bump_type: str = "patch",
-        files_modified: Optional[List[str]] = None,
-        breaking_changes: Optional[List[str]] = None,
+        files_modified: list[str] | None = None,
+        breaking_changes: list[str] | None = None,
         force: bool = False,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         Create a complete update across all files.
 
@@ -366,7 +366,7 @@ class UpdateManager:
 
         return success, new_version
 
-    def get_recent_changes(self, count: int = 5) -> List[Dict]:
+    def get_recent_changes(self, count: int = 5) -> list[dict]:
         """
         Get recent changes from changelog.
 
@@ -385,7 +385,7 @@ class UpdateManager:
             logger.error(f"Failed to parse changelog: {e}")
             return []
 
-    def analyze_git_changes(self) -> Dict:
+    def analyze_git_changes(self) -> dict:
         """
         Analyze git changes since last version tag.
 
@@ -631,11 +631,11 @@ class UpdateManager:
         elif index_status == " " and worktree_status != " ":
             return f"unstaged ({worktree_desc})"
         elif index_status != " " and worktree_status != " ":
-            return f"staged + unstaged changes"
+            return "staged + unstaged changes"
         else:
             return "unknown"
 
-    def _categorize_commits(self, commits: List[str], result: Dict):
+    def _categorize_commits(self, commits: list[str], result: dict):
         """
         Categorize commit messages into added/fixed/performance/other.
 
@@ -716,7 +716,7 @@ class UpdateManager:
         if result["suggested_bump"] != "major" and result["added"]:
             result["suggested_bump"] = "minor"
 
-    def _generate_suggested_title(self, result: Dict) -> str:
+    def _generate_suggested_title(self, result: dict) -> str:
         """
         Generate a suggested title based on detected changes.
 
@@ -765,7 +765,7 @@ class UpdateManager:
         else:
             return "Mise à jour"
 
-    def get_module_changes(self) -> Dict:
+    def get_module_changes(self) -> dict:
         """
         Analyze changes by scanning modules directory.
         Useful when git is not available.
@@ -805,7 +805,7 @@ class UpdateManager:
                                 result["files_modified"].append(rel_path)
 
                                 # Try to extract docstring
-                                with open(filepath, "r", encoding="utf-8") as f:
+                                with open(filepath, encoding="utf-8") as f:
                                     content = f.read()
                                     doc_match = re.search(r'"""(.*?)"""', content, re.DOTALL)
                                     if doc_match:
@@ -818,7 +818,7 @@ class UpdateManager:
         except Exception as e:
             logger.error(f"Failed to scan module changes: {e}")
 
-    def _filter_relevant_files(self, files: List[str]) -> List[str]:
+    def _filter_relevant_files(self, files: list[str]) -> list[str]:
         """Filter list of files to keep only relevant extensions."""
         relevant_extensions = [".py", ".md", ".toml", ".txt", ".css", ".js", ".html"]
         return [
@@ -834,7 +834,7 @@ def get_update_manager() -> UpdateManager:
     return UpdateManager()
 
 
-def quick_update(title: str, changes: List[str], bump_type: str = "patch") -> Tuple[bool, str]:
+def quick_update(title: str, changes: list[str], bump_type: str = "patch") -> tuple[bool, str]:
     """
     Quick update with default categorization.
 

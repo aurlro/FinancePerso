@@ -3,13 +3,11 @@ Multi-tier caching system for FinancePerso.
 Provides memory (LRU) and disk caching for optimal performance.
 """
 
-import os
-import time
-import pickle
 import hashlib
-from typing import Any, Optional, Callable, Dict
+import time
+from collections.abc import Callable
 from functools import wraps
-from pathlib import Path
+from typing import Any
 
 try:
     import diskcache
@@ -52,13 +50,13 @@ class MemoryCache:
             max_size: Maximum number of entries
             default_ttl: Default time-to-live in seconds
         """
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._hits = 0
         self._misses = 0
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from cache."""
         entry = self._cache.get(key)
 
@@ -75,7 +73,7 @@ class MemoryCache:
         self._hits += 1
         return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    def set(self, key: str, value: Any, ttl: int | None = None):
         """Set value in cache."""
         # Evict oldest entries if cache is full
         if len(self._cache) >= self._max_size:
@@ -103,7 +101,7 @@ class MemoryCache:
         oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k].last_accessed)
         del self._cache[oldest_key]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total = self._hits + self._misses
         hit_rate = (self._hits / total * 100) if total > 0 else 0
@@ -140,7 +138,7 @@ class DiskCache:
             self._cache = None
             logger.warning("diskcache not installed, disk caching disabled")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get value from disk cache."""
         if self._cache is None:
             self._misses += 1
@@ -157,7 +155,7 @@ class DiskCache:
         self._misses += 1
         return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    def set(self, key: str, value: Any, ttl: int | None = None):
         """Set value in disk cache."""
         if self._cache is None:
             return
@@ -183,7 +181,7 @@ class DiskCache:
         self._hits = 0
         self._misses = 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total = self._hits + self._misses
         hit_rate = (self._hits / total * 100) if total > 0 else 0
@@ -215,7 +213,7 @@ class MultiTierCache:
     def get(
         self,
         key: str,
-        fetch_func: Optional[Callable] = None,
+        fetch_func: Callable | None = None,
         ttl_memory: int = 300,
         ttl_disk: int = 3600,
     ) -> Any:
@@ -288,7 +286,7 @@ class MultiTierCache:
         self.memory.clear()
         self.disk.clear()
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get combined cache statistics."""
         return {
             "memory": self.memory.get_stats(),
@@ -317,7 +315,7 @@ def get_cache() -> MultiTierCache:
     return _cache_instance
 
 
-def cached(ttl_memory: int = 300, ttl_disk: int = 3600, key_func: Optional[Callable] = None):
+def cached(ttl_memory: int = 300, ttl_disk: int = 3600, key_func: Callable | None = None):
     """
     Decorator to cache function results.
 

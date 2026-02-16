@@ -1,5 +1,6 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
+
 from modules.db.budgets import get_budgets
 from modules.ui.feedback import toast_success
 
@@ -153,7 +154,6 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
                     if prev_spent > 0:
                         change = ((budget["spent"] - prev_spent) / prev_spent) * 100
                         trend_emoji = "📈" if change > 5 else "📉" if change < -5 else "➡️"
-                        trend_color = "red" if change > 10 else "green" if change < -10 else "gray"
                         st.caption(f"{trend_emoji} vs période précédente: {change:+.0f}%")
 
                 # Progress bar with color coding

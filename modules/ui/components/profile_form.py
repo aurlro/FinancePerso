@@ -1,7 +1,8 @@
 import streamlit as st
-from modules.db.rules import add_learning_rule
+
 from modules.db.budgets import set_budget
 from modules.db.categories import get_categories
+from modules.db.rules import add_learning_rule
 
 
 def render_profile_setup_form(key_prefix="profile"):

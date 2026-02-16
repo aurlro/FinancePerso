@@ -2,17 +2,16 @@
 Tests for members.py module.
 """
 
-import pytest
 from modules.db.members import (
+    add_member,
+    add_member_mapping,
+    delete_member,
+    delete_member_mapping,
+    get_member_mappings,
     get_members,
     get_unique_members,
-    add_member,
-    update_member_type,
-    delete_member,
     rename_member,
-    get_member_mappings,
-    add_member_mapping,
-    delete_member_mapping,
+    update_member_type,
 )
 
 

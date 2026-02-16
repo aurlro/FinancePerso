@@ -1,37 +1,34 @@
 """
 🧠 Intelligence - Automatisation & Apprentissage
 
-Centre de contrôle pour l'automatisation des catégorisations et 
+Centre de contrôle pour l'automatisation des catégorisations et
 la détection des paiements récurrents.
 """
 
 import streamlit as st
-import pandas as pd
-from datetime import datetime
 
-from modules.ui import load_css, render_scroll_to_top
-from modules.ui.layout import render_app_info
-from modules.db.migrations import init_db
-from modules.logger import logger
-
-# Rules module imports
-from modules.ui.rules import render_rule_list, render_add_rule_form
-from modules.ui.intelligence import render_smart_suggestions_panel
-from modules.db.rules import get_learning_rules
+from modules.analytics_v2 import detect_recurring_payments_v2
 from modules.db.audit import auto_fix_common_inconsistencies
-from modules.ui.feedback import toast_success, toast_info
+from modules.db.categories import get_categories_with_emojis
+from modules.db.migrations import init_db
+from modules.db.recurrence_feedback import get_all_feedback, init_recurrence_feedback_table
+from modules.db.rules import get_learning_rules
 
 # Recurrence module imports
 from modules.db.transactions import get_all_transactions
-from modules.db.categories import get_categories_with_emojis
-from modules.db.recurrence_feedback import init_recurrence_feedback_table, get_all_feedback
-from modules.analytics_v2 import detect_recurring_payments_v2
+from modules.ui import load_css, render_scroll_to_top
+from modules.ui.feedback import toast_info, toast_success
+from modules.ui.intelligence import render_smart_suggestions_panel
+from modules.ui.layout import render_app_info
 from modules.ui.recurrence_tabs import (
     render_dashboard_tab,
-    render_validation_tab,
     render_subscriptions_tab,
     render_trash_tab,
+    render_validation_tab,
 )
+
+# Rules module imports
+from modules.ui.rules import render_add_rule_form, render_rule_list
 
 # Page configuration
 st.set_page_config(page_title="Intelligence", page_icon="🧠", layout="wide")
@@ -40,9 +37,11 @@ init_db()
 init_recurrence_feedback_table()
 
 st.title("🧠 Intelligence & Automatisation")
-st.markdown("""
+st.markdown(
+    """
 Automatisez la catégorisation de vos transactions et découvrez vos paiements récurrents.
-""")
+"""
+)
 
 # --- NAVIGATION ---
 if "intel_active_tab" not in st.session_state:
@@ -87,7 +86,8 @@ if active_tab == "💡 Suggestions":
 
     # Info cards explaining the feature
     with st.expander("ℹ️ Comment fonctionnent les suggestions ?"):
-        st.markdown("""
+        st.markdown(
+            """
         **L'IA analyse vos données pour détecter :**
         
         - 📝 **Règles manquantes** : Patterns fréquents qui pourraient être automatisés
@@ -98,7 +98,8 @@ if active_tab == "💡 Suggestions":
         - 🏦 **Opportunités d'épargne** : Suggestions pour économiser
         
         *Les suggestions sont actualisées à chaque import de transactions.*
-        """)
+        """
+        )
 
 # =============================================================================
 # TAB: RULES
@@ -119,7 +120,8 @@ elif active_tab == "📋 Règles":
 
     # Educational content
     with st.expander("💡 Conseils pour créer de bonnes règles", expanded=False):
-        st.markdown("""
+        st.markdown(
+            """
         **Bonnes pratiques :**
         
         1. **Soyez spécifique** : Préférez `AMAZON` à `AM` (trop court = faux positifs)
@@ -131,7 +133,8 @@ elif active_tab == "📋 Règles":
         - `EDF|ENGIE|DIRECT ENERGIE` → Factures ( Maison )
         - `NETFLIX|SPOTIFY|DISNEY` → Abonnements ( Loisirs )
         - `CARREFOUR|LECLERC|INTERMARCHE` → Courses ( Alimentation )
-        """)
+        """
+        )
 
     st.markdown("### Ajouter une nouvelle règle")
     render_add_rule_form()

@@ -1,12 +1,14 @@
-import os
 import json
-import requests
+import os
 import time
 from abc import ABC, abstractmethod
 from functools import wraps
-from typing import Optional, Dict, Any, List, Union, Callable
-from modules.logger import logger
+from typing import Any
+
+import requests
 from dotenv import load_dotenv
+
+from modules.logger import logger
 
 load_dotenv()
 
@@ -54,17 +56,17 @@ except ImportError:
 # --- Abstract Base Class ---
 class AIProvider(ABC):
     @abstractmethod
-    def generate_json(self, prompt: str, model_name: Optional[str] = None) -> Dict[str, Any]:
+    def generate_json(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Returns a python dict/list from JSON response"""
         pass
 
     @abstractmethod
-    def generate_text(self, prompt: str, model_name: Optional[str] = None) -> str:
+    def generate_text(self, prompt: str, model_name: str | None = None) -> str:
         """Returns raw text response"""
         pass
 
     @abstractmethod
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """Returns list of available models"""
         pass
 

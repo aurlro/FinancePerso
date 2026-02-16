@@ -10,10 +10,10 @@ This module provides intelligent features including:
 """
 
 from modules.ai.anomaly_detector import detect_amount_anomalies
-from modules.ai.smart_tagger import suggest_tags_for_transaction, suggest_tags_batch
-from modules.ai.budget_predictor import predict_budget_overruns, get_budget_alerts_summary
-from modules.ai.trend_analyzer import analyze_spending_trends, get_top_categories_comparison
+from modules.ai.budget_predictor import get_budget_alerts_summary, predict_budget_overruns
 from modules.ai.conversational_assistant import chat_with_assistant
+from modules.ai.smart_tagger import suggest_tags_batch, suggest_tags_for_transaction
+from modules.ai.trend_analyzer import analyze_spending_trends, get_top_categories_comparison
 
 __all__ = [
     "detect_amount_anomalies",

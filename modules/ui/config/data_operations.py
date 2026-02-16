@@ -1,23 +1,24 @@
-import streamlit as st
-import pandas as pd
 from io import BytesIO
-from modules.db.transactions import (
-    delete_transactions_by_period,
-    get_transactions_by_criteria,
-    delete_transaction_by_id,
-    get_all_transactions,
-)
+
+import streamlit as st
+
 from modules.db.stats import get_available_months
-from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    show_success,
-    show_warning,
-    show_info,
+from modules.db.transactions import (
+    delete_transaction_by_id,
+    delete_transactions_by_period,
+    get_all_transactions,
+    get_transactions_by_criteria,
 )
 from modules.transaction_types import get_color_for_transaction
+from modules.ui.feedback import (
+    show_info,
+    show_success,
+    show_warning,
+    toast_error,
+    toast_info,
+    toast_success,
+    toast_warning,
+)
 
 
 def render_export_section():
@@ -211,7 +212,7 @@ def render_data_operations():
             for _, row in results.iterrows():
                 with st.container(border=True):
                     c1, c2 = st.columns([4, 1])
-                    amount_color = get_color_for_transaction(
+                    get_color_for_transaction(
                         row.get("category_validated", "Inconnu")
                     )
                     c1.markdown(
@@ -263,7 +264,7 @@ def render_data_operations():
                         st.code(result.stdout)
                 else:
                     error_output = result.stderr if result.stderr else "Erreur inconnue"
-                    toast_error(f"❌ Échec de la mise à jour", icon="❌")
+                    toast_error("❌ Échec de la mise à jour", icon="❌")
                     show_error(f"**Erreur :**\n\n{error_output}")
             except subprocess.TimeoutExpired:
                 toast_error("❌ Timeout : le script a pris trop de temps", icon="⏱️")

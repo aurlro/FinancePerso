@@ -3,40 +3,39 @@ Sections du tableau de bord organisées en fragments pour performance.
 Chaque section peut se recharger indépendamment.
 """
 
-import streamlit as st
+
 import pandas as pd
 import plotly.express as px
-from typing import Dict, List
+import streamlit as st
 
-from modules.db.budgets import get_budgets
-from modules.db.categories import get_categories_df
-from modules.ui.dashboard.kpi_cards import render_kpi_cards
-from modules.ui.dashboard.evolution_chart import render_evolution_chart, render_savings_trend_chart
-from modules.ui.dashboard.category_charts import (
-    render_category_bar_chart,
-    render_monthly_stacked_chart,
-    prepare_expense_dataframe,
-)
-from modules.ui.dashboard.top_expenses import render_top_expenses
-from modules.ui.dashboard.budget_tracker import render_budget_tracker
-from modules.ui.dashboard.ai_insights import render_month_end_forecast, render_ai_financial_report
-from modules.ui.dashboard.smart_recommendations import (
-    render_smart_recommendations_section,
-    render_quick_actions_banner,
-)
-from modules.ui.dashboard.smart_recommendations import render_smart_recommendations_section
+from modules.ai import get_budget_alerts_summary, predict_budget_overruns
 from modules.budgets_dynamic import (
     DynamicBudgetEngine,
+    render_challenges_section,
     render_dynamic_budget_suggestions,
     render_seasonal_adjustments,
-    render_challenges_section,
 )
+from modules.db.budgets import get_budgets
+from modules.db.categories import get_categories_df
 from modules.ui.components.transaction_drill_down import render_transaction_drill_down
-from modules.ai import predict_budget_overruns, get_budget_alerts_summary
+from modules.ui.dashboard.ai_insights import render_ai_financial_report, render_month_end_forecast
+from modules.ui.dashboard.budget_tracker import render_budget_tracker
+from modules.ui.dashboard.category_charts import (
+    prepare_expense_dataframe,
+    render_category_bar_chart,
+    render_monthly_stacked_chart,
+)
+from modules.ui.dashboard.evolution_chart import render_evolution_chart, render_savings_trend_chart
+from modules.ui.dashboard.kpi_cards import render_kpi_cards
+from modules.ui.dashboard.smart_recommendations import (
+    render_quick_actions_banner,
+    render_smart_recommendations_section,
+)
+from modules.ui.dashboard.top_expenses import render_top_expenses
 
 
 @st.cache_data(ttl=600)
-def get_cached_budget_predictions(df_month: pd.DataFrame, budgets: pd.DataFrame) -> List[Dict]:
+def get_cached_budget_predictions(df_month: pd.DataFrame, budgets: pd.DataFrame) -> list[dict]:
     """Cache les prédictions budgétaires (appel IA coûteux)."""
     if budgets.empty or df_month.empty:
         return []
@@ -44,7 +43,7 @@ def get_cached_budget_predictions(df_month: pd.DataFrame, budgets: pd.DataFrame)
 
 
 @st.fragment
-def render_overview_tab(df_current: pd.DataFrame, df_prev: pd.DataFrame, cat_emoji_map: Dict):
+def render_overview_tab(df_current: pd.DataFrame, df_prev: pd.DataFrame, cat_emoji_map: dict):
     """
     Onglet Vue d'ensemble : KPIs, évolution, catégories, top dépenses.
     """
@@ -76,9 +75,9 @@ def render_overview_tab(df_current: pd.DataFrame, df_prev: pd.DataFrame, cat_emo
 def render_budget_tab(
     df_current: pd.DataFrame,
     df_full: pd.DataFrame,
-    selected_years: List[int],
-    selected_months: List[int],
-    cat_emoji_map: Dict,
+    selected_years: list[int],
+    selected_months: list[int],
+    cat_emoji_map: dict,
 ):
     """
     Onglet Budgets & Prévisions : Suivi budgets, alertes, prévisions fin de mois.
@@ -102,8 +101,8 @@ def render_budget_tab(
             st.switch_page("pages/4_Intelligence.py")
     else:
         # Données du mois en cours
-        import datetime
         import calendar
+        import datetime
 
         today = datetime.date.today()
         current_month = today.strftime("%Y-%m")
@@ -291,12 +290,11 @@ def render_budget_tab(
 
 @st.fragment
 def render_analysis_tab(
-    df_current: pd.DataFrame, df_full: pd.DataFrame, official_list: List[str], cat_emoji_map: Dict
+    df_current: pd.DataFrame, df_full: pd.DataFrame, official_list: list[str], cat_emoji_map: dict
 ):
     """
     Onglet Analyses : Répartition par membre, bénéficiaires tiers, tags.
     """
-    from modules.ui.dashboard.filters import normalize_name
 
     col_left, col_right = st.columns(2)
 
@@ -429,8 +427,8 @@ def render_ai_tab(
     df_current: pd.DataFrame,
     df_prev: pd.DataFrame,
     df_full: pd.DataFrame,
-    selected_years: List[int],
-    selected_months: List[int],
+    selected_years: list[int],
+    selected_months: list[int],
 ):
     """
     Onglet IA & Rapports : Rapport financier généré par IA.
@@ -443,7 +441,7 @@ def render_ai_tab(
         return
 
     # Info sur les données analysées - Utilisation de la nouvelle logique cohérente
-    from modules.transaction_types import calculate_true_income, calculate_true_expenses
+    from modules.transaction_types import calculate_true_expenses, calculate_true_income
 
     cur_inc = calculate_true_income(df_current)
     cur_exp = calculate_true_expenses(df_current)

@@ -2,9 +2,9 @@
 Explorer Results - Affichage des résultats de l'explorateur.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import Optional
+import streamlit as st
 
 
 def render_summary_cards(df: pd.DataFrame):
@@ -164,8 +164,8 @@ def _render_bulk_actions(selected_ids: list[int], key_prefix: str):
             key=f"{key_prefix}_bulk_auto",
             use_container_width=True,
         ):
-            from modules.db.transactions import get_all_transactions, update_transaction_member
             from modules.db.members import detect_member_from_content
+            from modules.db.transactions import get_all_transactions, update_transaction_member
 
             all_tx = get_all_transactions(filters={"id": ("IN", tuple(selected_ids))})
             count = 0

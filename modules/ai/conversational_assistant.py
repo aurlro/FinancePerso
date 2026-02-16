@@ -4,18 +4,18 @@ Conversational AI Assistant for Financial Queries.
 Allows users to ask questions about their finances in natural language.
 """
 
-import pandas as pd
 import datetime
-from modules.ai_manager import get_ai_provider, get_active_model_name
-from modules.db.transactions import get_all_transactions
-from modules.db.budgets import get_budgets
-from modules.db.categories import get_categories
-from modules.logger import logger
-from modules.transaction_types import filter_expense_transactions
-
-
 import json
 import re
+
+import pandas as pd
+
+from modules.ai_manager import get_active_model_name, get_ai_provider
+from modules.db.budgets import get_budgets
+from modules.db.categories import get_categories
+from modules.db.transactions import get_all_transactions
+from modules.logger import logger
+from modules.transaction_types import filter_expense_transactions
 
 
 # Tool functions that the AI can call
@@ -49,7 +49,10 @@ def get_spending_history(category: str = None, months: int = 3) -> dict:
 
     if df_exp.empty:
         return {
-            "message": f"Aucune dépense trouvée pour {category or 'tout'} sur les {months} derniers mois."
+            "message": (
+                f"Aucune dépense trouvée pour {category or 'tout'} "
+                f"sur les {months} derniers mois."
+            )
         }
 
     # Calculate metrics
@@ -229,7 +232,7 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
         current_month = today.strftime("%Y-%m")
 
         # System Prompt definition
-        system_prompt = f"""
+        system_prompt = f"""  # noqa: E501
         Tu es un assistant financier expert. Tu as accès aux données réelles de l'utilisateur via des outils.
         
         CONTEXTE ACTUEL :
@@ -239,11 +242,13 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
         OUTILS DISPONIBLES :
         1. get_spending_history(category: str, months: int)
            -> Utile pour "moyenne", "tendance", "historique", "3 derniers mois".
-           -> Ex: {{"tool": "get_spending_history", "kwargs": {{"category": "Alimentation", "months": 3}}}}
+           -> Ex: {{"tool": "get_spending_history", "kwargs":  # noqa: E501
+           {{"category": "Alimentation", "months": 3}}}}
 
         2. get_expenses_by_category(category: str, month: str = None)
            -> Utile pour le total d'un mois précis ou total global.
-           -> Ex: {{"tool": "get_expenses_by_category", "kwargs": {{"category": "Logement", "month": "2026-01"}}}}
+           -> Ex: {{"tool": "get_expenses_by_category", "kwargs":  # noqa: E501
+           {{"category": "Logement", "month": "2026-01"}}}}
 
         3. get_budget_status(category: str)
            -> Utile pour "budget", "reste à dépenser", "statut".
@@ -253,9 +258,10 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
            -> Utile pour "plus grosses dépenses", "où va mon argent".
         
         PROTOCOLE DE RÉPONSE :
-        - Si tu as besoin d'une information : Réponds UNIQUEMENT avec un objet JSON représentant l'appel d'outil.
-          Format : {{"tool": "nom_outil", "kwargs": {{...}}}}
-        - Si tu as l'information ou si c'est une question générale : Réponds en texte naturel à l'utilisateur.
+        - Si tu as besoin d'une information : Réponds UNIQUEMENT avec un objet JSON  # noqa: E501
+          représentant l'appel d'outil. Format : {{"tool": "nom_outil", "kwargs": {{...}}}}
+        - Si tu as l'information ou si c'est une question générale : Réponds en texte  # noqa: E501
+          naturel à l'utilisateur.
         - Ne refuse JAMAIS de répondre si tu peux utiliser un outil pour trouver la réponse.
         - Si l'utilisateur demande une moyenne, calcule-la via get_spending_history.
         """

@@ -3,12 +3,12 @@ Settings management for user configuration.
 Provides functions to get and set application settings stored in the database.
 """
 
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-from typing import Optional, List
 
 
-def get_setting(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_setting(key: str, default: str | None = None) -> str | None:
     """
     Get a setting value from the database.
 
@@ -30,7 +30,7 @@ def get_setting(key: str, default: Optional[str] = None) -> Optional[str]:
         return default
 
 
-def set_setting(key: str, value: str, description: Optional[str] = None) -> bool:
+def set_setting(key: str, value: str, description: str | None = None) -> bool:
     """
     Set a setting value in the database.
 
@@ -78,7 +78,7 @@ def set_setting(key: str, value: str, description: Optional[str] = None) -> bool
         return False
 
 
-def get_internal_transfer_targets() -> List[str]:
+def get_internal_transfer_targets() -> list[str]:
     """
     Get the list of internal transfer target keywords.
 
@@ -94,7 +94,7 @@ def get_internal_transfer_targets() -> List[str]:
     return [t.strip().upper() for t in targets_str.split(",") if t.strip()]
 
 
-def set_internal_transfer_targets(targets: List[str]) -> bool:
+def set_internal_transfer_targets(targets: list[str]) -> bool:
     """
     Set the list of internal transfer target keywords.
 
@@ -117,13 +117,13 @@ def set_internal_transfer_targets(targets: List[str]) -> bool:
     )
 
 
-def get_internal_transfer_keywords() -> List[str]:
+def get_internal_transfer_keywords() -> list[str]:
     """Get the keywords that identify a transaction as a transfer (e.g. VIR, VRT)."""
     val = get_setting("internal_transfer_keywords", "VIR,VIREMENT,VRT,PIVOT,MOUVEMENT,TRANSFERT")
     return [t.strip().upper() for t in val.split(",") if t.strip()]
 
 
-def set_internal_transfer_keywords(keywords: List[str]) -> bool:
+def set_internal_transfer_keywords(keywords: list[str]) -> bool:
     """Set the keywords that identify a transaction as a transfer."""
     val = ",".join([t.strip().upper() for t in keywords if t.strip()])
     return set_setting(
@@ -133,7 +133,7 @@ def set_internal_transfer_keywords(keywords: List[str]) -> bool:
     )
 
 
-def get_verified_transfer_labels() -> List[str]:
+def get_verified_transfer_labels() -> list[str]:
     """Get the list of verified labels that are known to be correct as internal transfers."""
     val = get_setting("internal_transfer_verified_labels", "")
     return [

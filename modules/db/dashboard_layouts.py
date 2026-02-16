@@ -4,14 +4,13 @@ Gestion des layouts de dashboard en base de données.
 """
 
 import json
-import sqlite3
-from typing import Dict, List, Optional
 from datetime import datetime
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
 
-def get_layout(name: str = "default") -> Optional[List[Dict]]:
+def get_layout(name: str = "default") -> list[dict] | None:
     """
     Récupère un layout par son nom.
 
@@ -35,7 +34,7 @@ def get_layout(name: str = "default") -> Optional[List[Dict]]:
         return None
 
 
-def get_active_layout() -> Optional[List[Dict]]:
+def get_active_layout() -> list[dict] | None:
     """
     Récupère le layout actuellement actif.
 
@@ -67,7 +66,7 @@ def get_active_layout() -> Optional[List[Dict]]:
         return None
 
 
-def save_layout(name: str, layout: List[Dict], set_active: bool = False) -> bool:
+def save_layout(name: str, layout: list[dict], set_active: bool = False) -> bool:
     """
     Sauvegarde un layout dans la base de données.
 
@@ -187,7 +186,7 @@ def delete_layout(name: str) -> bool:
         return False
 
 
-def list_layouts() -> List[Dict]:
+def list_layouts() -> list[dict]:
     """
     Liste tous les layouts disponibles.
 

@@ -2,12 +2,12 @@
 Tests for UI validation grouping logic.
 """
 
-import pytest
 import pandas as pd
+
 from modules.ui.validation.grouping import (
-    get_smart_groups,
     calculate_group_stats,
     get_group_transactions,
+    get_smart_groups,
 )
 
 

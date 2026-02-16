@@ -3,14 +3,13 @@ Dynamic Budget System
 Ajuste automatiquement les budgets selon les saisonnalités et tendances.
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 from modules.db.budgets import get_budgets, set_budget
-from modules.logger import logger
 from modules.transaction_types import filter_expense_transactions
 
 
@@ -19,7 +18,7 @@ class SeasonalPattern:
     """Pattern saisonnier pour une catégorie."""
 
     category: str
-    month_factors: Dict[int, float]  # Mois -> Facteur (1.0 = moyenne)
+    month_factors: dict[int, float]  # Mois -> Facteur (1.0 = moyenne)
     confidence: float  # 0-1
     sample_size: int
 
@@ -55,7 +54,7 @@ class DynamicBudgetEngine:
             self.df["month"] = self.df["date_dt"].dt.month
             self.df["year"] = self.df["date_dt"].dt.year
 
-    def analyze_seasonality(self, category: str, min_months: int = 6) -> Optional[SeasonalPattern]:
+    def analyze_seasonality(self, category: str, min_months: int = 6) -> SeasonalPattern | None:
         """
         Analyse la saisonnalité d'une catégorie.
 
@@ -107,7 +106,7 @@ class DynamicBudgetEngine:
             sample_size=len(cat_data),
         )
 
-    def get_current_month_adjustment(self, category: str, base_budget: float) -> Tuple[float, str]:
+    def get_current_month_adjustment(self, category: str, base_budget: float) -> tuple[float, str]:
         """
         Calcule l'ajustement recommandé pour le mois courant.
 
@@ -136,7 +135,7 @@ class DynamicBudgetEngine:
 
         return adjusted, reason
 
-    def suggest_budget_adjustments(self) -> List[BudgetAdjustment]:
+    def suggest_budget_adjustments(self) -> list[BudgetAdjustment]:
         """
         Suggère des ajustements pour tous les budgets.
 
@@ -201,7 +200,7 @@ class DynamicBudgetEngine:
         suggestions.sort(key=lambda x: x.expected_savings, reverse=True)
         return suggestions
 
-    def detect_underspent_categories(self, current_month_df: pd.DataFrame) -> List[Dict]:
+    def detect_underspent_categories(self, current_month_df: pd.DataFrame) -> list[dict]:
         """
         Détecte les catégories sous-utilisées ce mois-ci.
 
@@ -256,7 +255,7 @@ class DynamicBudgetEngine:
 
         return results
 
-    def generate_smart_budgets(self, target_monthly_savings: float) -> Dict[str, float]:
+    def generate_smart_budgets(self, target_monthly_savings: float) -> dict[str, float]:
         """
         Génère des budgets optimisés pour atteindre un objectif d'épargne.
 
@@ -281,7 +280,7 @@ class DynamicBudgetEngine:
 
         # Dépenses moyennes par catégorie
         avg_by_category = recent_expenses.groupby("category_validated")["amount"].mean().to_dict()
-        total_avg = sum(avg_by_category.values())
+        sum(avg_by_category.values())
 
         # Calculer la réduction nécessaire
         current_savings = 0  # Simplifié
@@ -359,7 +358,7 @@ class BudgetChallenge:
     @classmethod
     def get_available_challenges(
         cls, df_history: pd.DataFrame, current_month_df: pd.DataFrame
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Retourne les challenges disponibles selon le contexte.
 
@@ -515,7 +514,7 @@ def render_challenges_section(df_history: pd.DataFrame, current_month_df: pd.Dat
                 _render_challenge_card(challenge)
 
 
-def _render_challenge_card(challenge: Dict):
+def _render_challenge_card(challenge: dict):
     """Rendu d'une carte de challenge."""
     status_icons = {"available": "⚪", "active": "🔵", "completed": "✅"}
 

@@ -3,12 +3,12 @@ Cache Monitor for Streamlit @st.cache_data functions.
 Tracks cache hit rates and provides analytics.
 """
 
-import time
 import logging
-from functools import wraps
-from collections import defaultdict
-from typing import Callable, Any
 import threading
+import time
+from collections import defaultdict
+from collections.abc import Callable
+from functools import wraps
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ class CacheMonitor:
 
                 if hit_rate < 50 and s["total_calls"] > 10:
                     lines.append(f"  ⚠️  {func_name}: Low hit rate ({hit_rate:.1f}%)")
-                    lines.append(f"      Consider increasing TTL or reviewing invalidation logic")
+                    lines.append("      Consider increasing TTL or reviewing invalidation logic")
 
                 if s["avg_compute_time_ms"] > 100 and s["misses"] > 5:
                     lines.append(

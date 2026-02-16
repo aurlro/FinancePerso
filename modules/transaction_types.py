@@ -16,7 +16,6 @@ Exemples :
   ❌ INCORRECT : amount < 0  (une dépense remboursée a un montant positif !)
 """
 
-from typing import List, Tuple, Optional
 import pandas as pd
 
 # ============================================================================
@@ -62,7 +61,7 @@ REFUND_CATEGORIES = [
 # ============================================================================
 
 
-def is_income_category(category: Optional[str]) -> bool:
+def is_income_category(category: str | None) -> bool:
     """
     Détermine si une catégorie est un revenu.
 
@@ -83,7 +82,7 @@ def is_income_category(category: Optional[str]) -> bool:
     return category.strip() in INCOME_CATEGORIES
 
 
-def is_expense_category(category: Optional[str]) -> bool:
+def is_expense_category(category: str | None) -> bool:
     """
     Détermine si une catégorie est une dépense.
 
@@ -102,7 +101,7 @@ def is_expense_category(category: Optional[str]) -> bool:
     return category not in INCOME_CATEGORIES and category not in EXCLUDED_CATEGORIES
 
 
-def is_excluded_category(category: Optional[str]) -> bool:
+def is_excluded_category(category: str | None) -> bool:
     """
     Détermine si une catégorie doit être exclue des calculs.
 
@@ -117,7 +116,7 @@ def is_excluded_category(category: Optional[str]) -> bool:
     return category.strip() in EXCLUDED_CATEGORIES
 
 
-def is_refund_category(category: Optional[str]) -> bool:
+def is_refund_category(category: str | None) -> bool:
     """
     Détermine si une catégorie est un remboursement.
 
@@ -134,7 +133,7 @@ def is_refund_category(category: Optional[str]) -> bool:
     return category.strip() in REFUND_CATEGORIES
 
 
-def get_category_type(category: Optional[str]) -> str:
+def get_category_type(category: str | None) -> str:
     """
     Retourne le type d'une catégorie.
 
@@ -156,7 +155,7 @@ def get_category_type(category: Optional[str]) -> str:
     return "unknown"
 
 
-def get_transaction_icon(category: Optional[str]) -> str:
+def get_transaction_icon(category: str | None) -> str:
     """
     Retourne l'icône emoji appropriée pour une catégorie.
 
@@ -187,7 +186,7 @@ def get_transaction_icon(category: Optional[str]) -> str:
     return icons.get(tx_type, "❓")
 
 
-def get_transaction_label(category: Optional[str]) -> str:
+def get_transaction_label(category: str | None) -> str:
     """
     Retourne le libellé français du type de transaction.
 
@@ -216,7 +215,7 @@ def get_transaction_label(category: Optional[str]) -> str:
     return labels.get(tx_type, "Inconnu")
 
 
-def get_color_for_transaction(category: Optional[str]) -> str:
+def get_color_for_transaction(category: str | None) -> str:
     """
     Retourne la couleur appropriée pour l'affichage.
 
@@ -250,7 +249,7 @@ def get_color_for_transaction(category: Optional[str]) -> str:
 # ============================================================================
 
 
-def validate_amount_consistency(category: str, amount: float) -> Tuple[bool, Optional[str]]:
+def validate_amount_consistency(category: str, amount: float) -> tuple[bool, str | None]:
     """
     Vérifie que le signe du montant correspond à la catégorie.
 

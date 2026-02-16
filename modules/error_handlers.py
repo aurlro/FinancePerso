@@ -3,10 +3,12 @@ Error handling utilities for FinancePerso.
 Provides consistent error handling and user-friendly error messages.
 """
 
-import streamlit as st
-from functools import wraps
-from typing import Callable, Any, Optional, Type, Tuple
 import logging
+from collections.abc import Callable
+from functools import wraps
+from typing import Any
+
+import streamlit as st
 
 logger = logging.getLogger(__name__)
 

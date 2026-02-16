@@ -2,10 +2,11 @@
 Tests for stats.py module (analytics/statistics).
 """
 
-import pytest
-import pandas as pd
 from datetime import date
-from modules.db.stats import get_global_stats, get_available_months
+
+import pandas as pd
+
+from modules.db.stats import get_available_months, get_global_stats
 from modules.db.transactions import save_transactions
 
 

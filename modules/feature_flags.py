@@ -3,10 +3,10 @@ Feature Flags system for FinancePerso.
 Allows gradual rollout of new features and A/B testing.
 """
 
-import os
 import json
-from typing import Dict, Optional, Any
-from dataclasses import dataclass, asdict
+import os
+from dataclasses import dataclass
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -19,10 +19,10 @@ class FeatureFlag:
     enabled: bool = False
     description: str = ""
     rollout_percentage: int = 0  # 0-100 for gradual rollout
-    user_groups: Optional[list] = None  # List of allowed user groups
+    user_groups: list | None = None  # List of allowed user groups
 
     def is_enabled_for(
-        self, user_id: Optional[str] = None, user_group: Optional[str] = None
+        self, user_id: str | None = None, user_group: str | None = None
     ) -> bool:
         """Check if feature is enabled for specific user."""
         if not self.enabled:
@@ -49,7 +49,7 @@ class FeatureFlagManager:
     """Manages feature flags with database persistence."""
 
     _instance = None
-    _cache: Dict[str, FeatureFlag] = {}
+    _cache: dict[str, FeatureFlag] = {}
     _cache_loaded = False
 
     def __new__(cls):
@@ -103,7 +103,7 @@ class FeatureFlagManager:
         logger.info(f"Loaded {len(self._cache)} feature flags")
 
     def is_enabled(
-        self, flag_name: str, user_id: Optional[str] = None, user_group: Optional[str] = None
+        self, flag_name: str, user_id: str | None = None, user_group: str | None = None
     ) -> bool:
         """Check if a feature flag is enabled."""
         self.load_flags()
@@ -142,7 +142,7 @@ class FeatureFlagManager:
         self._cache[flag.name] = flag
         logger.info(f"Updated feature flag: {flag.name}")
 
-    def get_all_flags(self) -> Dict[str, FeatureFlag]:
+    def get_all_flags(self) -> dict[str, FeatureFlag]:
         """Get all feature flags."""
         self.load_flags()
         return self._cache.copy()
@@ -182,7 +182,7 @@ def get_feature_manager() -> FeatureFlagManager:
 
 
 def is_enabled(
-    flag_name: str, user_id: Optional[str] = None, user_group: Optional[str] = None
+    flag_name: str, user_id: str | None = None, user_group: str | None = None
 ) -> bool:
     """Quick check if feature is enabled."""
     return get_feature_manager().is_enabled(flag_name, user_id, user_group)

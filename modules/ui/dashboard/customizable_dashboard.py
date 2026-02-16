@@ -4,35 +4,31 @@ Système de dashboard avec widgets déplaçables et personnalisables.
 Avec mode Preview et persistance en base de données.
 """
 
-import streamlit as st
-import pandas as pd
-from typing import Dict, List, Optional, Callable, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from enum import Enum
-import json
 
-from modules.logger import logger
+import pandas as pd
+import streamlit as st
+
 from modules.db.dashboard_layouts import (
-    get_layout,
     get_active_layout,
-    save_layout,
-    set_active_layout,
+    get_layout,
     list_layouts,
-    delete_layout,
-    duplicate_layout,
+    save_layout,
 )
-
-# Imports des widgets (déplacés ici pour éviter les imports répétés dans les fonctions)
-from modules.ui.dashboard.kpi_cards import calculate_trends, render_kpi_cards
-from modules.ui.dashboard.evolution_chart import render_evolution_chart, render_savings_trend_chart
+from modules.logger import logger
+from modules.ui.dashboard.budget_tracker import render_budget_tracker
 from modules.ui.dashboard.category_charts import (
+    prepare_expense_dataframe,
     render_category_bar_chart,
     render_monthly_stacked_chart,
-    prepare_expense_dataframe,
 )
-from modules.ui.dashboard.top_expenses import render_top_expenses
-from modules.ui.dashboard.budget_tracker import render_budget_tracker
+from modules.ui.dashboard.evolution_chart import render_evolution_chart, render_savings_trend_chart
+
+# Imports des widgets (déplacés ici pour éviter les imports répétés dans les fonctions)
+from modules.ui.dashboard.kpi_cards import calculate_trends
 from modules.ui.dashboard.smart_recommendations import render_smart_recommendations_section
+from modules.ui.dashboard.top_expenses import render_top_expenses
 
 
 class WidgetType(Enum):
@@ -66,13 +62,13 @@ class DashboardWidget:
     position: int
     size: str
     visible: bool = True
-    config: Dict = None
+    config: dict = None
 
     def __post_init__(self):
         if self.config is None:
             self.config = {}
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire pour JSON."""
         return {
             "id": self.id,
@@ -85,7 +81,7 @@ class DashboardWidget:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "DashboardWidget":
+    def from_dict(cls, data: dict) -> "DashboardWidget":
         """Crée un widget depuis un dictionnaire."""
         # Handle case where type might already be a WidgetType or a string
         type_val = data.get("type", "kpi_depenses")
@@ -213,7 +209,7 @@ class DashboardLayoutManager:
                 # Fallback aux valeurs par défaut
                 st.session_state[self.layout_key] = [w.to_dict() for w in DEFAULT_LAYOUT]
 
-    def get_layout(self, use_preview: bool = False) -> List[DashboardWidget]:
+    def get_layout(self, use_preview: bool = False) -> list[DashboardWidget]:
         """
         Récupère le layout actuel ou le preview.
 
@@ -241,7 +237,7 @@ class DashboardLayoutManager:
 
         return widgets
 
-    def get_all_widgets(self, use_preview: bool = False) -> List[DashboardWidget]:
+    def get_all_widgets(self, use_preview: bool = False) -> list[DashboardWidget]:
         """Récupère tous les widgets (même cachés)."""
         key = self.preview_key if use_preview else self.layout_key
         layout_data = st.session_state.get(key, [])
@@ -283,7 +279,7 @@ class DashboardLayoutManager:
         """Vérifie si on est en mode preview."""
         return st.session_state.get(f"{self.layout_key}_preview_mode", False)
 
-    def update_preview(self, widgets: List[DashboardWidget]):
+    def update_preview(self, widgets: list[DashboardWidget]):
         """Met à jour le layout en preview."""
         st.session_state[self.preview_key] = [w.to_dict() for w in widgets]
 
@@ -489,13 +485,12 @@ def _get_column_width(size: str) -> int:
 def render_customizable_overview(
     df_current: pd.DataFrame,
     df_prev: pd.DataFrame,
-    cat_emoji_map: Dict,
+    cat_emoji_map: dict,
     df_full: pd.DataFrame = None,
 ):
     """
     Rend la vue d'ensemble personnalisée avec les widgets configurables et grille responsive.
     """
-    from modules.db.budgets import get_budgets
     from modules.ui import card_kpi
 
     manager = DashboardLayoutManager()
@@ -536,7 +531,7 @@ def render_customizable_overview(
             return
 
         # Calculer les ratios de colonnes
-        total_width = sum(_get_column_width(w.size) for w in current_row_widgets)
+        sum(_get_column_width(w.size) for w in current_row_widgets)
 
         if len(current_row_widgets) == 1:
             # Widget seul sur la ligne
@@ -672,9 +667,10 @@ def _render_widget_content(
             render_budget_tracker(df_exp, cat_emoji_map, df_full)
 
         elif widget.type == WidgetType.BUDGET_ALERTS and not df_current.empty:
-            from modules.ai import predict_budget_overruns, get_budget_alerts_summary
-            from modules.db.budgets import get_budgets
             import datetime
+
+            from modules.ai import get_budget_alerts_summary, predict_budget_overruns
+            from modules.db.budgets import get_budgets
 
             budgets = get_budgets()
             if not budgets.empty:

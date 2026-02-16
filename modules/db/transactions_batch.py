@@ -3,11 +3,11 @@ Batch operations for transactions with multi-table transactions.
 Provides atomic operations for complex database updates.
 """
 
-import pandas as pd
-from typing import List, Dict, Optional, Tuple
 from contextlib import contextmanager
+
+import pandas as pd
+
 from modules.db.connection import get_db_connection
-from modules.db.rules import add_learning_rule
 from modules.logger import logger
 
 
@@ -42,13 +42,13 @@ def atomic_transaction():
 
 
 def batch_update_transactions_with_rule(
-    transaction_ids: List[int],
+    transaction_ids: list[int],
     category: str,
-    pattern: Optional[str] = None,
-    member: Optional[str] = None,
-    tags: Optional[str] = None,
-    beneficiary: Optional[str] = None,
-) -> Tuple[int, bool]:
+    pattern: str | None = None,
+    member: str | None = None,
+    tags: str | None = None,
+    beneficiary: str | None = None,
+) -> tuple[int, bool]:
     """
     Atomically update transactions and create a learning rule.
 
@@ -138,7 +138,7 @@ def batch_categorize_transactions(
     from modules.db.rules import get_compiled_learning_rules
 
     # Pre-load rules for performance
-    compiled_rules = get_compiled_learning_rules()
+    get_compiled_learning_rules()
 
     results = []
     total = len(transactions_df)
@@ -168,7 +168,7 @@ def batch_categorize_transactions(
     return pd.concat([transactions_df, results_df], axis=1)
 
 
-def merge_categories_atomic(source_category: str, target_category: str) -> Dict[str, int]:
+def merge_categories_atomic(source_category: str, target_category: str) -> dict[str, int]:
     """
     Atomically merge two categories.
     Updates all transactions, rules, and budgets in a single transaction.
@@ -254,7 +254,7 @@ def merge_categories_atomic(source_category: str, target_category: str) -> Dict[
 
 
 def bulk_tag_transactions(
-    transaction_ids: List[int], tags_to_add: List[str], create_if_missing: bool = True
+    transaction_ids: list[int], tags_to_add: list[str], create_if_missing: bool = True
 ) -> int:
     """
     Add tags to multiple transactions atomically.
@@ -305,7 +305,7 @@ def bulk_tag_transactions(
         return updated
 
 
-def batch_delete_transactions(transaction_ids: List[int], create_backup: bool = True) -> int:
+def batch_delete_transactions(transaction_ids: list[int], create_backup: bool = True) -> int:
     """
     Delete multiple transactions with optional backup.
 

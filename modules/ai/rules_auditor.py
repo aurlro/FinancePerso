@@ -5,7 +5,6 @@ Analyzes learning rules to detect inconsistencies, conflicts, and potential impr
 """
 
 import pandas as pd
-from modules.logger import logger
 
 
 def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
@@ -123,7 +122,7 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                         "message": f"La règle '{pat}' a été créée il y a plus de 6 mois ({rule['created_at']}). Est-elle toujours d'actualité ?",
                     }
                 )
-        except (ValueError, TypeError, KeyError) as e:
+        except (ValueError, TypeError, KeyError):
             # Skip rules with invalid or missing dates
             pass
 

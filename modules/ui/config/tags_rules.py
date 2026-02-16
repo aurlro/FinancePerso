@@ -1,15 +1,14 @@
 import streamlit as st
-from modules.db.tags import get_all_tags, remove_tag_from_all_transactions
-from modules.db.rules import get_learning_rules, delete_learning_rule
+
+from modules.db.rules import delete_learning_rule, get_learning_rules
 from modules.db.settings import get_internal_transfer_targets, set_internal_transfer_targets
+from modules.db.tags import get_all_tags, remove_tag_from_all_transactions
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    delete_feedback,
-    show_success,
     show_error,
+    toast_error,
+    toast_info,
+    toast_success,
+    toast_warning,
 )
 
 
@@ -190,7 +189,6 @@ def render_tags_rules():
     if current_targets:
         st.subheader("🗑️ Supprimer des mots-clés")
         cols_delete = st.columns(min(len(current_targets), 4))
-        deleted_any = False
         for idx, target in enumerate(current_targets):
             with cols_delete[idx % 4]:
                 if st.button(

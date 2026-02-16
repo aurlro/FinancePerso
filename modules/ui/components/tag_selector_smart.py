@@ -9,13 +9,14 @@ Features:
 - Bulk apply tags across multiple transactions
 """
 
-import streamlit as st
-import pandas as pd
-from typing import List, Dict, Any
 from difflib import SequenceMatcher
+from typing import Any
 
+import pandas as pd
+import streamlit as st
+
+from modules.db.categories import add_tag_to_category, get_categories_suggested_tags
 from modules.db.tags import get_all_tags
-from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
 from modules.db.transactions import get_transaction_by_id, get_transactions, update_transaction_tags
 
 # Initialisation des variables de session
@@ -34,7 +35,7 @@ def find_similar_transactions(
     category: str,
     df_context: pd.DataFrame = None,
     threshold: float = 0.75,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Find transactions similar to the given one.
 
@@ -98,7 +99,7 @@ def find_similar_transactions(
 
 
 def apply_tag_to_similar(
-    tag: str, similar_transactions: List[Dict[str, Any]], exclude_ids: List[int] = None
+    tag: str, similar_transactions: list[dict[str, Any]], exclude_ids: list[int] = None
 ) -> int:
     """
     Apply a tag to all similar transactions.
@@ -137,7 +138,7 @@ def apply_tag_to_similar(
 def render_tag_propagation_dialog(
     tag: str,
     source_transaction_id: int,
-    similar_transactions: List[Dict[str, Any]],
+    similar_transactions: list[dict[str, Any]],
     key_suffix: str = "",
 ) -> bool:
     """
@@ -200,13 +201,13 @@ def render_tag_propagation_dialog(
 
 def render_smart_tag_selector(
     transaction_id: int,
-    current_tags: List[str],
+    current_tags: list[str],
     category: str,
     key_suffix: str = "",
     df_context: pd.DataFrame = None,
     max_quick_tags: int = 3,
     enable_propagation: bool = True,
-) -> List[str]:
+) -> list[str]:
     """
     Render a smart tag selector with propagation suggestions.
 

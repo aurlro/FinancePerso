@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Composants de feedback UX améliorés pour FinancePerso.
 
@@ -6,11 +5,13 @@ Ce module fournit des wrappers et composants pour améliorer l'expérience utili
 avec des messages clairs, des indicateurs de progression et des confirmations.
 """
 
-import streamlit as st
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Callable, Any, Optional
 from functools import wraps
+from typing import Any
+
+import streamlit as st
 
 
 def show_action_toast(message: str, type_: str = "success", duration: int = 3):
@@ -74,8 +75,8 @@ def loading_spinner(text: str = "Chargement en cours...", show_time: bool = True
 
 def with_feedback(
     action_name: str,
-    success_msg: Optional[str] = None,
-    error_msg: Optional[str] = None,
+    success_msg: str | None = None,
+    error_msg: str | None = None,
     show_spinner: bool = True,
 ):
     """
@@ -126,7 +127,7 @@ def confirm_button(
     label: str,
     confirmation_text: str,
     on_confirm: Callable,
-    on_cancel: Optional[Callable] = None,
+    on_cancel: Callable | None = None,
     confirm_label: str = "Confirmer",
     cancel_label: str = "Annuler",
 ):
@@ -263,10 +264,10 @@ action_logger = ActionLogger()
 
 def logged_button(
     label: str,
-    key: Optional[str] = None,
-    help: Optional[str] = None,
+    key: str | None = None,
+    help: str | None = None,
     type_: str = "secondary",
-    on_click: Optional[Callable] = None,
+    on_click: Callable | None = None,
 ) -> bool:
     """
     Bouton avec logging automatique pour le débogage.
@@ -285,7 +286,7 @@ def logged_button(
 
     # Wrapper pour le on_click avec logging
     def wrapped_click():
-        action_logger.log(f"🖱️ Bouton cliqué", label)
+        action_logger.log("🖱️ Bouton cliqué", label)
         if on_click:
             on_click()
 
@@ -294,7 +295,7 @@ def logged_button(
     )
 
     if clicked and not on_click:
-        action_logger.log(f"🖱️ Bouton cliqué", label)
+        action_logger.log("🖱️ Bouton cliqué", label)
 
     return clicked
 

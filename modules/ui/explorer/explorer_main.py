@@ -2,15 +2,16 @@
 Explorer Main - Vue principale de l'explorateur.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import Optional
-from modules.db.transactions import get_all_transactions
+import streamlit as st
+
 from modules.db.categories import get_categories_with_emojis
-from modules.ui import load_css
+from modules.db.transactions import get_all_transactions
+
 from .explorer_filters import render_explorer_filters
-from .explorer_results import render_explorer_results
 from .explorer_launcher import render_back_button
+from .explorer_results import render_explorer_results
 
 
 def load_data_for_explorer(explorer_type: str, value: str) -> pd.DataFrame:

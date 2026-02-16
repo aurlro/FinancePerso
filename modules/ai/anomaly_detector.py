@@ -5,10 +5,10 @@ Identifies transactions with unusual amounts compared to historical patterns.
 """
 
 import pandas as pd
-import numpy as np
-from modules.utils import clean_label
+
 from modules.logger import logger
 from modules.transaction_types import filter_expense_transactions
+from modules.utils import clean_label
 
 
 def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> list:
@@ -16,7 +16,8 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
     Detect transactions with anomalous amounts based on historical patterns.
 
     Args:
-        df: DataFrame with transactions (must have 'label', 'amount', 'id', 'date', 'category_validated')
+        df: DataFrame with transactions (must have 'label', 'amount', 'id', 
+            'date', 'category_validated')
         threshold_sigma: Number of standard deviations to consider anomalous (default: 2.0)
 
     Returns:
@@ -85,7 +86,10 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
                 {
                     "type": "Anomalie Montant",
                     "label": label_clean,
-                    "details": f"Montant inhabituel détecté. Moyenne: {mean_amt:.2f}€ (±{std_amt:.2f}€)",
+                    "details": (
+                        f"Montant inhabituel détecté. "
+                        f"Moyenne: {mean_amt:.2f}€ (±{std_amt:.2f}€)"
+                    ),
                     "rows": anomaly_rows,
                     "expected_range": (mean_amt, std_amt),
                     "severity": "high" if anomalous_txs["z_score"].abs().max() > 3.0 else "medium",

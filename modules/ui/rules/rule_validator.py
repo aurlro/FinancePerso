@@ -5,16 +5,14 @@ Provides utilities for testing regex patterns against actual transactions
 to preview which transactions would match a pattern before creating a rule.
 """
 
-import streamlit as st
-import pandas as pd
 import re
-from typing import Optional
+
+import streamlit as st
 
 from modules.db.transactions import get_all_transactions
-from modules.db.categories import get_categories
-from modules.utils import validate_regex_pattern
 from modules.logger import logger
 from modules.transaction_types import get_color_for_transaction
+from modules.utils import validate_regex_pattern
 
 
 def test_pattern_against_transactions(

@@ -3,20 +3,19 @@ Composants visuels pour afficher les notifications dans Streamlit.
 Design moderne avec animations, barres de progression, et actions.
 """
 
+from collections.abc import Callable
+
 import streamlit as st
-import streamlit.components.v1 as components
-from typing import List, Optional, Callable
 
-from .types import (
-    Notification,
-    NotificationLevel,
-    NotificationAction,
-    LEVEL_COLORS,
-    LEVEL_BG_COLORS,
-    DEFAULT_ICONS,
-)
 from .manager import get_notification_manager
-
+from .types import (
+    DEFAULT_ICONS,
+    LEVEL_BG_COLORS,
+    LEVEL_COLORS,
+    Notification,
+    NotificationAction,
+    NotificationLevel,
+)
 
 # ==================== Composants Toast ====================
 
@@ -193,7 +192,7 @@ def render_toast_container():
     )
 
 
-def render_notification_toast(notification: Notification, on_dismiss: Optional[Callable] = None):
+def render_notification_toast(notification: Notification, on_dismiss: Callable | None = None):
     """
     Rend une notification au format toast.
 
@@ -280,11 +279,11 @@ def render_all_active_toasts():
 def render_inline_notification(
     message: str,
     level: NotificationLevel = NotificationLevel.INFO,
-    title: Optional[str] = None,
-    icon: Optional[str] = None,
-    actions: Optional[List[NotificationAction]] = None,
+    title: str | None = None,
+    icon: str | None = None,
+    actions: list[NotificationAction] | None = None,
     dismissible: bool = False,
-    key: Optional[str] = None,
+    key: str | None = None,
 ) -> bool:
     """
     Affiche une notification inline dans le flux de la page.
@@ -368,7 +367,7 @@ def render_inline_notification(
 
 
 def render_achievement_unlock(
-    title: str, description: str, icon: str = "🏆", reward: Optional[str] = None
+    title: str, description: str, icon: str = "🏆", reward: str | None = None
 ):
     """
     Affiche une célébration pour un achievement débloqué.
@@ -425,8 +424,8 @@ def render_achievement_unlock(
 
 def render_loading_state(
     message: str = "Chargement en cours...",
-    submessage: Optional[str] = None,
-    progress: Optional[float] = None,
+    submessage: str | None = None,
+    progress: float | None = None,
 ):
     """
     Affiche un état de chargement amélioré.
@@ -482,8 +481,8 @@ def render_empty_state(
     icon: str,
     title: str,
     description: str,
-    action_label: Optional[str] = None,
-    action_callback: Optional[Callable] = None,
+    action_label: str | None = None,
+    action_callback: Callable | None = None,
 ):
     """
     Affiche un état vide engageant.
@@ -534,7 +533,7 @@ def show_confirmation(
     title: str,
     message: str,
     on_confirm: Callable,
-    on_cancel: Optional[Callable] = None,
+    on_cancel: Callable | None = None,
     confirm_label: str = "Confirmer",
     cancel_label: str = "Annuler",
     danger: bool = False,

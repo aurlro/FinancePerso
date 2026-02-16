@@ -6,22 +6,21 @@ l'utilisateur atteint des milestones importants.
 """
 
 import json
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, Dict, List
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
 
 import streamlit as st
 
 from modules.logger import logger
-
 
 CELEBRATIONS_FILE = Path("Data/celebrations.json")
 
 
 class MilestoneType(Enum):
     """Types de milestones célébrables."""
+
     TRANSACTIONS_100 = "first_100_tx"
     TRANSACTIONS_500 = "first_500_tx"
     TRANSACTIONS_1000 = "first_1000_tx"
@@ -37,13 +36,14 @@ class MilestoneType(Enum):
 @dataclass
 class Milestone:
     """Un milestone avec ses propriétés."""
+
     type: MilestoneType
     title: str
     message: str
-    badge: Optional[str] = None
+    badge: str | None = None
     emoji: str = "🏆"
-    
-    def to_dict(self) -> Dict:
+
+    def to_dict(self) -> dict:
         return {
             "type": self.type.value,
             "title": self.title,
@@ -130,71 +130,70 @@ MILESTONES = {
 
 class CelebrationManager:
     """Gestionnaire des célébrations de milestones."""
-    
+
     def __init__(self):
         self._ensure_file_exists()
         self.celebrated = self._load_celebrated()
-    
+
     def _ensure_file_exists(self):
         """Créer le fichier s'il n'existe pas."""
         CELEBRATIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
         if not CELEBRATIONS_FILE.exists():
             CELEBRATIONS_FILE.write_text("{}", encoding="utf-8")
-    
-    def _load_celebrated(self) -> Dict[str, str]:
+
+    def _load_celebrated(self) -> dict[str, str]:
         """Charger les milestones déjà célébrés."""
         try:
             return json.loads(CELEBRATIONS_FILE.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
-    
+
     def _save_celebrated(self):
         """Sauvegarder les milestones célébrés."""
         try:
             CELEBRATIONS_FILE.write_text(json.dumps(self.celebrated, indent=2), encoding="utf-8")
         except Exception as e:
             logger.error(f"Error saving celebrations: {e}")
-    
+
     def has_celebrated(self, milestone_type: MilestoneType) -> bool:
         """Vérifier si un milestone a déjà été célébré."""
         return milestone_type.value in self.celebrated
-    
+
     def mark_celebrated(self, milestone_type: MilestoneType):
         """Marquer un milestone comme célébré."""
         self.celebrated[milestone_type.value] = datetime.now().isoformat()
         self._save_celebrated()
-    
-    def check_milestones(self) -> List[Milestone]:
+
+    def check_milestones(self) -> list[Milestone]:
         """Vérifier tous les milestones et retourner ceux à célébrer."""
         to_celebrate = []
-        
+
         try:
             # Importer les stats nécessaires
-            from modules.db.stats import get_global_stats
-            from modules.db.transactions import get_all_transactions
-            from modules.gamification import GamificationManager
             from modules.db.rules import get_learning_rules
+            from modules.db.stats import get_global_stats
+            from modules.gamification import GamificationManager
             from modules.savings_goals import get_achieved_goals
-            
+
             stats = get_global_stats()
-            
+
             # Vérifier les transactions
             if stats:
-                tx_count = stats.get('total_transactions', 0)
-                
+                tx_count = stats.get("total_transactions", 0)
+
                 if tx_count >= 1000 and not self.has_celebrated(MilestoneType.TRANSACTIONS_1000):
                     to_celebrate.append(MILESTONES[MilestoneType.TRANSACTIONS_1000])
                 elif tx_count >= 500 and not self.has_celebrated(MilestoneType.TRANSACTIONS_500):
                     to_celebrate.append(MILESTONES[MilestoneType.TRANSACTIONS_500])
                 elif tx_count >= 100 and not self.has_celebrated(MilestoneType.TRANSACTIONS_100):
                     to_celebrate.append(MILESTONES[MilestoneType.TRANSACTIONS_100])
-            
+
             # Vérifier le streak
             try:
                 gamification = GamificationManager()
                 streak_stats = gamification.get_stats_summary()
-                streak = streak_stats.get('streak', 0)
-                
+                streak = streak_stats.get("streak", 0)
+
                 if streak >= 100 and not self.has_celebrated(MilestoneType.STREAK_100):
                     to_celebrate.append(MILESTONES[MilestoneType.STREAK_100])
                 elif streak >= 30 and not self.has_celebrated(MilestoneType.STREAK_30):
@@ -203,7 +202,7 @@ class CelebrationManager:
                     to_celebrate.append(MILESTONES[MilestoneType.STREAK_7])
             except Exception:
                 pass
-            
+
             # Vérifier les règles
             try:
                 rules = get_learning_rules()
@@ -212,7 +211,7 @@ class CelebrationManager:
                         to_celebrate.append(MILESTONES[MilestoneType.RULE_WIZARD])
             except Exception:
                 pass
-            
+
             # Vérifier les objectifs atteints
             try:
                 achieved = get_achieved_goals()
@@ -223,15 +222,15 @@ class CelebrationManager:
                         to_celebrate.append(MILESTONES[MilestoneType.GOAL_ACHIEVED])
             except Exception:
                 pass
-                
+
         except Exception as e:
             logger.error(f"Error checking milestones: {e}")
-        
+
         return to_celebrate
 
 
 # Singleton
-_celebration_manager: Optional[CelebrationManager] = None
+_celebration_manager: CelebrationManager | None = None
 
 
 def get_celebration_manager() -> CelebrationManager:
@@ -244,27 +243,27 @@ def get_celebration_manager() -> CelebrationManager:
 
 def render_celebration(milestone: Milestone):
     """Afficher une célébration pour un milestone."""
-    
+
     # Effet visuel
     st.balloons()
-    
+
     # Message de succès
     st.success(f"## {milestone.emoji} {milestone.title}\n{milestone.message}")
-    
+
     # Badge si applicable
     if milestone.badge:
         st.info(f"🏅 Badge débloqué: **{milestone.badge}**")
-    
+
     # Marquer comme célébré
     get_celebration_manager().mark_celebrated(milestone.type)
 
 
 def check_and_render_celebrations():
     """Vérifier et afficher les célébrations en attente."""
-    
+
     manager = get_celebration_manager()
     milestones = manager.check_milestones()
-    
+
     for milestone in milestones:
         render_celebration(milestone)
 
@@ -272,9 +271,10 @@ def check_and_render_celebrations():
 # Fonction utilitaire pour célébrer un objectif atteint spécifique
 def celebrate_goal_achieved(goal_name: str, amount: float):
     """Célébrer l'atteinte d'un objectif d'épargne spécifique."""
-    
+
     st.balloons()
-    st.success(f"""
+    st.success(
+        f"""
     ## 🎉 Félicitations !
     
     Vous avez atteint votre objectif **{goal_name}** !
@@ -282,13 +282,14 @@ def celebrate_goal_achieved(goal_name: str, amount: float):
     Montant épargné: **{amount:.0f}€**
     
     Quel accomplissement ! 🏆
-    """)
-    
+    """
+    )
+
     # Option de partage
     col1, col2 = st.columns(2)
     with col1:
         st.button("📱 Partager", key="share_goal_achieved")
     with col2:
         if st.button("🎯 Nouvel objectif", key="new_goal_after_achievement"):
-            st.session_state['show_goal_form'] = True
+            st.session_state["show_goal_form"] = True
             st.rerun()

@@ -9,8 +9,9 @@ Page refactorisée avec architecture propre :
 """
 
 import streamlit as st
-from modules.ui import load_css, render_scroll_to_top
+
 from modules.db.migrations import init_db
+from modules.ui import load_css, render_scroll_to_top
 from modules.ui.assistant.state import init_assistant_state, switch_to_tab
 
 # Page config
@@ -31,10 +32,10 @@ tab_dashboard, tab_analytics, tab_audit, tab_config = st.tabs(
 )
 
 # Import tab renderers
-from modules.ui.assistant.dashboard_tab import render_dashboard_tab
 from modules.ui.assistant.analytics_tab import render_analytics_tab
 from modules.ui.assistant.audit_tab import render_audit_tab
 from modules.ui.assistant.config_tab import render_config_tab
+from modules.ui.assistant.dashboard_tab import render_dashboard_tab
 
 # Render tabs
 with tab_dashboard:

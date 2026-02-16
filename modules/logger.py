@@ -31,7 +31,7 @@ def setup_logger(name):
             )
             f_handler.setFormatter(formatter)
             logger.addHandler(f_handler)
-        except (OSError, IOError) as e:
+        except OSError as e:
             # If file logging fails, at least keep console logging
             print(f"Warning: Could not setup file logging: {e}")
 

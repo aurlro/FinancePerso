@@ -2,8 +2,8 @@
 Explorer Launcher - Boutons et utilitaires pour lancer l'explorateur.
 """
 
+
 import streamlit as st
-from typing import Optional
 
 
 def launch_explorer(explorer_type: str, value: str, from_page: str = "3_Synthèse") -> None:
@@ -28,10 +28,10 @@ def render_explore_button(
     explorer_type: str,
     value: str,
     from_page: str = "3_Synthèse",
-    label: Optional[str] = None,
+    label: str | None = None,
     use_container_width: bool = False,
     button_type: str = "secondary",
-    key_suffix: Optional[str] = None,
+    key_suffix: str | None = None,
     **button_kwargs,
 ) -> None:
     """
@@ -65,7 +65,7 @@ def render_explore_button(
 
 
 def render_explore_link(
-    explorer_type: str, value: str, from_page: str = "3_Synthèse", label: Optional[str] = None
+    explorer_type: str, value: str, from_page: str = "3_Synthèse", label: str | None = None
 ) -> None:
     """
     Render a link that launches the explorer.

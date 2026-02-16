@@ -1,12 +1,13 @@
-import streamlit as st
 import pandas as pd
-from modules.ui import card_kpi
+import streamlit as st
+
 from modules.transaction_types import (
-    calculate_true_income,
-    calculate_true_expenses,
     calculate_savings_rate,
+    calculate_true_expenses,
+    calculate_true_income,
     filter_excluded_transactions,
 )
+from modules.ui import card_kpi
 
 
 def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:

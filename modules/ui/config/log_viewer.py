@@ -1,6 +1,8 @@
-import streamlit as st
 import os
-from modules.logger import LOG_FILE, LOG_DIR
+
+import streamlit as st
+
+from modules.logger import LOG_DIR, LOG_FILE
 
 
 def render_log_viewer():
@@ -36,7 +38,7 @@ def render_log_viewer():
         st.metric("Taille", f"{file_size_kb:.1f} KB")
     with col2:
         # Count lines
-        with open(LOG_FILE, "r", encoding="utf-8") as f:
+        with open(LOG_FILE, encoding="utf-8") as f:
             line_count = sum(1 for _ in f)
         st.metric("Lignes", line_count)
     with col3:
@@ -65,7 +67,7 @@ def render_log_viewer():
         )
 
     # Load and filter logs
-    with open(LOG_FILE, "r", encoding="utf-8") as f:
+    with open(LOG_FILE, encoding="utf-8") as f:
         logs = f.readlines()
 
     # Apply filters

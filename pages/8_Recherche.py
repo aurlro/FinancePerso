@@ -1,9 +1,10 @@
 import streamlit as st
-from modules.ui import load_css, render_scroll_to_top
-from modules.ui.layout import render_app_info
+
 from modules.db.migrations import init_db
-from modules.ui.global_search import render_global_search_full
+from modules.ui import load_css, render_scroll_to_top
 from modules.ui.explorer import render_explorer_page
+from modules.ui.global_search import render_global_search_full
+from modules.ui.layout import render_app_info
 
 # Page config
 st.set_page_config(

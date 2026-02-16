@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Pytest configuration and shared fixtures for FinancePerso tests.
 """
-import pytest
-import sqlite3
 import os
+import sqlite3
 import tempfile
+from datetime import date
+
+import pytest
 import streamlit as st
-from datetime import datetime, date
 
 
 @pytest.fixture(autouse=True)
@@ -20,7 +20,6 @@ def reset_encryption_singleton():
     # Reset the singleton instance before test
     import modules.encryption as enc_module
 
-    original_instance = enc_module._encryption_instance
     enc_module._encryption_instance = None
 
     yield
@@ -206,7 +205,7 @@ def temp_db():
 
     try:
         os.unlink(db_path)
-    except (FileNotFoundError, PermissionError, OSError) as e:
+    except (FileNotFoundError, PermissionError, OSError):
         # Ignore cleanup errors in tests
         pass
 
@@ -216,7 +215,7 @@ def sample_transactions():
     """
     Sample transaction data for testing.
     """
-    today = date.today().isoformat()
+    date.today().isoformat()
     return [
         {
             "date": "2024-01-15",

@@ -2,7 +2,6 @@
 Tests for audit.py module.
 """
 
-import pytest
 from modules.db.audit import get_suggested_mappings, get_transfer_inconsistencies
 from modules.db.members import get_orphan_labels
 
@@ -61,7 +60,7 @@ class TestSuggestedMappings:
         )
         db_connection.commit()
 
-        suggestions = get_suggested_mappings()
+        get_suggested_mappings()
         # Should be empty or very limited
 
     def test_get_suggested_mappings_detected(self, temp_db, db_connection):

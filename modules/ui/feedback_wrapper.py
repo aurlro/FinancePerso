@@ -3,14 +3,17 @@ Feedback wrapper for user actions.
 Provides consistent feedback (success, error, warning, info) for all user operations.
 """
 
-import streamlit as st
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable, Any, Optional
+from typing import Any
+
+import streamlit as st
+
 from modules.logger import logger
 
 
 def with_feedback(
-    success_msg: Optional[str] = None,
+    success_msg: str | None = None,
     error_msg: str = "Une erreur est survenue",
     showSpinner: bool = False,
     spinner_text: str = "Traitement en cours...",
@@ -36,7 +39,7 @@ def with_feedback(
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
-            from modules.ui.feedback import toast_success, toast_error
+            from modules.ui.feedback import toast_error, toast_success
 
             try:
                 if showSpinner:
@@ -65,7 +68,7 @@ def with_feedback(
 
 def with_confirm(
     confirm_message: str = "Êtes-vous sûr ?",
-    success_msg: Optional[str] = None,
+    success_msg: str | None = None,
     error_msg: str = "Action échouée",
 ):
     """
@@ -80,7 +83,7 @@ def with_confirm(
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs) -> Any:
-            from modules.ui.feedback import toast_success, toast_error
+            from modules.ui.feedback import toast_error, toast_success
 
             # Check if confirmed via session state
             confirm_key = f"confirm_{func.__name__}"
@@ -113,8 +116,8 @@ def show_action_feedback(
     action_type: str,
     entity_name: str,
     success: bool = True,
-    error_detail: Optional[str] = None,
-    icon: Optional[str] = None,
+    error_detail: str | None = None,
+    icon: str | None = None,
 ):
     """
     Show standardized feedback for CRUD operations.
@@ -126,7 +129,7 @@ def show_action_feedback(
         error_detail: Optional error details
         icon: Optional custom icon
     """
-    from modules.ui.feedback import toast_success, toast_error, toast_warning
+    from modules.ui.feedback import toast_error, toast_success
 
     action_labels = {
         "create": ("créée", "création"),
@@ -163,7 +166,7 @@ def show_action_feedback(
 def safe_execute(
     func: Callable,
     *args,
-    success_msg: Optional[str] = None,
+    success_msg: str | None = None,
     error_msg: str = "Action échouée",
     default_return: Any = None,
     **kwargs,
@@ -182,7 +185,7 @@ def safe_execute(
     Returns:
         Function result or default_return on error
     """
-    from modules.ui.feedback import toast_success, toast_error
+    from modules.ui.feedback import toast_error, toast_success
 
     try:
         result = func(*args, **kwargs)

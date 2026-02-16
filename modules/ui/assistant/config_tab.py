@@ -2,16 +2,17 @@
 Configuration Tab - Paramétrage de l'IA et configuration automatique.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import Callable
-from modules.db.transactions import get_all_transactions
-from modules.db.rules import add_learning_rule
+import streamlit as st
+
+from modules.ai_manager import get_active_model_name, get_ai_provider
+from modules.analytics import detect_financial_profile, detect_recurring_payments
 from modules.db.categories import get_categories
-from modules.analytics import detect_recurring_payments, detect_financial_profile
-from modules.ai_manager import get_ai_provider, get_active_model_name
-from modules.ui.assistant.state import get_assistant_state, set_assistant_state
+from modules.db.rules import add_learning_rule
+from modules.db.transactions import get_all_transactions
 from modules.ui import card_kpi
+from modules.ui.assistant.state import get_assistant_state, set_assistant_state
 
 
 def render_config_tab():
@@ -58,7 +59,7 @@ def render_ai_status_card():
                 with st.spinner("Test en cours..."):
                     try:
                         # Simple test prompt
-                        response = provider.generate_text(
+                        provider.generate_text(
                             "Réponds simplement 'OK' pour confirmer la connexion.",
                             model_name=model_name,
                         )
@@ -66,7 +67,7 @@ def render_ai_status_card():
                     except Exception as e:
                         st.error(f"❌ Erreur : {e}")
 
-    except Exception as e:
+    except Exception:
         st.error("❌ IA non disponible")
         st.info(
             """

@@ -1,16 +1,17 @@
 # modules/ui/components/avatar_selector.py
 
+from collections.abc import Callable
+
 import streamlit as st
-from typing import List, Optional, Callable
 
 
 def render_avatar_selector(
     label: str,
-    options: List[str],
+    options: list[str],
     current_value: str,
     key: str,
-    on_change: Optional[Callable] = None,
-    color_map: Optional[dict] = None,
+    on_change: Callable | None = None,
+    color_map: dict | None = None,
 ) -> str:
     """
     Render a horizontal avatar selector.
@@ -27,7 +28,6 @@ def render_avatar_selector(
         The selected value
     """
 
-    is_expanded_key = f"{key}_expanded"
 
     # CSS injection for clicking (Streamlit buttons don't support custom HTML seamlessly inside them,
     # so we use st.button with custom styling for the "Avatars")

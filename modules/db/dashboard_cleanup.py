@@ -4,12 +4,10 @@ Gestion automatique et manuelle des problèmes de dashboard.
 Peut être lancé au démarrage ou manuellement.
 """
 
-import sqlite3
 import json
 import logging
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
@@ -33,7 +31,7 @@ class CleanupResult:
     widgets_checked: int
     widgets_fixed: int
     widgets_removed: int
-    errors: List[str]
+    errors: list[str]
     message: str
 
 
@@ -277,7 +275,7 @@ class DashboardCleanupManager:
         """Supprime uniquement les widgets corrompus."""
         return self._auto_repair()  # Même logique
 
-    def _validate_widget(self, widget: Dict, context: str) -> List[str]:
+    def _validate_widget(self, widget: dict, context: str) -> list[str]:
         """Valide un widget et retourne les erreurs."""
         errors = []
 
@@ -301,7 +299,7 @@ class DashboardCleanupManager:
 
         return errors
 
-    def _repair_widget(self, widget: Dict) -> Tuple[bool, Dict, bool]:
+    def _repair_widget(self, widget: dict) -> tuple[bool, dict, bool]:
         """
         Tente de réparer un widget corrompu.
 
@@ -359,7 +357,7 @@ class DashboardCleanupManager:
 
         return True, repaired, was_fixed
 
-    def _get_all_layouts(self) -> List[Dict]:
+    def _get_all_layouts(self) -> list[dict]:
         """Récupère tous les layouts de la base."""
         try:
             with get_db_connection() as conn:
@@ -380,7 +378,7 @@ class DashboardCleanupManager:
             logger.error(f"Error fetching layouts: {e}")
             return []
 
-    def _parse_widgets(self, layout_data: str) -> List[Dict]:
+    def _parse_widgets(self, layout_data: str) -> list[dict]:
         """Parse les widgets depuis le JSON."""
         try:
             if isinstance(layout_data, str):
@@ -393,7 +391,7 @@ class DashboardCleanupManager:
             logger.error(f"Invalid JSON in layout_data: {layout_data[:100]}...")
             return []
 
-    def _save_layout(self, layout_id: int, widgets: List[Dict]):
+    def _save_layout(self, layout_id: int, widgets: list[dict]):
         """Sauvegarde un layout modifié."""
         try:
             with get_db_connection() as conn:

@@ -1,15 +1,16 @@
+from collections.abc import Callable
+
 import streamlit as st
-from typing import List, Callable, Optional
 
 
 def render_chip_selector(
     label: str,
-    options: List[str],
+    options: list[str],
     current_value: str,  # or List[str] if multi
     key: str,
-    on_change: Optional[Callable] = None,
+    on_change: Callable | None = None,
     multi: bool = False,
-) -> str | List[str]:
+) -> str | list[str]:
     """
     Render a horizontal chip selector.
     """

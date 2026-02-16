@@ -4,12 +4,14 @@ Handles members, member mappings (card suffixes), and member-related queries.
 """
 
 import sqlite3
-import pandas as pd
 import unicodedata
+
+import pandas as pd
 import streamlit as st
+
+from modules.constants import MemberType
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-from modules.constants import MemberType
 
 
 def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
@@ -380,7 +382,7 @@ def detect_member_from_content(
 
     # 4. Account-based defaults (if account belongs to one person)
     if account_label:
-        account_upper = account_label.upper()
+        account_label.upper()
 
         # Check explicit mapping table first
         account_maps = get_account_member_mappings()
@@ -528,8 +530,8 @@ def repair_unknown_members(dry_run: bool = False) -> dict:
         - default_member: The member used for repair
         - sample_repaired: Sample of repaired transaction IDs
     """
-    from modules.db.settings import get_default_member, get_force_member_identification
     from modules.cache_manager import invalidate_transaction_caches
+    from modules.db.settings import get_default_member
 
     default_member = get_default_member()
 
@@ -666,7 +668,7 @@ def ensure_no_unknown_members() -> dict:
     Returns:
         Summary of actions taken
     """
-    from modules.db.settings import set_force_member_identification, get_default_member
+    from modules.db.settings import get_default_member, set_force_member_identification
 
     # Step 1: Enable force identification
     set_force_member_identification(True)

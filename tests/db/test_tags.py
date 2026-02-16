@@ -2,17 +2,17 @@
 Tests for tags.py module.
 """
 
-import pytest
 import pandas as pd
+
 from modules.db.tags import (
     get_all_tags,
-    remove_tag_from_all_transactions,
     normalize_tags_for_transaction,
+    remove_tag_from_all_transactions,
 )
 from modules.db.transactions import (
+    get_all_transactions,
     save_transactions,
     update_transaction_category,
-    get_all_transactions,
 )
 
 

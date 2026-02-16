@@ -5,11 +5,11 @@ Handles monthly budget management by category with an optimized UX.
 Shows only active budgets by default, with option to add/edit others.
 """
 
-import streamlit as st
-import pandas as pd
-from typing import Optional
 
-from modules.db.budgets import get_budgets, set_budget, delete_budget
+import pandas as pd
+import streamlit as st
+
+from modules.db.budgets import delete_budget, get_budgets, set_budget
 from modules.db.categories import get_categories
 from modules.logger import logger
 

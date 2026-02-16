@@ -3,11 +3,12 @@ Learning rules management.
 Handles pattern-based categorization rules.
 """
 
-import pandas as pd
 import re
+
+import pandas as pd
 import streamlit as st
-from typing import List, Tuple, Optional
-from modules.db.connection import get_db_connection, clear_db_cache
+
+from modules.db.connection import clear_db_cache, get_db_connection
 from modules.logger import logger
 from modules.utils import validate_regex_pattern
 
@@ -69,7 +70,7 @@ def get_learning_rules() -> pd.DataFrame:
 
 
 @st.cache_data
-def get_compiled_learning_rules() -> List[Tuple[Optional[re.Pattern], str, int, str]]:
+def get_compiled_learning_rules() -> list[tuple[re.Pattern | None, str, int, str]]:
     """
     Retrieve learning rules with pre-compiled regex patterns.
 

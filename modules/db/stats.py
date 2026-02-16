@@ -3,8 +3,10 @@ Statistics and application-level queries.
 Provides high-level stats for dashboards and initialization checks.
 """
 
-import pandas as pd
 import datetime
+
+import pandas as pd
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -62,14 +64,14 @@ def get_global_stats() -> dict:
             today = datetime.date.today()
             month_str = today.strftime("%Y-%m")
 
-            query_month = f"SELECT amount, category_validated FROM transactions WHERE strftime('%Y-%m', date) = ?"
+            query_month = "SELECT amount, category_validated FROM transactions WHERE strftime('%Y-%m', date) = ?"
             df_curr = pd.read_sql(query_month, conn, params=(month_str,))
 
             if not df_curr.empty:
                 from modules.transaction_types import (
-                    calculate_true_income,
-                    calculate_true_expenses,
                     calculate_savings_rate,
+                    calculate_true_expenses,
+                    calculate_true_income,
                 )
 
                 inc = calculate_true_income(df_curr, include_refunds=False)

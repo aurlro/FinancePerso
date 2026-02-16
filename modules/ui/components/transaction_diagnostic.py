@@ -3,19 +3,18 @@ Transaction Diagnostic Component
 Outil pour détecter et corriger les transactions incohérentes (montant vs catégorie).
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import List, Dict, Tuple
+import streamlit as st
+
+from modules.db.transactions import get_all_transactions
 from modules.transaction_types import (
-    validate_amount_consistency,
-    suggest_amount_sign,
-    fix_amount_sign,
-    get_category_type,
-    get_color_for_transaction,
-    INCOME_CATEGORIES,
     EXCLUDED_CATEGORIES,
+    INCOME_CATEGORIES,
+    get_color_for_transaction,
+    suggest_amount_sign,
+    validate_amount_consistency,
 )
-from modules.db.transactions import get_all_transactions, update_transaction
 
 
 def find_inconsistent_transactions(df: pd.DataFrame) -> pd.DataFrame:
@@ -147,7 +146,6 @@ def fix_transaction_amount(tx_id: str, new_amount: float) -> bool:
     try:
         # Note: Cette fonction dépend de votre système de DB
         # Adaptez selon votre implémentation
-        from modules.db.transactions import update_transaction_category
 
         # Mettre à jour le montant
         # update_transaction_amount(tx_id, new_amount)  # À implémenter selon votre DB

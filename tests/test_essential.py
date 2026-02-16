@@ -3,10 +3,11 @@ Tests essentiels consolidés - Tests critiques pour la confiance.
 Ce fichier regroupe les tests les plus importants pour valider le bon fonctionnement.
 """
 
-import pytest
-import pandas as pd
 import os
 from datetime import date
+
+import pandas as pd
+import pytest
 
 
 class TestDataLayer:
@@ -27,7 +28,7 @@ class TestDataLayer:
 
     def test_transaction_crud(self, temp_db):
         """CRUD basique des transactions."""
-        from modules.db.transactions import save_transactions, get_transactions_count
+        from modules.db.transactions import get_transactions_count, save_transactions
 
         # Compter avant
         count_before = get_transactions_count()
@@ -118,7 +119,7 @@ class TestBusinessLogic:
 
     def test_income_vs_expense_detection(self):
         """Détection revenus vs dépenses."""
-        from modules.transaction_types import is_income_category, is_expense_category
+        from modules.transaction_types import is_expense_category, is_income_category
 
         assert is_income_category("Revenus") is True
         assert is_income_category("Alimentation") is False
@@ -160,8 +161,8 @@ class TestIntegration:
 
     def test_import_to_validation_flow(self, temp_db):
         """Flux complet: import → catégorisation → validation."""
-        from modules.db.transactions import save_transactions
         from modules.categorization import categorize_transaction
+        from modules.db.transactions import save_transactions
 
         # 1. Importer des transactions
         df = pd.DataFrame(

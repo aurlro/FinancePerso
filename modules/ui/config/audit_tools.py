@@ -1,48 +1,47 @@
-import streamlit as st
-import pandas as pd
 import difflib
 import hashlib
-from modules.utils import clean_label
+
+import pandas as pd
+import streamlit as st
+
+from modules.backup_manager import create_backup
+from modules.data_manager import auto_fix_common_inconsistencies
 from modules.db.audit import (
-    get_transfer_inconsistencies,
     get_suggested_mappings,
+    get_transfer_inconsistencies,
     whitelist_transfer_label,
 )
-from modules.db.tags import learn_tags_from_history
-from modules.data_manager import auto_fix_common_inconsistencies
-from modules.db.members import (
-    get_members,
-    rename_member,
-    add_member,
-    add_member_mapping,
-    get_orphan_labels,
-    delete_and_replace_label,
-)
 from modules.db.categories import (
-    get_categories,
-    merge_categories,
     add_category,
     get_all_categories_including_ghosts,
+    get_categories,
+    merge_categories,
+)
+from modules.db.members import (
+    add_member,
+    add_member_mapping,
+    delete_and_replace_label,
+    get_members,
+    get_orphan_labels,
+    rename_member,
 )
 from modules.db.rules import add_learning_rule
+from modules.db.tags import learn_tags_from_history
 from modules.db.transactions import (
-    get_transactions_by_criteria,
-    delete_transaction_by_id,
-    update_transaction_category,
     bulk_update_transaction_status,
+    delete_transaction_by_id,
     get_duplicates_report,
+    get_transactions_by_criteria,
 )
-from modules.backup_manager import create_backup
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    show_success,
-    show_warning,
-    show_info,
     celebrate_completion,
+    show_info,
+    show_success,
+    toast_info,
+    toast_success,
+    toast_warning,
 )
+from modules.utils import clean_label
 
 
 def render_audit_tools():
@@ -359,7 +358,7 @@ def render_audit_tools():
                             label_visibility="collapsed",
                         )
 
-                        if c3.button(f"Confirmer ce groupe", key=f"bulk_fix_{safe_key}"):
+                        if c3.button("Confirmer ce groupe", key=f"bulk_fix_{safe_key}"):
                             tx_ids = group["id"].tolist()
                             bulk_update_transaction_status(tx_ids, target_cat)
                             toast_success(
@@ -368,7 +367,7 @@ def render_audit_tools():
                             st.rerun()
 
                         # Show individual transactions if user wants
-                        if st.checkbox(f"Détails", key=f"show_detail_{label}"):
+                        if st.checkbox("Détails", key=f"show_detail_{label}"):
                             for _, row in group.iterrows():
                                 st.write(
                                     f"  • {row['date']} • {row['label']} • {row['amount']:.2f}€"
@@ -466,7 +465,7 @@ def render_audit_tools():
                             )
                             st.rerun()
 
-                        if st.checkbox(f"Détails", key=f"show_detail_w_{label}"):
+                        if st.checkbox("Détails", key=f"show_detail_w_{label}"):
                             for _, row in group.iterrows():
                                 st.write(
                                     f"  • {row['date']} • {row['label']} • {row['amount']:.2f}€"

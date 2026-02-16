@@ -2,14 +2,14 @@
 Tests for encryption module.
 """
 
-import pytest
 import os
+
 from modules.encryption import (
-    FieldEncryption,
-    encrypt_field,
-    decrypt_field,
-    generate_encryption_key,
     EncryptedFieldMixin,
+    FieldEncryption,
+    decrypt_field,
+    encrypt_field,
+    generate_encryption_key,
 )
 
 

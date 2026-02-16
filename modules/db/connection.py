@@ -4,11 +4,11 @@ import streamlit as st
 Database connection management.
 Provides context manager for SQLite connections.
 """
-import sqlite3
 import os
+import sqlite3
 from contextlib import contextmanager
-from modules.logger import logger
 
+from modules.logger import logger
 
 # Get absolute path to the database
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -1,15 +1,16 @@
-import streamlit as st
-import pandas as pd
-import datetime
 import calendar
-from modules.ui import card_kpi
+import datetime
+
+import pandas as pd
+import streamlit as st
+
 from modules.categorization import generate_financial_report
 from modules.transaction_types import (
-    filter_expense_transactions,
-    filter_income_transactions,
-    calculate_true_income,
     calculate_true_expenses,
+    calculate_true_income,
+    filter_expense_transactions,
 )
+from modules.ui import card_kpi
 
 
 def render_month_end_forecast(
@@ -131,7 +132,7 @@ def render_month_end_forecast(
                         else:
                             st.warning(f"⚠️ -{abs(balance):.0f}€ de déficit")
                     elif name == "optimiste" and balance > 0:
-                        st.success(f"🎯 Objectif atteint!")
+                        st.success("🎯 Objectif atteint!")
 
         # KPIs actuels
         st.divider()
@@ -169,8 +170,8 @@ def render_month_end_forecast(
 
             if daily_budget < 0:
                 st.error(
-                    f"💡 **Alerte critique**: Vous avez déjà dépassé votre capacité. "
-                    f"Objectif: **0€/jour** jusqu'à la fin du mois pour limiter les dégâts."
+                    "💡 **Alerte critique**: Vous avez déjà dépassé votre capacité. "
+                    "Objectif: **0€/jour** jusqu'à la fin du mois pour limiter les dégâts."
                 )
             elif daily_budget < 20:
                 st.warning(

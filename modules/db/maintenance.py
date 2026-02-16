@@ -3,10 +3,11 @@ Maintenance and automated cleanup scheduler.
 Handles periodic tasks like the weekly "Magic Fix" audit.
 """
 
-from datetime import datetime
 import sqlite3
-from modules.db.connection import get_db_connection
+from datetime import datetime
+
 from modules.db.audit import auto_fix_common_inconsistencies
+from modules.db.connection import get_db_connection
 from modules.logger import logger
 
 
@@ -21,7 +22,7 @@ def should_run_weekly_cleanup() -> bool:
     if now.weekday() != 6:  # Sunday is 6 in Python's datetime.weekday()
         return False
 
-    today_str = now.strftime("%Y-%m-%d")
+    now.strftime("%Y-%m-%d")
     current_week = now.strftime("%Y-%W")  # Year-WeekNumber
 
     try:

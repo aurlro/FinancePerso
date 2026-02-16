@@ -5,10 +5,11 @@ Replaces the static 'Revoir le guide' button with intelligent suggestions.
 """
 
 import streamlit as st
-from modules.db.transactions import get_all_transactions
-from modules.db.rules import get_learning_rules
+
 from modules.db.budgets import get_budgets
+from modules.db.rules import get_learning_rules
 from modules.db.stats import get_global_stats
+from modules.db.transactions import get_all_transactions
 
 
 def get_user_progress_state():
@@ -266,7 +267,7 @@ def render_smart_actions():
                     "{} {}".format(action["icon"], action["label"]),
                     use_container_width=True,
                     help=action["help"],
-                    key="smart_action_secondary_{}".format(idx),
+                    key=f"smart_action_secondary_{idx}",
                 ):
                     if "tab" in action:
                         st.session_state["intel_active_tab"] = action["tab"]

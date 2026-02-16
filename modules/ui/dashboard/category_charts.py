@@ -1,12 +1,11 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 from plotly.subplots import make_subplots
+
 from modules.transaction_types import (
     filter_expense_transactions,
-    is_excluded_category,
-    EXCLUDED_CATEGORIES,
 )
 
 

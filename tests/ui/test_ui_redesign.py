@@ -1,9 +1,8 @@
 import streamlit as st
-import pandas as pd
+
 from modules.ui import load_css
-from modules.ui.validation.row_view import render_validation_row
 from modules.ui.components.avatar_selector import render_avatar_selector
-from modules.utils import clean_label
+from modules.ui.validation.row_view import render_validation_row
 
 # Mock Data
 all_members = ["Aurélien", "Élise", "Maison"]

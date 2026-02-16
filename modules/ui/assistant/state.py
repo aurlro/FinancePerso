@@ -3,9 +3,9 @@ State management for Assistant page.
 Centralizes all session_state keys and operations.
 """
 
-import streamlit as st
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
+import streamlit as st
 
 # Session state keys
 STATE_KEYS = {
@@ -135,7 +135,7 @@ def clear_chat_history():
     set_assistant_state("chat_history", [])
 
 
-def get_audit_stats() -> Dict[str, int]:
+def get_audit_stats() -> dict[str, int]:
     """Get current audit statistics."""
     results = get_assistant_state("audit_results") or []
     corrected = get_assistant_state("audit_corrected") or []

@@ -4,9 +4,11 @@ Handles CRUD operations for transaction categories and their metadata (emojis, s
 """
 
 import sqlite3
+
 import pandas as pd
 import streamlit as st
-from modules.db.connection import get_db_connection, clear_db_cache
+
+from modules.db.connection import clear_db_cache, get_db_connection
 from modules.logger import logger
 
 
@@ -283,7 +285,7 @@ def merge_categories(source_category: str, target_category: str) -> dict:
             "SELECT COUNT(*) FROM transactions WHERE category_validated = ? COLLATE NOCASE",
             (source_category,),
         )
-        tx_count = cursor.fetchone()[0]
+        cursor.fetchone()[0]
 
         # Update transactions (validated category)
         cursor.execute(

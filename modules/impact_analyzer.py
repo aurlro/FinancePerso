@@ -3,12 +3,11 @@ Impact Analyzer - Preview the impact of configuration changes.
 Shows how many transactions will be affected by a change before applying it.
 """
 
-import streamlit as st
 import pandas as pd
-from modules.db.transactions import get_all_transactions
+import streamlit as st
+
 from modules.db.rules import get_learning_rules
-from modules.db.categories import get_categories
-from modules.logger import logger
+from modules.db.transactions import get_all_transactions
 
 
 def analyze_category_merge_impact(source_category: str, target_category: str) -> dict:
@@ -64,7 +63,6 @@ def analyze_rule_creation_impact(pattern: str, category: str) -> dict:
         - sample_matches: preview of transactions that would be affected
         - estimated_time_saved: estimated seconds saved per month
     """
-    from modules.categorization import apply_rules
     import re
 
     df = get_all_transactions()

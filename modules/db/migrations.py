@@ -3,8 +3,8 @@ Database schema initialization and migrations.
 Handles database schema creation, updates, and versioning.
 """
 
-from modules.db.connection import get_db_connection
 from modules.backup_manager import auto_backup_daily
+from modules.db.connection import get_db_connection
 from modules.logger import logger
 
 

@@ -4,9 +4,11 @@ Budget Prediction and Overrun Detection.
 Projects monthly spending and alerts on potential budget overruns.
 """
 
-import pandas as pd
-import datetime
 import calendar
+import datetime
+
+import pandas as pd
+
 from modules.logger import logger
 from modules.transaction_types import filter_expense_transactions
 

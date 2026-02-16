@@ -5,10 +5,11 @@ Provides local fallback for development.
 """
 
 import os
-import sys
 import traceback
-from typing import Optional, Dict, Any, Callable
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
+
 from modules.logger import logger
 
 
@@ -24,7 +25,7 @@ class ErrorTracker:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def init_sentry(self, dsn: Optional[str] = None, environment: str = "development"):
+    def init_sentry(self, dsn: str | None = None, environment: str = "development"):
         """Initialize Sentry if DSN is available."""
         if self._sentry_initialized:
             return
@@ -75,7 +76,7 @@ class ErrorTracker:
 
         return event
 
-    def capture_exception(self, exception: Exception, context: Optional[Dict] = None):
+    def capture_exception(self, exception: Exception, context: dict | None = None):
         """Capture an exception for tracking."""
         error_info = {
             "type": type(exception).__name__,
@@ -105,7 +106,7 @@ class ErrorTracker:
 
         logger.error(f"Exception captured: {exception}", exc_info=True)
 
-    def capture_message(self, message: str, level: str = "info", context: Optional[Dict] = None):
+    def capture_message(self, message: str, level: str = "info", context: dict | None = None):
         """Capture a message for tracking."""
         if self._sentry_initialized:
             try:
@@ -124,9 +125,9 @@ class ErrorTracker:
 
     def set_user(
         self,
-        user_id: Optional[str] = None,
-        email: Optional[str] = None,
-        username: Optional[str] = None,
+        user_id: str | None = None,
+        email: str | None = None,
+        username: str | None = None,
     ):
         """Set user context for error tracking."""
         if self._sentry_initialized and user_id:
@@ -168,23 +169,23 @@ def get_tracker() -> ErrorTracker:
     return _tracker
 
 
-def init_error_tracking(dsn: Optional[str] = None, environment: str = "development"):
+def init_error_tracking(dsn: str | None = None, environment: str = "development"):
     """Initialize error tracking."""
     get_tracker().init_sentry(dsn, environment)
 
 
-def capture_exception(exception: Exception, context: Optional[Dict] = None):
+def capture_exception(exception: Exception, context: dict | None = None):
     """Capture an exception."""
     get_tracker().capture_exception(exception, context)
 
 
-def capture_message(message: str, level: str = "info", context: Optional[Dict] = None):
+def capture_message(message: str, level: str = "info", context: dict | None = None):
     """Capture a message."""
     get_tracker().capture_message(message, level, context)
 
 
 def set_user_context(
-    user_id: Optional[str] = None, email: Optional[str] = None, username: Optional[str] = None
+    user_id: str | None = None, email: str | None = None, username: str | None = None
 ):
     """Set user context."""
     get_tracker().set_user(user_id, email, username)
@@ -193,7 +194,7 @@ def set_user_context(
 # Decorators
 
 
-def track_errors(context: Optional[Dict] = None, fallback_value: Any = None):
+def track_errors(context: dict | None = None, fallback_value: Any = None):
     """Decorator to track errors in functions."""
 
     def decorator(func: Callable) -> Callable:
@@ -219,7 +220,7 @@ def track_errors(context: Optional[Dict] = None, fallback_value: Any = None):
 
 
 def with_retry(
-    max_attempts: int = 3, exceptions: tuple = (Exception,), on_retry: Optional[Callable] = None
+    max_attempts: int = 3, exceptions: tuple = (Exception,), on_retry: Callable | None = None
 ):
     """Decorator to retry function on failure."""
 

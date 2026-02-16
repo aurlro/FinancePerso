@@ -4,6 +4,7 @@ Handles CRUD operations for category budgets.
 """
 
 import pandas as pd
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 

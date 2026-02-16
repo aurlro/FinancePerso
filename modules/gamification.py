@@ -4,15 +4,15 @@ Objectif: Créer l'habitude et l'engagement quotidien.
 """
 
 import json
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Optional
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
-from modules.logger import logger
+import pandas as pd
+
 from modules.db.stats import get_global_stats
 from modules.db.transactions import get_all_transactions
-import pandas as pd
+from modules.logger import logger
 
 
 @dataclass
@@ -27,10 +27,10 @@ class Challenge:
     condition_value: float
     reward_badge: str
     reward_points: int
-    start_date: Optional[str] = None
-    end_date: Optional[str] = None
+    start_date: str | None = None
+    end_date: str | None = None
     completed: bool = False
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
     progress: float = 0.0  # 0.0 to 1.0
 
 
@@ -53,9 +53,9 @@ class UserStats:
     total_points: int
     current_streak: int  # jours consécutifs d'utilisation
     longest_streak: int
-    last_visit: Optional[str]
-    badges: List[Badge]
-    completed_challenges: List[str]
+    last_visit: str | None
+    badges: list[Badge]
+    completed_challenges: list[str]
 
 
 class GamificationManager:
@@ -128,8 +128,8 @@ class GamificationManager:
     def __init__(self):
         self.data_file = Path("Data/gamification.json")
         self.data_file.parent.mkdir(exist_ok=True)
-        self.challenges: List[Challenge] = []
-        self.badges: List[Badge] = []
+        self.challenges: list[Challenge] = []
+        self.badges: list[Badge] = []
         self.stats = UserStats(
             total_points=0,
             current_streak=0,
@@ -145,7 +145,7 @@ class GamificationManager:
         """Charge les données de gamification."""
         if self.data_file.exists():
             try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.stats = UserStats(**data.get("stats", {}))
                     self.challenges = [Challenge(**c) for c in data.get("challenges", [])]
@@ -206,7 +206,7 @@ class GamificationManager:
             self.stats.last_visit = today.isoformat()
             self._save()
 
-    def get_active_challenges(self) -> List[Challenge]:
+    def get_active_challenges(self) -> list[Challenge]:
         """Retourne les challenges actifs et non complétés."""
         today = datetime.now()
 
@@ -230,7 +230,7 @@ class GamificationManager:
 
         return active
 
-    def check_challenges(self) -> List[Challenge]:
+    def check_challenges(self) -> list[Challenge]:
         """Vérifie si des challenges sont complétés. Retourne les nouveaux complétés."""
         completed = []
         today = datetime.now()
@@ -310,7 +310,7 @@ class GamificationManager:
                 self.badges.append(badge)
                 logger.info(f"Badge awarded: {name}")
 
-    def get_stats_summary(self) -> Dict:
+    def get_stats_summary(self) -> dict:
         """Retourne un résumé des stats pour affichage."""
         return {
             "points": self.stats.total_points,

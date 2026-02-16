@@ -3,10 +3,10 @@ Loading States Component - Skeletons and progress indicators.
 Provides visual feedback during long operations.
 """
 
-import streamlit as st
 import time
-from typing import Optional, Iterator
 from contextlib import contextmanager
+
+import streamlit as st
 
 
 def render_skeleton_card(height: int = 100, key: str = "skeleton"):

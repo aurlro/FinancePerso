@@ -3,11 +3,6 @@ Gestion des feedbacks utilisateur sur les récurrences détectées.
 Permet de confirmer/rejeter les récurrences et de les persister en DB.
 """
 
-import json
-import sqlite3
-from datetime import datetime
-from typing import List, Dict, Optional
-import streamlit as st
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -43,7 +38,7 @@ def init_recurrence_feedback_table():
         conn.commit()
 
 
-def get_recurrence_feedback(label_pattern: str, category: str = None) -> Optional[Dict]:
+def get_recurrence_feedback(label_pattern: str, category: str = None) -> dict | None:
     """
     Get existing feedback for a label pattern.
 
@@ -148,7 +143,7 @@ def set_recurrence_feedback(
         return False
 
 
-def get_all_feedback(status: str = None) -> List[Dict]:
+def get_all_feedback(status: str = None) -> list[dict]:
     """
     Get all recurrence feedback entries.
 
@@ -200,13 +195,13 @@ def get_all_feedback(status: str = None) -> List[Dict]:
         return []
 
 
-def get_confirmed_recurring() -> List[str]:
+def get_confirmed_recurring() -> list[str]:
     """Get list of label patterns confirmed as recurring by user."""
     feedback = get_all_feedback(status="confirmed")
     return [f["label_pattern"] for f in feedback]
 
 
-def get_rejected_recurring() -> List[str]:
+def get_rejected_recurring() -> list[str]:
     """Get list of label patterns rejected by user (not recurring)."""
     feedback = get_all_feedback(status="rejected")
     return [f["label_pattern"] for f in feedback]
@@ -252,7 +247,7 @@ def delete_feedback(label_pattern: str, category: str = None) -> bool:
         return False
 
 
-def get_feedback_stats() -> Dict:
+def get_feedback_stats() -> dict:
     """Get statistics about user feedback."""
     try:
         with get_db_connection() as conn:

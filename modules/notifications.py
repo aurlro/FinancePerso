@@ -5,35 +5,35 @@ Alertes budget, rappels, et récapitulatifs.
 Redirige maintenant vers le système V2 (modules.ui.notifications).
 """
 
-import os
 import json
+import os
 import smtplib
 import sqlite3
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any
-from dataclasses import dataclass, asdict
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from pathlib import Path
+from typing import Any
 
+import pandas as pd
 import streamlit as st
 
-from modules.logger import logger
 from modules.db.budgets import get_budgets
+from modules.db.connection import get_db_connection
 from modules.db.stats import get_global_stats
 from modules.db.transactions import get_all_transactions
-from modules.db.connection import get_db_connection
-import pandas as pd
+from modules.logger import logger
+from modules.ui.notifications.center import render_notification_badge_sidebar
 
 # V2 System Imports
 from modules.ui.notifications.manager import get_notification_manager
-from modules.ui.notifications.types import NotificationLevel, NotificationAction
-from modules.ui.notifications.center import render_notification_badge_sidebar
+from modules.ui.notifications.types import NotificationAction, NotificationLevel
 
 # ============ SETTINGS MANAGEMENT ============
 
 
-def get_notification_settings() -> Dict[str, str]:
+def get_notification_settings() -> dict[str, str]:
     """Récupère tous les paramètres de notification depuis la base de données."""
     settings = {}
     try:
@@ -104,7 +104,7 @@ def save_notification_setting(key: str, value: str):
         logger.error(f"Error saving notification setting {key}: {e}")
 
 
-def test_notification_settings() -> Dict[str, Any]:
+def test_notification_settings() -> dict[str, Any]:
     """Teste la configuration des notifications."""
     settings = get_notification_settings()
     results = {"desktop": False, "email": False, "errors": []}
@@ -203,7 +203,7 @@ class NotificationManager:
                 ),
             )
 
-    def get_unread(self) -> List[Any]:
+    def get_unread(self) -> list[Any]:
         return [n for n in self._v2_manager.notification_history if not n.read]
 
     def mark_as_read(self, notification_id: str):
@@ -297,7 +297,7 @@ def generate_daily_digest() -> bool:
     """
     manager = get_notification_manager()
     today = datetime.now()
-    notif_id = f"daily_digest_{today.strftime('%Y%m%d')}"
+    f"daily_digest_{today.strftime('%Y%m%d')}"
 
     # Check V2 history for today's digest
     # (Checking exact ID might be hard via history list if IDs are UUIDs,
@@ -307,7 +307,7 @@ def generate_daily_digest() -> bool:
     # V2 IDs are UUIDs by default. We can pass a group.)
 
     # Check if we already did it today (simple hack: check specific setting key)
-    digest_key = f"digest_sent_{today.strftime('%Y%m%d')}"
+    f"digest_sent_{today.strftime('%Y%m%d')}"
     # This key isn't standard but we can use get_notification_settings for a custom key?
     # No, let's just query history
 
@@ -367,7 +367,7 @@ def send_email_notification(notification: Any, to_email: str) -> bool:
 # ============ SETTINGS MANAGEMENT ============
 
 
-def get_notification_settings() -> Dict[str, str]:
+def get_notification_settings() -> dict[str, str]:
     """Récupère tous les paramètres de notification depuis la base de données."""
     settings = {}
     try:
@@ -438,7 +438,7 @@ def save_notification_setting(key: str, value: str):
         logger.error(f"Error saving notification setting {key}: {e}")
 
 
-def test_notification_settings() -> Dict[str, any]:
+def test_notification_settings() -> dict[str, any]:
     """Teste la configuration des notifications."""
     settings = get_notification_settings()
     results = {"desktop": False, "email": False, "errors": []}
@@ -561,7 +561,7 @@ class Notification:
     priority: str  # 'low', 'medium', 'high'
     created_at: str
     read: bool = False
-    action_url: Optional[str] = None
+    action_url: str | None = None
 
 
 class NotificationManager:
@@ -570,14 +570,14 @@ class NotificationManager:
     def __init__(self):
         self.notifications_file = Path("Data/notifications.json")
         self.notifications_file.parent.mkdir(exist_ok=True)
-        self.notifications: List[Notification] = []
+        self.notifications: list[Notification] = []
         self._load()
 
     def _load(self):
         """Charge les notifications depuis le fichier."""
         if self.notifications_file.exists():
             try:
-                with open(self.notifications_file, "r", encoding="utf-8") as f:
+                with open(self.notifications_file, encoding="utf-8") as f:
                     data = json.load(f)
                     self.notifications = [Notification(**n) for n in data]
             except Exception as e:
@@ -596,7 +596,7 @@ class NotificationManager:
         self.notifications.append(notification)
         self._save()
 
-    def get_unread(self) -> List[Notification]:
+    def get_unread(self) -> list[Notification]:
         """Retourne les notifications non lues."""
         return [n for n in self.notifications if not n.read]
 
@@ -617,7 +617,7 @@ class NotificationManager:
         self._save()
 
 
-def check_budget_alerts(force_check: bool = False) -> List[Dict]:
+def check_budget_alerts(force_check: bool = False) -> list[dict]:
     """
     Vérifie les budgets et génère des alertes si dépassés ou proches.
     Retourne la liste des alertes sous forme de dictionnaires.
@@ -694,7 +694,7 @@ def check_budget_alerts(force_check: bool = False) -> List[Dict]:
     return alerts
 
 
-def generate_daily_digest() -> Optional[Notification]:
+def generate_daily_digest() -> Notification | None:
     """
     Génère le récapitulatif quotidien.
     À appeler une fois par jour (via cron ou au lancement).

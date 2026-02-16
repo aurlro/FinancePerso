@@ -2,24 +2,23 @@
 Module containing tab implementations for the Recurrence page.
 """
 
-import streamlit as st
+from datetime import datetime
+
 import pandas as pd
 import plotly.graph_objects as go
-from typing import Dict, List, Any
-from datetime import datetime
-from modules.ui.recurrence_manager import (
-    render_recurrence_card,
-    render_manual_add_section,
-    render_feedback_summary,
-    delete_feedback,
-    get_recurrence_feedback,
-    set_recurrence_feedback,
-)
+import streamlit as st
+
 from modules.db.recurrence_feedback import get_all_feedback
 from modules.transaction_types import (
     get_color_for_transaction,
-    is_income_category,
     is_expense_category,
+    is_income_category,
+)
+from modules.ui.recurrence_manager import (
+    delete_feedback,
+    render_manual_add_section,
+    render_recurrence_card,
+    set_recurrence_feedback,
 )
 
 
@@ -169,7 +168,7 @@ def render_dashboard_tab(recurring_df: pd.DataFrame, validated_df: pd.DataFrame)
                 st.markdown(f":{color}[{abs(amount):,.0f} €]")
 
 
-def render_validation_tab(recurring_df: pd.DataFrame, cat_emoji_map: Dict):
+def render_validation_tab(recurring_df: pd.DataFrame, cat_emoji_map: dict):
     """Tab 2: Validation Inbox (Pending items only)."""
     st.markdown("### ✅ Validation (Inbox)")
     st.caption("Validez les nouvelles récurrences détectées pour les ajouter à votre budget.")
@@ -195,7 +194,6 @@ def render_validation_tab(recurring_df: pd.DataFrame, cat_emoji_map: Dict):
     st.success(f"**{len(pending_df)}** nouvelles détections à vérifier.")
 
     for _, row in pending_df.iterrows():
-        categories = cat_emoji_map  # Pass map
         render_recurrence_card(
             row,
             on_confirm=lambda l, c: _handle_feedback(l, c, True, "Confirmé depuis Inbox"),
@@ -209,7 +207,7 @@ def _handle_feedback(label, category, is_recurring, notes):
     st.rerun()
 
 
-def render_subscriptions_tab(recurring_df: pd.DataFrame, cat_emoji_map: Dict):
+def render_subscriptions_tab(recurring_df: pd.DataFrame, cat_emoji_map: dict):
     """Tab 3: Active Subscriptions (Confirmed items)."""
     st.markdown("### 💳 Abonnements & Revenus Actifs")
 

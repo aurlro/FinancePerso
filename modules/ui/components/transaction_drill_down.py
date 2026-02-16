@@ -4,33 +4,30 @@ Transaction Drill-Down Component.
 Displays transactions for a category with validation capabilities.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import Tuple, Optional
+import streamlit as st
+
+from modules.db.categories import get_categories
+from modules.db.rules import add_learning_rule
 from modules.db.transactions import (
     get_all_transactions,
     update_transaction_category,
-    add_tag_to_transactions,
 )
-from modules.db.categories import get_categories
-from modules.db.rules import add_learning_rule
-from modules.utils import clean_label
-from modules.logger import logger
-from modules.ui.feedback import toast_success, show_rich_success
-from modules.ui.components.tag_selector_compact import render_cheque_nature_field
 from modules.ui.components.tag_manager import (
-    render_smart_tag_selector,
     render_pill_tags,
-    find_similar_transactions,
+    render_smart_tag_selector,
 )
-
+from modules.ui.components.tag_selector_compact import render_cheque_nature_field
+from modules.ui.feedback import show_rich_success
+from modules.utils import clean_label
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
 
-def _fetch_and_filter_transactions(transaction_ids: list) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _fetch_and_filter_transactions(transaction_ids: list) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Fetch and filter transactions by IDs, returning validated and pending separately.
 
@@ -214,8 +211,8 @@ def _handle_validated_transactions(
     key_prefix: str,
     category: str,
     show_anomaly_management: bool,
-    anomaly_index: Optional[int] = None,
-    anomaly_list_key: Optional[str] = None,
+    anomaly_index: int | None = None,
+    anomaly_list_key: str | None = None,
 ):
     """
     Display and handle validated transactions - VERSION COMPACTE.
@@ -310,8 +307,8 @@ def _handle_validated_transactions(
 
                 # Invalidate caches
                 from modules.cache_manager import (
-                    invalidate_transaction_caches,
                     invalidate_rule_caches,
+                    invalidate_transaction_caches,
                 )
 
                 invalidate_transaction_caches()
@@ -411,7 +408,7 @@ def _handle_pending_transactions(df_pending: pd.DataFrame, key_prefix: str, cate
                         if add_learning_rule(pattern, selected_category, priority=5):
                             rules_created += 1
 
-            from modules.cache_manager import invalidate_transaction_caches, invalidate_rule_caches
+            from modules.cache_manager import invalidate_rule_caches, invalidate_transaction_caches
 
             invalidate_transaction_caches()
             if rules_created > 0:
@@ -440,8 +437,8 @@ def render_transaction_drill_down(
     period_end: str = None,
     key_prefix: str = "drilldown",
     show_anomaly_management: bool = False,
-    anomaly_index: Optional[int] = None,
-    anomaly_list_key: Optional[str] = None,
+    anomaly_index: int | None = None,
+    anomaly_list_key: str | None = None,
 ):
     """
     Render an interactive drill-down view with improved UX.
@@ -457,7 +454,7 @@ def render_transaction_drill_down(
         anomaly_list_key: Session state key for anomaly list
     """
     if not transaction_ids:
-        st.info(f"Aucune transaction trouvée.")
+        st.info("Aucune transaction trouvée.")
         return
 
     df_validated, df_pending = _fetch_and_filter_transactions(transaction_ids)

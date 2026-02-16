@@ -1,6 +1,7 @@
+import datetime
 import os
 import shutil
-import datetime
+
 from modules.logger import logger
 
 DB_PATH = "Data/finance.db"

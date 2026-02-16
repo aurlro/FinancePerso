@@ -1,13 +1,15 @@
-import streamlit as st
 import os
 import re
 from datetime import datetime
+
+import streamlit as st
+
 from modules.db.migrations import init_db
 from modules.ui import load_css
-from modules.ui.layout import render_app_info
-from modules.ui.feedback import render_scroll_to_top
 from modules.ui.changelog_parser import parse_changelog
-from modules.update_manager import get_update_manager, VersionEntry
+from modules.ui.feedback import render_scroll_to_top
+from modules.ui.layout import render_app_info
+from modules.update_manager import get_update_manager
 
 st.set_page_config(page_title="Nouveautés", page_icon="🎁", layout="wide")
 load_css()
@@ -270,7 +272,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                     # Show what was updated
                     st.markdown("### 📄 Fichiers mis à jour :")
                     st.markdown(f"- **CHANGELOG.md** - Nouvelle entrée v{version}")
-                    st.markdown(f"- **AGENTS.md** - Version et date mises à jour")
+                    st.markdown("- **AGENTS.md** - Version et date mises à jour")
                     st.markdown(f'- **modules/constants.py** - APP_VERSION = "{version}"')
 
                     st.info("📝 N'oubliez pas de commit et push ces changements !")
@@ -303,7 +305,7 @@ else:
                         date_obj = datetime.strptime(v["date"], "%Y-%m-%d")
                         formatted_date = date_obj.strftime("%d %B %Y")
                         st.caption(formatted_date)
-                    except (ValueError, TypeError) as e:
+                    except (ValueError, TypeError):
                         # Fallback to raw date string if parsing fails
                         st.caption(v["date"])
 

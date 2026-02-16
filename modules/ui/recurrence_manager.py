@@ -3,22 +3,24 @@ Composants UI pour la gestion des récurrences détectées.
 Permet de confirmer, rejeter et gérer les récurrences.
 """
 
-import streamlit as st
+from collections.abc import Callable
+
 import pandas as pd
-from typing import Callable, Dict, Any, List
+import streamlit as st
+
 from modules.db.recurrence_feedback import (
-    set_recurrence_feedback,
-    get_recurrence_feedback,
-    get_all_feedback,
     delete_feedback,
+    get_all_feedback,
     get_feedback_stats,
-    is_pattern_rejected,
+    get_recurrence_feedback,
     is_pattern_confirmed,
+    is_pattern_rejected,
+    set_recurrence_feedback,
 )
 
 
 def render_recurrence_card(
-    row: pd.Series, on_confirm: Callable, on_reject: Callable, cat_emoji_map: Dict[str, str] = None
+    row: pd.Series, on_confirm: Callable, on_reject: Callable, cat_emoji_map: dict[str, str] = None
 ):
     """
     Render a recurrence detection card with user feedback buttons.
@@ -40,17 +42,14 @@ def render_recurrence_card(
         if existing_feedback["user_feedback"] == "confirmed":
             border_color = "#22c55e"
             bg_color = "#f0fdf4"
-            status_icon = "✅"
             status_text = "Confirmée"
         else:
             border_color = "#ef4444"
             bg_color = "#fef2f2"
-            status_icon = "❌"
             status_text = "Rejetée"
     else:
         border_color = "#e2e8f0"
         bg_color = "#ffffff"
-        status_icon = "🤔"
         status_text = "À vérifier"
 
     # Card container
@@ -188,7 +187,7 @@ def render_feedback_summary():
 
 
 def render_confirmed_recurring_section(
-    recurring_df: pd.DataFrame, cat_emoji_map: Dict[str, str] = None
+    recurring_df: pd.DataFrame, cat_emoji_map: dict[str, str] = None
 ):
     """Render section showing user-confirmed recurrences."""
     from modules.db.recurrence_feedback import get_confirmed_recurring
@@ -356,7 +355,7 @@ def get_validation_status_badge(label: str, category: str = None) -> str:
 
 
 def render_batch_validation_actions(
-    selected_labels: List[str], on_batch_confirm: Callable, on_batch_reject: Callable
+    selected_labels: list[str], on_batch_confirm: Callable, on_batch_reject: Callable
 ):
     """Render batch actions for multiple selected recurrences."""
     if not selected_labels:

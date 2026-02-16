@@ -4,17 +4,18 @@ Local ML Manager UI Component
 Interface pour gérer et utiliser le modèle ML local scikit-learn.
 """
 
-import streamlit as st
 from datetime import datetime
 
+import streamlit as st
+
 from modules.local_ml import (
+    MODEL_PATH,
     get_classifier,
-    train_local_model,
     get_local_ml_stats,
     is_local_ml_available,
-    MODEL_PATH,
+    train_local_model,
 )
-from modules.ui.feedback import toast_success, toast_error, toast_info, toast_warning
+from modules.ui.feedback import toast_error, toast_success
 
 
 def render_local_ml_section():

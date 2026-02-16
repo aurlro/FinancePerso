@@ -5,6 +5,7 @@ Identifies changes in financial behavior by comparing periods.
 """
 
 import pandas as pd
+
 from modules.logger import logger
 from modules.transaction_types import filter_expense_transactions
 

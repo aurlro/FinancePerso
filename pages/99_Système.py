@@ -1,12 +1,12 @@
-import streamlit as st
 import subprocess
-import time
-import os
+
 import pandas as pd
+import streamlit as st
+
+from modules.db.connection import get_db_connection
+from modules.db.migrations import init_db
 from modules.ui import load_css, render_scroll_to_top
 from modules.ui.layout import render_app_info
-from modules.db.migrations import init_db
-from modules.db.connection import get_db_connection
 
 # Page setup
 st.set_page_config(page_title="Système", page_icon="⚙️", layout="wide")
@@ -105,9 +105,7 @@ elif active_tab == "🔔 Notifications":
         render_notification_center_full,
         render_notification_settings,
         success,
-        info,
         warning,
-        error,
     )
 
     notif_tabs = st.tabs(["📬 Centre", "⚙️ Paramètres", "🎮 Demo"])

@@ -1,11 +1,13 @@
+import json
+
+import streamlit as st
 from dotenv import load_dotenv
+
+from modules.ai_manager import get_active_model_name, get_ai_provider
+from modules.db.categories import get_categories
+from modules.local_ml import get_classifier, is_local_ml_available
 from modules.logger import logger
 from modules.utils import clean_label
-from modules.db.categories import get_categories
-from modules.ai_manager import get_ai_provider, get_active_model_name
-from modules.local_ml import get_classifier, is_local_ml_available
-import streamlit as st
-import json
 
 load_dotenv()
 
@@ -161,7 +163,6 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
         return cat, "rule", conf
 
     # 2. Heuristic: Internal Transfers Detection
-    from modules.db.settings import get_internal_transfer_targets
 
     TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
     INTERNAL_TARGETS = _get_cached_transfer_targets()

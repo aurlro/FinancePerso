@@ -8,11 +8,11 @@ Features:
 - Visual hierarchy: current tags > quick adds > selector
 """
 
-import streamlit as st
-from typing import List
-from modules.db.tags import get_all_tags
-from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
 
+import streamlit as st
+
+from modules.db.categories import add_tag_to_category, get_categories_suggested_tags
+from modules.db.tags import get_all_tags
 
 # Initialisation des variables de session
 if "get" not in st.session_state:
@@ -21,11 +21,11 @@ if "get" not in st.session_state:
 
 def render_tag_selector_compact(
     transaction_id: int,
-    current_tags: List[str],
+    current_tags: list[str],
     category: str,
     key_suffix: str = "",
     max_quick_tags: int = 3,
-) -> List[str]:
+) -> list[str]:
     """
     Render a compact tag selector optimized for table/grid layouts.
 

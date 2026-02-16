@@ -1,7 +1,8 @@
-import pandas as pd
 import hashlib
 import re
-from typing import Optional, Dict, Tuple, Union
+
+import pandas as pd
+
 from modules.logger import logger
 
 
@@ -44,7 +45,7 @@ def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=["_local_occ"])
 
 
-def parse_bourso_csv(file) -> Optional[pd.DataFrame]:
+def parse_bourso_csv(file) -> pd.DataFrame | None:
     """
     Legacy parser for BoursoBank specific format.
 
@@ -140,7 +141,7 @@ def parse_bourso_csv(file) -> Optional[pd.DataFrame]:
         return None, f"Erreur lors de l'import: {str(e)[:150]}"
 
 
-def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optional[pd.DataFrame]:
+def parse_generic_csv(file, config: dict[str, str | int | dict]) -> pd.DataFrame | None:
     """
     Parse a CSV based on dynamic config.
 
@@ -288,7 +289,7 @@ def parse_generic_csv(file, config: Dict[str, Union[str, int, Dict]]) -> Optiona
 
 
 def load_transaction_file(
-    uploaded_file, mode: str = "auto", config: Optional[Dict[str, Union[str, int, Dict]]] = None
+    uploaded_file, mode: str = "auto", config: dict[str, str | int | dict] | None = None
 ):
     """
     Load and parse a transaction file based on specified mode.

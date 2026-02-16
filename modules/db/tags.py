@@ -4,9 +4,9 @@ Handles tag extraction, manipulation, and tag-related queries.
 Tag management functions.
 """
 
-import sqlite3
 import pandas as pd
 import streamlit as st
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 

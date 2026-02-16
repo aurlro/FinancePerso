@@ -1,5 +1,5 @@
-import pytest
 import pandas as pd
+
 from modules.ai.anomaly_detector import detect_amount_anomalies
 
 

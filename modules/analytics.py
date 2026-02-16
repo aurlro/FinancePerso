@@ -1,32 +1,33 @@
+
 import pandas as pd
-from typing import Tuple
-from modules.categorization import clean_label
-from modules.db.rules import get_learning_rules
+
 from modules.analytics_constants import (
-    MIN_OCCURRENCES_FOR_RECURRING,
     AMOUNT_TOLERANCE_ENERGY,
-    AMOUNT_TOLERANCE_STANDARD,
     AMOUNT_TOLERANCE_FIXED_THRESHOLD,
-    FREQUENCY_MONTHLY_MIN,
-    FREQUENCY_MONTHLY_MAX,
-    FREQUENCY_MONTHLY_LABEL,
-    FREQUENCY_QUARTERLY_MIN,
-    FREQUENCY_QUARTERLY_MAX,
-    FREQUENCY_QUARTERLY_LABEL,
-    FREQUENCY_ANNUAL_MIN,
-    FREQUENCY_ANNUAL_MAX,
-    FREQUENCY_ANNUAL_LABEL,
-    ENERGY_KEYWORDS,
-    SALARY_MIN_AMOUNT,
-    HIGH_CONFIDENCE_MIN_COUNT,
-    RENT_LOAN_MIN_AMOUNT,
+    AMOUNT_TOLERANCE_STANDARD,
     CATEGORY_KEYWORDS,
     DEFAULT_MONTHS_TREND,
+    ENERGY_KEYWORDS,
+    FREQUENCY_ANNUAL_LABEL,
+    FREQUENCY_ANNUAL_MAX,
+    FREQUENCY_ANNUAL_MIN,
+    FREQUENCY_MONTHLY_LABEL,
+    FREQUENCY_MONTHLY_MAX,
+    FREQUENCY_MONTHLY_MIN,
+    FREQUENCY_QUARTERLY_LABEL,
+    FREQUENCY_QUARTERLY_MAX,
+    FREQUENCY_QUARTERLY_MIN,
+    HIGH_CONFIDENCE_MIN_COUNT,
     INTERNAL_TRANSFER_PATTERNS,
+    MIN_OCCURRENCES_FOR_RECURRING,
+    RENT_LOAN_MIN_AMOUNT,
+    SALARY_MIN_AMOUNT,
 )
+from modules.categorization import clean_label
+from modules.db.rules import get_learning_rules
 
 
-def detect_frequency(avg_diff_days: float) -> Tuple[bool, str]:
+def detect_frequency(avg_diff_days: float) -> tuple[bool, str]:
     """
     Detect recurring frequency pattern from average days between transactions.
 
@@ -83,7 +84,7 @@ def detect_recurring_payments(df):
         # Check amounts consistency
         # Subscriptions usually have exact same amount
         # Utilities might vary slightly (Electricity, Water, etc.)
-        amounts = group["amount"].tolist()
+        group["amount"].tolist()
         amounts_std = group["amount"].std()
         avg_amount = group["amount"].mean()
 
@@ -164,7 +165,11 @@ def detect_financial_profile(df):
     incomes = df[df["amount"] > SALARY_MIN_AMOUNT].copy()
     if not incomes.empty:
         incomes["clean"] = incomes["label"].apply(clean_label)
-        grouped = incomes.groupby("clean").agg({"amount": "mean", "date": "count", "label": "first"}).reset_index()
+        grouped = (
+            incomes.groupby("clean")
+            .agg({"amount": "mean", "date": "count", "label": "first"})
+            .reset_index()
+        )
         for _, row in grouped.iterrows():
             # Skip empty or too short labels
             if not row["clean"] or len(row["clean"]) < 3:
@@ -189,7 +194,11 @@ def detect_financial_profile(df):
     expenses = filter_expense_transactions(df).copy()
     if not expenses.empty:
         expenses["clean"] = expenses["label"].apply(clean_label)
-        grouped = expenses.groupby("clean").agg({"amount": "mean", "date": "count", "label": "first"}).reset_index()
+        grouped = (
+            expenses.groupby("clean")
+            .agg({"amount": "mean", "date": "count", "label": "first"})
+            .reset_index()
+        )
 
         for _, row in grouped.iterrows():
             # Skip empty or too short labels
@@ -232,7 +241,7 @@ def get_monthly_savings_trend(months=DEFAULT_MONTHS_TREND):
     Returns DataFrame with columns ['Month', 'Revenus', 'Dépenses', 'Epargne', 'Taux'].
     """
     from modules.db.connection import get_db_connection
-    from modules.transaction_types import calculate_true_income, calculate_true_expenses
+    from modules.transaction_types import calculate_true_expenses, calculate_true_income
 
     with get_db_connection() as conn:
         # Fetch raw data for the period

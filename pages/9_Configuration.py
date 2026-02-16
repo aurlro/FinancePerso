@@ -1,22 +1,22 @@
 import streamlit as st
-from modules.ui import load_css, render_scroll_to_top
+
 from modules.db.migrations import init_db
+from modules.ui import load_css, render_scroll_to_top
+from modules.ui.components.local_ml_manager import render_local_ml_section, render_ml_mode_selector
+from modules.ui.config.api_settings import render_api_settings
+from modules.ui.config.audit_tools import render_audit_tools
+from modules.ui.config.backup_restore import render_backup_restore
+from modules.ui.config.category_management import render_category_management
 from modules.ui.config.config_dashboard import render_config_dashboard
 from modules.ui.config.config_mode import (
-    render_mode_toggle,
     is_advanced_mode,
+    render_mode_toggle,
     render_simple_mode_help,
 )
-from modules.ui.config.api_settings import render_api_settings
-from modules.ui.config.member_management import render_member_management
-from modules.ui.config.category_management import render_category_management
-from modules.ui.config.tags_rules import render_tags_rules
-from modules.ui.config.audit_tools import render_audit_tools
-from modules.ui.config.data_operations import render_data_operations, render_export_section
-from modules.ui.config.backup_restore import render_backup_restore
+from modules.ui.config.data_operations import render_export_section
 from modules.ui.config.log_viewer import render_log_viewer
+from modules.ui.config.member_management import render_member_management
 from modules.ui.config.notifications import render_notification_settings
-from modules.ui.components.local_ml_manager import render_local_ml_section, render_ml_mode_selector
 from modules.ui.feedback import display_flash_messages, toast_info
 
 # Page Setup
@@ -84,7 +84,7 @@ with tabs[2]:
     st.subheader("Mode de catégorisation", divider="blue")
 
     # Offline Mode Toggle
-    from modules.feature_flags import get_feature_manager, FeatureFlag
+    from modules.feature_flags import get_feature_manager
 
     fm = get_feature_manager()
     is_offline = fm.is_enabled("FORCE_OFFLINE_MODE")

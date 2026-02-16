@@ -3,33 +3,28 @@ Analytics V2 - Enhanced Recurrence Detection
 Improved detection with better income handling and drill-down capabilities.
 """
 
-import pandas as pd
 import re
-from typing import Tuple, List, Dict
-from datetime import datetime
+
+import pandas as pd
+
+from modules.analytics_constants import (
+    AMOUNT_TOLERANCE_FIXED_THRESHOLD,
+    AMOUNT_TOLERANCE_STANDARD,
+    FREQUENCY_ANNUAL_LABEL,
+    FREQUENCY_ANNUAL_MAX,
+    FREQUENCY_ANNUAL_MIN,
+    FREQUENCY_MONTHLY_LABEL,
+    FREQUENCY_MONTHLY_MAX,
+    FREQUENCY_MONTHLY_MIN,
+    FREQUENCY_QUARTERLY_LABEL,
+    FREQUENCY_QUARTERLY_MAX,
+    FREQUENCY_QUARTERLY_MIN,
+    MIN_OCCURRENCES_FOR_RECURRING,
+)
 from modules.categorization import clean_label
 from modules.transaction_types import (
-    is_income_category,
     is_expense_category,
-    filter_expense_transactions,
-)
-from modules.analytics_constants import (
-    MIN_OCCURRENCES_FOR_RECURRING,
-    AMOUNT_TOLERANCE_ENERGY,
-    AMOUNT_TOLERANCE_STANDARD,
-    AMOUNT_TOLERANCE_FIXED_THRESHOLD,
-    FREQUENCY_MONTHLY_MIN,
-    FREQUENCY_MONTHLY_MAX,
-    FREQUENCY_MONTHLY_LABEL,
-    FREQUENCY_QUARTERLY_MIN,
-    FREQUENCY_QUARTERLY_MAX,
-    FREQUENCY_QUARTERLY_LABEL,
-    FREQUENCY_ANNUAL_MIN,
-    FREQUENCY_ANNUAL_MAX,
-    FREQUENCY_ANNUAL_LABEL,
-    ENERGY_KEYWORDS,
-    SALARY_MIN_AMOUNT,
-    HIGH_CONFIDENCE_MIN_COUNT,
+    is_income_category,
 )
 
 # Income-specific patterns for better detection
@@ -41,7 +36,7 @@ INCOME_PATTERNS = {
 }
 
 
-def detect_frequency(avg_diff_days: float) -> Tuple[bool, str]:
+def detect_frequency(avg_diff_days: float) -> tuple[bool, str]:
     """Detect recurring frequency pattern."""
     if FREQUENCY_MONTHLY_MIN <= avg_diff_days <= FREQUENCY_MONTHLY_MAX:
         return True, FREQUENCY_MONTHLY_LABEL
@@ -76,7 +71,7 @@ def extract_base_label(label: str) -> str:
     return base
 
 
-def detect_income_pattern(label: str) -> Tuple[bool, str]:
+def detect_income_pattern(label: str) -> tuple[bool, str]:
     """
     Check if label matches known income patterns.
     Returns (is_income, income_type)
@@ -115,7 +110,7 @@ def detect_recurring_payments_v2(df: pd.DataFrame) -> pd.DataFrame:
     data["base_label"] = data["label"].apply(extract_base_label)
 
     # Check for income patterns (by category first, then by label pattern)
-    from modules.transaction_types import is_income_category, is_excluded_category
+    from modules.transaction_types import is_income_category
 
     data["income_check"] = data.apply(
         lambda x: is_income_category(x["category_validated"])
@@ -135,7 +130,7 @@ def detect_recurring_payments_v2(df: pd.DataFrame) -> pd.DataFrame:
             recurring_items.append(item)
 
     # Strategy 2: For incomes, also try base_label grouping (more aggressive)
-    income_data = data[data["income_check"] == True]
+    income_data = data[data["income_check"] is True]
     if not income_data.empty:
         income_grouped = income_data.groupby("base_label")
 
@@ -169,14 +164,14 @@ def detect_recurring_payments_v2(df: pd.DataFrame) -> pd.DataFrame:
 
 def _analyze_group(
     label: str, group: pd.DataFrame, grouping_key: str, is_income: bool = False
-) -> Dict:
+) -> dict:
     """Analyze a group of transactions for recurrence patterns."""
 
     if len(group) < MIN_OCCURRENCES_FOR_RECURRING:
         return None
 
     # Check amounts consistency
-    amounts = group["amount"].tolist()
+    group["amount"].tolist()
     amounts_std = group["amount"].std()
     avg_amount = group["amount"].mean()
 
@@ -187,8 +182,7 @@ def _analyze_group(
         variability_ratio = 0
 
     # For incomes, allow more variability
-    tolerance = AMOUNT_TOLERANCE_STANDARD * 2 if is_income else AMOUNT_TOLERANCE_STANDARD
-    is_consistent_amount = variability_ratio < tolerance
+    AMOUNT_TOLERANCE_STANDARD * 2 if is_income else AMOUNT_TOLERANCE_STANDARD
 
     # Check Periodicity
     dates = group["date"].sort_values()
@@ -241,9 +235,7 @@ def _analyze_group(
         "sample_labels": sample_labels,
         "is_income": is_income
         or is_income_category(
-            group["category_validated"].iloc[0]
-            if "category_validated" in group.columns
-            else ""
+            group["category_validated"].iloc[0] if "category_validated" in group.columns else ""
         ),
     }
 
@@ -322,7 +314,7 @@ def get_recurring_by_tags(df: pd.DataFrame, recurring_df: pd.DataFrame) -> pd.Da
     return grouped.sort_values("total_amount", ascending=True)
 
 
-def analyze_recurrence_summary(df: pd.DataFrame, recurring_df: pd.DataFrame) -> Dict:
+def analyze_recurrence_summary(df: pd.DataFrame, recurring_df: pd.DataFrame) -> dict:
     """
     Generate summary statistics for recurring payments.
     """

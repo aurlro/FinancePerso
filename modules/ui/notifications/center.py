@@ -3,13 +3,12 @@ Notification Center - Interface utilisateur complète.
 Historique, gestion et préférences des notifications.
 """
 
-import streamlit as st
-from typing import Optional, List
 from datetime import datetime
 
-from .types import NotificationLevel, LEVEL_COLORS, DEFAULT_ICONS
+import streamlit as st
+
 from .manager import get_notification_manager
-from .components import render_inline_notification
+from .types import DEFAULT_ICONS, LEVEL_COLORS, NotificationLevel
 
 
 def render_notification_center_compact():
@@ -20,7 +19,7 @@ def render_notification_center_compact():
     """
     manager = get_notification_manager()
     raw_count = manager.unread_count
-    
+
     # Limiter l'affichage à 5 pour éviter l'anxiété
     MAX_DISPLAY_COUNT = 5
     display_count = min(raw_count, MAX_DISPLAY_COUNT)

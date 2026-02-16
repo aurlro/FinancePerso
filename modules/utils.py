@@ -3,8 +3,8 @@ Utility functions shared across modules.
 Centralizes common operations to avoid code duplication.
 """
 
-import re
 import html
+import re
 
 
 def validate_regex_pattern(pattern: str) -> tuple[bool, str]:

@@ -4,21 +4,17 @@ Gère la file d'attente, l'historique, et la persistance.
 """
 
 import json
-import time
-from typing import List, Optional, Callable, Dict, Any
+import threading
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from pathlib import Path
-import threading
-
-import streamlit as st
+from typing import Any
 
 from .types import (
     Notification,
-    NotificationLevel,
     NotificationAction,
-    NotificationPosition,
+    NotificationLevel,
     NotificationPreferences,
-    DEFAULT_DURATIONS,
 )
 
 
@@ -53,10 +49,10 @@ class NotificationManager:
         self._storage_path.parent.mkdir(exist_ok=True)
 
         # État interne (non persisté)
-        self._active_notifications: List[Notification] = []
-        self._notification_history: List[Notification] = []
+        self._active_notifications: list[Notification] = []
+        self._notification_history: list[Notification] = []
         self._preferences = NotificationPreferences()
-        self._subscribers: List[Callable] = []
+        self._subscribers: list[Callable] = []
 
         # Chargement initial
         self._load_history()
@@ -68,13 +64,13 @@ class NotificationManager:
         self,
         message: str,
         level: NotificationLevel = NotificationLevel.INFO,
-        title: Optional[str] = None,
-        icon: Optional[str] = None,
-        duration: Optional[float] = None,
+        title: str | None = None,
+        icon: str | None = None,
+        duration: float | None = None,
         persistent: bool = False,
-        actions: Optional[List[NotificationAction]] = None,
-        group: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        actions: list[NotificationAction] | None = None,
+        group: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Notification:
         """
         Crée et affiche une nouvelle notification.
@@ -137,7 +133,7 @@ class NotificationManager:
     # Méthodes pratiques pour chaque niveau
 
     def success(
-        self, message: str, title: Optional[str] = None, duration: Optional[float] = None, **kwargs
+        self, message: str, title: str | None = None, duration: float | None = None, **kwargs
     ) -> Notification:
         """Notification de succès."""
         return self.notify(
@@ -163,8 +159,8 @@ class NotificationManager:
     def warning(
         self,
         message: str,
-        title: Optional[str] = "Attention",
-        duration: Optional[float] = None,
+        title: str | None = "Attention",
+        duration: float | None = None,
         **kwargs,
     ) -> Notification:
         """Notification d'avertissement."""
@@ -177,7 +173,7 @@ class NotificationManager:
         )
 
     def info(
-        self, message: str, title: Optional[str] = None, duration: Optional[float] = None, **kwargs
+        self, message: str, title: str | None = None, duration: float | None = None, **kwargs
     ) -> Notification:
         """Notification informative."""
         return self.notify(
@@ -201,7 +197,7 @@ class NotificationManager:
         )
 
     def loading(
-        self, message: str, title: Optional[str] = "Chargement...", **kwargs
+        self, message: str, title: str | None = "Chargement...", **kwargs
     ) -> Notification:
         """Notification de chargement (à fermer manuellement)."""
         return self.notify(
@@ -225,7 +221,7 @@ class NotificationManager:
                 return True
         return False
 
-    def dismiss_all(self, level: Optional[NotificationLevel] = None) -> int:
+    def dismiss_all(self, level: NotificationLevel | None = None) -> int:
         """
         Ferme toutes les notifications, ou seulement celles d'un niveau donné.
 
@@ -274,12 +270,12 @@ class NotificationManager:
     # ==================== Accesseurs ====================
 
     @property
-    def active_notifications(self) -> List[Notification]:
+    def active_notifications(self) -> list[Notification]:
         """Notifications actuellement affichées."""
         return self._active_notifications.copy()
 
     @property
-    def notification_history(self) -> List[Notification]:
+    def notification_history(self) -> list[Notification]:
         """Historique complet des notifications."""
         return self._notification_history.copy()
 
@@ -293,11 +289,11 @@ class NotificationManager:
         """Préférences utilisateur."""
         return self._preferences
 
-    def get_active_by_level(self, level: NotificationLevel) -> List[Notification]:
+    def get_active_by_level(self, level: NotificationLevel) -> list[Notification]:
         """Retourne les notifications actives d'un niveau donné."""
         return [n for n in self._active_notifications if n.level == level]
 
-    def get_history_by_level(self, level: NotificationLevel, limit: int = 50) -> List[Notification]:
+    def get_history_by_level(self, level: NotificationLevel, limit: int = 50) -> list[Notification]:
         """Retourne l'historique filtré par niveau."""
         filtered = [n for n in self._notification_history if n.level == level]
         return filtered[:limit]
@@ -329,7 +325,7 @@ class NotificationManager:
 
     # ==================== Nettoyage ====================
 
-    def clear_history(self, older_than_days: Optional[int] = None) -> int:
+    def clear_history(self, older_than_days: int | None = None) -> int:
         """
         Nettoie l'historique des notifications.
 
@@ -418,7 +414,7 @@ class NotificationManager:
             return
 
         try:
-            with open(self._storage_path, "r", encoding="utf-8") as f:
+            with open(self._storage_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             self._notification_history = [

@@ -6,15 +6,15 @@ Features:
 - Batch tagging operations
 """
 
-import streamlit as st
-import pandas as pd
-from typing import List, Dict, Tuple
-from modules.db.tags import get_all_tags
-from modules.db.categories import get_categories_suggested_tags, add_tag_to_category
-from modules.db.transactions import get_all_transactions
-from modules.categorization import clean_label
-from modules.utils import escape_html
 
+import pandas as pd
+import streamlit as st
+
+from modules.categorization import clean_label
+from modules.db.categories import add_tag_to_category, get_categories_suggested_tags
+from modules.db.tags import get_all_tags
+from modules.db.transactions import get_all_transactions
+from modules.utils import escape_html
 
 # Tag color scheme for visual distinction
 TAG_COLORS = {
@@ -30,7 +30,7 @@ TAG_COLORS = {
 }
 
 
-def get_tag_color(tag: str) -> Dict[str, str]:
+def get_tag_color(tag: str) -> dict[str, str]:
     """Get color scheme for a tag based on its content."""
     tag_lower = tag.lower()
 
@@ -59,7 +59,7 @@ def get_tag_color(tag: str) -> Dict[str, str]:
 
 
 def render_pill_tags(
-    tags: List[str],
+    tags: list[str],
     size: str = "normal",
     removable: bool = False,
     on_remove=None,
@@ -118,7 +118,7 @@ def render_pill_tags(
 
         if removable:
             # Add remove button
-            if st.button(f"✕", key=tag_key, type="tertiary"):
+            if st.button("✕", key=tag_key, type="tertiary"):
                 if on_remove:
                     on_remove(tag)
                 st.rerun()
@@ -238,14 +238,14 @@ def _calculate_label_similarity(label1: str, label2: str) -> float:
 
 def render_smart_tag_selector(
     transaction_id: int,
-    current_tags: List[str],
+    current_tags: list[str],
     category: str,
     label: str = "",
     key_suffix: str = "",
     max_quick_tags: int = 3,
     enable_propagation: bool = True,
     df_context: pd.DataFrame = None,
-) -> List[str]:
+) -> list[str]:
     """
     Render a smart tag selector with pill display and propagation suggestions.
 
@@ -417,7 +417,7 @@ def render_smart_tag_selector(
                                     st.session_state["pending_tag_additions"][tx_info["id"]].extend(
                                         new_tags
                                     )
-                                    st.toast(f"✅ Tags ajoutés à la transaction !", icon="🏷️")
+                                    st.toast("✅ Tags ajoutés à la transaction !", icon="🏷️")
 
                         # Batch propagate button
                         if len(missing_tags_tx) > 1:
@@ -450,7 +450,7 @@ def render_smart_tag_selector(
     return selected
 
 
-def batch_apply_tags_to_similar(transaction_ids: List[int], tags: List[str]) -> Dict[int, bool]:
+def batch_apply_tags_to_similar(transaction_ids: list[int], tags: list[str]) -> dict[int, bool]:
     """
     Apply tags to multiple transactions and their similar counterparts.
 

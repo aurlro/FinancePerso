@@ -2,19 +2,19 @@
 Dashboard Tab - Vue d'accueil de l'Assistant IA.
 """
 
+from collections.abc import Callable
+
 import streamlit as st
-import pandas as pd
-from typing import Callable
-from modules.db.transactions import get_all_transactions
-from modules.db.rules import get_learning_rules
+
 from modules.db.budgets import get_budgets
+from modules.db.rules import get_learning_rules
 from modules.db.stats import get_global_stats
-from modules.ui.assistant.state import get_assistant_state, set_assistant_state
 from modules.ui.assistant.components import (
+    render_audit_summary_cards,
     render_empty_state,
     render_metric_row,
-    render_audit_summary_cards,
 )
+from modules.ui.assistant.state import get_assistant_state
 
 
 def get_dashboard_stats() -> dict:

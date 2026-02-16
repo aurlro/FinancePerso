@@ -2,8 +2,7 @@
 Tests for budgets.py module.
 """
 
-import pytest
-from modules.db.budgets import get_budgets, set_budget, delete_budget
+from modules.db.budgets import delete_budget, get_budgets, set_budget
 
 
 class TestGetBudgets:

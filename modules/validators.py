@@ -4,11 +4,11 @@ Provides strict validation and sanitization for all user inputs.
 Uses Pydantic v2 for robust validation with clear error messages.
 """
 
-import re
 import html
-from datetime import date, datetime, timedelta
-from typing import Optional, List
-from pydantic import BaseModel, Field, field_validator, ValidationError
+import re
+from datetime import date, timedelta
+
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 
 class TransactionInput(BaseModel):
@@ -17,9 +17,9 @@ class TransactionInput(BaseModel):
     label: str = Field(..., min_length=1, max_length=500)
     amount: float = Field(..., gt=-1e9, lt=1e9)
     date: date
-    category: Optional[str] = Field(None, max_length=100)
-    account_label: Optional[str] = Field(None, max_length=100)
-    member: Optional[str] = Field(None, max_length=100)
+    category: str | None = Field(None, max_length=100)
+    account_label: str | None = Field(None, max_length=100)
+    member: str | None = Field(None, max_length=100)
 
     @field_validator("label")
     @classmethod
@@ -50,7 +50,7 @@ class TransactionInput(BaseModel):
         if v < min_date:
             raise ValueError(f"Date cannot be before {min_date}")
         if v > max_date:
-            raise ValueError(f"Date cannot be more than 1 year in the future")
+            raise ValueError("Date cannot be more than 1 year in the future")
         return v
 
 
@@ -177,8 +177,8 @@ class TagInput(BaseModel):
 
 
 def validate_transaction(
-    label: str, amount: float, tx_date: date, category: Optional[str] = None
-) -> tuple[bool, Optional[str]]:
+    label: str, amount: float, tx_date: date, category: str | None = None
+) -> tuple[bool, str | None]:
     """
     Validate transaction data.
 
@@ -232,7 +232,7 @@ def sanitize_string_input(value: str, max_length: int = 255, allow_html: bool = 
     return value
 
 
-def validate_sql_identifier(identifier: str) -> tuple[bool, Optional[str]]:
+def validate_sql_identifier(identifier: str) -> tuple[bool, str | None]:
     """
     Validate that a string is safe to use as SQL identifier (table/column name).
 
@@ -279,7 +279,7 @@ class ValidationUtils:
     """Utility class for common validation operations."""
 
     @staticmethod
-    def validate_file_extension(filename: str, allowed_extensions: List[str]) -> bool:
+    def validate_file_extension(filename: str, allowed_extensions: list[str]) -> bool:
         """Validate file extension."""
         if not filename:
             return False

@@ -3,10 +3,11 @@ Data quality audit and cleanup operations.
 Handles data integrity checks, duplicate detection, and automatic fixes.
 """
 
-import pandas as pd
-import os
 import re
 from pathlib import Path
+
+import pandas as pd
+
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -29,8 +30,8 @@ def auto_fix_common_inconsistencies() -> int:
     """
     total_fixed = 0
     from modules.db.members import detect_member_from_content
-    from modules.utils import clean_label
     from modules.db.tags import learn_tags_from_history
+    from modules.utils import clean_label
 
     # 0. Boostrap learning
     learn_tags_from_history()

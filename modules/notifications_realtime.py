@@ -3,15 +3,12 @@ Real-time Notifications System
 Détecte et notifie les événements importants en temps réel.
 """
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
 
-from modules.logger import logger
-from modules.ai.category_insights import CategoryInsightsEngine
+import pandas as pd
+import streamlit as st
 
 
 class AlertType(Enum):
@@ -34,10 +31,10 @@ class RealTimeAlert:
     severity: str  # 'critical', 'warning', 'info', 'success'
     title: str
     message: str
-    category: Optional[str] = None
-    amount: Optional[float] = None
+    category: str | None = None
+    amount: float | None = None
     timestamp: datetime = None
-    actions: List[Dict] = None
+    actions: list[dict] = None
     dismissed: bool = False
 
     def __post_init__(self):
@@ -59,7 +56,7 @@ class RealTimeNotificationManager:
     DUPLICATE_TIME_WINDOW_HOURS = 24
 
     def __init__(self):
-        self.alerts: List[RealTimeAlert] = []
+        self.alerts: list[RealTimeAlert] = []
         self._load_pending_alerts()
 
     def _load_pending_alerts(self):
@@ -72,7 +69,7 @@ class RealTimeNotificationManager:
         """Sauvegarde les alertes dans la session."""
         st.session_state["pending_alerts"] = self.alerts
 
-    def check_new_transaction(self, tx: Dict, df_history: pd.DataFrame) -> List[RealTimeAlert]:
+    def check_new_transaction(self, tx: dict, df_history: pd.DataFrame) -> list[RealTimeAlert]:
         """
         Vérifie une nouvelle transaction et génère des alertes si nécessaire.
         À appeler lors de l'import de chaque transaction.
@@ -133,7 +130,7 @@ class RealTimeNotificationManager:
 
     def check_budget_overrun(
         self, category: str, spent: float, budget: float
-    ) -> Optional[RealTimeAlert]:
+    ) -> RealTimeAlert | None:
         """
         Vérifie si un budget vient d'être dépassé.
 
@@ -171,7 +168,7 @@ class RealTimeNotificationManager:
 
     def check_savings_milestone(
         self, current_savings: float, previous_savings: float
-    ) -> Optional[RealTimeAlert]:
+    ) -> RealTimeAlert | None:
         """
         Détecte les jalons d'épargne positifs.
 
@@ -216,7 +213,7 @@ class RealTimeNotificationManager:
 
         return None
 
-    def _create_large_expense_alert(self, tx: Dict) -> Optional[RealTimeAlert]:
+    def _create_large_expense_alert(self, tx: dict) -> RealTimeAlert | None:
         """Crée une alerte pour une grosse dépense."""
         amount = abs(tx.get("amount", 0))
         return RealTimeAlert(
@@ -233,7 +230,7 @@ class RealTimeNotificationManager:
             ],
         )
 
-    def _create_anomaly_alert(self, tx: Dict, mean_amount: float, z_score: float) -> RealTimeAlert:
+    def _create_anomaly_alert(self, tx: dict, mean_amount: float, z_score: float) -> RealTimeAlert:
         """Crée une alerte pour une anomalie."""
         amount = abs(tx.get("amount", 0))
         deviation = ((amount - mean_amount) / mean_amount) * 100
@@ -252,7 +249,7 @@ class RealTimeNotificationManager:
             ],
         )
 
-    def _check_duplicate(self, tx: Dict, df_history: pd.DataFrame) -> Optional[pd.Series]:
+    def _check_duplicate(self, tx: dict, df_history: pd.DataFrame) -> pd.Series | None:
         """Vérifie si une transaction similaire existe déjà."""
         if df_history.empty:
             return None
@@ -277,7 +274,7 @@ class RealTimeNotificationManager:
 
         return None
 
-    def _create_duplicate_alert(self, tx: Dict, duplicate: pd.Series) -> RealTimeAlert:
+    def _create_duplicate_alert(self, tx: dict, duplicate: pd.Series) -> RealTimeAlert:
         """Crée une alerte pour un doublon potentiel."""
         return RealTimeAlert(
             id=f"dup_{tx.get('id', 'unknown')}",
@@ -293,7 +290,7 @@ class RealTimeNotificationManager:
             ],
         )
 
-    def _create_new_merchant_alert(self, tx: Dict) -> RealTimeAlert:
+    def _create_new_merchant_alert(self, tx: dict) -> RealTimeAlert:
         """Crée une alerte pour un nouveau commerçant."""
         return RealTimeAlert(
             id=f"new_{tx.get('id', 'unknown')}",
@@ -307,8 +304,8 @@ class RealTimeNotificationManager:
         )
 
     def get_pending_alerts(
-        self, severity_filter: Optional[List[str]] = None
-    ) -> List[RealTimeAlert]:
+        self, severity_filter: list[str] | None = None
+    ) -> list[RealTimeAlert]:
         """
         Récupère les alertes en attente.
 
@@ -426,7 +423,7 @@ def render_notification_center():
         _render_alerts_list(alerts, manager)
 
 
-def _render_alerts_list(alerts: List[RealTimeAlert], manager: RealTimeNotificationManager):
+def _render_alerts_list(alerts: list[RealTimeAlert], manager: RealTimeNotificationManager):
     """Rendu d'une liste d'alertes."""
     if not alerts:
         st.info("Aucune notification")

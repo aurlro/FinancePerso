@@ -3,15 +3,15 @@ Configuration Dashboard - Overview of all settings.
 Provides a quick glance at configuration status and quick actions.
 """
 
-import streamlit as st
-from modules.db.members import get_members
-from modules.db.categories import get_categories
-from modules.db.transactions import get_all_transactions
-from modules.db.budgets import get_budgets
-from modules.notifications import get_notification_settings
-from modules.ai_manager import is_ai_available
-import os
 
+import streamlit as st
+
+from modules.ai_manager import is_ai_available
+from modules.db.budgets import get_budgets
+from modules.db.categories import get_categories
+from modules.db.members import get_members
+from modules.db.transactions import get_all_transactions
+from modules.notifications import get_notification_settings
 
 # Initialisation des variables de session
 if "config_jump_to" not in st.session_state:
@@ -193,7 +193,7 @@ def render_config_dashboard():
     with col_m1:
         if st.button("🔍 Vérifier les widgets", use_container_width=True, key="btn_check_widgets"):
             with st.spinner("Vérification en cours..."):
-                from modules.db.dashboard_cleanup import DashboardCleanupManager, CleanupScenario
+                from modules.db.dashboard_cleanup import CleanupScenario, DashboardCleanupManager
 
                 manager = DashboardCleanupManager()
                 result = manager.run_cleanup(CleanupScenario.VALIDATE_ONLY)

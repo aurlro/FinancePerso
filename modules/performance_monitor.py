@@ -3,13 +3,14 @@ Performance Monitoring & Optimization
 Outils pour monitorer et optimiser les performances de l'application.
 """
 
-import time
 import functools
-import streamlit as st
-from typing import Callable, Any, Optional
+import time
+from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import datetime
+
 import pandas as pd
+import streamlit as st
 
 from modules.logger import logger
 

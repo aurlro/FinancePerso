@@ -4,14 +4,16 @@ Détecte les incohérences, anomalies et erreurs de catégorisation.
 """
 
 import json
+from typing import Any
+
 import pandas as pd
-from typing import List, Dict, Any, Optional, Union
+
+from modules.ai_manager import get_active_model_name, get_ai_provider
 from modules.categorization import clean_label
-from modules.ai_manager import get_ai_provider, get_active_model_name
 from modules.logger import logger
 
 
-def detect_inconsistencies(df: pd.DataFrame) -> List[Dict[str, Any]]:
+def detect_inconsistencies(df: pd.DataFrame) -> list[dict[str, Any]]:
     """
     Find labels that have been categorized differently across transactions.
 
@@ -63,7 +65,7 @@ def detect_inconsistencies(df: pd.DataFrame) -> List[Dict[str, Any]]:
     return inconsistencies
 
 
-def ai_audit_batch(df: pd.DataFrame, limit: int = 50) -> List[Dict[str, Any]]:
+def ai_audit_batch(df: pd.DataFrame, limit: int = 50) -> list[dict[str, Any]]:
     """
     Send unique label/category pairs to AI to check for logical errors.
 
@@ -134,7 +136,10 @@ def ai_audit_batch(df: pd.DataFrame, limit: int = 50) -> List[Dict[str, Any]]:
                     {
                         "type": "Suspicion IA",
                         "label": clean_label_val,
-                        "details": f"{current_cat} ➔ {sugg.get('suggested', '?')} ({sugg.get('reason', 'Anomalie détectée')})",
+                        "details": (
+                            f"{current_cat} ➔ {sugg.get('suggested', '?')} "
+                            f"({sugg.get('reason', 'Anomalie détectée')})"
+                        ),
                         "suggested_category": sugg.get("suggested"),
                         "current_category": current_cat,
                         "reason": sugg.get("reason"),
@@ -149,7 +154,7 @@ def ai_audit_batch(df: pd.DataFrame, limit: int = 50) -> List[Dict[str, Any]]:
         return []
 
 
-def run_full_audit(df: pd.DataFrame, use_ai: bool = True) -> Dict[str, Any]:
+def run_full_audit(df: pd.DataFrame, use_ai: bool = True) -> dict[str, Any]:
     """
     Run complete audit with progress tracking.
 
@@ -189,8 +194,8 @@ def run_full_audit(df: pd.DataFrame, use_ai: bool = True) -> Dict[str, Any]:
 
 
 def get_audit_summary(
-    audit_results: List[Dict], corrected: List[int], hidden: List[int]
-) -> Dict[str, int]:
+    audit_results: list[dict], corrected: list[int], hidden: list[int]
+) -> dict[str, int]:
     """
     Get summary statistics for audit results.
 

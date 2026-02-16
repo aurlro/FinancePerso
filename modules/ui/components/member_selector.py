@@ -9,6 +9,7 @@ Handles:
 """
 
 import streamlit as st
+
 from modules.constants import MemberType
 
 

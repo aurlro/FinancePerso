@@ -3,18 +3,17 @@ Module de gestion des filtres pour le tableau de bord Synthèse.
 Centralise toute la logique de filtrage pour éviter la duplication.
 """
 
-import streamlit as st
-import pandas as pd
 import unicodedata
-from typing import Dict, List, Tuple, Optional
-from functools import lru_cache
+
+import pandas as pd
+import streamlit as st
 
 from modules.db.members import get_unique_members
 from modules.db.tags import get_all_tags
 
 
 @st.cache_data(ttl=300)
-def get_filter_options(df: pd.DataFrame) -> Dict:
+def get_filter_options(df: pd.DataFrame) -> dict:
     """
     Extraire toutes les options de filtrage disponibles.
 
@@ -79,7 +78,7 @@ def normalize_name(name: str) -> str:
     ).lower()
 
 
-def consolidate_names(names: pd.Series, official_list: List[str]) -> pd.Series:
+def consolidate_names(names: pd.Series, official_list: list[str]) -> pd.Series:
     """
     Consolider une série de noms avec la liste officielle.
 
@@ -101,7 +100,7 @@ def consolidate_names(names: pd.Series, official_list: List[str]) -> pd.Series:
     return names.apply(consolidate)
 
 
-def render_filter_sidebar(df: pd.DataFrame) -> Dict:
+def render_filter_sidebar(df: pd.DataFrame) -> dict:
     """
     Rendre le panneau de filtres dans la sidebar.
     Retourne les filtres sélectionnés.
@@ -125,14 +124,17 @@ def render_filter_sidebar(df: pd.DataFrame) -> Dict:
 
     # Mois - Par défaut: uniquement le mois courant (UX améliorée)
     from datetime import datetime
+
     month_names = options["months"]
     month_to_int = {name: i + 1 for i, name in enumerate(month_names)}
-    
+
     # Déterminer le mois courant pour le sélectionner par défaut
     current_month_idx = datetime.now().month - 1  # 0-indexed
-    current_month_name = month_names[current_month_idx] if current_month_idx < len(month_names) else month_names[0]
+    current_month_name = (
+        month_names[current_month_idx] if current_month_idx < len(month_names) else month_names[0]
+    )
     default_months = [current_month_name] if current_month_name in month_names else month_names[:1]
-    
+
     selected_month_names = st.sidebar.multiselect(
         "Mois", month_names, default=default_months, key="filter_months"
     )
@@ -230,7 +232,7 @@ def render_filter_sidebar(df: pd.DataFrame) -> Dict:
     }
 
 
-def render_filter_info(df_full: pd.DataFrame, filter_result: Dict):
+def render_filter_info(df_full: pd.DataFrame, filter_result: dict):
     """
     Affiche un résumé des filtres actifs et des alertes sur les données exclues.
     """

@@ -3,23 +3,24 @@ Integration Tests for FinancePerso
 Tests complete workflows and interactions between modules.
 """
 
-import pytest
-import pandas as pd
 from datetime import date, timedelta
+
+import pandas as pd
+
+from modules.categorization import categorize_transaction
+from modules.db.categories import get_categories
+from modules.db.members import add_member
+from modules.db.rules import add_learning_rule, get_learning_rules
+from modules.db.tags import get_all_tags
 
 # Import flow
 from modules.db.transactions import (
-    save_transactions,
+    bulk_update_transaction_status,
     get_all_transactions,
     get_pending_transactions,
+    save_transactions,
     update_transaction_category,
-    bulk_update_transaction_status,
 )
-from modules.db.categories import get_categories
-from modules.db.members import add_member, get_members
-from modules.db.rules import add_learning_rule, get_learning_rules
-from modules.db.tags import get_all_tags, remove_tag_from_all_transactions
-from modules.categorization import categorize_transaction
 
 
 # Helper to simulate apply_rules_to_pending
@@ -212,7 +213,7 @@ class TestBudgetTracking:
 
     def test_budget_vs_actual_flow(self, temp_db, db_connection):
         """Test setting budget and comparing with actuals."""
-        from modules.db.budgets import set_budget, get_budgets
+        from modules.db.budgets import get_budgets, set_budget
 
         # Step 1: Set budget
         set_budget("Alimentation", 500.00)
@@ -263,7 +264,7 @@ class TestAuditWorkflows:
 
     def test_orphan_detection_and_cleanup(self, temp_db, db_connection):
         """Test detecting and fixing orphan members."""
-        from modules.db.members import get_orphan_labels, add_member
+        from modules.db.members import add_member, get_orphan_labels
 
         # Step 1: Add transactions with unknown member
         df = pd.DataFrame(
@@ -452,8 +453,8 @@ class TestOptimizationsWorkflow:
 
     def test_compiled_rules_performance(self, temp_db, db_connection):
         """Test that compiled rules cache works correctly."""
-        from modules.db.rules import get_compiled_learning_rules
         from modules.cache_manager import invalidate_rule_caches
+        from modules.db.rules import get_compiled_learning_rules
 
         # Step 1: Add multiple rules
         patterns = [
@@ -753,7 +754,7 @@ class TestConfigurationWorkflow:
 
     def test_category_merge_workflow(self, temp_db, db_connection):
         """Test merging two categories with deletion of source."""
-        from modules.db.categories import merge_categories, get_categories_df, add_category
+        from modules.db.categories import add_category, get_categories_df, merge_categories
 
         # Step 1: Create categories first (required for deletion to work)
         add_category("Shopping", "🛒")
@@ -818,7 +819,6 @@ class TestConfigurationWorkflow:
 
     def test_category_usage_tracking(self, temp_db, db_connection):
         """Test that category usage can be tracked."""
-        from modules.db.categories import get_categories
 
         # Step 1: Add transactions with different categories
         df = pd.DataFrame(
@@ -860,7 +860,7 @@ class TestConfigurationWorkflow:
 
     def test_orphan_member_cleanup(self, temp_db, db_connection):
         """Test detecting and fixing orphan member names."""
-        from modules.db.members import get_orphan_labels, add_member, rename_member
+        from modules.db.members import add_member, get_orphan_labels, rename_member
 
         # Step 1: Add transaction with typo in member name
         df = pd.DataFrame(
@@ -941,7 +941,7 @@ class TestRuleManagementWorkflow:
         result = add_learning_rule("[INVALID(", "TestCategory", priority=5)
 
         # Should be rejected by validation
-        assert result == False, "Invalid regex pattern should be rejected"
+        assert result is False, "Invalid regex pattern should be rejected"
 
         # Step 2: Get compiled rules
         compiled = get_compiled_learning_rules()

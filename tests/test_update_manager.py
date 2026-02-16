@@ -2,11 +2,10 @@
 Tests for update manager module.
 """
 
-import pytest
 import os
-import tempfile
 import subprocess
-from datetime import datetime
+
+import pytest
 
 from modules.update_manager import (
     UpdateManager,
@@ -79,7 +78,7 @@ class TestUpdateManagerIntegration:
         assert success
         assert os.path.exists(temp_manager.constants_path)
 
-        with open(temp_manager.constants_path, "r") as f:
+        with open(temp_manager.constants_path) as f:
             content = f.read()
             assert 'APP_VERSION = "3.5.0"' in content
 
@@ -94,7 +93,7 @@ class TestUpdateManagerIntegration:
         success = temp_manager.update_constants("2.0.0")
         assert success
 
-        with open(temp_manager.constants_path, "r") as f:
+        with open(temp_manager.constants_path) as f:
             content = f.read()
             assert 'APP_VERSION = "2.0.0"' in content
             assert "1.0.0" not in content
@@ -114,7 +113,7 @@ class TestUpdateManagerIntegration:
         assert success
         assert os.path.exists(temp_manager.changelog_path)
 
-        with open(temp_manager.changelog_path, "r") as f:
+        with open(temp_manager.changelog_path) as f:
             content = f.read()
             assert "## [1.1.0] - 2026-02-01" in content
             assert "Test Update" in content

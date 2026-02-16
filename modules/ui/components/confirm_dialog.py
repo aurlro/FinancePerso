@@ -3,8 +3,9 @@ Confirmation Dialog Component - For destructive actions.
 Prevents accidental data loss.
 """
 
+from collections.abc import Callable
+
 import streamlit as st
-from typing import Optional, Callable
 
 
 def confirm_dialog(

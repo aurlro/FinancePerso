@@ -10,12 +10,11 @@ Analyzes user data to provide actionable recommendations for:
 - Spending pattern improvements
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from collections import Counter
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+import pandas as pd
 
 from modules.logger import logger
 
@@ -30,7 +29,7 @@ class Suggestion:
     title: str
     description: str
     action_label: str
-    action_data: Dict[str, Any]
+    action_data: dict[str, Any]
     impact_score: int  # 0-100
     auto_fixable: bool = False
 
@@ -49,9 +48,9 @@ class SmartSuggestionEngine:
         self.rules = rules_df
         self.budgets = budgets_df
         self.members = members_df
-        self.suggestions: List[Suggestion] = []
+        self.suggestions: list[Suggestion] = []
 
-    def analyze_all(self) -> List[Suggestion]:
+    def analyze_all(self) -> list[Suggestion]:
         """Run all analyses and return combined suggestions."""
         self.suggestions = []
 
@@ -117,7 +116,10 @@ class SmartSuggestionEngine:
                             if len(label) > 40
                             else f"📋 {count} transactions non catégorisées : '{label}'"
                         ),
-                        description=f"Cette transaction apparaît {count} fois sans catégorie. Créez une règle pour la catégoriser automatiquement.",
+                        description=(
+                            f"Cette transaction apparaît {count} fois sans catégorie. "
+                            f"Créez une règle pour la catégoriser automatiquement."
+                        ),
                         action_label="Créer une règle",
                         action_data={
                             "pattern": label[:30],
@@ -160,7 +162,10 @@ class SmartSuggestionEngine:
                             if len(row["label"]) > 40
                             else f"🔄 Pattern fréquent : '{row['label']}'"
                         ),
-                        description=f"{row['count']} transactions avec la catégorie '{row['category_validated']}'. Une règle permettrait d'automatiser.",
+                        description=(
+                            f"{row['count']} transactions avec la catégorie "
+                            f"'{row['category_validated']}'. Une règle permettrait d'automatiser."
+                        ),
                         action_label="Créer règle auto",
                         action_data={
                             "pattern": row["label"][:30],
@@ -839,7 +844,7 @@ def get_smart_suggestions(
     rules_df: pd.DataFrame,
     budgets_df: pd.DataFrame,
     members_df: pd.DataFrame,
-) -> List[Suggestion]:
+) -> list[Suggestion]:
     """
     Get intelligent suggestions based on data analysis.
 
@@ -857,12 +862,12 @@ def get_smart_suggestions(
 
 
 def get_suggestions_by_type(
-    suggestions: List[Suggestion], suggestion_type: str
-) -> List[Suggestion]:
+    suggestions: list[Suggestion], suggestion_type: str
+) -> list[Suggestion]:
     """Filter suggestions by type."""
     return [s for s in suggestions if s.type == suggestion_type]
 
 
-def get_suggestions_by_priority(suggestions: List[Suggestion], priority: str) -> List[Suggestion]:
+def get_suggestions_by_priority(suggestions: list[Suggestion], priority: str) -> list[Suggestion]:
     """Filter suggestions by priority."""
     return [s for s in suggestions if s.priority == priority]

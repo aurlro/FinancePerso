@@ -1,9 +1,10 @@
 import streamlit as st
-from modules.ui import load_css, render_scroll_to_top
+
 from modules.db.migrations import init_db
+from modules.ui import load_css, render_scroll_to_top
+from modules.ui.components.tooltips import IMPORT_HELP, VALIDATION_HELP, render_contextual_help
 from modules.ui.importing.main import render_import_tab
 from modules.ui.validation.main import render_validation_tab
-from modules.ui.components.tooltips import render_contextual_help, IMPORT_HELP, VALIDATION_HELP
 
 st.set_page_config(page_title="Opérations", page_icon="🧾", layout="wide")
 load_css()

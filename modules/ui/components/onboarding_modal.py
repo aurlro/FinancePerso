@@ -4,9 +4,11 @@ Guides users through initial configuration.
 """
 
 import os
+
 import streamlit as st
-from modules.db.members import get_members
+
 from modules.db.categories import get_categories
+from modules.db.members import get_members
 from modules.db.stats import is_app_initialized
 from modules.notifications import get_notification_settings
 

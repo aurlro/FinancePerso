@@ -2,19 +2,18 @@
 Tests for categories.py module.
 """
 
-import pytest
 from modules.db.categories import (
+    add_category,
+    delete_category,
+    get_all_categories_including_ghosts,
     get_categories,
     get_categories_df,
-    get_categories_with_emojis,
     get_categories_suggested_tags,
-    add_category,
+    get_categories_with_emojis,
+    merge_categories,
     update_category_emoji,
     update_category_fixed,
     update_category_suggested_tags,
-    delete_category,
-    merge_categories,
-    get_all_categories_including_ghosts,
 )
 
 
@@ -75,14 +74,14 @@ class TestAddCategory:
 
     def test_add_category_with_emoji(self, temp_db):
         """Test adding category with emoji."""
-        cat_id = add_category("SantéCustom", emoji="⚕️")
+        add_category("SantéCustom", emoji="⚕️")
 
         emoji_map = get_categories_with_emojis()
         assert emoji_map["SantéCustom"] == "⚕️"
 
     def test_add_category_with_fixed_flag(self, temp_db):
         """Test adding fixed category."""
-        cat_id = add_category("Loyer Mensuel", emoji="🏘️", is_fixed=1)
+        add_category("Loyer Mensuel", emoji="🏘️", is_fixed=1)
 
         df = get_categories_df()
         cat = df[df["name"] == "Loyer Mensuel"].iloc[0]

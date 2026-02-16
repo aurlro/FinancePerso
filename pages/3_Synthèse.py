@@ -13,49 +13,46 @@ Optimisations apportées:
 # ============================================================================
 # IMPORTS STANDARD
 # ============================================================================
-import os
-import sys
 
 # ============================================================================
 # IMPORTS TIERS
 # ============================================================================
-import streamlit as st
 import pandas as pd
+import streamlit as st
+
+from modules.analytics import detect_financial_profile
+from modules.db.categories import get_categories_with_emojis
+from modules.db.members import get_orphan_labels, get_unique_members
 
 # ============================================================================
 # IMPORTS LOCAUX - Modules de base
 # ============================================================================
 from modules.db.migrations import init_db
-from modules.db.categories import get_categories_with_emojis
-from modules.db.members import get_orphan_labels, get_unique_members
-from modules.ui import load_css, render_scroll_to_top
-from modules.ui.feedback import toast_success, toast_info
-from modules.analytics import detect_financial_profile
 from modules.notifications import check_budget_alerts
-
-# ============================================================================
-# IMPORTS LOCAUX - Composants dashboard
-# ============================================================================
-from modules.ui.dashboard.filters import (
-    render_filter_sidebar,
-    render_filter_info,
-    compute_previous_period,
-)
-from modules.ui.dashboard.sections import (
-    render_budget_tab,
-    render_analysis_tab,
-    render_ai_tab,
-)
+from modules.ui import load_css, render_scroll_to_top
 from modules.ui.components.savings_goals_widget import (
     render_savings_goals_summary,
-    render_savings_goals_page,
 )
 from modules.ui.components.smart_reminders_widget import render_smart_reminders_widget
 from modules.ui.dashboard.customizable_dashboard import (
     render_customizable_overview,
     render_dashboard_configurator,
-    DashboardLayoutManager,
 )
+
+# ============================================================================
+# IMPORTS LOCAUX - Composants dashboard
+# ============================================================================
+from modules.ui.dashboard.filters import (
+    compute_previous_period,
+    render_filter_info,
+    render_filter_sidebar,
+)
+from modules.ui.dashboard.sections import (
+    render_ai_tab,
+    render_analysis_tab,
+    render_budget_tab,
+)
+from modules.ui.feedback import toast_info, toast_success
 
 # ============================================================================
 # CONFIGURATION PAGE
@@ -122,15 +119,15 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
     count = st.session_state.get(ONBOARDING_COUNT_KEY, 0)
     if count > 0:
         suggestions = detect_financial_profile(df)
-        
+
         # Fermer par défaut après la première visite (amélioration UX)
         CONFIG_SEEN_KEY = "config_assist_seen"
         is_first_visit = CONFIG_SEEN_KEY not in st.session_state
         expanded_default = is_first_visit  # Ouvert uniquement la première fois
-        
+
         with st.expander(
-            f"🔔 Configuration Assistée - {count} suggestion(s) détectée(s)", 
-            expanded=expanded_default
+            f"🔔 Configuration Assistée - {count} suggestion(s) détectée(s)",
+            expanded=expanded_default,
         ):
             # Marquer comme vu après affichage
             if is_first_visit:
@@ -138,13 +135,17 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
             st.markdown("##### J'ai détecté des opportunités de configuration")
             st.caption("Vérifiez et ajustez les suggestions avant de les valider.")
 
-            from modules.db.rules import add_learning_rule
             from modules.db.categories import get_categories_with_emojis
-            from modules.ui.feedback import toast_success, toast_error
-            
+            from modules.db.rules import add_learning_rule
+            from modules.ui.feedback import toast_error, toast_success
+
             # Get available categories for dropdown
             categories = get_categories_with_emojis()
-            category_list = list(categories.keys()) if categories else ["Revenus", "Logement", "Alimentation", "Transport", "Loisirs"]
+            category_list = (
+                list(categories.keys())
+                if categories
+                else ["Revenus", "Logement", "Alimentation", "Transport", "Loisirs"]
+            )
 
             for i, sug in enumerate(suggestions):
                 with st.container(border=True):
@@ -152,47 +153,67 @@ def render_onboarding_notification(df: pd.DataFrame) -> None:
                     col_header, col_actions = st.columns([3, 1])
                     with col_header:
                         st.write(f"**{sug['type']}**")
-                        confidence = sug.get('confidence', 'Moyenne')
-                        amount_display = abs(sug['amount'])
-                        st.caption(f"Confiance: {'🟢' if confidence == 'Haute' else '🟡'} {confidence} | Montant moyen: {amount_display:.2f} €")
-                    
+                        confidence = sug.get("confidence", "Moyenne")
+                        amount_display = abs(sug["amount"])
+                        st.caption(
+                            f"Confiance: {'🟢' if confidence == 'Haute' else '🟡'} {confidence} | Montant moyen: {amount_display:.2f} €"
+                        )
+
                     with col_actions:
-                        if st.button("🗑️ Ignorer", key=f"sug_skip_{i}", help="Ne pas créer de règle pour cette suggestion"):
+                        if st.button(
+                            "🗑️ Ignorer",
+                            key=f"sug_skip_{i}",
+                            help="Ne pas créer de règle pour cette suggestion",
+                        ):
                             st.session_state[ONBOARDING_COUNT_KEY] -= 1
                             st.rerun()
-                    
+
                     # Editable fields
                     col1, col2, col3 = st.columns([2, 1, 1])
-                    
+
                     with col1:
                         # Pattern input with current value
-                        current_label = sug['label'] if sug['label'] else sug.get('original_label', '')
+                        current_label = (
+                            sug["label"] if sug["label"] else sug.get("original_label", "")
+                        )
                         edited_label = st.text_input(
                             "Pattern de détection",
                             value=current_label,
                             key=f"sug_pattern_{i}",
-                            help="Modifiez pour affiner la détection (ex: 'SALAIRE' détectera toutes les transactions contenant 'SALAIRE')"
+                            help="Modifiez pour affiner la détection (ex: 'SALAIRE' détectera toutes les transactions contenant 'SALAIRE')",
                         )
-                    
+
                     with col2:
                         # Category dropdown
-                        current_cat = sug['default_category']
+                        current_cat = sug["default_category"]
                         edited_category = st.selectbox(
                             "Catégorie",
                             options=category_list,
-                            index=category_list.index(current_cat) if current_cat in category_list else 0,
-                            key=f"sug_cat_{i}"
+                            index=(
+                                category_list.index(current_cat)
+                                if current_cat in category_list
+                                else 0
+                            ),
+                            key=f"sug_cat_{i}",
                         )
-                    
+
                     with col3:
                         st.write("")
                         st.write("")
-                        if st.button("✅ Valider", key=f"sug_val_{i}", use_container_width=True, type="primary"):
+                        if st.button(
+                            "✅ Valider",
+                            key=f"sug_val_{i}",
+                            use_container_width=True,
+                            type="primary",
+                        ):
                             if not edited_label.strip():
                                 toast_error("Le pattern ne peut pas être vide", icon="⚠️")
                             else:
                                 if add_learning_rule(edited_label, edited_category):
-                                    toast_success(f"✅ Règle créée: '{edited_label}' → {edited_category}", icon="📝")
+                                    toast_success(
+                                        f"✅ Règle créée: '{edited_label}' → {edited_category}",
+                                        icon="📝",
+                                    )
                                     st.session_state[ONBOARDING_COUNT_KEY] -= 1
                                     st.rerun()
                                 else:
@@ -329,7 +350,7 @@ def main():
 
         # Rendre la vue d'ensemble personnalisée
         render_customizable_overview(df_current, df_prev, cat_emoji_map, df)
-        
+
         # Objectifs d'épargne (nouvelle section)
         st.divider()
         render_savings_goals_summary()

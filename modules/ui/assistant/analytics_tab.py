@@ -2,14 +2,15 @@
 Analytics & Trends Tab - Analyse approfondie avec chat intégré.
 """
 
-import streamlit as st
-import pandas as pd
 import datetime
-from typing import Callable
-from modules.db.transactions import get_all_transactions
+
+import pandas as pd
+import streamlit as st
+
 from modules.analytics import exclude_internal_transfers
-from modules.ui.assistant.state import get_assistant_state, set_assistant_state, add_chat_message
+from modules.db.transactions import get_all_transactions
 from modules.ui.assistant.components import render_chat_interface
+from modules.ui.assistant.state import add_chat_message, get_assistant_state, set_assistant_state
 
 
 def render_analytics_tab():

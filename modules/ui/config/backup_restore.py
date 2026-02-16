@@ -1,17 +1,18 @@
-import streamlit as st
 import os
 import shutil
-import sqlite3
 from datetime import datetime
+
+import streamlit as st
+
 from modules.db.connection import DB_PATH
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    show_success,
     show_error,
+    show_success,
     show_warning,
+    toast_error,
+    toast_info,
+    toast_success,
+    toast_warning,
 )
 
 
@@ -201,7 +202,7 @@ def render_backup_restore():
                                 key=f"dl_{b['filename']}",
                                 help=f"Télécharger {b['filename']}",
                             )
-                    except Exception as e:
+                    except Exception:
                         st.button(
                             "❌",
                             disabled=True,

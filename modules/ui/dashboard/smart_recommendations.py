@@ -3,16 +3,16 @@ Smart Recommendations Component for Budget Dashboard
 Affiche les recommandations intelligentes par catégorie.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import List, Optional
-from modules.transaction_types import filter_expense_transactions
+import streamlit as st
+
 from modules.ai.category_insights import (
-    CategoryInsightsEngine,
     CategoryInsight,
-    render_category_insights_card,
+    CategoryInsightsEngine,
     get_smart_recommendations,
 )
+from modules.transaction_types import filter_expense_transactions
 
 
 def render_smart_recommendations_section(df_full: pd.DataFrame, df_current: pd.DataFrame):
@@ -118,7 +118,7 @@ def _render_anomaly_card(insight: CategoryInsight, df_current: pd.DataFrame):
                 if st.button(
                     "✏️ Modifier", key=f"edit_{insight.category}", use_container_width=True
                 ):
-                    st.toast(f"Modification de la catégorie...", icon="✏️")
+                    st.toast("Modification de la catégorie...", icon="✏️")
 
         # Détail des transactions si demandé
         if st.session_state.get(f"show_anomaly_{insight.category}", False):
@@ -147,7 +147,7 @@ def _render_anomaly_card(insight: CategoryInsight, df_current: pd.DataFrame):
 
 def _render_trend_card(insight: CategoryInsight):
     """Rendu spécifique pour les tendances."""
-    is_positive = "Réussite" in insight.title or "réduit" in insight.description.lower()
+    "Réussite" in insight.title or "réduit" in insight.description.lower()
 
     with st.container(border=True):
         col1, col2 = st.columns([3, 1])
@@ -168,7 +168,7 @@ def _render_trend_card(insight: CategoryInsight):
                 if st.button(
                     insight.action, key=f"trend_{insight.category}", use_container_width=True
                 ):
-                    st.toast(f"Ouverture du détail...", icon="📊")
+                    st.toast("Ouverture du détail...", icon="📊")
 
 
 def _render_suggestion_card(insight: CategoryInsight):
@@ -192,7 +192,7 @@ def _render_suggestion_card(insight: CategoryInsight):
 
 def render_quick_actions_banner(
     df_current: pd.DataFrame, budgets_df: pd.DataFrame
-) -> Optional[str]:
+) -> str | None:
     """
     Bannière d'actions rapides basées sur l'état actuel.
     Retourne l'action recommandée principale.

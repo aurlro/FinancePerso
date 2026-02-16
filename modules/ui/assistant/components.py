@@ -2,9 +2,10 @@
 Reusable UI components for Assistant page.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 import streamlit as st
-import pandas as pd
-from typing import List, Dict, Any, Optional, Callable
 
 
 def render_progress_card(title: str, current: int, total: int, status_text: str = ""):
@@ -15,7 +16,7 @@ def render_progress_card(title: str, current: int, total: int, status_text: str 
     st.progress(progress, text=status_text)
 
 
-def render_audit_summary_cards(stats: Dict[str, int]):
+def render_audit_summary_cards(stats: dict[str, int]):
     """Render summary cards for audit statistics."""
     cols = st.columns(4)
 
@@ -31,14 +32,14 @@ def render_audit_summary_cards(stats: Dict[str, int]):
 
 def render_anomaly_card(
     index: int,
-    item: Dict[str, Any],
+    item: dict[str, Any],
     is_corrected: bool,
     is_hidden: bool,
     is_selected: bool,
     on_select: Callable[[int, bool], None],
     on_correct: Callable[[int], None],
     on_hide: Callable[[int], None],
-    on_apply: Optional[Callable[[int], None]] = None,
+    on_apply: Callable[[int], None] | None = None,
 ):
     """
     Render a single anomaly card with actions.
@@ -128,7 +129,7 @@ def render_anomaly_card(
     st.divider()
 
 
-def render_insight_card(insight: Dict[str, Any], index: int):
+def render_insight_card(insight: dict[str, Any], index: int):
     """Render an insight card for trends/analytics."""
     title = insight.get("title", "Insight")
     description = insight.get("description", "")
@@ -154,9 +155,9 @@ def render_insight_card(insight: Dict[str, Any], index: int):
 
 
 def render_chat_interface(
-    history: List[Dict[str, str]],
+    history: list[dict[str, str]],
     on_send: Callable[[str], None],
-    suggestions: Optional[List[str]] = None,
+    suggestions: list[str] | None = None,
 ):
     """
     Render chat interface with history and input.
@@ -197,7 +198,7 @@ def render_chat_interface(
 
 
 def render_empty_state(
-    icon: str, title: str, description: str, actions: Optional[List[tuple]] = None
+    icon: str, title: str, description: str, actions: list[tuple] | None = None
 ):
     """
     Render an engaging empty state.
@@ -260,7 +261,7 @@ def render_quick_action_card(icon: str, label: str, description: str, on_click: 
             on_click()
 
 
-def render_metric_row(metrics: List[Dict[str, Any]]):
+def render_metric_row(metrics: list[dict[str, Any]]):
     """Render a row of metric cards."""
     cols = st.columns(len(metrics))
     for i, metric in enumerate(metrics):

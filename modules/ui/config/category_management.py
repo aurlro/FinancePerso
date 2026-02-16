@@ -1,25 +1,25 @@
 import streamlit as st
+
 from modules.db.categories import (
-    get_categories_df,
     add_category,
     delete_category,
+    get_categories,
+    get_categories_df,
+    merge_categories,
     update_category_emoji,
     update_category_fixed,
     update_category_suggested_tags,
-    merge_categories,
-    get_categories,
 )
 from modules.impact_analyzer import analyze_category_merge_impact, render_impact_preview
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    save_feedback,
     delete_feedback,
-    show_success,
-    show_warning,
+    save_feedback,
     show_error,
+    show_warning,
+    toast_error,
+    toast_info,
+    toast_success,
+    toast_warning,
 )
 
 
@@ -99,7 +99,7 @@ def render_category_management():
                                 )
                             elif "FOREIGN KEY" in error_msg:
                                 toast_error(
-                                    f"❌ Modification impossible : catégorie utilisée ailleurs",
+                                    "❌ Modification impossible : catégorie utilisée ailleurs",
                                     icon="🔗",
                                 )
                             else:
@@ -242,7 +242,7 @@ def render_category_management():
                         if tx_count > 0:
                             messages.append(f"• {tx_count} transaction(s) transférée(s)")
                         elif tx_count == 0:
-                            messages.append(f"• Aucune transaction à transférer")
+                            messages.append("• Aucune transaction à transférer")
 
                         if rules_count > 0:
                             messages.append(
@@ -250,7 +250,7 @@ def render_category_management():
                             )
 
                         if budget_transferred:
-                            messages.append(f"• 💰 Budget transféré")
+                            messages.append("• 💰 Budget transféré")
 
                         if category_deleted:
                             messages.append(f"• 🗑️ Catégorie '{source_cat}' supprimée")
@@ -265,7 +265,7 @@ def render_category_management():
 
                         # Detailed success banner
                         with st.container(border=True):
-                            st.markdown(f"**🔀 Fusion réussie**")
+                            st.markdown("**🔀 Fusion réussie**")
                             st.markdown(f"**'{source_cat}'** → **'{target_cat}'**")
                             if tx_count > 0:
                                 st.markdown(f"✅ {tx_count} transaction(s) réattribuée(s)")
@@ -290,7 +290,7 @@ def render_category_management():
                             )
                         elif "database" in error_msg.lower():
                             show_error("Erreur base de données lors de la fusion", icon="💾")
-                            toast_error(f"❌ Problème de base de données. Réessayez.", icon="💾")
+                            toast_error("❌ Problème de base de données. Réessayez.", icon="💾")
                         else:
                             show_error(f"Impossible de fusionner : {error_msg}", icon="❌")
                             toast_error(f"❌ Échec de la fusion : {error_msg[:80]}", icon="❌")

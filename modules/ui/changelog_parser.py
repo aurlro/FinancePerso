@@ -1,6 +1,5 @@
-import re
 import os
-from datetime import datetime
+import re
 
 
 def parse_changelog(file_path):
@@ -19,7 +18,7 @@ def parse_changelog(file_path):
     if not os.path.exists(file_path):
         return []
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # Split by version headers (## [version] - date or ## version - date)

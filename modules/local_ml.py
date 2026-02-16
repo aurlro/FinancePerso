@@ -10,23 +10,22 @@ import os
 import pickle
 import re
 from datetime import datetime
-from typing import Optional, Tuple, List
+
 import numpy as np
 
 # Gestion optionnelle de scikit-learn
 try:
     from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics import accuracy_score, classification_report
+    from sklearn.model_selection import train_test_split
     from sklearn.naive_bayes import MultinomialNB
     from sklearn.pipeline import Pipeline
-    from sklearn.model_selection import train_test_split
-    from sklearn.metrics import classification_report, accuracy_score
 
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
 from modules.db.transactions import get_all_transactions
-from modules.db.categories import get_categories
 from modules.logger import logger
 
 # Chemin du modèle sauvegardé
@@ -40,10 +39,10 @@ class LocalTransactionClassifier:
     """
 
     def __init__(self):
-        self.model: Optional[Pipeline] = None
+        self.model: Pipeline | None = None
         self.is_trained = False
-        self.categories: List[str] = []
-        self.training_date: Optional[datetime] = None
+        self.categories: list[str] = []
+        self.training_date: datetime | None = None
 
         # Essayer de charger un modèle existant
         self._load_model()
@@ -79,7 +78,7 @@ class LocalTransactionClassifier:
 
         return text
 
-    def train(self, min_samples_per_category: int = 5) -> Tuple[bool, str]:
+    def train(self, min_samples_per_category: int = 5) -> tuple[bool, str]:
         """
         Entraîne le modèle sur les transactions historiques.
 
@@ -174,7 +173,7 @@ class LocalTransactionClassifier:
             logger.error(f"Error training local ML model: {e}")
             return False, f"Erreur d'entraînement: {str(e)}"
 
-    def predict(self, label: str, amount: float = None, date=None) -> Tuple[Optional[str], float]:
+    def predict(self, label: str, amount: float = None, date=None) -> tuple[str | None, float]:
         """
         Prédit la catégorie d'une transaction.
 
@@ -208,7 +207,7 @@ class LocalTransactionClassifier:
             logger.error(f"Error predicting with local ML: {e}")
             return None, 0.0
 
-    def predict_batch(self, labels: List[str]) -> List[Tuple[Optional[str], float]]:
+    def predict_batch(self, labels: list[str]) -> list[tuple[str | None, float]]:
         """
         Prédit les catégories pour plusieurs transactions.
 
@@ -290,7 +289,7 @@ class LocalTransactionClassifier:
             logger.error(f"Error loading model: {e}")
             self.is_trained = False
 
-    def retrain_if_needed(self, min_accuracy: float = 0.7) -> Tuple[bool, str]:
+    def retrain_if_needed(self, min_accuracy: float = 0.7) -> tuple[bool, str]:
         """
         Réentraîne le modèle si nécessaire.
 
@@ -315,7 +314,7 @@ class LocalTransactionClassifier:
 
 
 # Instance globale du classificateur
-_classifier: Optional[LocalTransactionClassifier] = None
+_classifier: LocalTransactionClassifier | None = None
 
 
 def get_classifier() -> LocalTransactionClassifier:
@@ -328,7 +327,7 @@ def get_classifier() -> LocalTransactionClassifier:
 
 def predict_category_local(
     label: str, amount: float = None, date=None
-) -> Tuple[Optional[str], float]:
+) -> tuple[str | None, float]:
     """
     Fonction helper pour prédire la catégorie d'une transaction.
 
@@ -339,7 +338,7 @@ def predict_category_local(
     return classifier.predict(label, amount, date)
 
 
-def train_local_model() -> Tuple[bool, str]:
+def train_local_model() -> tuple[bool, str]:
     """
     Entraîne le modèle local sur les transactions historiques.
 

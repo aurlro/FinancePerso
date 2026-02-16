@@ -6,12 +6,14 @@ toasts, et messages de confirmation à l'utilisateur.
 # Force reload
 """
 
-import streamlit as st
-import streamlit.components.v1 as components
-from enum import Enum
-from typing import Optional, Callable, Any
 import functools
 import time
+from collections.abc import Callable
+from enum import Enum
+from typing import Any
+
+import streamlit as st
+import streamlit.components.v1 as components
 
 
 class FeedbackType(Enum):
@@ -131,7 +133,7 @@ def show_rich_success(
     key_prefix: str,
     keep_open: bool = False,
     auto_close_delay: int = 3,
-    on_close_callback: Optional[Callable] = None,
+    on_close_callback: Callable | None = None,
 ):
     """
     Affiche un feedback riche : Toast immédiat + Banner optionnel + Auto-close.
@@ -234,7 +236,7 @@ def with_spinner(message: str = "Chargement..."):
 def action_feedback(
     success: bool,
     success_message: str,
-    error_message: Optional[str] = None,
+    error_message: str | None = None,
     show_banner: bool = False,
 ):
     """
@@ -355,7 +357,7 @@ def import_feedback(count: int, skipped: int = 0, account_name: str = ""):
 # ============================================================================
 
 
-def config_saved_feedback(section: Optional[str] = None):
+def config_saved_feedback(section: str | None = None):
     """Feedback quand une configuration est sauvegardée."""
     msg = "Configuration sauvegardée"
     if section:
@@ -493,8 +495,8 @@ def display_flash_toasts():
 def show_operation_status(
     operation_name: str,
     status: str,  # 'pending', 'running', 'success', 'error'
-    progress: Optional[float] = None,
-    message: Optional[str] = None,
+    progress: float | None = None,
+    message: str | None = None,
 ):
     """
     Affiche le statut d'une opération longue.
@@ -587,7 +589,6 @@ def render_scroll_to_top(anchor_id: str = "top"):
     Args:
         anchor_id: ID de l'ancre cible (défaut: "top")
     """
-    import streamlit.components.v1 as components
 
     # Créer l'ancre en haut de la page (invisible)
     st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)

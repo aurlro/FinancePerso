@@ -2,8 +2,8 @@
 Tests for migrations.py module.
 """
 
-import pytest
 import sqlite3
+
 from modules.db.migrations import init_db
 
 

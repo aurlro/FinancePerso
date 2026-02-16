@@ -2,21 +2,22 @@
 Tests for rules.py module.
 """
 
-import pytest
 import re
+
+import pandas as pd
+
+from modules.categorization import categorize_transaction
 from modules.db.rules import (
-    get_learning_rules,
-    get_compiled_learning_rules,
     add_learning_rule,
     delete_learning_rule,
+    get_compiled_learning_rules,
+    get_learning_rules,
 )
 from modules.db.transactions import (
     get_pending_transactions,
-    update_transaction_category,
     save_transactions,
+    update_transaction_category,
 )
-from modules.categorization import categorize_transaction
-import pandas as pd
 
 
 # Helper function to simulate apply_rules_to_pending
@@ -78,7 +79,7 @@ class TestCompiledRules:
         for pattern_compiled, category, priority, pattern_str in compiled_rules:
             assert isinstance(pattern_compiled, re.Pattern), "Pattern should be compiled"
             assert isinstance(category, str), "Category should be string"
-            assert isinstance(priority, (int, float)), "Priority should be numeric"
+            assert isinstance(priority, int | float), "Priority should be numeric"
             assert isinstance(pattern_str, str), "Original pattern should be string"
 
     def test_compiled_rules_sorted_by_priority(self, temp_db):
@@ -117,7 +118,7 @@ class TestCompiledRules:
         result = add_learning_rule("[INVALID(", "TestCat", priority=5)
 
         # Should be rejected by validation
-        assert result == False, "Invalid regex should be rejected at insertion"
+        assert result is False, "Invalid regex should be rejected at insertion"
 
         compiled_rules = get_compiled_learning_rules()
 

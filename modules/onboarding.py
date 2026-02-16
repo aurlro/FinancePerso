@@ -1,14 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 Module d'onboarding pour guider les nouveaux utilisateurs.
 Fournit une expérience de premier lancement fluide.
 """
 
+
 import streamlit as st
-from typing import Optional, Callable
-from modules.db.transactions import get_all_transactions
+
 from modules.db.categories import get_categories
-from modules.db.members import get_members
+from modules.db.transactions import get_all_transactions
 from modules.logger import logger
 
 

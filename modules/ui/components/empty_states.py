@@ -3,20 +3,21 @@ Empty States Component - Engaging empty states for better UX.
 Prevents user abandonment by providing clear next steps.
 """
 
+from collections.abc import Callable
+
 import streamlit as st
-from typing import Optional, Callable
 
 
 def render_empty_state(
     icon: str = "📭",
     title: str = "Aucune donnée",
     message: str = "Commencez par ajouter des données.",
-    action_label: Optional[str] = None,
+    action_label: str | None = None,
     action_icon: str = "➕",
-    action_page: Optional[str] = None,
-    action_callback: Optional[Callable] = None,
-    help_text: Optional[str] = None,
-    illustration: Optional[str] = None,
+    action_page: str | None = None,
+    action_callback: Callable | None = None,
+    help_text: str | None = None,
+    illustration: str | None = None,
     key: str = "empty_state",
 ):
     """
@@ -169,7 +170,7 @@ def render_no_data_state(
 
 def render_error_state(
     error_message: str = "Une erreur s'est produite",
-    retry_callback: Optional[Callable] = None,
+    retry_callback: Callable | None = None,
     key: str = "error_state",
 ):
     """Error state with retry option."""

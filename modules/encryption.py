@@ -4,14 +4,13 @@ Provides AES-256 encryption for sensitive data fields.
 Uses Fernet symmetric encryption with key derivation.
 """
 
-import os
 import base64
-import logging
-from typing import Optional, Union
+import os
+
 from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.backends import default_backend
 
 from modules.logger import logger
 
@@ -22,7 +21,7 @@ class FieldEncryption:
     Uses AES-256 in CBC mode via Fernet.
     """
 
-    def __init__(self, master_key: Optional[str] = None):
+    def __init__(self, master_key: str | None = None):
         """
         Initialize encryption with a master key.
 
@@ -83,7 +82,7 @@ class FieldEncryption:
         """Check if encryption is enabled and working."""
         return self._cipher is not None
 
-    def encrypt(self, plaintext: Union[str, None]) -> Optional[str]:
+    def encrypt(self, plaintext: str | None) -> str | None:
         """
         Encrypt a string value.
 
@@ -113,7 +112,7 @@ class FieldEncryption:
             logger.error(f"Encryption failed: {e}")
             return plaintext
 
-    def decrypt(self, ciphertext: Union[str, None]) -> Optional[str]:
+    def decrypt(self, ciphertext: str | None) -> str | None:
         """
         Decrypt an encrypted string value.
 
@@ -185,12 +184,12 @@ def get_encryption() -> FieldEncryption:
     return _encryption_instance
 
 
-def encrypt_field(value: Union[str, None]) -> Optional[str]:
+def encrypt_field(value: str | None) -> str | None:
     """Encrypt a field value using singleton instance."""
     return get_encryption().encrypt(value)
 
 
-def decrypt_field(value: Union[str, None]) -> Optional[str]:
+def decrypt_field(value: str | None) -> str | None:
     """Decrypt a field value using singleton instance."""
     return get_encryption().decrypt(value)
 

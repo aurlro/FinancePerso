@@ -1,15 +1,17 @@
-import streamlit as st
 import os
 import stat
-from dotenv import load_dotenv, set_key, find_dotenv
+
+import streamlit as st
+from dotenv import find_dotenv, load_dotenv, set_key
+
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
     api_config_feedback,
-    show_success,
     show_error,
+    show_success,
+    toast_error,
+    toast_info,
+    toast_success,
+    toast_warning,
 )
 
 
@@ -29,7 +31,7 @@ def load_env_vars():
     vars = {}
     if os.path.exists(env_file):
         try:
-            with open(env_file, "r", encoding="utf-8") as f:
+            with open(env_file, encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line and not line.startswith("#") and "=" in line:

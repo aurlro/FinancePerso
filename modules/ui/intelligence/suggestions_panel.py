@@ -4,16 +4,14 @@ Smart Suggestions Panel for Intelligence page.
 Renders actionable suggestions based on data analysis.
 """
 
-import streamlit as st
+
 import pandas as pd
-from typing import List, Optional
+import streamlit as st
 
-from modules.ai.smart_suggestions import get_smart_suggestions, Suggestion
+from modules.ai.smart_suggestions import Suggestion, get_smart_suggestions
 from modules.db.rules import add_learning_rule
-from modules.db.members import add_member_mapping, add_account_member_mapping
-from modules.ui.feedback import toast_success, toast_error, toast_info
 from modules.logger import logger
-
+from modules.ui.feedback import toast_error, toast_info, toast_success
 
 # Session state initialization
 if "suggestions_filter" not in st.session_state:
@@ -71,7 +69,7 @@ def _handle_suggestion_action(suggestion: Suggestion):
             account_label = action_data.get("account_label")
             st.session_state["pending_account_mapping"] = account_label
             toast_info(
-                f"🏦 Allez dans Configuration → Membres pour définir le membre par défaut",
+                "🏦 Allez dans Configuration → Membres pour définir le membre par défaut",
                 icon="👤",
             )
             return True
@@ -79,7 +77,7 @@ def _handle_suggestion_action(suggestion: Suggestion):
         elif action_type == "adjust_budget":
             category = action_data.get("category")
             st.session_state["pending_budget_adjustment"] = category
-            toast_info(f"💰 Allez dans l'onglet Budgets pour ajuster", icon="💰")
+            toast_info("💰 Allez dans l'onglet Budgets pour ajuster", icon="💰")
             return True
 
         elif action_type == "view_duplicates":

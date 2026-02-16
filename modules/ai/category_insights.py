@@ -4,12 +4,10 @@ Génère des recommandations intelligentes par catégorie de budget.
 Détecte les anomalies et propose des actions contextuelles.
 """
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-from modules.logger import logger
+from datetime import datetime, timedelta
+
+import pandas as pd
 
 
 @dataclass
@@ -21,10 +19,10 @@ class CategoryInsight:
     severity: str  # 'high', 'medium', 'low'
     title: str
     description: str
-    action: Optional[str] = None
-    action_link: Optional[str] = None
-    amount: Optional[float] = None
-    savings_potential: Optional[float] = None
+    action: str | None = None
+    action_link: str | None = None
+    amount: float | None = None
+    savings_potential: float | None = None
 
 
 @dataclass
@@ -36,8 +34,8 @@ class TransactionAnomaly:
     amount: float
     date: str
     anomaly_type: str  # 'unusual_amount', 'unusual_frequency', 'new_merchant'
-    expected_amount: Optional[float] = None
-    deviation_percent: Optional[float] = None
+    expected_amount: float | None = None
+    deviation_percent: float | None = None
 
 
 class CategoryInsightsEngine:
@@ -50,7 +48,8 @@ class CategoryInsightsEngine:
         Initialize avec l'historique complet des transactions.
 
         Args:
-            df_full: DataFrame avec toutes les transactions (doit avoir date_dt, category_validated, amount, label)
+            df_full: DataFrame avec toutes les transactions (doit avoir 
+                date_dt, category_validated, amount, label)
         """
         self.df = df_full.copy()
         if not self.df.empty and "date_dt" in self.df.columns:
@@ -58,7 +57,7 @@ class CategoryInsightsEngine:
 
     def get_category_insights(
         self, category: str, current_month_df: pd.DataFrame
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """
         Génère tous les insights pour une catégorie donnée.
 
@@ -106,7 +105,7 @@ class CategoryInsightsEngine:
 
     def _detect_amount_anomalies(
         self, category: str, history: pd.DataFrame, current: pd.DataFrame
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """Détecte les transactions avec des montants inhabituels."""
         insights = []
 
@@ -135,8 +134,11 @@ class CategoryInsightsEngine:
                         category=category,
                         insight_type="anomaly",
                         severity="high" if z_score > 3 else "medium",
-                        title=f"🚨 Dépense inhabituelle",
-                        description=f"'{tx['label']}' à {amount:.0f}€ est {deviation:.0f}% plus élevé que d'habitude (moyenne: {mean_amount:.0f}€)",
+                        title="🚨 Dépense inhabituelle",
+                        description=(
+                            f"'{tx['label']}' à {amount:.0f}€ est {deviation:.0f}% "
+                            f"plus élevé que d'habitude (moyenne: {mean_amount:.0f}€)"
+                        ),
                         action="Vérifier cette transaction",
                         amount=amount,
                         savings_potential=amount - mean_amount,
@@ -147,7 +149,7 @@ class CategoryInsightsEngine:
 
     def _analyze_trend(
         self, category: str, history: pd.DataFrame, current: pd.DataFrame
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """Analyse la tendance par rapport aux mois précédents."""
         insights = []
 
@@ -171,8 +173,11 @@ class CategoryInsightsEngine:
                         category=category,
                         insight_type="trend",
                         severity="high" if change_pct > 50 else "medium",
-                        title=f"📈 Forte augmentation",
-                        description=f"Vos dépenses '{category}' ont augmenté de {change_pct:.0f}% par rapport à la moyenne ({avg_last_3:.0f}€ → {current_total:.0f}€)",
+                        title="📈 Forte augmentation",
+                        description=(
+                            f"Vos dépenses '{category}' ont augmenté de {change_pct:.0f}% "
+                            f"par rapport à la moyenne ({avg_last_3:.0f}€ → {current_total:.0f}€)"
+                        ),
                         action="Analyser les causes",
                         amount=current_total,
                         savings_potential=current_total - avg_last_3,
@@ -184,8 +189,11 @@ class CategoryInsightsEngine:
                         category=category,
                         insight_type="trend",
                         severity="low",
-                        title=f"📉 Réussite !",
-                        description=f"Vous avez réduit vos dépenses '{category}' de {abs(change_pct):.0f}% par rapport à la moyenne. Continuez ainsi !",
+                        title="📉 Réussite !",
+                        description=(
+                            f"Vous avez réduit vos dépenses '{category}' de "
+                            f"{abs(change_pct):.0f}% par rapport à la moyenne. Continuez ainsi !"
+                        ),
                         action="Voir le détail",
                     )
                 )
@@ -194,7 +202,7 @@ class CategoryInsightsEngine:
 
     def _detect_new_merchants(
         self, category: str, history: pd.DataFrame, current: pd.DataFrame
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """Détecte les nouveaux commerçants ou libellés."""
         insights = []
 
@@ -221,8 +229,11 @@ class CategoryInsightsEngine:
                     category=category,
                     insight_type="suggestion",
                     severity="low",
-                    title=f"🆕 Nouvelles dépenses détectées",
-                    description=f"{len(new_transactions)} nouvelle(s) dépense(s) dans '{category}' pour un total de {total_new:.0f}€",
+                    title="🆕 Nouvelles dépenses détectées",
+                    description=(
+                        f"{len(new_transactions)} nouvelle(s) dépense(s) dans '{category}' "
+                        f"pour un total de {total_new:.0f}€"
+                    ),
                     action="Vérifier et catégoriser",
                 )
             )
@@ -231,13 +242,13 @@ class CategoryInsightsEngine:
 
     def _generate_savings_suggestions(
         self, category: str, history: pd.DataFrame, current: pd.DataFrame
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """Génère des suggestions d'économies."""
         insights = []
 
         # Analyser la fréquence
-        current_month = datetime.now().month
-        current_year = datetime.now().year
+        datetime.now().month
+        datetime.now().year
 
         # Nombre de transactions ce mois
         tx_count_current = len(current)
@@ -257,7 +268,7 @@ class CategoryInsightsEngine:
                     category=category,
                     insight_type="suggestion",
                     severity="medium",
-                    title=f"💡 Opportunité d'économie",
+                    title="💡 Opportunité d'économie",
                     description=f"Vous faites {tx_count_current} transactions ce mois contre {avg_tx_per_month:.0f} en moyenne. En regroupant vos achats, vous pourriez économiser ~{potential_savings:.0f}€/mois",
                     action="Voir les fréquences",
                     savings_potential=potential_savings,
@@ -268,7 +279,7 @@ class CategoryInsightsEngine:
 
     def get_top_insights(
         self, current_month_df: pd.DataFrame, max_insights: int = 5
-    ) -> List[CategoryInsight]:
+    ) -> list[CategoryInsight]:
         """
         Récupère les insights les plus importants sur toutes les catégories.
 
@@ -307,7 +318,7 @@ class CategoryInsightsEngine:
 
     def get_anomalous_transactions(
         self, category: str, current_month_df: pd.DataFrame
-    ) -> List[TransactionAnomaly]:
+    ) -> list[TransactionAnomaly]:
         """
         Récupère les transactions anormales pour une catégorie.
 
@@ -389,7 +400,7 @@ def render_category_insights_card(insight: CategoryInsight):
 
 
 # Fonction utilitaire pour intégration rapide
-def get_smart_recommendations(df_full: pd.DataFrame, df_current: pd.DataFrame) -> Dict:
+def get_smart_recommendations(df_full: pd.DataFrame, df_current: pd.DataFrame) -> dict:
     """
     Fonction simple pour obtenir des recommandations intelligentes.
 

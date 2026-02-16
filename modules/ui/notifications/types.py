@@ -3,11 +3,12 @@ Types et classes de données pour le système de notifications.
 Définit les différents types de notifications et leurs propriétés.
 """
 
-from enum import Enum, auto
-from dataclasses import dataclass, field
-from typing import Optional, Callable, List, Dict, Any
-from datetime import datetime
 import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 
 class NotificationLevel(Enum):
@@ -48,10 +49,10 @@ class NotificationAction:
     """Action associée à une notification."""
 
     label: str
-    callback: Optional[Callable] = None
-    url: Optional[str] = None  # Redirection vers une page
+    callback: Callable | None = None
+    url: str | None = None  # Redirection vers une page
     primary: bool = False  # Style bouton primaire
-    icon: Optional[str] = None
+    icon: str | None = None
 
 
 @dataclass
@@ -80,20 +81,20 @@ class Notification:
 
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     level: NotificationLevel = NotificationLevel.INFO
-    title: Optional[str] = None
+    title: str | None = None
     message: str = ""
-    icon: Optional[str] = None
-    duration: Optional[float] = None
+    icon: str | None = None
+    duration: float | None = None
     persistent: bool = False
-    actions: List[NotificationAction] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    actions: list[NotificationAction] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: datetime = field(default_factory=datetime.now)
     read: bool = False
-    dismissed_at: Optional[datetime] = None
+    dismissed_at: datetime | None = None
     position: NotificationPosition = NotificationPosition.TOP_RIGHT
     sound: NotificationSound = NotificationSound.NONE
     show_progress: bool = True
-    group: Optional[str] = None
+    group: str | None = None
 
     def __post_init__(self):
         """Définit les valeurs par défaut selon le niveau."""
@@ -117,7 +118,7 @@ class Notification:
         """Marque la notification comme fermée."""
         self.dismissed_at = datetime.now()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertit en dictionnaire pour sérialisation."""
         return {
             "id": self.id,
@@ -135,7 +136,7 @@ class Notification:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Notification":
+    def from_dict(cls, data: dict[str, Any]) -> "Notification":
         """Crée une notification depuis un dictionnaire."""
         data = data.copy()
         data["level"] = NotificationLevel(data["level"])
@@ -146,7 +147,7 @@ class Notification:
 
 
 # Configuration par défaut selon le niveau
-DEFAULT_DURATIONS: Dict[NotificationLevel, float] = {
+DEFAULT_DURATIONS: dict[NotificationLevel, float] = {
     NotificationLevel.CRITICAL: 0,  # Persistant
     NotificationLevel.WARNING: 10.0,
     NotificationLevel.SUCCESS: 3.0,
@@ -155,7 +156,7 @@ DEFAULT_DURATIONS: Dict[NotificationLevel, float] = {
     NotificationLevel.LOADING: 0,  # Jusqu'à completion
 }
 
-DEFAULT_ICONS: Dict[NotificationLevel, str] = {
+DEFAULT_ICONS: dict[NotificationLevel, str] = {
     NotificationLevel.CRITICAL: "🚨",
     NotificationLevel.WARNING: "⚠️",
     NotificationLevel.SUCCESS: "✅",
@@ -164,7 +165,7 @@ DEFAULT_ICONS: Dict[NotificationLevel, str] = {
     NotificationLevel.LOADING: "🔄",
 }
 
-LEVEL_COLORS: Dict[NotificationLevel, str] = {
+LEVEL_COLORS: dict[NotificationLevel, str] = {
     NotificationLevel.CRITICAL: "#dc2626",  # Red 600
     NotificationLevel.WARNING: "#f59e0b",  # Amber 500
     NotificationLevel.SUCCESS: "#16a34a",  # Green 600
@@ -173,7 +174,7 @@ LEVEL_COLORS: Dict[NotificationLevel, str] = {
     NotificationLevel.LOADING: "#6b7280",  # Gray 500
 }
 
-LEVEL_BG_COLORS: Dict[NotificationLevel, str] = {
+LEVEL_BG_COLORS: dict[NotificationLevel, str] = {
     NotificationLevel.CRITICAL: "#fef2f2",  # Red 50
     NotificationLevel.WARNING: "#fffbeb",  # Amber 50
     NotificationLevel.SUCCESS: "#f0fdf4",  # Green 50
@@ -202,7 +203,7 @@ class NotificationPreferences:
     show_achievement: bool = True
 
     # Durées personnalisées (None = utiliser les défauts)
-    custom_durations: Dict[str, float] = field(default_factory=dict)
+    custom_durations: dict[str, float] = field(default_factory=dict)
 
     def should_show(self, level: NotificationLevel) -> bool:
         """Vérifie si un niveau de notification doit être affiché."""

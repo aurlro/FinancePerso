@@ -2,18 +2,16 @@
 Tests for transactions.py module.
 """
 
-import pytest
 import pandas as pd
+
 from modules.db.transactions import (
+    bulk_update_transaction_status,
+    delete_transaction_by_id,
+    delete_transactions_by_period,
     get_all_transactions,
     get_pending_transactions,
     save_transactions,
     update_transaction_category,
-    bulk_update_transaction_status,
-    delete_transaction_by_id,
-    delete_transactions_by_period,
-    get_transactions_by_criteria,
-    get_duplicates_report,
 )
 
 

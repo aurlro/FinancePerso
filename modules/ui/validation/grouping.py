@@ -4,7 +4,9 @@ Pure business logic for smart grouping of pending transactions.
 """
 
 import re
+
 import pandas as pd
+
 from modules.utils import clean_label
 
 

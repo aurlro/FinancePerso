@@ -4,37 +4,33 @@ Quick Actions Component - Popup-based quick actions for the dashboard.
 Provides inline actions without leaving the home page using Streamlit popovers.
 """
 
-import streamlit as st
-import pandas as pd
 from datetime import datetime
 
+import pandas as pd
+import streamlit as st
+
+from modules.ai_manager import is_ai_available
+from modules.categorization import categorize_transaction
 from modules.data_manager import (
-    get_pending_transactions,
-    bulk_update_transaction_status,
-    get_members,
-    get_categories,
-    add_member,
     add_category,
     add_learning_rule,
+    add_member,
+    bulk_update_transaction_status,
+    get_categories,
+    get_members,
+    get_pending_transactions,
+    save_transactions,
 )
+from modules.db.transactions import get_all_hashes
+from modules.ingestion import load_transaction_file
+from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    validation_feedback,
-    save_feedback,
+    FeedbackType,
+    set_flash_message,
     show_info,
     show_warning,
-    set_flash_message,
-    FeedbackType,
+    toast_error,
 )
-from modules.ingestion import load_transaction_file
-from modules.data_manager import save_transactions
-from modules.db.transactions import get_all_hashes
-from modules.categorization import categorize_transaction
-from modules.ai_manager import is_ai_available
-from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 
 
 def render_quick_validation_popover():

@@ -2,10 +2,9 @@
 Module de graphiques d'évolution avec caching.
 """
 
-import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import numpy as np
+import streamlit as st
 
 
 @st.cache_data(ttl=300)
@@ -24,7 +23,7 @@ def _compute_monthly_evolution(df_current: pd.DataFrame) -> pd.DataFrame:
         .tolist()
     )
 
-    from modules.transaction_types import calculate_true_income, calculate_true_expenses
+    from modules.transaction_types import calculate_true_expenses, calculate_true_income
 
     monthly_data = []
     for m in all_months:

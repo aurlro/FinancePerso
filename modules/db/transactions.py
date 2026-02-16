@@ -4,10 +4,12 @@ Handles CRUD operations for transactions, the core entity of the application.
 """
 
 import uuid
+
 import pandas as pd
 import streamlit as st
-from modules.db.connection import get_db_connection, build_filter_clause, clear_db_cache
-from modules.db.members import get_member_mappings, detect_member_from_content
+
+from modules.db.connection import build_filter_clause, clear_db_cache, get_db_connection
+from modules.db.members import detect_member_from_content, get_member_mappings
 from modules.logger import logger
 
 
@@ -69,7 +71,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
         skipped_count = 0
 
         # Pre-load member mappings
-        card_maps = get_member_mappings()
+        get_member_mappings()
 
         # Ensure date is string for consistent grouping/querying
         df["date_str"] = df["date"].astype(str)

@@ -1,27 +1,18 @@
-import streamlit as st
-import pandas as pd
 import datetime
-from modules.ingestion import load_transaction_file
-from modules.db.transactions import save_transactions, get_all_transactions, get_all_hashes
-from modules.db.stats import get_recent_imports, get_all_account_labels
+
+import pandas as pd
+import streamlit as st
+
+from modules.ai_manager import is_ai_available
 from modules.categorization import categorize_transaction
-from modules.ui import load_css, render_scroll_to_top
+from modules.db.stats import get_all_account_labels, get_recent_imports
+from modules.db.transactions import get_all_hashes, get_all_transactions, save_transactions
+from modules.ingestion import load_transaction_file
+from modules.onboarding import render_onboarding_widget
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    show_success,
-    show_error,
-    show_warning,
-    show_info,
     import_feedback,
-    celebrate_completion,
 )
 from modules.utils import validate_csv_file
-from modules.validators import validate_transaction, sanitize_string_input
-from modules.ai_manager import is_ai_available
-from modules.onboarding import render_onboarding_widget
 
 
 def render_import_tab():
@@ -32,19 +23,19 @@ def render_import_tab():
     render_onboarding_widget("default", has_data=not df_check.empty)
 
     st.header("📥 Importation des relevés")
-    
+
     # WIZARD PROGRESS INDICATOR
     steps = ["📁 Fichier", "⚙️ Paramètres", "👁️ Preview", "✅ Import"]
-    
+
     # Déterminer l'étape actuelle basée sur l'état
     if "import_step" not in st.session_state:
         st.session_state.import_step = 0
-    
+
     current_step = st.session_state.import_step
-    
+
     # Progress bar
     st.progress((current_step + 1) / len(steps))
-    
+
     # Indicateur visuel des étapes
     cols = st.columns(len(steps))
     for i, (col, step) in enumerate(zip(cols, steps)):
@@ -54,8 +45,8 @@ def render_import_tab():
             elif i == current_step:
                 st.info(f"→ **{step}**")  # Actif
             else:
-                st.caption(f"○ {step}")   # À venir
-    
+                st.caption(f"○ {step}")  # À venir
+
     st.divider()
 
     # Quick guide
@@ -116,7 +107,7 @@ def render_import_tab():
     if uploaded_file is not None:
         # Passer à l'étape 1 (Fichier sélectionné)
         st.session_state.import_step = 1
-        
+
         # Validate file
         is_valid, error_msg = validate_csv_file(uploaded_file)
         if not is_valid:
@@ -159,7 +150,7 @@ def render_import_tab():
         if ready_to_import:
             # Passer à l'étape 2 (Paramètres)
             st.session_state.import_step = 2
-            
+
             # --- STEP 2: QUESTIONNAIRE ---
             st.divider()
             st.subheader("2️⃣ Paramètres d'import")
@@ -220,7 +211,7 @@ def render_import_tab():
 
             # Passer à l'étape 3 (Preview)
             st.session_state.import_step = 3
-            
+
             # Parse file
             st.divider()
             st.subheader("3️⃣ Prévisualisation & Doublons")
@@ -278,12 +269,12 @@ def render_import_tab():
 
                     # Passer à l'étape 4 (Import)
                     st.session_state.import_step = 3  # Stay at 3 until click
-                    
+
                     # --- STEP 4: IMPORT ---
                     st.divider()
                     st.subheader("4️⃣ Import des données")
 
-                    ai_available = is_ai_available()
+                    is_ai_available()
                     auto_cat = st.checkbox("Lancer la catégorisation automatique", value=True)
 
                     if st.button(
@@ -301,7 +292,7 @@ def render_import_tab():
                         with st.status("Importation en cours...", expanded=True) as status:
                             if auto_cat:
                                 all_results = []
-                                total = len(df_import)
+                                len(df_import)
                                 for i, (_, row) in enumerate(df_import.iterrows()):
                                     cat, source, conf = categorize_transaction(
                                         row["label"], row["amount"], row["date"]

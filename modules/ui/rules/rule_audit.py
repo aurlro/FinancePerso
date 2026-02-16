@@ -5,15 +5,14 @@ Provides AI-powered analysis of learning rules to detect conflicts,
 duplicates, overlaps, and other issues.
 """
 
-import streamlit as st
-import pandas as pd
 from datetime import datetime
-from typing import Optional
 
-from modules.db.rules import get_learning_rules, delete_learning_rule
+import pandas as pd
+import streamlit as st
+
 from modules.ai.rules_auditor import analyze_rules_integrity
+from modules.db.rules import delete_learning_rule, get_learning_rules
 from modules.logger import logger
-
 
 # Initialisation des variables de session
 if "audit_last_run" not in st.session_state:
@@ -154,7 +153,7 @@ def render_audit_section():
                         try:
                             for rule_id in conflict["ids"]:
                                 delete_learning_rule(rule_id)
-                            st.success(f"✅ Règles supprimées")
+                            st.success("✅ Règles supprimées")
                             invalidate_audit_cache()
                             _get_cached_rules_for_audit.clear()
                             st.rerun(scope="fragment")

@@ -2,17 +2,16 @@
 Import Analyzer - Analyse temps réel lors de l'import de transactions
 """
 
-import pandas as pd
-import streamlit as st
-from typing import List, Dict
 from datetime import datetime
 
-from modules.notifications_realtime import get_notification_manager, RealTimeAlert
-from modules.ai.category_insights import CategoryInsightsEngine
+import pandas as pd
+import streamlit as st
+
+from modules.notifications_realtime import RealTimeAlert, get_notification_manager
 from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 
 
-def analyze_imported_transactions(df_new: pd.DataFrame, df_history: pd.DataFrame) -> List[Dict]:
+def analyze_imported_transactions(df_new: pd.DataFrame, df_history: pd.DataFrame) -> list[dict]:
     """
     Analyse un batch de transactions nouvellement importées.
     Génère des alertes temps réel si nécessaire.
@@ -77,7 +76,7 @@ def analyze_imported_transactions(df_new: pd.DataFrame, df_history: pd.DataFrame
     return alerts
 
 
-def render_import_summary(df_imported: pd.DataFrame, alerts: List[RealTimeAlert]):
+def render_import_summary(df_imported: pd.DataFrame, alerts: list[RealTimeAlert]):
     """
     Affiche un résumé de l'import avec les alertes détectées.
 
@@ -122,7 +121,7 @@ def render_import_summary(df_imported: pd.DataFrame, alerts: List[RealTimeAlert]
         st.success("🎉 Aucune anomalie détectée ! Tout semble normal.")
 
 
-def get_import_insights(df_imported: pd.DataFrame) -> Dict:
+def get_import_insights(df_imported: pd.DataFrame) -> dict:
     """
     Génère des insights sur l'import effectué.
 

@@ -3,26 +3,26 @@ Tests unitaires pour le module transaction_types.
 Couverture >95% obligatoire.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
 from modules.transaction_types import (
-    is_income_category,
-    is_expense_category,
-    is_excluded_category,
-    is_refund_category,
-    get_category_type,
-    validate_amount_consistency,
-    suggest_amount_sign,
-    filter_income_transactions,
-    filter_expense_transactions,
-    filter_excluded_transactions,
-    calculate_true_income,
-    calculate_true_expenses,
-    calculate_savings_rate,
-    INCOME_CATEGORIES,
     EXCLUDED_CATEGORIES,
-    REFUND_CATEGORIES,
+    INCOME_CATEGORIES,
+    calculate_savings_rate,
+    calculate_true_expenses,
+    calculate_true_income,
+    filter_excluded_transactions,
+    filter_expense_transactions,
+    filter_income_transactions,
+    get_category_type,
+    is_excluded_category,
+    is_expense_category,
+    is_income_category,
+    is_refund_category,
+    suggest_amount_sign,
+    validate_amount_consistency,
 )
 
 
@@ -376,7 +376,7 @@ class TestPerformance:
         )
 
         start = time.time()
-        result = filter_expense_transactions(df)
+        filter_expense_transactions(df)
         duration = time.time() - start
 
         # Devrait prendre moins d'une seconde

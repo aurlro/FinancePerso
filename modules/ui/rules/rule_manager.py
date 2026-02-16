@@ -5,24 +5,24 @@ Handles CRUD operations for learning rules with search, filter, and pagination.
 Uses Streamlit fragments for performance optimization.
 """
 
-import streamlit as st
-import pandas as pd
 from datetime import datetime
-from typing import Optional
 
-from modules.db.rules import get_learning_rules, delete_learning_rule, add_learning_rule
+import pandas as pd
+import streamlit as st
+
 from modules.db.categories import get_categories
-from modules.utils import validate_regex_pattern
+from modules.db.rules import add_learning_rule, delete_learning_rule, get_learning_rules
 from modules.logger import logger
 from modules.ui.feedback import (
-    toast_success,
-    toast_error,
-    toast_warning,
-    show_success,
     show_error,
-    show_warning,
     show_info,
+    show_success,
+    show_warning,
+    toast_error,
+    toast_success,
+    toast_warning,
 )
+from modules.utils import validate_regex_pattern
 
 
 def invalidate_rules_cache():
@@ -237,7 +237,7 @@ def render_add_rule_form():
             if new_pattern:
                 is_valid, error_msg = validate_regex_pattern(new_pattern)
                 if is_valid:
-                    st.success(f"✅ Pattern valide")
+                    st.success("✅ Pattern valide")
                 else:
                     st.error(f"❌ {error_msg}")
 
@@ -270,7 +270,7 @@ def render_add_rule_form():
                         toast_success(
                             f"Règle '{pattern_preview}' → '{new_category}' ajoutée !", icon="✅"
                         )
-                        show_success(f"Règle créée avec succès")
+                        show_success("Règle créée avec succès")
                         invalidate_rules_cache()
                         _get_cached_rules.clear()
                         st.rerun(scope="fragment")
