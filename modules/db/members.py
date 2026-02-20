@@ -10,9 +10,9 @@ import pandas as pd
 import streamlit as st
 
 from modules.constants import MemberType
+from modules.core.events import EventBus
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-
 
 def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
     """
@@ -25,8 +25,6 @@ def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
     Returns:
         True if member was added, False if already exists
     """
-    from modules.cache_manager import invalidate_member_caches
-
     with get_db_connection() as conn:
         cursor = conn.cursor()
         try:
@@ -34,36 +32,31 @@ def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
                 "INSERT INTO members (name, member_type) VALUES (?, ?)", (name, member_type)
             )
             conn.commit()
-            invalidate_member_caches()
             logger.info(f"Member added: {name} ({member_type})")
+            EventBus.emit("members.changed", action="added")
             return True
         except sqlite3.IntegrityError:
             logger.warning(f"Member '{name}' already exists")
             return False
 
-
 def update_member_type(member_id: int, member_type: str) -> None:
     """Update the type of a member (HOUSEHOLD or EXTERNAL)."""
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE members SET member_type = ? WHERE id = ?", (member_type, member_id))
         conn.commit()
-        invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 def delete_member(member_id: int) -> None:
     """Delete a member by ID."""
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM members WHERE id = ?", (member_id,))
         conn.commit()
 
-    invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_members() -> pd.DataFrame:
@@ -78,7 +71,6 @@ def get_members() -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM members ORDER BY name", conn)
-
 
 def rename_member(old_name: str, new_name: str) -> int:
     """
@@ -115,14 +107,11 @@ def rename_member(old_name: str, new_name: str) -> int:
         conn.commit()
 
     # Invalidate both member and transaction caches since both are affected
-    from modules.cache_manager import invalidate_member_caches, invalidate_transaction_caches
-
-    invalidate_member_caches()
-    invalidate_transaction_caches()
+    EventBus.emit("members.changed")
+    EventBus.emit("transactions.changed")
 
     logger.info(f"Renamed member '{old_name}' → '{new_name}': {tx_count} transactions updated")
     return tx_count
-
 
 def get_orphan_labels() -> list[str]:
     """
@@ -154,7 +143,6 @@ def get_orphan_labels() -> list[str]:
         orphans = all_txn_values - official_members
 
         return sorted(list(orphans))
-
 
 def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu") -> int:
     """
@@ -194,17 +182,13 @@ def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu")
         conn.commit()
 
     # Invalidate both member and transaction caches since both are affected
-    from modules.cache_manager import invalidate_member_caches, invalidate_transaction_caches
-
-    invalidate_member_caches()
-    invalidate_transaction_caches()
+    EventBus.emit("members.changed")
+    EventBus.emit("transactions.changed")
 
     logger.info(f"Replaced label '{old_label}' → '{replacement_label}': {count} updates")
     return count
 
-
 # --- Member Mapping Functions ---
-
 
 def add_member_mapping(card_suffix: str, member_name: str) -> None:
     """
@@ -216,7 +200,6 @@ def add_member_mapping(card_suffix: str, member_name: str) -> None:
         card_suffix: Last 4 digits of card number
         member_name: Member to assign
     """
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -225,8 +208,7 @@ def add_member_mapping(card_suffix: str, member_name: str) -> None:
             (card_suffix, member_name),
         )
         conn.commit()
-        invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_member_mappings() -> dict[str, str]:
@@ -243,17 +225,14 @@ def get_member_mappings() -> dict[str, str]:
         df = pd.read_sql("SELECT card_suffix, member_name FROM member_mappings", conn)
         return dict(zip(df["card_suffix"], df["member_name"]))
 
-
 def delete_member_mapping(mapping_id: int) -> None:
     """Delete a member mapping by ID."""
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM member_mappings WHERE id = ?", (mapping_id,))
         conn.commit()
-        invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 def get_member_mappings_df() -> pd.DataFrame:
     """
@@ -264,7 +243,6 @@ def get_member_mappings_df() -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM member_mappings", conn)
-
 
 def get_unique_members() -> list[str]:
     """
@@ -320,7 +298,6 @@ def get_unique_members() -> list[str]:
 
         return sorted(list(seen.values()))
 
-
 def update_transaction_member(tx_id: int, new_member: str) -> None:
     """Update the member for a specific transaction."""
     with get_db_connection() as conn:
@@ -328,14 +305,12 @@ def update_transaction_member(tx_id: int, new_member: str) -> None:
         cursor.execute("UPDATE transactions SET member = ? WHERE id = ?", (new_member, tx_id))
         conn.commit()
 
-
 def get_all_member_names() -> list[str]:
     """Get all unique member names from the database."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM members")
         return [row[0] for row in cursor.fetchall()]
-
 
 def detect_member_from_content(
     label: str, card_suffix: str = None, account_label: str = None
@@ -401,13 +376,10 @@ def detect_member_from_content(
 
     return "Inconnu"
 
-
 # --- Account Mapping Functions ---
-
 
 def add_account_member_mapping(account_label: str, member_name: str) -> None:
     """Map a bank account label to a default member name."""
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -416,8 +388,7 @@ def add_account_member_mapping(account_label: str, member_name: str) -> None:
             (account_label, member_name),
         )
         conn.commit()
-        invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 @st.cache_data(ttl=300)
 def get_account_member_mappings() -> dict[str, str]:
@@ -430,7 +401,6 @@ def get_account_member_mappings() -> dict[str, str]:
             # Fallback if table doesn't exist yet
             return {}
 
-
 def get_account_member_mappings_df() -> pd.DataFrame:
     """Get all account-member mappings as DataFrame."""
     with get_db_connection() as conn:
@@ -439,22 +409,18 @@ def get_account_member_mappings_df() -> pd.DataFrame:
         except Exception:
             return pd.DataFrame()
 
-
 def delete_account_member_mapping(mapping_id: int) -> None:
     """Delete an account-member mapping by ID."""
-    from modules.cache_manager import invalidate_member_caches
 
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM account_member_mappings WHERE id = ?", (mapping_id,))
         conn.commit()
-        invalidate_member_caches()
-
+    EventBus.emit("members.changed")
 
 # ============================================================================
 # UNKNOWN MEMBER ANALYSIS & REPAIR
 # ============================================================================
-
 
 def get_unknown_member_stats() -> dict:
     """
@@ -516,7 +482,6 @@ def get_unknown_member_stats() -> dict:
             "default_member": get_default_member(),
         }
 
-
 def repair_unknown_members(dry_run: bool = False) -> dict:
     """
     Repair transactions with 'Inconnu' member by applying the default member.
@@ -530,7 +495,6 @@ def repair_unknown_members(dry_run: bool = False) -> dict:
         - default_member: The member used for repair
         - sample_repaired: Sample of repaired transaction IDs
     """
-    from modules.cache_manager import invalidate_transaction_caches
     from modules.db.settings import get_default_member
 
     default_member = get_default_member()
@@ -573,18 +537,17 @@ def repair_unknown_members(dry_run: bool = False) -> dict:
             )
 
             conn.commit()
-            invalidate_transaction_caches()
-
             logger.info(f"Repaired {len(tx_ids)} transactions: 'Inconnu' → '{default_member}'")
 
-        return {
-            "repaired_count": len(tx_ids),
-            "default_member": default_member,
-            "sample_repaired": sample,
-            "dry_run": dry_run,
-            "message": f"{'Simulé' if dry_run else 'Réparé'}: {len(tx_ids)} transactions 'Inconnu' → '{default_member}'",
-        }
+    EventBus.emit("transactions.changed")
 
+    return {
+        "repaired_count": len(tx_ids),
+        "default_member": default_member,
+        "sample_repaired": sample,
+        "dry_run": dry_run,
+        "message": f"{'Simulé' if dry_run else 'Réparé'}: {len(tx_ids)} transactions 'Inconnu' → '{default_member}'",
+    }
 
 def analyze_unknown_patterns() -> list[dict]:
     """
@@ -654,7 +617,6 @@ def analyze_unknown_patterns() -> list[dict]:
             )
 
         return suggestions
-
 
 def ensure_no_unknown_members() -> dict:
     """

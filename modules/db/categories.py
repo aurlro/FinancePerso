@@ -8,6 +8,7 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 
+from modules.core.events import EventBus
 from modules.db.connection import clear_db_cache, get_db_connection
 from modules.logger import logger
 
@@ -36,10 +37,7 @@ def add_category(name: str, emoji: str = "🏷️", is_fixed: int = 0) -> bool:
             )
             conn.commit()
             logger.info(f"Category added: {emoji} {name}")
-            # Invalidate cache for category-related functions
-            from modules.cache_manager import invalidate_category_caches
-
-            invalidate_category_caches()
+            EventBus.emit("categories.changed", action="added", name=name)
             return True
         except sqlite3.IntegrityError:
             logger.warning(f"Category '{name}' already exists")
@@ -52,10 +50,8 @@ def update_category_emoji(cat_id: int, new_emoji: str) -> None:
         cursor = conn.cursor()
         cursor.execute("UPDATE categories SET emoji = ? WHERE id = ?", (new_emoji, cat_id))
         conn.commit()
-        # Invalidate cache for category-related functions
-        from modules.cache_manager import invalidate_category_caches
 
-        invalidate_category_caches()
+    EventBus.emit("categories.changed", action="emoji_updated")
 
 
 def update_category_fixed(cat_id: int, is_fixed: int) -> None:
@@ -64,11 +60,9 @@ def update_category_fixed(cat_id: int, is_fixed: int) -> None:
         cursor = conn.cursor()
         cursor.execute("UPDATE categories SET is_fixed = ? WHERE id = ?", (is_fixed, cat_id))
         conn.commit()
-        # Invalidate cache for category-related functions
-        from modules.cache_manager import invalidate_category_caches
 
-        invalidate_category_caches()
-        clear_db_cache()
+    EventBus.emit("categories.changed", action="fixed_updated")
+    clear_db_cache()
 
 
 def update_category_suggested_tags(cat_id: int, tags_list_str: str) -> None:
@@ -85,10 +79,8 @@ def update_category_suggested_tags(cat_id: int, tags_list_str: str) -> None:
             "UPDATE categories SET suggested_tags = ? WHERE id = ?", (tags_list_str, cat_id)
         )
         conn.commit()
-        # Invalidate cache for category-related functions
-        from modules.cache_manager import invalidate_category_caches
 
-        invalidate_category_caches()
+    EventBus.emit("categories.changed", action="tags_updated")
 
 
 def delete_category(cat_id: int) -> None:
@@ -103,10 +95,8 @@ def delete_category(cat_id: int) -> None:
         cursor.execute("DELETE FROM categories WHERE id = ?", (cat_id,))
         conn.commit()
         logger.info(f"Category {cat_id} deleted")
-        # Invalidate cache for category-related functions
-        from modules.cache_manager import invalidate_category_caches
 
-        invalidate_category_caches()
+    EventBus.emit("categories.changed", action="deleted", cat_id=cat_id)
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
@@ -348,20 +338,18 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         category_deleted = cursor.rowcount > 0
 
         conn.commit()
-        from modules.cache_manager import invalidate_category_caches
 
-        invalidate_category_caches()
+    EventBus.emit("categories.changed", action="merged")
+    logger.info(
+        f"Merged '{source_category}' → '{target_category}': "
+        f"{tx_updated} transactions, {rule_count} rules, "
+        f"budget transferred: {budget_transferred}, "
+        f"category deleted: {category_deleted}"
+    )
 
-        logger.info(
-            f"Merged '{source_category}' → '{target_category}': "
-            f"{tx_updated} transactions, {rule_count} rules, "
-            f"budget transferred: {budget_transferred}, "
-            f"category deleted: {category_deleted}"
-        )
-
-        return {
-            "transactions": tx_updated,
-            "rules": rule_count,
-            "budgets_transferred": budget_transferred,
-            "category_deleted": category_deleted,
-        }
+    return {
+        "transactions": tx_updated,
+        "rules": rule_count,
+        "budgets_transferred": budget_transferred,
+        "category_deleted": category_deleted,
+    }

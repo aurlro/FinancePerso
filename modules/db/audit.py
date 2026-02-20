@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from modules.core.events import EventBus
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -274,9 +275,9 @@ def auto_fix_common_inconsistencies() -> int:
         logger.error(f"Error re-applying rules in magic fix: {e}")
 
     if total_fixed > 0:
-        from modules.cache_manager import invalidate_all_caches
-
-        invalidate_all_caches()
+        EventBus.emit("transactions.batch_changed", action="magic_fix")
+        EventBus.emit("categories.changed", action="magic_fix")
+        EventBus.emit("members.changed", action="magic_fix")
 
     logger.info(f"Magic Fix 5.1 applied {total_fixed} corrections")
     return total_fixed

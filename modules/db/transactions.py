@@ -8,6 +8,7 @@ import uuid
 import pandas as pd
 import streamlit as st
 
+from modules.core.events import EventBus
 from modules.db.connection import build_filter_clause, clear_db_cache, get_db_connection
 from modules.db.members import detect_member_from_content, get_member_mappings
 from modules.logger import logger
@@ -157,9 +158,7 @@ def save_transactions(df: pd.DataFrame) -> tuple[int, int]:
 
         conn.commit()
 
-    from modules.cache_manager import invalidate_transaction_caches
-
-    invalidate_transaction_caches()
+    EventBus.emit("transactions.batch_changed", new_count=new_count, skipped_count=skipped_count)
     clear_db_cache()
 
     logger.info(f"Imported {new_count} new transactions, skipped {skipped_count} duplicates")
@@ -288,10 +287,9 @@ def delete_transaction_by_id(tx_id: int) -> int:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
-        return cursor.rowcount
+    EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
+    return cursor.rowcount
 
 
 def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
@@ -336,9 +334,7 @@ def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
 
         conn.commit()
 
-    from modules.cache_manager import invalidate_transaction_caches
-
-    invalidate_transaction_caches()
+    EventBus.emit("transactions.changed", action="tagged")
     return updated
 
 
@@ -511,9 +507,8 @@ def bulk_update_transaction_status(
 
         cursor.execute(query, params)
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
+    EventBus.emit("transactions.changed", tx_ids=tx_ids, action="bulk_updated")
 
 
 def undo_last_action() -> tuple[bool, str]:
@@ -554,10 +549,9 @@ def undo_last_action() -> tuple[bool, str]:
         # Delete history for this action
         cursor.execute("DELETE FROM transaction_history WHERE action_group_id = ?", (action_id,))
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
-        return True, f"Action {action_id} annulée ({len(entries)} transactions rétablies)."
+    EventBus.emit("transactions.changed", action="undo")
+    return True, f"Action {action_id} annulée ({len(entries)} transactions rétablies)."
 
 
 def mark_transaction_as_ungrouped(tx_id: int) -> None:
@@ -566,9 +560,8 @@ def mark_transaction_as_ungrouped(tx_id: int) -> None:
         cursor = conn.cursor()
         cursor.execute("UPDATE transactions SET is_manually_ungrouped = 1 WHERE id = ?", (tx_id,))
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
+    EventBus.emit("transactions.changed", tx_id=tx_id, action="ungrouped")
 
 
 def delete_transaction(tx_id: int) -> None:
@@ -577,9 +570,8 @@ def delete_transaction(tx_id: int) -> None:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
+    EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
 
 
 def delete_transactions_by_period(month_str: str) -> int:
@@ -597,8 +589,7 @@ def delete_transactions_by_period(month_str: str) -> int:
         cursor.execute("DELETE FROM transactions WHERE strftime('%Y-%m', date) = ?", (month_str,))
         deleted_count = cursor.rowcount
         conn.commit()
-        from modules.cache_manager import invalidate_transaction_caches
 
-        invalidate_transaction_caches()
-        logger.info(f"Deleted {deleted_count} transactions for period {month_str}")
-        return deleted_count
+    EventBus.emit("transactions.batch_changed", deleted_count=deleted_count, period=month_str)
+    logger.info(f"Deleted {deleted_count} transactions for period {month_str}")
+    return deleted_count

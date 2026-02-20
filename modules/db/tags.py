@@ -7,6 +7,7 @@ Tag management functions.
 import pandas as pd
 import streamlit as st
 
+from modules.core.events import EventBus
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
@@ -80,10 +81,7 @@ def remove_tag_from_all_transactions(tag_to_remove: str) -> int:
 
         conn.commit()
 
-    from modules.cache_manager import invalidate_tag_caches
-
-    invalidate_tag_caches()
-
+    EventBus.emit("tags.changed", action="removed", tag=tag_to_remove)
     logger.info(f"Removed tag '{tag_to_remove}' from {updated_count} transactions")
     return updated_count
 
