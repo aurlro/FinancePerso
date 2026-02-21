@@ -10,7 +10,7 @@ import re
 
 import pandas as pd
 
-from modules.ai_manager import get_active_model_name, get_ai_provider
+from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories
 from modules.db.transactions import get_all_transactions

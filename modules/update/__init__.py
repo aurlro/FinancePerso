@@ -14,4 +14,16 @@ Example:
 from modules.update.manager import UpdateManager
 from modules.update.models import VersionEntry, ChangeType
 
-__all__ = ["UpdateManager", "VersionEntry", "ChangeType"]
+# Singleton instance for backward compatibility
+_update_manager = None
+
+
+def get_update_manager() -> UpdateManager:
+    """Get the singleton UpdateManager instance."""
+    global _update_manager
+    if _update_manager is None:
+        _update_manager = UpdateManager()
+    return _update_manager
+
+
+__all__ = ["UpdateManager", "VersionEntry", "ChangeType", "get_update_manager"]

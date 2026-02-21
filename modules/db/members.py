@@ -46,6 +46,11 @@ def update_member_type(member_id: int, member_type: str) -> None:
         cursor = conn.cursor()
         cursor.execute("UPDATE members SET member_type = ? WHERE id = ?", (member_type, member_id))
         conn.commit()
+    # Clear cache to ensure fresh data on next read
+    try:
+        st.cache_data.clear()
+    except Exception:
+        pass
     EventBus.emit("members.changed")
 
 def delete_member(member_id: int) -> None:

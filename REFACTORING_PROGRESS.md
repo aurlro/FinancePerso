@@ -192,4 +192,45 @@ Tous les anciens imports fonctionnent avec un warning de déprécation :
 
 ---
 
-**Prochaine session** : Phase 2 - Restructuration UI (78 fichiers)
+## 🚧 En Cours
+
+### Phase 2 : Restructuration UI - Atomic Design
+
+**Fichier cible** : `modules/ui/feedback.py` (671 lignes, 35+ fonctions)
+
+**Nouvelle structure créée** :
+```
+modules/ui_v2/                   # NOUVEAU - Structure Atomic Design
+├── __init__.py
+├── atoms/                       # Éléments de base
+│   ├── __init__.py
+│   ├── icons.py                 # IconSet enum (80+ icônes)
+│   └── colors.py                # ColorScheme, FeedbackColor, PriorityColor
+├── molecules/                   # Composants composés
+│   ├── __init__.py
+│   ├── toasts.py                # Toast notifications
+│   ├── banners.py               # Banner messages (success/error/warning/info)
+│   └── badges.py                # Status badges
+├── organisms/                   # Sections complètes
+│   ├── __init__.py
+│   ├── dialogs.py               # Confirmation dialogs
+│   └── flash_messages.py        # Flash message system
+└── legacy/
+    └── feedback.py              # Compatibilité arrière (imports + warnings)
+```
+
+**Architecture Atomic Design** :
+- **Atoms** : Éléments indivisibles (icônes, couleurs, typographie)
+- **Molecules** : Combinaisons d'atoms (toasts, banners, badges)
+- **Organisms** : Sections fonctionnelles complètes (dialogs, flash messages)
+- **Templates** : Layouts de page (à venir)
+
+**Bénéfices** :
+- ✅ Cohérence visuelle (icônes et couleurs centralisées)
+- ✅ Composants réutilisables et testables
+- ✅ Structure évolutive (facile d'ajouter de nouveaux composants)
+- ✅ Backward compatibility (ancien API fonctionne avec warnings)
+
+---
+
+**Prochaine session** : Phase 2 suite - Migrer les autres composants UI

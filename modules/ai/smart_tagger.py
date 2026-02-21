@@ -6,7 +6,7 @@ Analyzes transaction context to suggest relevant tags.
 
 import pandas as pd
 
-from modules.ai_manager import get_active_model_name, get_ai_provider
+from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
 from modules.logger import logger
 
 

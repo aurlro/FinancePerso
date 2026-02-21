@@ -49,7 +49,7 @@ class IconSet(Enum):
     FOOD = "🛒"
     TRANSPORT = "🚗"
     HEALTH = "🏥"
-    HOME = "🏠"
+    HOME_CAT = "🏠"
     LEISURE = "🎮"
     EDUCATION = "📚"
     SHOPPING = "🛍️"

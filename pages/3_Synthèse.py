@@ -79,7 +79,7 @@ def get_cached_transactions() -> pd.DataFrame:
     Évite de re-parcourir et re-convertir la base à chaque interaction.
     """
     # Import différé pour éviter les imports circulaires au niveau module
-    from modules.data_manager import get_all_transactions
+    from modules.db.transactions import get_all_transactions
 
     df = get_all_transactions()
     if not df.empty:
@@ -93,7 +93,7 @@ def get_cached_categories() -> tuple:
     Récupère les catégories avec emojis et le DataFrame complet.
     """
     cat_emoji_map = get_categories_with_emojis()
-    from modules.data_manager import get_categories_df
+    from modules.db.categories import get_categories_df
 
     cat_df = get_categories_df()
     return cat_emoji_map, cat_df

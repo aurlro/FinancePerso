@@ -1,27 +1,28 @@
 """
-AI-powered features for financial analysis and assistance.
+AI Module - Suite d'intelligence artificielle
+=============================================
 
-This module provides intelligent features including:
-- Anomaly detection for unusual transaction amounts
-- Smart tag suggestions based on context
-- Trend analysis for spending patterns
-- Conversational AI assistant
-- Budget prediction and alerts
+Modules pour l'analyse, la catégorisation et les suggestions IA.
+
+Local SLM (optional):
+    pip install unsloth torch transformers
+    
+Usage:
+    from modules.ai import categorize_transaction
+    result = categorize_transaction("Carrefour Paris", amount=-45.67)
 """
 
-from modules.ai.anomaly_detector import detect_amount_anomalies
-from modules.ai.budget_predictor import get_budget_alerts_summary, predict_budget_overruns
-from modules.ai.conversational_assistant import chat_with_assistant
-from modules.ai.smart_tagger import suggest_tags_batch, suggest_tags_for_transaction
-from modules.ai.trend_analyzer import analyze_spending_trends, get_top_categories_comparison
+# Local SLM (optional import)
+try:
+    from modules.ai.local_slm_provider import LocalSLMProvider, get_local_slm_provider
+    LOCAL_SLM_AVAILABLE = True
+except ImportError:
+    LocalSLMProvider = None
+    get_local_slm_provider = None
+    LOCAL_SLM_AVAILABLE = False
 
 __all__ = [
-    "detect_amount_anomalies",
-    "suggest_tags_for_transaction",
-    "suggest_tags_batch",
-    "predict_budget_overruns",
-    "get_budget_alerts_summary",
-    "analyze_spending_trends",
-    "get_top_categories_comparison",
-    "chat_with_assistant",
+    "LocalSLMProvider",
+    "get_local_slm_provider",
+    "LOCAL_SLM_AVAILABLE",
 ]

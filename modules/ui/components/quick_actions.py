@@ -9,15 +9,13 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from modules.ai_manager import is_ai_available
+from modules.ai_manager_v2 import is_ai_available
 from modules.categorization import categorize_transaction
-from modules.data_manager import (
-    add_category,
-    add_learning_rule,
-    add_member,
+from modules.db.categories import add_category, get_categories
+from modules.db.members import add_member, get_members
+from modules.db.rules import add_learning_rule
+from modules.db.transactions import (
     bulk_update_transaction_status,
-    get_categories,
-    get_members,
     get_pending_transactions,
     save_transactions,
 )
@@ -284,7 +282,7 @@ def render_quick_import_popover():
 
         if uploaded_file is not None:
             # Account selection
-            from modules.data_manager import get_all_account_labels
+            from modules.db.transactions import get_all_account_labels
 
             existing_accounts = get_all_account_labels()
 

@@ -82,7 +82,7 @@ def render_validation_tab():
 
     with col_sort3:
         if st.button("🔙 Annuler", help="Annuler la dernière action", use_container_width=True):
-            from modules.data_manager import undo_last_action
+            from modules.db.transactions import undo_last_action
 
             success, msg = undo_last_action()
             if success:

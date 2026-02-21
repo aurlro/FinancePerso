@@ -8,7 +8,7 @@ from collections import Counter
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(PROJECT_ROOT)
 
-from modules.data_manager import get_db_connection
+from modules.db.connection import get_db_connection
 
 def full_audit():
     print("🚀 Starting Comprehensive Audit (Fixed Path)...\n")

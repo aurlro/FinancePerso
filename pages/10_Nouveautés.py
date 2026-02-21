@@ -9,7 +9,7 @@ from modules.ui import load_css
 from modules.ui.changelog_parser import parse_changelog
 from modules.ui.feedback import render_scroll_to_top
 from modules.ui.layout import render_app_info
-from modules.update_manager import get_update_manager
+from modules.update import get_update_manager
 
 st.set_page_config(page_title="Nouveautés", page_icon="🎁", layout="wide")
 load_css()

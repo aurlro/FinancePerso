@@ -22,7 +22,6 @@ def _on_transactions_changed(**kwargs):
     try:
         # Import inside handler to avoid circular dependency at module level
         from modules.db.transactions import get_all_transactions, get_all_hashes
-
         get_all_transactions.clear()
         get_all_hashes.clear()
         logger.debug("Transaction caches cleared via event")
