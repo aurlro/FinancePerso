@@ -209,7 +209,7 @@ class CategorizationService:
         }
         method = method_map.get(cascade_result.source, CategorizationMethod.HEURISTIC)
         
-        # Construire les métadonnées
+        # Construire les métadonnées au format PFCv2
         metadata = {
             "clean_merchant": cascade_result.clean_merchant,
             "is_recurring_candidate": cascade_result.is_recurring_candidate,
@@ -217,10 +217,10 @@ class CategorizationService:
             "similar_transaction_id": cascade_result.similar_transaction_id,
             "similarity_score": cascade_result.similarity_score,
             "categorization": {
-                "confidence_score": cascade_result.confidence_score,
-                "method": method.value,
+                "cleaning_score": cascade_result.confidence_score,
+                "method_used": method.value,
                 "timestamp": datetime.now().isoformat(),
-                "version": "2.0",
+                "pfc_version": "v2",
             }
         }
         

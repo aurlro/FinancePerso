@@ -12,7 +12,8 @@ Usage:
 """
 
 from modules.transactions.constants import (
-    PFCV2_CATEGORIES,
+    PFC_TAXONOMY,
+    PFCV2_CATEGORIES,  # Alias pour compatibilité
     CategorizationMethod,
     CategoryType,
     HEURISTIC_PATTERNS,
@@ -32,7 +33,8 @@ from modules.transactions.services import (
 
 __all__ = [
     # Constants
-    "PFCV2_CATEGORIES",
+    "PFC_TAXONOMY",
+    "PFCV2_CATEGORIES",  # Alias pour compatibilité
     "CategorizationMethod",
     "CategoryType",
     "HEURISTIC_PATTERNS",

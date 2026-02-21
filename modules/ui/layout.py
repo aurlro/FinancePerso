@@ -1,26 +1,20 @@
 """
-UI Layout Components.
+UI Layout Components (Legacy wrapper).
+This module is deprecated. Use modules.ui_v2.templates.app_layout instead.
 """
 
 import streamlit as st
-
+import warnings
 
 def render_app_info():
     """
     Renders the application version and changelog link in the sidebar directly.
     Should be called at the end of every page.
     """
-    try:
-        from modules.constants import APP_VERSION
-    except ImportError:
-        # Fallback if the name is somehow missing during reload
-        import modules.constants
+    st.warning("⚠️ L'utilisation de `modules.ui.layout.render_app_info` est dépréciée. Veuillez utiliser `modules.ui_v2.templates.app_layout.render_app_info`.", icon="🔄")
+    warnings.warn("modules.ui.layout is deprecated. Use modules.ui_v2.templates.app_layout instead.", DeprecationWarning, stacklevel=2)
+    
+    from modules.ui_v2.templates.app_layout import render_app_info as new_render_app_info
+    return new_render_app_info()
 
-        APP_VERSION = getattr(modules.constants, "APP_VERSION", "0.x.x")
-
-    with st.sidebar:
-        st.divider()
-        c1, c2 = st.columns([3, 1])
-        c1.caption(f"v{APP_VERSION}")
-        if c2.button("ℹ️", key="btn_changelog_sidebar", help="Nouveautés"):
-            st.switch_page("pages/10_Nouveautés.py")
+__all__ = ["render_app_info"]

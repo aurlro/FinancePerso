@@ -59,9 +59,78 @@ DATE_PATTERNS = [
 ]
 
 
+def clean_transaction_label(raw_label: str) -> str:
+    """
+    Nettoie un libellé de transaction et retourne le nom du commerçant en MAJUSCULES.
+    
+    Cette fonction supprime :
+    - Les préfixes de cartes (CB*, CARTE, VISA, etc.)
+    - Les numéros de terminaux et dates incluses
+    - Les localisations géographiques (villes, codes postaux)
+    
+    Args:
+        raw_label: Libellé brut de la transaction
+        
+    Returns:
+        Nom du commerçant nettoyé en MAJUSCULES
+        
+    Examples:
+        >>> clean_transaction_label("MONOPRIX PARIS 14 CB*1234")
+        'MONOPRIX'
+        >>> clean_transaction_label("UBER EATS PARIS 15E")
+        'UBER EATS'
+        >>> clean_transaction_label("CARTE 1234 CARREFOUR MARKET LYON")
+        'CARREFOUR MARKET'
+    """
+    if not raw_label:
+        return ""
+    
+    # Conversion en majuscules dès le départ
+    cleaned = raw_label.upper()
+    
+    # 1. Supprimer les préfixes de cartes (CB*, CARTE, VISA, etc.)
+    card_patterns = [
+        r"CB\*?\d{0,4}",  # CB*1234, CB, CB1234
+        r"CARTE\s*\*?\d*",  # CARTE, CARTE*1234, CARTE 1234
+        r"VISA\s*\*?\d*",  # VISA, VISA*1234
+        r"MASTERCARD\s*\*?\d*",
+        r"AMEX\s*\*?\d*",
+    ]
+    for pattern in card_patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+    
+    # 2. Supprimer les numéros de terminaux et dates
+    for pattern in DATE_PATTERNS:
+        cleaned = re.sub(pattern, "", cleaned)
+    
+    for pattern in TERMINAL_PATTERNS:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+    
+    # 3. Supprimer les localisations géographiques (agressif par défaut)
+    for pattern in LOCATION_PATTERNS:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
+    
+    # 4. Supprimer les codes postaux (5 chiffres consécutifs)
+    cleaned = re.sub(r"\b\d{5}\b", "", cleaned)
+    
+    # 5. Supprimer les numéros de références longs
+    cleaned = re.sub(r"\b\d{4,}\b", "", cleaned)
+    
+    # 6. Supprimer les caractères spéciaux en début/fin
+    cleaned = re.sub(r"^[^A-Z0-9]+|[^A-Z0-9]+$", "", cleaned)
+    
+    # 7. Normaliser les espaces multiples
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    
+    # 8. NE PAS appliquer base_clean_label qui fait du title case
+    # On reste en majuscules
+    
+    return cleaned.strip()
+
+
 def clean_merchant_name(label: str, aggressive: bool = True) -> str:
     """
-    Nettoie un libellé pour extraire le nom du commerçant.
+    Nettoie un libellé pour extraire le nom du commerçant (Title Case pour compatibilité).
     
     Cette fonction supprime :
     - Les codes de terminaux de paiement (CB*1234)
@@ -74,47 +143,15 @@ def clean_merchant_name(label: str, aggressive: bool = True) -> str:
         aggressive: Si True, supprime aussi les localisations
         
     Returns:
-        Nom du commerçant nettoyé
+        Nom du commerçant nettoyé (Title Case pour compatibilité legacy)
         
     Examples:
         >>> clean_merchant_name("MONOPRIX PARIS 14 CB*1234")
-        'MONOPRIX'
-        >>> clean_merchant_name("UBER EATS PARIS", aggressive=True)
-        'UBER EATS'
-        >>> clean_merchant_name("CARREFOUR MARKET LYON 7", aggressive=False)
-        'CARREFOUR MARKET LYON 7'
+        'Monoprix'
     """
-    if not label:
-        return ""
-    
-    cleaned = label.upper()
-    
-    # 1. Supprimer les dates
-    for pattern in DATE_PATTERNS:
-        cleaned = re.sub(pattern, "", cleaned)
-    
-    # 2. Supprimer les codes de terminaux
-    for pattern in TERMINAL_PATTERNS:
-        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
-    
-    # 3. Supprimer les localisations (si mode agressif)
-    if aggressive:
-        for pattern in LOCATION_PATTERNS:
-            cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE)
-    
-    # 4. Supprimer les numéros de références (séquences de chiffres longues)
-    cleaned = re.sub(r"\b\d{4,}\b", "", cleaned)
-    
-    # 5. Supprimer les caractères spéciaux en début/fin
-    cleaned = re.sub(r"^[^A-Z0-9]+|[^A-Z0-9]+$", "", cleaned)
-    
-    # 6. Normaliser les espaces multiples
-    cleaned = re.sub(r"\s+", " ", cleaned)
-    
-    # 7. Appliquer le nettoyage de base
-    cleaned = base_clean_label(cleaned)
-    
-    return cleaned.strip()
+    # Utilise clean_transaction_label puis convertit en Title Case
+    cleaned = clean_transaction_label(label)
+    return cleaned.title()
 
 
 def extract_location(label: str) -> Optional[str]:
@@ -216,7 +253,7 @@ def normalize_merchant_name(merchant: str) -> str:
     return normalized.strip()
 
 
-def clean_transaction_label(label: str, amount: float = 0) -> Tuple[str, dict]:
+def extract_transaction_metadata(label: str, amount: float = 0) -> Tuple[str, dict]:
     """
     Nettoyage complet d'un libellé de transaction avec métadonnées.
     
@@ -228,7 +265,7 @@ def clean_transaction_label(label: str, amount: float = 0) -> Tuple[str, dict]:
         Tuple (libellé_nettoyé, métadonnées)
         
     Examples:
-        >>> clean_transaction_label("MONOPRIX PARIS 14 CB*1234", -45.67)
+        >>> extract_transaction_metadata("MONOPRIX PARIS 14 CB*1234", -45.67)
         ('MONOPRIX', {
             'original': 'MONOPRIX PARIS 14 CB*1234',
             'clean_merchant': 'MONOPRIX',
@@ -237,15 +274,16 @@ def clean_transaction_label(label: str, amount: float = 0) -> Tuple[str, dict]:
             'is_income': False
         })
     """
+    cleaned = clean_transaction_label(label)
     metadata = {
         "original": label,
-        "clean_merchant": clean_merchant_name(label, aggressive=True),
+        "clean_merchant": cleaned,
         "location": extract_location(label),
         "card_suffix": extract_card_suffix(label),
         "is_income": amount > 0,
     }
     
-    return metadata["clean_merchant"], metadata
+    return cleaned, metadata
 
 
 def batch_clean_labels(labels: list[str], amounts: list[float] = None) -> list[Tuple[str, dict]]:
@@ -263,7 +301,7 @@ def batch_clean_labels(labels: list[str], amounts: list[float] = None) -> list[T
         amounts = [0] * len(labels)
     
     return [
-        clean_transaction_label(label, amount)
+        extract_transaction_metadata(label, amount)
         for label, amount in zip(labels, amounts)
     ]
 
