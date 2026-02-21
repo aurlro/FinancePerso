@@ -29,35 +29,6 @@ from modules.ui.components.quick_actions import render_quick_actions_grid
 from modules.ui.components.smart_actions import render_smart_actions
 from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
 from modules.notifications import (
-
-# ============================================================
-# INTEGRATION PHASES 4-5-6 - Auto-generated
-# ============================================================
-
-import sys
-from pathlib import Path
-
-# Ajouter le répertoire parent au path
-sys.path.insert(0, str(Path(__file__).parent))
-
-# Imports des nouvelles vues
-try:
-    from views.subscriptions import render_subscriptions_page
-    from views.projections import render_projections_page
-    from views.wealth_view import render_wealth_dashboard
-    NEW_VIEWS_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️  Certaines vues ne sont pas disponibles: {e}")
-    NEW_VIEWS_AVAILABLE = False
-
-# Imports Design System
-try:
-    from modules.ui import apply_vibe_theme
-    DESIGN_SYSTEM_AVAILABLE = True
-except ImportError:
-    DESIGN_SYSTEM_AVAILABLE = False
-
-
     NotificationManager,
     check_all_notifications,
     render_notification_badge,
@@ -287,42 +258,3 @@ else:
 
     # Scroll to top button
     render_scroll_to_top()
-
-
-# ============================================================
-# NAVIGATION NOUVELLES FONCTIONNALITÉS
-# ============================================================
-
-if NEW_VIEWS_AVAILABLE:
-    st.sidebar.markdown("---")
-    st.sidebar.header("🆕 Nouveautés v5.4")
-    
-    new_features = {
-        "📊 Patrimoine 360°": render_wealth_dashboard if 'render_wealth_dashboard' in locals() else None,
-        "📈 Projections": render_projections_page if 'render_projections_page' in locals() else None,
-        "🔄 Abonnements": render_subscriptions_page if 'render_subscriptions_page' in locals() else None,
-    }
-    
-    # Filtrer les fonctionnalités non disponibles
-    new_features = {k: v for k, v in new_features.items() if v is not None}
-    
-    if new_features:
-        selected_feature = st.sidebar.radio(
-            "Explorer",
-            ["🏠 Dashboard"] + list(new_features.keys()),
-            key="new_features_nav"
-        )
-        
-        if selected_feature != "🏠 Dashboard":
-            st.sidebar.markdown("---")
-            # Afficher la vue sélectionnée
-            if selected_feature == "📊 Patrimoine 360°":
-                render_wealth_dashboard()
-                st.stop()
-            elif selected_feature == "📈 Projections":
-                render_projections_page()
-                st.stop()
-            elif selected_feature == "🔄 Abonnements":
-                render_subscriptions_page()
-                st.stop()
-

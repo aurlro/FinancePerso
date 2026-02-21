@@ -1,0 +1,533 @@
+"""
+Transaction Drill-Down Component.
+
+Displays transactions for a category with validation capabilities.
+"""
+
+
+import pandas as pd
+import streamlit as st
+
+from modules.db.categories import get_categories
+from modules.db.rules import add_learning_rule
+from modules.db.transactions import (
+    get_all_transactions,
+    update_transaction_category,
+)
+from modules.ui_v2.atoms.icons import IconSet
+from modules.ui_v2.molecules.tag_manager import (
+    render_pill_tags,
+    render_smart_tag_selector,
+)
+from modules.ui.components.tag_selector_compact import render_cheque_nature_field
+from modules.ui_v2.organisms.flash_messages import flash_success
+from modules.utils import clean_label
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+
+def _fetch_and_filter_transactions(transaction_ids: list) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Fetch and filter transactions by IDs, returning validated and pending separately.
+
+    Args:
+        transaction_ids: List of transaction IDs to fetch
+
+    Returns:
+        Tuple of (df_validated, df_pending)
+    """
+    df_all = get_all_transactions()
+    df_cat = df_all[df_all["id"].isin(transaction_ids)].copy()
+
+    if df_cat.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
+    df_validated = df_cat[df_cat["status"] == "validated"].copy()
+    df_pending = df_cat[df_cat["status"] == "pending"].copy()
+
+    return df_validated, df_pending
+
+
+def _display_summary_metrics(df: pd.DataFrame):
+    """
+    Display summary metrics for a set of transactions.
+
+    Args:
+        df: DataFrame of transactions
+    """
+    total_amount = abs(df["amount"].sum())
+    avg_amount = abs(df["amount"].mean())
+    count = len(df)
+
+    col_s1, col_s2, col_s3 = st.columns(3)
+    with col_s1:
+        st.metric("Total", f"{total_amount:.2f}€")
+    with col_s2:
+        st.metric("Moyenne", f"{avg_amount:.2f}€")
+    with col_s3:
+        st.metric("Transactions", count)
+
+    st.divider()
+
+
+def _is_cheque_transaction(label: str) -> bool:
+    """Check if a transaction is a cheque based on label."""
+    cheque_keywords = ["chq.", "chèque", "cheque", "chq ", "cheq "]
+    label_lower = label.lower()
+    return any(keyword in label_lower for keyword in cheque_keywords)
+
+
+def _render_transaction_row_compact(
+    row: pd.Series,
+    categories: list,
+    key_prefix: str,
+    session_key: str,
+    current_category: str,
+    is_header: bool = False,
+):
+    """
+    Render a compact transaction row optimized for space.
+
+    Args:
+        row: Transaction row data
+        categories: List of available categories
+        key_prefix: Unique key prefix
+        session_key: Session state key
+        current_category: Current category
+        is_header: If True, render headers only
+    """
+    tx_id = row["id"] if not is_header else "header"
+
+    # Check if this is a cheque
+    is_cheque = _is_cheque_transaction(row.get("label", "")) if not is_header else False
+
+    # Adjust layout based on whether it's a cheque (needs extra row for nature)
+    if is_header:
+        # Header row
+        cols = st.columns([1.2, 2.5, 1, 1.8, 2.5, 2])
+        with cols[0]:
+            st.markdown(f"**{IconSet.CALENDAR.value} Date**")
+        with cols[1]:
+            st.markdown(f"**{IconSet.EDIT.value} Libellé**")
+        with cols[2]:
+            st.markdown(f"**{IconSet.MONEY.value} Montant**")
+        with cols[3]:
+            st.markdown(f"**{IconSet.CATEGORY.value} Catégorie**")
+        with cols[4]:
+            st.markdown(f"**{IconSet.TAG.value} Tags**")
+        with cols[5]:
+            st.markdown(f"**{IconSet.INFO.value} Contexte**")
+        st.divider()
+        return
+
+    # Main transaction row
+    cols = st.columns([1.2, 2.5, 1, 1.8, 2.5, 2])
+
+    with cols[0]:
+        st.text(row["date"])
+
+    with cols[1]:
+        label = row["label"]
+        label_display = label[:45] + "..." if len(label) > 45 else label
+        st.text(label_display)
+        if is_cheque:
+            st.caption("🧾 Chèque détecté")
+
+    with cols[2]:
+        st.text(f"{row['amount']:.2f}€")
+
+    with cols[3]:
+        default_idx = categories.index(current_category) if current_category in categories else 0
+        selected_cat = st.selectbox(
+            "Catégorie",
+            categories,
+            index=default_idx,
+            key=f"{key_prefix}_cat_{tx_id}",
+            label_visibility="collapsed",
+        )
+
+        if session_key not in st.session_state:
+            st.session_state[session_key] = {}
+        if tx_id not in st.session_state[session_key]:
+            st.session_state[session_key][tx_id] = {}
+        st.session_state[session_key][tx_id]["category"] = selected_cat
+
+    with cols[4]:
+        current_tags_str = row.get("tags", "") if row.get("tags") else ""
+        current_tags = [t.strip() for t in current_tags_str.split(",") if t.strip()]
+
+        # Display current tags as pills (compact view)
+        if current_tags:
+            render_pill_tags(current_tags, size="small", removable=False)
+
+        # Smart tag selector with propagation
+        selected_tags = render_smart_tag_selector(
+            transaction_id=tx_id,
+            current_tags=current_tags,
+            category=selected_cat,
+            label=row.get("label", ""),
+            key_suffix=f"{key_prefix}_tagsel_{tx_id}",
+            max_quick_tags=3,
+            enable_propagation=True,
+        )
+        st.session_state[session_key][tx_id]["tags"] = selected_tags
+
+    with cols[5]:
+        notes_key = f"{key_prefix}_notes_{tx_id}"
+        current_notes = row.get("notes", "") if pd.notna(row.get("notes")) else ""
+
+        notes_value = st.text_input(
+            "Notes",
+            value=current_notes,
+            key=notes_key,
+            label_visibility="collapsed",
+            placeholder="Contextualiser...",
+        )
+        st.session_state[session_key][tx_id]["notes"] = notes_value
+
+    # Extra row for cheque nature
+    if is_cheque:
+        with st.container():
+            nature_cols = st.columns([1.2, 8, 1])
+            with nature_cols[1]:
+                cheque_nature = render_cheque_nature_field(
+                    transaction_id=tx_id,
+                    current_nature="",
+                    key_suffix=f"{key_prefix}_nature_{tx_id}",
+                )
+                if cheque_nature:
+                    # Add nature as a tag
+                    nature_tag = f"chèque-{cheque_nature.lower().replace(' ', '-')}"
+                    if nature_tag not in st.session_state[session_key][tx_id].get("tags", []):
+                        if "tags" not in st.session_state[session_key][tx_id]:
+                            st.session_state[session_key][tx_id]["tags"] = []
+                        st.session_state[session_key][tx_id]["tags"].append(nature_tag)
+        st.divider()
+
+
+def _handle_validated_transactions(
+    df_validated: pd.DataFrame,
+    key_prefix: str,
+    category: str,
+    show_anomaly_management: bool,
+    anomaly_index: int | None = None,
+    anomaly_list_key: str | None = None,
+):
+    """
+    Display and handle validated transactions - VERSION COMPACTE.
+    """
+    # Header compact avec compteur
+    cols = st.columns([4, 1])
+    with cols[0]:
+        st.markdown(f"**{IconSet.SUCCESS.value} Validées ({len(df_validated)})**")
+    with cols[1]:
+        with st.popover(f"{IconSet.INFO.value} Aide", use_container_width=True):
+            st.caption("**Actions possibles :**")
+            st.markdown(
+                f"""
+            - {IconSet.CATEGORY.value} Corriger la catégorie
+            - {IconSet.TAG.value} Ajouter des tags
+            - {IconSet.EDIT.value} Ajouter des notes
+            """
+            )
+
+    # Info minimale (peut être étendue avec le popover)
+
+    # Initialize session
+    session_key = f"{key_prefix}_validated_edits"
+    if session_key not in st.session_state:
+        st.session_state[session_key] = {}
+
+    categories = get_categories()
+
+    # Header
+    _render_transaction_row_compact(
+        pd.Series({"id": "header"}), categories, key_prefix, session_key, "", is_header=True
+    )
+
+    # Transaction rows
+    for idx, row in df_validated.iterrows():
+        current_edits = st.session_state.get(session_key, {})
+        row_cat = row.get("category_validated", category)
+        current_val = current_edits.get(row["id"], {}).get("category", row_cat)
+
+        _render_transaction_row_compact(
+            row, categories, f"{key_prefix}_validated", session_key, current_val
+        )
+
+    st.markdown("---")
+
+    # Save section
+    col_v1, col_v2 = st.columns([3, 1])
+
+    with col_v1:
+        st.markdown(f"**{len(df_validated)} transaction(s)** à modifier")
+
+        auto_learn = st.checkbox(
+            f"{IconSet.BRAIN.value} Mémoriser pour le futur",
+            value=True,
+            key=f"{key_prefix}_learn_validated",
+            help="Crée des règles pour l'IA",
+        )
+
+    with col_v2:
+        if st.button(
+            f"{IconSet.SAVE.value} Enregistrer les corrections",
+            key=f"{key_prefix}_save_validated",
+            type="primary",
+            use_container_width=True,
+        ):
+            edits = st.session_state.get(session_key, {})
+            if not edits:
+                st.warning("Aucune modification à sauvegarder.")
+            else:
+                rules_created = 0
+
+                for tx_id, edit_data in edits.items():
+                    selected_category = edit_data.get("category")
+                    selected_tags = edit_data.get("tags", [])
+                    selected_notes = edit_data.get("notes", "")
+
+                    # Prepare tags string
+                    tags_str = ",".join(selected_tags) if selected_tags else None
+                    notes_str = selected_notes if selected_notes else None
+
+                    update_transaction_category(
+                        tx_id, selected_category, tags=tags_str, notes=notes_str
+                    )
+
+                    if auto_learn:
+                        tx_row = df_validated[df_validated["id"] == tx_id]
+                        if not tx_row.empty:
+                            label = tx_row.iloc[0]["label"]
+                            pattern = clean_label(label)
+                            if add_learning_rule(pattern, selected_category, priority=5):
+                                rules_created += 1
+
+                # Invalidate caches
+                from modules.cache_manager import (
+                    invalidate_rule_caches,
+                    invalidate_transaction_caches,
+                )
+
+                invalidate_transaction_caches()
+                if rules_created > 0:
+                    invalidate_rule_caches()
+
+                # Clear edits
+                if session_key in st.session_state:
+                    del st.session_state[session_key]
+
+                # Build message
+                msg = f"✅ {len(edits)} transactions mises à jour !"
+                if rules_created > 0:
+                    msg += f" \n🧠 {rules_created} règles créées."
+
+                # Show confirmation
+                st.session_state[f"{key_prefix}_success_msg"] = msg
+                # st.session_state[f'{key_prefix}_show_confetti'] = True # Deprecated
+
+                # Mark anomaly as corrected if applicable
+                if anomaly_index is not None and anomaly_list_key:
+                    if f"{anomaly_list_key}_corrected" not in st.session_state:
+                        st.session_state[f"{anomaly_list_key}_corrected"] = []
+                    st.session_state[f"{anomaly_list_key}_corrected"].append(anomaly_index)
+
+                st.rerun()
+
+
+def _handle_pending_transactions(df_pending: pd.DataFrame, key_prefix: str, category: str):
+    """Display pending transactions section."""
+    st.subheader(f"⏳ Transactions en Attente ({len(df_pending)})")
+
+    st.info(
+        """
+    **📝 Validez ces transactions :**
+    Vérifiez la catégorie suggérée, ajoutez des tags si nécessaire, puis validez.
+    """
+    )
+
+    session_key = f"{key_prefix}_edits"
+    if session_key not in st.session_state:
+        st.session_state[session_key] = {}
+
+    categories = get_categories()
+
+    # Header
+    _render_transaction_row_compact(
+        pd.Series({"id": "header"}), categories, key_prefix, session_key, "", is_header=True
+    )
+
+    # Rows
+    for idx, row in df_pending.iterrows():
+        row_cat = row.get("original_category", category)
+        current_val = (
+            st.session_state.get(session_key, {}).get(row["id"], {}).get("category", row_cat)
+        )
+
+        _render_transaction_row_compact(row, categories, key_prefix, session_key, current_val)
+
+    st.markdown("---")
+
+    col_v1, col_v2 = st.columns([3, 1])
+
+    with col_v1:
+        st.markdown(f"**{len(df_pending)} transaction(s)** à valider")
+        auto_learn = st.checkbox(
+            "🧠 Mémoriser ces choix", value=True, key=f"{key_prefix}_learn_pending"
+        )
+
+    with col_v2:
+        if st.button(
+            "✅ Tout valider",
+            key=f"{key_prefix}_validate_bulk",
+            type="primary",
+            use_container_width=True,
+        ):
+            edits = st.session_state.get(session_key, {})
+            rules_created = 0
+
+            for tx_id, edit_data in edits.items():
+                selected_category = edit_data.get("category")
+                selected_tags = edit_data.get("tags", [])
+                selected_notes = edit_data.get("notes", "")
+
+                tags_str = ",".join(selected_tags) if selected_tags else None
+                notes_str = selected_notes if selected_notes else None
+
+                update_transaction_category(
+                    tx_id, selected_category, tags=tags_str, notes=notes_str
+                )
+
+                if auto_learn:
+                    tx_row = df_pending[df_pending["id"] == tx_id]
+                    if not tx_row.empty:
+                        label = tx_row.iloc[0]["label"]
+                        pattern = clean_label(label)
+                        if add_learning_rule(pattern, selected_category, priority=5):
+                            rules_created += 1
+
+            from modules.cache_manager import invalidate_rule_caches, invalidate_transaction_caches
+
+            invalidate_transaction_caches()
+            if rules_created > 0:
+                invalidate_rule_caches()
+
+            if session_key in st.session_state:
+                del st.session_state[session_key]
+
+            msg = f"✅ {len(edits)} transactions validées !"
+            if rules_created > 0:
+                msg += f" \n🧠 {rules_created} règles créées."
+
+            st.session_state[f"{key_prefix}_success_msg"] = msg
+            st.rerun()
+
+
+# ============================================================================
+# MAIN RENDER FUNCTION
+# ============================================================================
+
+
+def render_transaction_drill_down(
+    category: str,
+    transaction_ids: list,
+    period_start: str = None,
+    period_end: str = None,
+    key_prefix: str = "drilldown",
+    show_anomaly_management: bool = False,
+    anomaly_index: int | None = None,
+    anomaly_list_key: str | None = None,
+):
+    """
+    Render an interactive drill-down view with improved UX.
+
+    Args:
+        category: Category name
+        transaction_ids: List of transaction IDs
+        period_start: Start date
+        period_end: End date
+        key_prefix: Unique key prefix
+        show_anomaly_management: Show anomaly options
+        anomaly_index: Index of anomaly in list (for marking corrected)
+        anomaly_list_key: Session state key for anomaly list
+    """
+    if not transaction_ids:
+        st.info("Aucune transaction trouvée.")
+        return
+
+    df_validated, df_pending = _fetch_and_filter_transactions(transaction_ids)
+
+    if df_validated.empty and df_pending.empty:
+        st.warning("Les transactions n'ont pas pu être chargées.")
+        return
+
+    # -------------------------------------------------------------------------
+    # IMPROVED: Show success message using Standardized Rich Feedback
+    # -------------------------------------------------------------------------
+    if f"{key_prefix}_success_msg" in st.session_state:
+        msg = st.session_state[f"{key_prefix}_success_msg"]
+
+        # Use the standarized component
+        flash_success(msg)
+        from modules.ui_v2.organisms.flash_messages import display_flash_messages
+        display_flash_messages()
+
+        # We don't delete immediately to allow 'keep open' to work during reruns if pinned
+        # logic is handled in show_rich_success now.
+        # However, we must ensure we don't show it forever if not pinned.
+        if (
+            f"{key_prefix}_keep_open" not in st.session_state
+            or not st.session_state[f"{key_prefix}_keep_open"]
+        ):
+            # If not pinned, we might want to clear it after one viewing?
+            # But show_rich_success handles the auto-close visual.
+            # The issue is if the user navigates away and back.
+            pass
+
+    # Summary
+    df_all = pd.concat([df_validated, df_pending], ignore_index=True)
+    _display_summary_metrics(df_all)
+
+    # Show corrected badge
+    if anomaly_index is not None and anomaly_list_key:
+        corrected_list = st.session_state.get(f"{anomaly_list_key}_corrected", [])
+        if anomaly_index in corrected_list:
+            st.success(
+                "✅ **Anomalie vérifiée et corrigée** - Les modifications ont été sauvegardées."
+            )
+            st.caption("Vous pouvez continuer à modifier ou fermer cette section.")
+
+    # Sections
+    if not df_validated.empty:
+        _handle_validated_transactions(
+            df_validated,
+            key_prefix,
+            category,
+            show_anomaly_management,
+            anomaly_index,
+            anomaly_list_key,
+        )
+
+    if not df_pending.empty:
+        _handle_pending_transactions(df_pending, key_prefix, category)
+
+
+def render_category_drill_down_expander(
+    insight: dict, period_start: str = None, period_end: str = None, key_prefix: str = "insight"
+):
+    """Render expander for trend insights."""
+    if not insight.get("category"):
+        st.markdown(f"{insight['emoji']} {insight['message']}")
+        return
+
+    with st.expander(f"{insight['emoji']} {insight['message']}", expanded=False):
+        render_transaction_drill_down(
+            category=insight["category"],
+            transaction_ids=insight.get("transaction_ids", []),
+            period_start=period_start,
+            period_end=period_end,
+            key_prefix=f"{key_prefix}_{insight['category'].replace(' ', '_')}",
+        )

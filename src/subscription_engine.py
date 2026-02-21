@@ -125,6 +125,44 @@ class Subscription:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
 
+@dataclass
+class RemainingBudgetResult:
+    """
+    Résultat du calcul du Reste à Vivre.
+    
+    Attributes:
+        current_balance: Solde actuel du compte
+        days_ahead: Période de projection en jours
+        upcoming_charges: Liste des charges à venir avec dates
+        total_upcoming: Montant total des charges à venir
+        remaining_budget: "Reste à vivre" après charges
+        percentage_remaining: Pourcentage du budget restant
+        status: Statut du budget (ok, warning, critical)
+        daily_budget: Budget quotidien disponible
+    """
+    current_balance: float
+    days_ahead: int
+    upcoming_charges: List[Dict]
+    total_upcoming: float
+    remaining_budget: float
+    percentage_remaining: float
+    status: str
+    daily_budget: float
+    
+    def to_dict(self) -> Dict:
+        """Convertit le résultat en dictionnaire."""
+        return {
+            "current_balance": round(self.current_balance, 2),
+            "days_ahead": self.days_ahead,
+            "upcoming_charges": self.upcoming_charges,
+            "total_upcoming": round(self.total_upcoming, 2),
+            "remaining_budget": round(self.remaining_budget, 2),
+            "percentage_remaining": round(self.percentage_remaining, 1),
+            "status": self.status,
+            "daily_budget": round(self.daily_budget, 2),
+        }
+
+
 class SubscriptionDetector:
     """
     Détecteur d'abonnements basé sur l'analyse temporelle et statistique.
@@ -546,7 +584,7 @@ def calculate_remaining_budget(
     current_balance: float,
     subscriptions: List[Subscription],
     days_ahead: int = 30,
-) -> Dict:
+) -> RemainingBudgetResult:
     """
     Calcule le "Reste à Vivre" en soustrayant les abonnements à venir.
     
@@ -556,13 +594,13 @@ def calculate_remaining_budget(
         days_ahead: Nombre de jours à projeter
         
     Returns:
-        Dict avec détails du calcul
+        RemainingBudgetResult avec détails du calcul
     """
     today = datetime.now()
     end_date = today + timedelta(days=days_ahead)
     
     upcoming_total = 0.0
-    upcoming_subscriptions = []
+    upcoming_charges = []
     
     for sub in subscriptions:
         sub_obj = Subscription(**sub) if isinstance(sub, dict) else sub
@@ -575,19 +613,31 @@ def calculate_remaining_budget(
         # Vérifier si le prélèvement est dans la période
         if today <= next_date <= end_date:
             upcoming_total += sub_obj.average_amount
-            upcoming_subscriptions.append({
+            upcoming_charges.append({
                 "merchant": sub_obj.merchant,
-                "amount": sub_obj.average_amount,
+                "amount": round(sub_obj.average_amount, 2),
                 "date": sub_obj.next_expected_date,
             })
     
     remaining = current_balance - upcoming_total
+    percentage = (remaining / current_balance * 100) if current_balance > 0 else 0
+    daily = remaining / days_ahead if days_ahead > 0 else 0
     
-    return {
-        "current_balance": round(current_balance, 2),
-        "upcoming_charges": round(upcoming_total, 2),
-        "remaining_budget": round(remaining, 2),
-        "days_projected": days_ahead,
-        "upcoming_subscriptions": upcoming_subscriptions,
-        "status": "healthy" if remaining > 0 else "critical",
-    }
+    # Déterminer le statut
+    if remaining < 0:
+        status = "critical"
+    elif percentage < 20:
+        status = "warning"
+    else:
+        status = "ok"
+    
+    return RemainingBudgetResult(
+        current_balance=current_balance,
+        days_ahead=days_ahead,
+        upcoming_charges=upcoming_charges,
+        total_upcoming=upcoming_total,
+        remaining_budget=remaining,
+        percentage_remaining=percentage,
+        status=status,
+        daily_budget=daily,
+    )

@@ -9,9 +9,10 @@ BACKUP_DIR = "Data/backups"
 
 
 def ensure_backup_dir():
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
-        logger.info(f"Dossier de sauvegarde créé : {BACKUP_DIR}")
+    try:
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+    except Exception as e:
+        logger.warning(f"Impossible de vérifier ou créer le dossier {BACKUP_DIR}: {e}")
 
 
 def create_backup(label="auto"):
@@ -32,54 +33,63 @@ def create_backup(label="auto"):
 
 def auto_backup_daily():
     """Creates a backup if none exists for today."""
-    ensure_backup_dir()
-    today_prefix = datetime.datetime.now().strftime("finance_%Y%m%d")
+    try:
+        ensure_backup_dir()
+        today_prefix = datetime.datetime.now().strftime("finance_%Y%m%d")
 
-    backups = os.listdir(BACKUP_DIR)
-    already_done = any(f.startswith(today_prefix) for f in backups)
+        backups = os.listdir(BACKUP_DIR)
+        already_done = any(f.startswith(today_prefix) for f in backups)
 
-    if not already_done:
-        logger.info("Première utilisation du jour, lancement de la sauvegarde automatique...")
-        create_backup(label="daily")
+        if not already_done:
+            logger.info("Première utilisation du jour, lancement de la sauvegarde automatique...")
+            create_backup(label="daily")
+    except Exception as e:
+        logger.error(f"Erreur lors de la sauvegarde automatique: {e}")
 
 
 def cleanup_old_backups(days=365):
     """Deletes backups older than the specified number of days."""
-    ensure_backup_dir()
-    now = datetime.datetime.now()
-    threshold = now - datetime.timedelta(days=days)
+    try:
+        ensure_backup_dir()
+        now = datetime.datetime.now()
+        threshold = now - datetime.timedelta(days=days)
 
-    for filename in os.listdir(BACKUP_DIR):
-        if not filename.endswith(".db"):
-            continue
+        for filename in os.listdir(BACKUP_DIR):
+            if not filename.endswith(".db"):
+                continue
 
-        file_path = os.path.join(BACKUP_DIR, filename)
-        file_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+            file_path = os.path.join(BACKUP_DIR, filename)
+            file_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
 
-        if file_time < threshold:
-            try:
-                os.remove(file_path)
-                logger.info(f"Ancienne sauvegarde supprimée : {filename}")
-            except Exception as e:
-                logger.error(f"Erreur lors du nettoyage : {e}")
+            if file_time < threshold:
+                try:
+                    os.remove(file_path)
+                    logger.info(f"Ancienne sauvegarde supprimée : {filename}")
+                except Exception as e:
+                    logger.error(f"Erreur lors du nettoyage : {e}")
+    except Exception as e:
+        logger.error(f"Erreur lors de l'accès aux sauvegardes pour nettoyage: {e}")
 
 
 def list_backups():
     """Returns a list of available backups sorted by date (newest first)."""
-    ensure_backup_dir()
     backups = []
-    for filename in os.listdir(BACKUP_DIR):
-        if filename.endswith(".db"):
-            path = os.path.join(BACKUP_DIR, filename)
-            stats = os.stat(path)
-            backups.append(
-                {
-                    "filename": filename,
-                    "path": path,
-                    "size": stats.st_size,
-                    "date": datetime.datetime.fromtimestamp(stats.st_mtime),
-                }
-            )
+    try:
+        ensure_backup_dir()
+        for filename in os.listdir(BACKUP_DIR):
+            if filename.endswith(".db"):
+                path = os.path.join(BACKUP_DIR, filename)
+                stats = os.stat(path)
+                backups.append(
+                    {
+                        "filename": filename,
+                        "path": path,
+                        "size": stats.st_size,
+                        "date": datetime.datetime.fromtimestamp(stats.st_mtime),
+                    }
+                )
+    except Exception as e:
+        logger.error(f"Impossible de lister les sauvegardes: {e}")
 
     return sorted(backups, key=lambda x: x["date"], reverse=True)
 
