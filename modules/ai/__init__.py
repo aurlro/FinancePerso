@@ -21,8 +21,24 @@ except ImportError:
     get_local_slm_provider = None
     LOCAL_SLM_AVAILABLE = False
 
+# Budget predictions
+try:
+    from modules.ai.budget_predictor import get_budget_alerts_summary, predict_budget_overruns
+except ImportError:
+    get_budget_alerts_summary = None
+    predict_budget_overruns = None
+
+# Anomaly detection
+try:
+    from modules.ai.anomaly_detector import detect_amount_anomalies
+except ImportError:
+    detect_amount_anomalies = None
+
 __all__ = [
     "LocalSLMProvider",
     "get_local_slm_provider",
     "LOCAL_SLM_AVAILABLE",
+    "get_budget_alerts_summary",
+    "predict_budget_overruns",
+    "detect_amount_anomalies",
 ]

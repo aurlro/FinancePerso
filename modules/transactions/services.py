@@ -37,8 +37,9 @@ from modules.categorization_cascade import (
     CategorizationResult as CascadeResult,
 )
 from modules.db.connection import get_db_connection
-from modules.db_v2 import TransactionRepository
 from modules.logger import logger
+
+TransactionRepository = None
 
 
 @dataclass
@@ -140,7 +141,7 @@ class CategorizationService:
             use_local_ai=use_local_ai,
             use_cloud_fallback=use_cloud_fallback,
         )
-        self.tx_repo = TransactionRepository()
+        self.tx_repo = TransactionRepository() if TransactionRepository else None
         
         # S'assurer que la colonne meta_data existe
         self._ensure_meta_data_column()
@@ -362,10 +363,18 @@ class CategorizationService:
         Returns:
             Liste des transactions similaires
         """
-        # Utiliser le repository pour chercher
-        history = self.tx_repo.get_all(filters={"status": "validated"}, limit=5000)
+        # Requête directe à la base de données
+        try:
+            with get_db_connection() as conn:
+                import pandas as pd
+                history = pd.read_sql_query(
+                    "SELECT id, label, category_validated FROM transactions WHERE status = 'validated' LIMIT 5000",
+                    conn
+                )
+        except Exception:
+            history = None
         
-        if history.empty:
+        if history is None or history.empty:
             return []
         
         from difflib import SequenceMatcher

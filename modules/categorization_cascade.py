@@ -23,7 +23,8 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from modules.db_v2 import CategoryRepository, TransactionRepository
+CategoryRepository = None
+TransactionRepository = None
 from modules.logger import logger
 
 
@@ -213,9 +214,8 @@ class TransactionCategorizer:
         self.use_local_ai = use_local_ai
         self.use_cloud_fallback = use_cloud_fallback
         
-        # Repositories
-        self.tx_repo = TransactionRepository()
-        self.cat_repo = CategoryRepository()
+        self.tx_repo = None
+        self.cat_repo = None
         
         # Cache historique
         self._history_cache: Optional[pd.DataFrame] = None
@@ -249,10 +249,12 @@ class TransactionCategorizer:
     def _load_history(self) -> pd.DataFrame:
         """Charge l'historique des transactions catégorisées."""
         if self._history_cache is None:
-            self._history_cache = self.tx_repo.get_all(
-                filters={"status": "validated"},
-                limit=5000,  # Dernières 5000 transactions
-            )
+            from modules.db.transactions import get_all_transactions
+            df = get_all_transactions(limit=5000)
+            if not df.empty and "status" in df.columns:
+                self._history_cache = df[df["status"] == "validated"]
+            else:
+                self._history_cache = df
         return self._history_cache
 
     def _clean_label(self, label: str) -> str:

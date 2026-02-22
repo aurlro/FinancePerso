@@ -17,6 +17,7 @@ Usage:
 import streamlit as st
 import numpy as np
 from datetime import datetime
+from typing import Dict
 
 from src.math_engine import MonteCarloSimulator, ScenarioType, quick_simulation
 from src.visualizations import plot_wealth_projection, plot_scenario_comparison

@@ -276,6 +276,29 @@ def get_transactions_by_criteria(
         return pd.read_sql(query, conn, params=params)
 
 
+def get_transaction_by_id(tx_id: int) -> dict | None:
+    """
+    Retrieve a single transaction by its ID.
+
+    Args:
+        tx_id: Transaction ID
+
+    Returns:
+        Transaction as dict, or None if not found
+    """
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM transactions WHERE id = ?", (tx_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            return None
+            
+        # Convertir en dict avec les noms de colonnes
+        columns = [desc[0] for desc in cursor.description]
+        return dict(zip(columns, row))
+
+
 def delete_transaction_by_id(tx_id: int) -> int:
     """
     Delete a specific transaction.
@@ -288,6 +311,10 @@ def delete_transaction_by_id(tx_id: int) -> int:
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
 
+    # Clear cache to ensure fresh data
+    get_all_transactions.clear()
+    get_pending_transactions.clear()
+    
     EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
     return cursor.rowcount
 
@@ -508,6 +535,10 @@ def bulk_update_transaction_status(
         cursor.execute(query, params)
         conn.commit()
 
+    # Clear cache to ensure fresh data
+    get_all_transactions.clear()
+    get_pending_transactions.clear()
+    
     EventBus.emit("transactions.changed", tx_ids=tx_ids, action="bulk_updated")
 
 

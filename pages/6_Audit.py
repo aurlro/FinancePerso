@@ -145,7 +145,10 @@ if active_tab == "📊 Dashboard Santé":
                 first_day = today.replace(day=1)
                 month_tx = transactions_df[transactions_df["date"] >= first_day]
 
-                spending_by_cat = month_tx.groupby("category")["amount"].sum().to_dict()
+                if not month_tx.empty and "category" in month_tx.columns:
+                    spending_by_cat = month_tx.groupby("category")["amount"].sum().to_dict()
+                else:
+                    spending_by_cat = {}
                 budget_map = dict(zip(budgets_df["category"], budgets_df["amount"]))
 
                 overruns = 0

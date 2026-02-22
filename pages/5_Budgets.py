@@ -88,7 +88,10 @@ if active_tab == "📊 Vue d'ensemble":
             month_tx = transactions_df[transactions_df["date"] >= first_day]
 
             # Calculate spending by category
-            spending_by_cat = month_tx.groupby("category")["amount"].sum().to_dict()
+            if not month_tx.empty and "category" in month_tx.columns:
+                spending_by_cat = month_tx.groupby("category")["amount"].sum().to_dict()
+            else:
+                spending_by_cat = {}
 
             # Build budget vs actual comparison
             budget_comparison = []

@@ -26,12 +26,21 @@ class EventBus:
 
     This class implements the Observer pattern to allow modules to communicate
     without direct imports, eliminating circular dependencies.
+    This is a singleton class.
 
     Attributes:
         _listeners: Dictionary mapping event names to lists of callback functions.
+        _instance: Singleton instance.
     """
 
+    _instance: Optional['EventBus'] = None
     _listeners: Dict[str, List[Callable]] = {}
+
+    def __new__(cls) -> 'EventBus':
+        """Ensure singleton pattern."""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     @classmethod
     def subscribe(cls, event: str, callback: Callable) -> None:
@@ -89,9 +98,17 @@ class EventBus:
                 logger.error(f"Event handler error for '{event}': {e}")
 
     @classmethod
-    def clear(cls) -> None:
-        """Clear all listeners. Useful for testing."""
-        cls._listeners.clear()
+    def clear(cls, event: Optional[str] = None) -> None:
+        """Clear all listeners or listeners for a specific event.
+        
+        Args:
+            event: Optional event name to clear subscribers for.
+                   If None, clears all subscribers.
+        """
+        if event is None:
+            cls._listeners.clear()
+        elif event in cls._listeners:
+            del cls._listeners[event]
 
     @classmethod
     def get_subscribers(cls, event: Optional[str] = None) -> List[str]:

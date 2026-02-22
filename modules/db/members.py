@@ -61,6 +61,9 @@ def delete_member(member_id: int) -> None:
         cursor.execute("DELETE FROM members WHERE id = ?", (member_id,))
         conn.commit()
 
+    # Clear cache to ensure fresh data
+    get_members.clear()
+    
     EventBus.emit("members.changed")
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
