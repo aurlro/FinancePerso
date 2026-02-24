@@ -19,7 +19,7 @@ import numpy as np
 from datetime import datetime
 from typing import Dict
 
-from src.math_engine import MonteCarloSimulator, ScenarioType, quick_simulation
+from src.math_engine import MonteCarloSimulator, ScenarioType, quick_simulation, SCENARIO_PARAMS
 from src.visualizations import plot_wealth_projection, plot_scenario_comparison
 from src.subscription_engine import calculate_remaining_budget, SubscriptionDetector
 from modules.db.transactions import get_all_transactions
@@ -114,22 +114,26 @@ def render_projections_page():
         )
     
     with col2:
+        default_mu = float(SCENARIO_PARAMS[scenario_type]["mu"] * 100)
         annual_return = st.slider(
             "Rendement annuel attendu (%)",
             min_value=-5.0,
             max_value=30.0,
-            value=int(SCENARIO_PARAMS[scenario_type]["mu"] * 100),
+            value=default_mu,
             step=0.5,
+            key="proj_annual_return",
             help="μ (mu) - Rendement moyen historique attendu",
         ) / 100
     
     with col3:
+        default_sigma = float(SCENARIO_PARAMS[scenario_type]["sigma"] * 100)
         volatility = st.slider(
             "Volatilité / Risque (%)",
             min_value=0.0,
             max_value=100.0,
-            value=int(SCENARIO_PARAMS[scenario_type]["sigma"] * 100),
+            value=default_sigma,
             step=1.0,
+            key="proj_volatility",
             help="σ (sigma) - Incertitude/volatilité du rendement",
         ) / 100
     

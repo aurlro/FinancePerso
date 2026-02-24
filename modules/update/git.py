@@ -184,3 +184,56 @@ class GitAnalyzer:
             logger.error(f"Error getting commit messages: {e}")
 
         return []
+
+    def get_uncommitted_changes(self) -> dict[str, str]:
+        """Get uncommitted changes in the working directory.
+        
+        Returns:
+            Dictionary mapping file paths to their status
+        """
+        try:
+            # Get status in porcelain format for parsing
+            result = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_path,
+            )
+            
+            if result.returncode != 0:
+                return {}
+            
+            changes = {}
+            for line in result.stdout.strip().split("\n"):
+                if not line:
+                    continue
+                
+                # Parse porcelain format: XY filename or XY "filename with spaces"
+                status_code = line[:2]
+                file_path = line[3:].strip()
+                
+                # Determine human-readable status
+                if status_code == "??":
+                    status = "untracked"
+                elif status_code[0] == "A":
+                    status = "staged (added)"
+                elif status_code[0] == "M":
+                    status = "staged (modified)"
+                elif status_code[0] == "D":
+                    status = "staged (deleted)"
+                elif status_code[1] == "M":
+                    status = "unstaged (modified)"
+                elif status_code[1] == "D":
+                    status = "unstaged (deleted)"
+                elif status_code[0] != " " and status_code[1] != " ":
+                    status = "staged + unstaged changes"
+                else:
+                    status = "modified"
+                
+                changes[file_path] = status
+            
+            return changes
+            
+        except Exception as e:
+            logger.error(f"Error getting uncommitted changes: {e}")
+            return {}

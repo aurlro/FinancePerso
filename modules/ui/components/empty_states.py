@@ -11,7 +11,7 @@ def render_empty_state(title, message, icon="📭"):
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_transactions_state(title="Aucune transaction", message="Aucune transaction à afficher pour cette période.", icon="📭"):
+def render_no_transactions_state(title="Aucune transaction", message="Aucune transaction à afficher pour cette période.", icon="📭", key=None):
     """Affiche un état vide pour les transactions."""
     st.info(f"{icon} **{title}**: {message}")
 

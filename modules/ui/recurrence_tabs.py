@@ -179,7 +179,7 @@ def render_validation_tab(recurring_df: pd.DataFrame, cat_emoji_map: dict):
     pending_df = recurring_df[recurring_df["user_feedback"].isna()]
 
     if pending_df.empty:
-        st.canvas(
+        st.html(
             """
             <div style="text-align: center; padding: 50px;">
                 <h1>🎉</h1>

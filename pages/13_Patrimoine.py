@@ -618,10 +618,10 @@ def _render_projections_tab(wealth_manager: WealthManager, monthly_income: float
         scenario = st.selectbox(
             "Profil de risque",
             [
-                ("Défensif (2%/5%)", ScenarioType.DEFENSIVE),
-                ("Conservateur (3%/8%)", ScenarioType.CONSERVATIVE),
-                ("Modéré (7%/15%)", ScenarioType.MODERATE),
-                ("Agressif (10%/25%)", ScenarioType.AGGRESSIVE),
+                ("Défensif (2%/5%)", ScenarioType.DEFENSIF),
+                ("Conservateur (3%/8%)", ScenarioType.CONSERVATEUR),
+                ("Modéré (7%/15%)", ScenarioType.MODERE),
+                ("Agressif (10%/25%)", ScenarioType.AGRESSIF),
             ],
             format_func=lambda x: x[0],
         )[1]

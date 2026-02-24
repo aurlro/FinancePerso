@@ -88,6 +88,29 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                 cols_summary[1].metric("✨ Ajouts", len(changes.get("added", [])))
                 cols_summary[2].metric("🐛 Corrections", len(changes.get("fixed", [])))
                 cols_summary[3].metric("⚡ Perf", len(changes.get("performance", [])))
+        
+        # Show AI-generated suggestions
+        st.divider()
+        st.subheader("🤖 Suggestions générées automatiquement")
+        
+        suggested_bump = changes.get("suggested_bump", "patch")
+        bump_labels = {
+            "patch": "🔧 Correction (patch)",
+            "minor": "✨ Fonctionnalité (minor)",
+            "major": "🚀 Majeure (major)"
+        }
+        bump_label = bump_labels.get(suggested_bump, "🔧 Correction")
+        bump_emoji = {"patch": "🔧", "minor": "✨", "major": "🚀"}.get(suggested_bump, "🔧")
+        
+        sugg_cols = st.columns([1, 2])
+        with sugg_cols[0]:
+            st.markdown("**Type de version suggéré :**")
+            st.markdown(bump_emoji + " **" + bump_label + "**")
+        
+        with sugg_cols[1]:
+            suggested_title = changes.get("suggested_title", "")
+            if suggested_title:
+                st.markdown("**📝 Résumé suggéré :** `" + suggested_title + "`")
 
         # Show detailed breakdown if there are uncommitted changes
         if changes.get("has_uncommitted_changes"):
@@ -108,25 +131,25 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                             "unstaged (deleted)": "❌",
                             "staged + unstaged changes": "🔄",
                         }.get(status, "📝")
-                        st.caption(f"{status_emoji} `{f}` _({status})_")
+                        st.caption(status_emoji + " `" + f + "`_(" + status + ")_")
 
                     if len(uncommitted_files) > 20:
-                        st.caption(f"... et {len(uncommitted_files) - 20} autres fichiers")
+                        st.caption("... et " + str(len(uncommitted_files) - 20) + " autres fichiers")
 
                 if changes.get("has_committed_changes"):
                     st.divider()
                     st.markdown("**Fichiers modifiés dans les commits :**")
                     committed_files = changes.get("committed_files", [])
                     for f in sorted(committed_files)[:10]:
-                        st.caption(f"📦 `{f}`")
+                        st.caption("📦 `" + f + "`")
                     if len(committed_files) > 10:
-                        st.caption(f"... et {len(committed_files) - 10} autres fichiers")
+                        st.caption("... et " + str(len(committed_files) - 10) + " autres fichiers")
 
     st.divider()
 
     col1, col2 = st.columns(2)
     with col1:
-        st.info(f"Version actuelle : **v{current_version}**")
+        st.info("Version actuelle : **v" + current_version + "**")
 
     with col2:
         # Pre-select bump type based on detected changes
@@ -147,14 +170,14 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
         )[0]
 
         new_version = manager.bump_version(current_version, bump_type)
-        st.success(f"Nouvelle version : **v{new_version}**")
+        st.success("Nouvelle version : **v" + new_version + "**")
 
     # Get pre-filled values from detected changes
     detected = st.session_state.detected_changes or {}
     default_title = detected.get("suggested_title", "")
-    default_added = "\n".join([f"- {item}" for item in detected.get("added", [])])
-    default_fixed = "\n".join([f"- {item}" for item in detected.get("fixed", [])])
-    default_perf = "\n".join([f"- {item}" for item in detected.get("performance", [])])
+    default_added = "\n".join(["- " + item for item in detected.get("added", [])])
+    default_fixed = "\n".join(["- " + item for item in detected.get("fixed", [])])
+    default_perf = "\n".join(["- " + item for item in detected.get("performance", [])])
     default_files = "\n".join(detected.get("files_modified", []))
 
     # Update form
@@ -266,14 +289,14 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                     )
 
                 if success:
-                    st.success(f"✅ Mise à jour v{version} créée avec succès !")
+                    st.success("✅ Mise à jour v" + version + " créée avec succès !")
                     st.balloons()
 
                     # Show what was updated
                     st.markdown("### 📄 Fichiers mis à jour :")
-                    st.markdown(f"- **CHANGELOG.md** - Nouvelle entrée v{version}")
+                    st.markdown("- **CHANGELOG.md** - Nouvelle entrée v" + version)
                     st.markdown("- **AGENTS.md** - Version et date mises à jour")
-                    st.markdown(f'- **modules/constants.py** - APP_VERSION = "{version}"')
+                    st.markdown('- **modules/constants.py** - APP_VERSION = "' + version + '"')
 
                     st.info("📝 N'oubliez pas de commit et push ces changements !")
 
@@ -281,7 +304,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                     st.rerun()
                 else:
                     # version contains error message when success is False
-                    st.error(f"❌ {version}")
+                    st.error("❌ " + str(version))
 
 # Path to changelog
 CHANGELOG_PATH = os.path.join(os.getcwd(), "CHANGELOG.md")
@@ -298,7 +321,7 @@ else:
         with st.container(border=True):
             col_ver, col_content = st.columns([1, 4])
             with col_ver:
-                st.markdown(f"### `v{v['version']}`")
+                st.markdown("### `v" + v['version'] + "`")
                 if v["date"]:
                     # Try to format date nicely if possible
                     try:
@@ -313,7 +336,7 @@ else:
                 # (Look for first ### header)
                 first_header = re.search(r"### (.*)", v["content"])
                 if first_header:
-                    st.caption(f"✨ {first_header.group(1)}")
+                    st.caption("✨ " + first_header.group(1))
 
             with col_content:
                 st.markdown(v["content"])
