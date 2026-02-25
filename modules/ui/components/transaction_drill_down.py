@@ -86,12 +86,12 @@ def render_transaction_drill_down(
             tx = transactions[0]
             new_category = st.text_input(
                 "Nouvelle catégorie",
-                value=tx.category_validated or tx.category_suggested or "",
+                value=tx.get("category_validated") or tx.get("category_suggested") or "",
                 key=f"{key_prefix}_category",
             )
             if st.button("Sauvegarder", key=f"{key_prefix}_save"):
-                tx.category_validated = new_category
-                tx.save()
+                from modules.db.transactions import update_transaction_category
+                update_transaction_category(tx.get("id"), new_category)
                 st.success("Catégorie mise à jour!")
                 st.rerun()
 

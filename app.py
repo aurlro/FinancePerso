@@ -28,6 +28,7 @@ from modules.ui.components.onboarding_modal import should_show_onboarding, rende
 from modules.ui.components.quick_actions import render_quick_actions_grid
 from modules.ui.components.smart_actions import render_smart_actions
 from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
+from modules.gamification.streaks import render_streak_badge, record_daily_login
 from modules.notifications import (
     NotificationManager,
     check_all_notifications,
@@ -60,6 +61,32 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# PWA Support - Add meta tags for mobile
+st.markdown("""
+    <meta name="theme-color" content="#1E88E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MyFinance">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="/assets/manifest.json">
+""", unsafe_allow_html=True)
+
+# Register Service Worker for PWA
+st.markdown("""
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('assets/service-worker.js')
+            .then((registration) => {
+                console.log('[PWA] Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.log('[PWA] Service Worker registration failed:', error);
+            });
+    }
+    </script>
+""", unsafe_allow_html=True)
 
 load_css()
 try:
@@ -109,8 +136,12 @@ except Exception as e:
 # Vérifier les notifications (budget alerts, daily digest, etc.)
 check_all_notifications()
 
-# Afficher le badge de notification dans la sidebar
+# Track daily login for streak
+record_daily_login()
+
+# Afficher le badge de notification et le streak dans la sidebar
 render_notification_badge()
+render_streak_badge()
 
 # Afficher les messages flash en attente
 display_flash_messages()

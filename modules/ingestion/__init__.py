@@ -1,9 +1,23 @@
+"""
+Ingestion module for FinancePerso.
+Handles CSV import from various bank formats and transaction hashing.
+"""
+
 import hashlib
 import re
 
 import pandas as pd
 
 from modules.logger import logger
+
+# Import bank templates
+from modules.ingestion.bank_templates import (
+    BankTemplate,
+    BANK_TEMPLATES,
+    detect_bank_format,
+    apply_template,
+    load_bank_csv,
+)
 
 
 def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:
@@ -332,3 +346,18 @@ def load_transaction_file(
 
     except Exception as e:
         return None, f"Erreur inattendue lors de l'import: {str(e)[:150]}"
+
+
+__all__ = [
+    # Core functions
+    "generate_tx_hash",
+    "parse_bourso_csv",
+    "parse_generic_csv",
+    "load_transaction_file",
+    # Bank templates
+    "BankTemplate",
+    "BANK_TEMPLATES",
+    "detect_bank_format",
+    "apply_template",
+    "load_bank_csv",
+]

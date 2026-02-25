@@ -48,127 +48,15 @@ def temp_db():
     except Exception:
         pass
 
-    # Initialize schema
+    # Initialize schema using the REAL init_db from migrations
+    # DB_PATH is already set above, init_db() will use it via get_db_connection()
+    from modules.db.migrations import init_db
+
+    init_db()  # Utilise le vrai schéma de production via DB_PATH
+
+    # Insert test defaults (categories, members)
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-
-    # Create all tables
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,
-            label TEXT NOT NULL,
-            amount REAL NOT NULL,
-            account_label TEXT,
-            original_category TEXT,
-            category_validated TEXT DEFAULT 'Inconnu',
-            member TEXT DEFAULT 'Inconnu',
-            beneficiary TEXT DEFAULT 'Inconnu',
-            card_suffix TEXT,
-            tags TEXT,
-            notes TEXT,
-            status TEXT DEFAULT 'pending',
-            import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            tx_hash TEXT,
-            is_manually_ungrouped INTEGER DEFAULT 0
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS transaction_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            action_group_id TEXT NOT NULL,
-            tx_ids TEXT NOT NULL,
-            prev_status TEXT,
-            prev_category TEXT,
-            prev_member TEXT,
-            prev_tags TEXT,
-            prev_beneficiary TEXT,
-            prev_notes TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS categories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
-            emoji TEXT DEFAULT '🏷️',
-            is_fixed INTEGER DEFAULT 0,
-            suggested_tags TEXT
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS members (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
-            member_type TEXT DEFAULT 'HOUSEHOLD'
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS budgets (
-            category TEXT PRIMARY KEY,
-            amount REAL NOT NULL,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS learning_rules (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pattern TEXT NOT NULL,
-            category TEXT NOT NULL,
-            priority INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS accounts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            label TEXT UNIQUE NOT NULL,
-            type TEXT DEFAULT 'CHECKING'
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS member_mappings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            card_suffix TEXT UNIQUE NOT NULL,
-            member_name TEXT NOT NULL
-        )
-    """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS import_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            account_label TEXT NOT NULL,
-            import_date TEXT NOT NULL,
-            num_lines INTEGER,
-            file_hash TEXT
-        )
-    """
-    )
 
     # Insert default categories
     default_categories = [
@@ -181,13 +69,13 @@ def temp_db():
         ("Inconnu", "❓", 0, ""),
     ]
     cursor.executemany(
-        "INSERT INTO categories (name, emoji, is_fixed, suggested_tags) VALUES (?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO categories (name, emoji, is_fixed, suggested_tags) VALUES (?, ?, ?, ?)",
         default_categories,
     )
 
     # Insert default members
     default_members = [("Maison", "HOUSEHOLD"), ("Famille", "HOUSEHOLD"), ("Inconnu", "EXTERNAL")]
-    cursor.executemany("INSERT INTO members (name, member_type) VALUES (?, ?)", default_members)
+    cursor.executemany("INSERT OR IGNORE INTO members (name, member_type) VALUES (?, ?)", default_members)
 
     conn.commit()
     conn.close()

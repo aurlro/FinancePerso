@@ -31,6 +31,7 @@ import json
 import os
 import time
 from abc import ABC, abstractmethod
+from enum import Enum
 from functools import wraps
 from typing import Any
 
@@ -40,6 +41,131 @@ from dotenv import load_dotenv
 from modules.logger import logger
 
 load_dotenv()
+
+
+# --- Circuit Breaker ---
+class CircuitState(Enum):
+    """Circuit breaker states."""
+    CLOSED = "closed"       # Normal operation
+    OPEN = "open"          # Failing, reject calls
+    HALF_OPEN = "half_open"  # Testing if recovered
+
+
+class CircuitBreakerOpen(Exception):
+    """Exception raised when circuit breaker is open."""
+    pass
+
+
+class CircuitBreaker:
+    """
+    Circuit breaker for AI provider calls.
+    
+    Prevents cascading failures by blocking calls after consecutive failures.
+    """
+    
+    def __init__(
+        self,
+        name: str,
+        failure_threshold: int = 3,
+        recovery_timeout: float = 60.0,
+        half_open_max_calls: int = 1
+    ):
+        self.name = name
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.half_open_max_calls = half_open_max_calls
+        
+        self._state = CircuitState.CLOSED
+        self._failure_count = 0
+        self._success_count = 0
+        self._last_failure_time = 0.0
+        self._half_open_calls = 0
+    
+    @property
+    def state(self) -> CircuitState:
+        """Get current circuit state."""
+        if self._state == CircuitState.OPEN:
+            # Check if we should try half-open
+            if time.time() - self._last_failure_time > self.recovery_timeout:
+                self._state = CircuitState.HALF_OPEN
+                self._half_open_calls = 0
+                logger.info(f"Circuit breaker '{self.name}' entering HALF_OPEN state")
+        
+        return self._state
+    
+    def call(self, func, *args, **kwargs):
+        """
+        Execute function with circuit breaker protection.
+        
+        Args:
+            func: Function to call
+            *args, **kwargs: Arguments for function
+            
+        Returns:
+            Function result
+            
+        Raises:
+            CircuitBreakerOpen: If circuit is OPEN
+            Exception: If function fails in HALF_OPEN
+        """
+        current_state = self.state
+        
+        if current_state == CircuitState.OPEN:
+            raise CircuitBreakerOpen(
+                f"Circuit breaker '{self.name}' is OPEN. "
+                f"Too many failures, try again in {self.recovery_timeout}s"
+            )
+        
+        if current_state == CircuitState.HALF_OPEN:
+            if self._half_open_calls >= self.half_open_max_calls:
+                raise CircuitBreakerOpen(
+                    f"Circuit breaker '{self.name}' HALF_OPEN limit reached"
+                )
+            self._half_open_calls += 1
+        
+        try:
+            result = func(*args, **kwargs)
+            self._on_success()
+            return result
+        except Exception as e:
+            self._on_failure()
+            raise
+    
+    def _on_success(self):
+        """Handle successful call."""
+        if self._state == CircuitState.HALF_OPEN:
+            self._success_count += 1
+            # If we've had enough successes, close the circuit
+            if self._success_count >= self.half_open_max_calls:
+                self._state = CircuitState.CLOSED
+                self._failure_count = 0
+                logger.info(f"Circuit breaker '{self.name}' CLOSED (recovered)")
+        else:
+            # Reset failure count on success in CLOSED state
+            self._failure_count = 0
+    
+    def _on_failure(self):
+        """Handle failed call."""
+        self._failure_count += 1
+        self._last_failure_time = time.time()
+        
+        if self._failure_count >= self.failure_threshold:
+            if self._state != CircuitState.OPEN:
+                logger.error(
+                    f"Circuit breaker '{self.name}' OPENED after "
+                    f"{self._failure_count} failures"
+                )
+            self._state = CircuitState.OPEN
+    
+    def get_status(self) -> dict:
+        """Get circuit breaker status for monitoring."""
+        return {
+            "name": self.name,
+            "state": self.state.value,
+            "failure_count": self._failure_count,
+            "last_failure_time": self._last_failure_time,
+            "seconds_since_last_failure": time.time() - self._last_failure_time if self._last_failure_time > 0 else None
+        }
 
 # Import new Google GenAI API
 try:
@@ -119,6 +245,37 @@ class GeminiProvider(AIProvider):
         self.client = None
         if api_key and GENAI_AVAILABLE:
             self.client = genai.Client(api_key=api_key)
+        
+        # Initialize circuit breaker
+        self._circuit = CircuitBreaker(
+            name="gemini",
+            failure_threshold=3,
+            recovery_timeout=60.0
+        )
+
+    def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
+        """Internal method that does the actual API call."""
+        if not self.api_key:
+            raise ValueError("API key not configured")
+        if not GENAI_AVAILABLE:
+            raise RuntimeError("AI library not installed")
+        if not self.client:
+            raise RuntimeError("Client initialization failed")
+
+        model = model_name or self.DEFAULT_MODEL
+
+        response = self.client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            ),
+        )
+        text = response.text
+
+        # Clean up markdown code blocks if present
+        text = text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
 
     @rate_limited
     def generate_json(
@@ -144,22 +301,15 @@ class GeminiProvider(AIProvider):
             logger.error("Gemini client not initialized")
             return {"error": "Client initialization failed", "status": "error"}
 
-        model = model_name or self.DEFAULT_MODEL
-
         try:
-            response = self.client.models.generate_content(
-                model=model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json"
-                ),
-            )
-            text = response.text
-
-            # Clean up markdown code blocks if present
-            text = text.replace("```json", "").replace("```", "").strip()
-            return json.loads(text)
-
+            return self._circuit.call(self._generate_json_internal, prompt, model_name)
+        except CircuitBreakerOpen as e:
+            logger.warning(str(e))
+            return {
+                "error": "Circuit breaker open - AI temporarily unavailable",
+                "status": "circuit_open",
+                "circuit_state": self._circuit.state.value
+            }
         except json.JSONDecodeError as e:
             logger.error(f"Gemini JSON parsing error: {e}")
             return {"error": "Invalid JSON response from AI", "status": "parse_error"}
@@ -243,25 +393,43 @@ class OllamaProvider(AIProvider):
 
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url.rstrip("/")
+        
+        # Initialize circuit breaker
+        self._circuit = CircuitBreaker(
+            name="ollama",
+            failure_threshold=3,
+            recovery_timeout=60.0
+        )
+
+    def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
+        """Internal method that does the actual API call."""
+        model = model_name or self.DEFAULT_MODEL
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json",
+        }
+        resp = requests.post(
+            f"{self.base_url}/api/generate",
+            json=payload,
+            timeout=60,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return json.loads(data["response"])
 
     def generate_json(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Generate JSON response using Ollama."""
-        model = model_name or self.DEFAULT_MODEL
         try:
-            payload = {
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-                "format": "json",
+            return self._circuit.call(self._generate_json_internal, prompt, model_name)
+        except CircuitBreakerOpen as e:
+            logger.warning(str(e))
+            return {
+                "error": "Circuit breaker open - Ollama temporarily unavailable",
+                "status": "circuit_open",
+                "circuit_state": self._circuit.state.value
             }
-            resp = requests.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
-                timeout=60,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return json.loads(data["response"])
         except requests.ConnectionError:
             logger.error(f"Ollama connection error - is Ollama running at {self.base_url}?")
             return {
@@ -322,13 +490,19 @@ class OpenAICompatibleProvider(AIProvider):
     def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1"):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
+        
+        # Initialize circuit breaker
+        provider_name = "openai" if "openai" in base_url else "deepseek" if "deepseek" in base_url else "openai_compatible"
+        self._circuit = CircuitBreaker(
+            name=provider_name,
+            failure_threshold=3,
+            recovery_timeout=60.0
+        )
 
-    def generate_json(
-        self, prompt: str, model_name: str | None = None
-    ) -> dict[str, Any]:
-        """Generate JSON response using OpenAI-compatible API."""
+    def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
+        """Internal method that does the actual API call."""
         if not self.api_key:
-            return {"error": "API key not configured", "status": "unconfigured"}
+            raise ValueError("API key not configured")
 
         model = model_name or "gpt-3.5-turbo"
         headers = {
@@ -340,16 +514,32 @@ class OpenAICompatibleProvider(AIProvider):
             "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"},
         }
+        resp = requests.post(
+            f"{self.base_url}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        return json.loads(content)
+
+    def generate_json(
+        self, prompt: str, model_name: str | None = None
+    ) -> dict[str, Any]:
+        """Generate JSON response using OpenAI-compatible API."""
+        if not self.api_key:
+            return {"error": "API key not configured", "status": "unconfigured"}
+
         try:
-            resp = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
-            return json.loads(content)
+            return self._circuit.call(self._generate_json_internal, prompt, model_name)
+        except CircuitBreakerOpen as e:
+            logger.warning(str(e))
+            return {
+                "error": "Circuit breaker open - AI temporarily unavailable",
+                "status": "circuit_open",
+                "circuit_state": self._circuit.state.value
+            }
         except requests.HTTPError as e:
             status_code = e.response.status_code if hasattr(e, "response") else "unknown"
             logger.error(f"OpenAI HTTP Error {status_code}: {e}")
@@ -428,13 +618,18 @@ class KimiProvider(AIProvider):
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://api.moonshot.cn/v1"
+        
+        # Initialize circuit breaker
+        self._circuit = CircuitBreaker(
+            name="kimi",
+            failure_threshold=3,
+            recovery_timeout=60.0
+        )
 
-    def generate_json(
-        self, prompt: str, model_name: str | None = None
-    ) -> dict[str, Any]:
-        """Generate JSON response using KIMI."""
+    def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
+        """Internal method that does the actual API call."""
         if not self.api_key:
-            return {"error": "API key not configured", "status": "unconfigured"}
+            raise ValueError("API key not configured")
 
         model = model_name or self.DEFAULT_MODEL
         headers = {
@@ -446,17 +641,33 @@ class KimiProvider(AIProvider):
             "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"},
         }
+        resp = requests.post(
+            f"{self.base_url}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        content = content.replace("```json", "").replace("```", "").strip()
+        return json.loads(content)
+
+    def generate_json(
+        self, prompt: str, model_name: str | None = None
+    ) -> dict[str, Any]:
+        """Generate JSON response using KIMI."""
+        if not self.api_key:
+            return {"error": "API key not configured", "status": "unconfigured"}
+
         try:
-            resp = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-            resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
-            content = content.replace("```json", "").replace("```", "").strip()
-            return json.loads(content)
+            return self._circuit.call(self._generate_json_internal, prompt, model_name)
+        except CircuitBreakerOpen as e:
+            logger.warning(str(e))
+            return {
+                "error": "Circuit breaker open - KIMI temporarily unavailable",
+                "status": "circuit_open",
+                "circuit_state": self._circuit.state.value
+            }
         except requests.HTTPError as e:
             status_code = e.response.status_code if hasattr(e, "response") else "unknown"
             logger.error(f"KIMI HTTP Error {status_code}: {e}")
@@ -632,6 +843,51 @@ def get_ai_error_message() -> str:
         return "🤖 Service IA non disponible"
     except Exception as e:
         return f"🤖 Service IA non disponible: {str(e)[:100]}"
+
+
+# --- Circuit Breaker Registry ---
+_circuit_breakers: dict[str, CircuitBreaker] = {}
+
+
+def register_circuit_breaker(provider_name: str, circuit: CircuitBreaker) -> None:
+    """Register a circuit breaker for monitoring."""
+    _circuit_breakers[provider_name] = circuit
+
+
+def get_circuit_status() -> dict[str, Any]:
+    """
+    Get status of all registered circuit breakers.
+    
+    Returns:
+        Dict with circuit breaker states for monitoring
+    """
+    # Also get circuits from active provider instances
+    circuits = {}
+    
+    # Try to get current provider and its circuit
+    try:
+        provider = get_ai_provider()
+        if isinstance(provider, GeminiProvider) and hasattr(provider, '_circuit'):
+            circuits["gemini"] = provider._circuit.get_status()
+        elif isinstance(provider, OllamaProvider) and hasattr(provider, '_circuit'):
+            circuits["ollama"] = provider._circuit.get_status()
+        elif isinstance(provider, OpenAICompatibleProvider) and hasattr(provider, '_circuit'):
+            circuits[provider._circuit.name] = provider._circuit.get_status()
+        elif isinstance(provider, KimiProvider) and hasattr(provider, '_circuit'):
+            circuits["kimi"] = provider._circuit.get_status()
+    except Exception as e:
+        logger.debug(f"Could not get provider circuit status: {e}")
+    
+    # Add registered circuits
+    for name, circuit in _circuit_breakers.items():
+        circuits[name] = circuit.get_status()
+    
+    return {
+        "circuits": circuits,
+        "total_circuits": len(circuits),
+        "open_circuits": sum(1 for c in circuits.values() if c.get("state") == "open"),
+        "half_open_circuits": sum(1 for c in circuits.values() if c.get("state") == "half_open"),
+    }
 
 
 # Backward compatibility aliases

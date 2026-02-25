@@ -14,6 +14,19 @@ from modules.logger import logger
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_PATH = os.path.join(PROJECT_ROOT, "Data", "finance.db")
 
+# Allowed columns for SQL filtering (whitelist)
+ALLOWED_COLUMNS = {'id', 'date', 'label', 'amount', 'status', 'category',
+                   'member_id', 'tx_hash', 'created_at', 'updated_at',
+                   'account_label', 'card_suffix', 'member', 'beneficiary'}
+ALLOWED_OPERATORS = {'=', '<>', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'}
+
+
+def validate_sql_identifier(identifier: str, allowed: set[str]) -> str:
+    """Valide qu'un identifiant SQL est dans la liste autorisée."""
+    if identifier not in allowed:
+        raise ValueError(f"Identifiant SQL non autorisé: {identifier}")
+    return identifier
+
 
 @contextmanager
 def get_db_connection():
@@ -70,8 +83,13 @@ def build_filter_clause(filters: dict) -> tuple[str, list]:
     params = []
 
     for column, condition in filters.items():
+        # Validate column name against whitelist
+        validate_sql_identifier(column, ALLOWED_COLUMNS)
+
         if isinstance(condition, tuple):
             operator, value = condition
+            # Validate operator against whitelist
+            validate_sql_identifier(operator, ALLOWED_OPERATORS)
             where_clause += f" AND {column} {operator} ?"
             params.append(value)
         else:

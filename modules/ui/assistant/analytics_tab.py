@@ -64,6 +64,16 @@ def render_analytics_tab():
         # Get AI response
         from modules.ai import chat_with_assistant
 
+        # Check if chat is available
+        if chat_with_assistant is None:
+            add_chat_message(
+                "assistant",
+                "⚠️ L'assistant conversationnel n'est pas disponible. "
+                "Vérifiez que la bibliothèque AI est installée (pip install google-genai).",
+            )
+            st.rerun()
+            return
+
         with st.spinner("L'assistant réfléchit..."):
             try:
                 history = get_assistant_state("chat_history")

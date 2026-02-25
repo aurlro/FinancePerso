@@ -27,7 +27,7 @@ import shutil
 import sqlite3
 import zipfile
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Any
 import hashlib
@@ -534,7 +534,8 @@ class GDPRManager:
             count = cursor.fetchone()[0]
             conn.close()
             return count > 0
-        except:
+        except (sqlite3.Error, OSError) as e:
+            logger.warning(f"Erreur vérification existence utilisateur {user_id}: {e}")
             return False
     
     def _count_user_records(self, user_id: str) -> Dict[str, int]:

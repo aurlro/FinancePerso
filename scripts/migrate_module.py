@@ -15,11 +15,14 @@ Ce script:
 """
 
 import argparse
+import logging
 import os
 import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class ModuleMigrator:
@@ -79,8 +82,8 @@ class ModuleMigrator:
                         module_name = str(self.from_path).replace('/', '.')
                         if f"from {module_name}" in content or f"import {module_name}" in content:
                             affected_files.append(filepath)
-                    except:
-                        pass
+                    except (IOError, UnicodeDecodeError) as e:
+                        logger.debug(f"Impossible de lire {filepath}: {e}")
         
         print(f"   Fichiers affectés: {len(affected_files)}")
         for f in affected_files[:10]:  # Limiter l'affichage

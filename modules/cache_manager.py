@@ -129,9 +129,18 @@ def invalidate_rule_caches():
     """Invalidate rule-related caches.
 
     Call this after adding/deleting learning rules.
-    Emits 'rules.changed' event.
+    Emits 'rules.changed' event and clears Streamlit caches.
     """
     EventBus.emit("rules.changed")
+    
+    # Clear Streamlit caches for rules
+    try:
+        from modules.db.rules import get_learning_rules, get_compiled_learning_rules, get_rules_for_category
+        get_learning_rules.clear()
+        get_compiled_learning_rules.clear()
+        get_rules_for_category.clear()
+    except Exception:
+        pass  # Ignore if cache clearing fails
 
 
 def invalidate_category_caches():

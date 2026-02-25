@@ -711,6 +711,7 @@ def _render_projections_tab(wealth_manager: WealthManager, monthly_income: float
             # Probabilités d'atteinte des objectifs
             st.subheader("Probabilité d'atteinte des objectifs")
             
+            life_goals = []  # Initialisation par défaut (à remplacer par récupération DB si nécessaire)
             for goal in life_goals:
                 # Calculer probabilité approximative
                 if result['percentile_95'] >= goal['amount']:

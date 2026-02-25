@@ -299,10 +299,14 @@ def get_transaction_by_id(tx_id: int) -> dict | None:
         return dict(zip(columns, row))
 
 
-def delete_transaction_by_id(tx_id: int) -> int:
+def delete_transaction(tx_id: int, permanent: bool = False) -> int:
     """
     Delete a specific transaction.
-
+    
+    Args:
+        tx_id: Transaction ID to delete
+        permanent: If True, permanently delete (bypass recycle bin)
+    
     Returns:
         Number of rows deleted (0 or 1)
     """
@@ -310,13 +314,32 @@ def delete_transaction_by_id(tx_id: int) -> int:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
         conn.commit()
+        deleted = cursor.rowcount
 
     # Clear cache to ensure fresh data
     get_all_transactions.clear()
     get_pending_transactions.clear()
     
-    EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
-    return cursor.rowcount
+    if deleted > 0:
+        EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
+    
+    return deleted
+
+
+def delete_transaction_by_id(tx_id: int) -> int:
+    """
+    Delete a specific transaction.
+    
+    DEPRECATED: Use delete_transaction() instead.
+    
+    Args:
+        tx_id: Transaction ID to delete
+    
+    Returns:
+        Number of rows deleted (0 or 1)
+    """
+    logger.warning("delete_transaction_by_id() is deprecated, use delete_transaction() instead")
+    return delete_transaction(tx_id)
 
 
 def add_tag_to_transactions(tx_ids: list[int], tag: str) -> int:
@@ -593,16 +616,6 @@ def mark_transaction_as_ungrouped(tx_id: int) -> None:
         conn.commit()
 
     EventBus.emit("transactions.changed", tx_id=tx_id, action="ungrouped")
-
-
-def delete_transaction(tx_id: int) -> None:
-    """Delete a transaction."""
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
-        conn.commit()
-
-    EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
 
 
 def delete_transactions_by_period(month_str: str) -> int:

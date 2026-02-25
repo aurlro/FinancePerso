@@ -184,73 +184,9 @@ def merge_categories_atomic(source_category: str, target_category: str) -> dict[
         result = merge_categories_atomic("Courses", "Alimentation")
         print(f"Merged {result['transactions']} transactions")
     """
-    with atomic_transaction() as conn:
-        cursor = conn.cursor()
+    from modules.db.merge_utils import merge_categories_atomic as _merge_atomic
 
-        # Update transactions
-        cursor.execute(
-            """
-            UPDATE transactions 
-            SET category_validated = ? 
-            WHERE category_validated = ? COLLATE NOCASE
-            """,
-            (target_category, source_category),
-        )
-        tx_count = cursor.rowcount
-
-        # Update learning rules
-        cursor.execute(
-            """
-            UPDATE learning_rules 
-            SET category = ? 
-            WHERE category = ? COLLATE NOCASE
-            """,
-            (target_category, source_category),
-        )
-        rules_count = cursor.rowcount
-
-        # Update budgets (transfer amount if target doesn't exist)
-        cursor.execute(
-            "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE", (source_category,)
-        )
-        source_budget = cursor.fetchone()
-
-        budget_count = 0
-        if source_budget:
-            source_amount = source_budget[0]
-
-            # Check if target budget exists
-            cursor.execute(
-                "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE", (target_category,)
-            )
-            target_budget = cursor.fetchone()
-
-            if target_budget:
-                # Add amounts
-                new_amount = target_budget[0] + source_amount
-                cursor.execute(
-                    "UPDATE budgets SET amount = ? WHERE category = ? COLLATE NOCASE",
-                    (new_amount, target_category),
-                )
-            else:
-                # Create new budget with source amount
-                cursor.execute(
-                    "INSERT INTO budgets (category, amount) VALUES (?, ?)",
-                    (target_category, source_amount),
-                )
-
-            # Delete source budget
-            cursor.execute(
-                "DELETE FROM budgets WHERE category = ? COLLATE NOCASE", (source_category,)
-            )
-            budget_count = 1
-
-        logger.info(
-            f"Merged category '{source_category}' into '{target_category}': "
-            f"{tx_count} transactions, {rules_count} rules, {budget_count} budgets"
-        )
-
-        return {"transactions": tx_count, "rules": rules_count, "budgets": budget_count}
+    return _merge_atomic(source_category, target_category)
 
 
 def bulk_tag_transactions(

@@ -14,6 +14,7 @@ from modules.db.transactions import (
 from modules.ui import toast_success, toast_warning
 
 # New modular components
+from modules.ui.components.pagination import paginated_list
 from modules.ui.components.progress_tracker import render_progress_tracker
 from modules.ui.feedback import validation_feedback
 from modules.ui.validation.grouping import calculate_group_stats, get_smart_groups
@@ -108,10 +109,17 @@ def render_validation_tab():
     ):
         local_df = get_smart_groups(filtered_df, excluded_ids=set())
         group_stats = calculate_group_stats(local_df)
-        display_groups = sort_groups(group_stats, sort_key=sort_key, max_groups=40)
+        all_groups = sort_groups(group_stats, sort_key=sort_key, max_groups=None)
+        
+        # Pagination avec le composant réutilisable
+        display_groups = paginated_list(
+            all_groups, 
+            page_size=20,  # 20 groupes par page
+            key=f"validation_pagination{key_suffix}"
+        )
 
-        if len(group_stats) > 40:
-            st.info(f"Affichage des 40 premiers groupes (sur {len(group_stats)}).")
+        if len(all_groups) > 20:
+            st.caption(f"Affichage de {len(display_groups)} groupe(s) sur {len(all_groups)} total.")
 
         # BULK VALIDATION - Header avec checkbox "Tout sélectionner"
         selected_in_session = st.session_state.get("bulk_selected_groups", set())

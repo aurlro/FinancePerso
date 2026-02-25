@@ -91,7 +91,7 @@ def check_code_size():
             else:
                 print_warning(f"Objectif non atteint: {total:,} > 50,000 lignes")
                 return False
-        except:
+        except (ValueError, IndexError):
             print_warning("Impossible de compter les lignes")
             return False
     

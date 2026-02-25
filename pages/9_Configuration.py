@@ -7,6 +7,7 @@ from modules.ui.config.api_settings import render_api_settings
 from modules.ui.config.audit_tools import render_audit_tools
 from modules.ui.config.backup_restore import render_backup_restore
 from modules.ui.config.category_management import render_category_management
+from modules.ui.config.recycle_bin import render_recycle_bin_manager
 from modules.ui.config.config_dashboard import render_config_dashboard
 from modules.ui.config.config_mode import (
     is_advanced_mode,
@@ -158,6 +159,10 @@ if is_advanced_mode():
         with col_back2:
             st.subheader("📑 Logs système", divider="blue")
             render_log_viewer()
+        
+        # Recycle Bin
+        st.divider()
+        render_recycle_bin_manager()
 
 render_scroll_to_top()
 from modules.ui.layout import render_app_info

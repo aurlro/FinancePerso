@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import pandas as pd
+import streamlit as st
 
 
 @dataclass

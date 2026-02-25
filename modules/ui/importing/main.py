@@ -11,6 +11,13 @@ from modules.ingestion import load_transaction_file
 from modules.onboarding import render_onboarding_widget
 from modules.ui.feedback import (
     import_feedback,
+    toast_success,
+    toast_error,
+)
+from modules.ui.importing.preview import (
+    render_import_preview,
+    show_import_progress,
+    show_import_summary,
 )
 from modules.utils import validate_csv_file
 
@@ -264,40 +271,91 @@ def render_import_tab():
                             st.error("❌ Toutes les transactions sont déjà importées !")
                             return
 
-                    # Preview
-                    st.dataframe(df.head(5)[["date", "label", "amount"]])
-
-                    # Passer à l'étape 4 (Import)
-                    st.session_state.import_step = 3  # Stay at 3 until click
-
-                    # --- STEP 4: IMPORT ---
-                    st.divider()
-                    st.subheader("4️⃣ Import des données")
-
-                    is_ai_available()
-                    auto_cat = st.checkbox("Lancer la catégorisation automatique", value=True)
-
-                    if st.button(
-                        "🚀 Valider et Importer",
-                        type="primary",
-                        key="btn_ops_run_import",
-                        use_container_width=True,
-                    ):
-                        df_import = (
-                            df[~duplicates_mask].copy()
-                            if existing_hashes and not force_import
-                            else df.copy()
-                        )
-
-                        with st.status("Importation en cours...", expanded=True) as status:
+                    # --- STEP 3: PROFESSIONAL PREVIEW ---
+                    st.session_state.import_step = 3
+                    
+                    # Préparer les données pour le composant de preview
+                    detected_bank = "BoursoBank" if "Bourso" in import_mode else "Banque personnalisée"
+                    duplicates_df = df[duplicates_mask].copy() if existing_hashes and num_duplicates > 0 else None
+                    
+                    # Callbacks pour les actions
+                    def on_import_confirmed(df_to_import, options):
+                        """Callback quand l'utilisateur confirme l'import."""
+                        st.session_state["import_confirmed"] = True
+                        st.session_state["df_to_import"] = df_to_import
+                        st.session_state["import_options"] = options
+                        st.session_state["account_name"] = account_name
+                    
+                    def on_import_cancelled():
+                        """Callback quand l'utilisateur annule."""
+                        st.session_state["import_cancelled"] = True
+                    
+                    # Afficher le preview professionnel
+                    render_import_preview(
+                        df=df,
+                        detected_bank=detected_bank,
+                        duplicates=duplicates_df,
+                        on_confirm=on_import_confirmed,
+                        on_cancel=on_import_cancelled,
+                        key="import_preview_main"
+                    )
+                    
+                    # Gérer les actions du preview
+                    if st.session_state.get("import_cancelled"):
+                        st.session_state["import_cancelled"] = False
+                        st.session_state.import_step = 0
+                        st.rerun()
+                    
+                    if st.session_state.get("import_confirmed"):
+                        df_import = st.session_state["df_to_import"]
+                        options = st.session_state["import_options"]
+                        auto_cat = options.get("auto_categorize", True)
+                        skip_validation = options.get("skip_validation", False)
+                        
+                        # Réinitialiser les flags
+                        st.session_state["import_confirmed"] = False
+                        
+                        # Passer à l'étape 4 (Import)
+                        st.session_state.import_step = 4
+                        
+                        # --- STEP 4: IMPORT AVEC PROGRESSION ---
+                        st.divider()
+                        st.subheader("4️⃣ Import des données")
+                        
+                        # Étapes d'import pour la barre de progression
+                        import_steps = [
+                            "Préparation des données",
+                            "Catégorisation automatique",
+                            "Enregistrement en base",
+                            "Finalisation"
+                        ]
+                        
+                        errors = []
+                        categorized_count = 0
+                        
+                        with st.container():
+                            # Étape 1: Préparation
+                            show_import_progress(1, len(import_steps), import_steps[0])
+                            
+                            # Étape 2: Catégorisation (si activée)
+                            all_results = []
                             if auto_cat:
-                                all_results = []
-                                len(df_import)
+                                show_import_progress(2, len(import_steps), import_steps[1])
+                                
+                                progress_bar = st.progress(0)
                                 for i, (_, row) in enumerate(df_import.iterrows()):
-                                    cat, source, conf = categorize_transaction(
-                                        row["label"], row["amount"], row["date"]
-                                    )
-                                    all_results.append((cat, source, conf))
+                                    try:
+                                        cat, source, conf = categorize_transaction(
+                                            row["label"], row["amount"], row["date"]
+                                        )
+                                        all_results.append((cat, source, conf))
+                                        categorized_count += 1
+                                    except Exception as e:
+                                        errors.append(f"Ligne {i}: {str(e)}")
+                                        all_results.append(("Inconnu", "error", 0.0))
+                                    
+                                    # Mise à jour de la barre de progression
+                                    progress_bar.progress((i + 1) / len(df_import))
 
                                 df_import["category_validated"] = [
                                     r[0] if r[0] else "Inconnu" for r in all_results
@@ -307,15 +365,32 @@ def render_import_tab():
                                     "validated" if r[1] == "rule" else "pending"
                                     for r in all_results
                                 ]
-
+                            else:
+                                # Sans catégorisation auto
+                                df_import["category_validated"] = "Inconnu"
+                                df_import["ai_confidence"] = 0.0
+                                df_import["status"] = "pending"
+                            
+                            # Étape 3: Enregistrement
+                            show_import_progress(3, len(import_steps), import_steps[2])
                             df_import["account_label"] = account_name
                             count, skipped = save_transactions(df_import)
-                            status.update(label="Importation terminée !", state="complete")
-
-                        import_feedback(count, skipped, account_name)
-                        if count > 0:
-                            st.session_state["just_imported"] = True
-                            st.rerun()
+                            
+                            # Étape 4: Finalisation
+                            show_import_progress(4, len(import_steps), import_steps[3])
+                            
+                            # Afficher le résumé professionnel
+                            show_import_summary(
+                                imported=count,
+                                categorized=categorized_count,
+                                duplicates_skipped=skipped,
+                                errors=errors
+                            )
+                            
+                            # Redirection vers validation si succès
+                            if count > 0:
+                                st.session_state["just_imported"] = True
+                                st.rerun()
 
             except Exception as e:
                 st.error(f"Une erreur est survenue : {e}")

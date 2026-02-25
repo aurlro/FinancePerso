@@ -32,22 +32,24 @@ TERMINAL_PATTERNS = [
     r"SEPA\s*\w*",  # SEPA
     r"RETRAIT\s*DAB",  # Retrait
     r"CHEQUE\s*\d*",  # Chèque
+    r"DBIT[-\s]*\d{0,2}[-\s]*\d{0,4}",  # DBIT-20-2026, DBIT
+    r"\d{4}[-\s]*\d{0,2}[-\s]*\d{0,4}",  # Dates au format 2026-02-21
 ]
 
 LOCATION_PATTERNS = [
-    r"\s+PARIS\s*\d{0,2}",  # PARIS 14, PARIS
-    r"\s+LYON\s*\d{0,2}",  # LYON 7
-    r"\s+MARSEILLE\s*\d{0,2}",  # MARSEILLE 13
-    r"\s+TOULOUSE\s*\d{0,2}",
-    r"\s+NANTES\s*\d{0,2}",
-    r"\s+STRASBOURG\s*\d{0,2}",
-    r"\s+MONTPELLIER\s*\d{0,2}",
-    r"\s+BORDEAUX\s*\d{0,2}",
-    r"\s+LILLE\s*\d{0,2}",
-    r"\s+RENNES\s*\d{0,2}",
-    r"\s+REIMS\s*\d{0,2}",
-    r"\s+LE\s+HAVRE\s*\d{0,2}",
-    r"\s+SAINT[-\s]\w+\s*\d{0,2}",  # SAINT-ETIENNE, SAINT ETIENNE
+    r"[-\s]*PARIS[-\s]*\d{0,2}",  # PARIS 14, PARIS, -PARIS-, PARIS-
+    r"[-\s]*LYON[-\s]*\d{0,2}",  # LYON 7
+    r"[-\s]*MARSEILLE[-\s]*\d{0,2}",  # MARSEILLE 13
+    r"[-\s]*TOULOUSE[-\s]*\d{0,2}",
+    r"[-\s]*NANTES[-\s]*\d{0,2}",
+    r"[-\s]*STRASBOURG[-\s]*\d{0,2}",
+    r"[-\s]*MONTPELLIER[-\s]*\d{0,2}",
+    r"[-\s]*BORDEAUX[-\s]*\d{0,2}",
+    r"[-\s]*LILLE[-\s]*\d{0,2}",
+    r"[-\s]*RENNES[-\s]*\d{0,2}",
+    r"[-\s]*REIMS[-\s]*\d{0,2}",
+    r"[-\s]*LE[-\s]*HAVRE[-\s]*\d{0,2}",
+    r"[-\s]*SAINT[-\s]\w+[-\s]*\d{0,2}",  # SAINT-ETIENNE, SAINT ETIENNE
 ]
 
 DATE_PATTERNS = [

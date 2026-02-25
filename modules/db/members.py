@@ -14,6 +14,7 @@ from modules.core.events import EventBus
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
+
 def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
     """
     Add a new member.
@@ -39,6 +40,7 @@ def add_member(name: str, member_type: str = MemberType.HOUSEHOLD) -> bool:
             logger.warning(f"Member '{name}' already exists")
             return False
 
+
 def update_member_type(member_id: int, member_type: str) -> None:
     """Update the type of a member (HOUSEHOLD or EXTERNAL)."""
 
@@ -53,6 +55,7 @@ def update_member_type(member_id: int, member_type: str) -> None:
         pass
     EventBus.emit("members.changed")
 
+
 def delete_member(member_id: int) -> None:
     """Delete a member by ID."""
 
@@ -65,6 +68,7 @@ def delete_member(member_id: int) -> None:
     get_members.clear()
     
     EventBus.emit("members.changed")
+
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_members() -> pd.DataFrame:
@@ -79,6 +83,7 @@ def get_members() -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM members ORDER BY name", conn)
+
 
 def rename_member(old_name: str, new_name: str) -> int:
     """
@@ -121,6 +126,7 @@ def rename_member(old_name: str, new_name: str) -> int:
     logger.info(f"Renamed member '{old_name}' → '{new_name}': {tx_count} transactions updated")
     return tx_count
 
+
 def get_orphan_labels() -> list[str]:
     """
     Find values in transactions that are NOT in the members table.
@@ -151,6 +157,7 @@ def get_orphan_labels() -> list[str]:
         orphans = all_txn_values - official_members
 
         return sorted(list(orphans))
+
 
 def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu") -> int:
     """
@@ -196,7 +203,9 @@ def delete_and_replace_label(old_label: str, replacement_label: str = "Inconnu")
     logger.info(f"Replaced label '{old_label}' → '{replacement_label}': {count} updates")
     return count
 
+
 # --- Member Mapping Functions ---
+
 
 def add_member_mapping(card_suffix: str, member_name: str) -> None:
     """
@@ -218,6 +227,7 @@ def add_member_mapping(card_suffix: str, member_name: str) -> None:
         conn.commit()
     EventBus.emit("members.changed")
 
+
 @st.cache_data(ttl=300)  # Cache for 5 minutes
 def get_member_mappings() -> dict[str, str]:
     """
@@ -233,6 +243,7 @@ def get_member_mappings() -> dict[str, str]:
         df = pd.read_sql("SELECT card_suffix, member_name FROM member_mappings", conn)
         return dict(zip(df["card_suffix"], df["member_name"]))
 
+
 def delete_member_mapping(mapping_id: int) -> None:
     """Delete a member mapping by ID."""
 
@@ -241,6 +252,7 @@ def delete_member_mapping(mapping_id: int) -> None:
         cursor.execute("DELETE FROM member_mappings WHERE id = ?", (mapping_id,))
         conn.commit()
     EventBus.emit("members.changed")
+
 
 def get_member_mappings_df() -> pd.DataFrame:
     """
@@ -251,6 +263,7 @@ def get_member_mappings_df() -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql("SELECT * FROM member_mappings", conn)
+
 
 def get_unique_members() -> list[str]:
     """
@@ -306,12 +319,14 @@ def get_unique_members() -> list[str]:
 
         return sorted(list(seen.values()))
 
+
 def update_transaction_member(tx_id: int, new_member: str) -> None:
     """Update the member for a specific transaction."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("UPDATE transactions SET member = ? WHERE id = ?", (new_member, tx_id))
         conn.commit()
+
 
 def get_all_member_names() -> list[str]:
     """Get all unique member names from the database."""
@@ -320,8 +335,33 @@ def get_all_member_names() -> list[str]:
         cursor.execute("SELECT name FROM members")
         return [row[0] for row in cursor.fetchall()]
 
+
+@st.cache_data(ttl=300)
+def get_member_detection_data() -> tuple[dict[str, str], list[str], dict[str, str]]:
+    """
+    Charge en une fois toutes les données nécessaires à la détection de membre.
+    
+    Cette fonction est utilisée pour éviter le problème N+1 lors de l'import
+    de transactions en masse.
+    
+    Returns:
+        Tuple contenant:
+        - mappings: dict[card_suffix -> member_name]
+        - all_members: list[str] des noms de membres
+        - account_maps: dict[account_label -> member_name]
+    """
+    return (
+        get_member_mappings(),
+        get_all_member_names(),
+        get_account_member_mappings()
+    )
+
+
 def detect_member_from_content(
-    label: str, card_suffix: str = None, account_label: str = None
+    label: str,
+    card_suffix: str = None,
+    account_label: str = None,
+    cached_data: tuple[dict[str, str], list[str], dict[str, str]] | None = None
 ) -> str:
     """
     Detect member based on label, card suffix, and account.
@@ -336,6 +376,9 @@ def detect_member_from_content(
         label: Transaction label
         card_suffix: Detected card suffix (e.g. 6759)
         account_label: Bank account label
+        cached_data: Optional pre-loaded data to avoid N+1 queries.
+                     Tuple of (mappings, all_members, account_maps).
+                     If not provided, data will be loaded from cache.
 
     Returns:
         Member name. Never returns 'Inconnu' if force_member_identification is enabled.
@@ -344,15 +387,19 @@ def detect_member_from_content(
 
     label_upper = label.upper()
 
+    # Utiliser les données fournies ou charger depuis le cache
+    if cached_data is not None:
+        mappings, all_members, account_maps = cached_data
+    else:
+        mappings, all_members, account_maps = get_member_detection_data()
+
     # 1. Check card suffix mapping (highest priority)
     if card_suffix:
-        mappings = get_member_mappings()
         if card_suffix in mappings:
             return mappings[card_suffix]
 
     # 2. Check for member names in label
     # We fetch all member names
-    all_members = get_all_member_names()
     for member in all_members:
         # Search for exact name in label (with boundaries or common formats)
         if member.upper() in label_upper:
@@ -368,7 +415,6 @@ def detect_member_from_content(
         account_label.upper()
 
         # Check explicit mapping table first
-        account_maps = get_account_member_mappings()
         if account_label in account_maps:
             return account_maps[account_label]
 
@@ -384,7 +430,9 @@ def detect_member_from_content(
 
     return "Inconnu"
 
+
 # --- Account Mapping Functions ---
+
 
 def add_account_member_mapping(account_label: str, member_name: str) -> None:
     """Map a bank account label to a default member name."""
@@ -398,6 +446,7 @@ def add_account_member_mapping(account_label: str, member_name: str) -> None:
         conn.commit()
     EventBus.emit("members.changed")
 
+
 @st.cache_data(ttl=300)
 def get_account_member_mappings() -> dict[str, str]:
     """Get all account-member mappings."""
@@ -409,6 +458,7 @@ def get_account_member_mappings() -> dict[str, str]:
             # Fallback if table doesn't exist yet
             return {}
 
+
 def get_account_member_mappings_df() -> pd.DataFrame:
     """Get all account-member mappings as DataFrame."""
     with get_db_connection() as conn:
@@ -416,6 +466,7 @@ def get_account_member_mappings_df() -> pd.DataFrame:
             return pd.read_sql("SELECT * FROM account_member_mappings", conn)
         except Exception:
             return pd.DataFrame()
+
 
 def delete_account_member_mapping(mapping_id: int) -> None:
     """Delete an account-member mapping by ID."""
@@ -426,9 +477,11 @@ def delete_account_member_mapping(mapping_id: int) -> None:
         conn.commit()
     EventBus.emit("members.changed")
 
+
 # ============================================================================
 # UNKNOWN MEMBER ANALYSIS & REPAIR
 # ============================================================================
+
 
 def get_unknown_member_stats() -> dict:
     """
@@ -489,6 +542,7 @@ def get_unknown_member_stats() -> dict:
             "by_label": by_label,
             "default_member": get_default_member(),
         }
+
 
 def repair_unknown_members(dry_run: bool = False) -> dict:
     """
@@ -556,6 +610,7 @@ def repair_unknown_members(dry_run: bool = False) -> dict:
         "dry_run": dry_run,
         "message": f"{'Simulé' if dry_run else 'Réparé'}: {len(tx_ids)} transactions 'Inconnu' → '{default_member}'",
     }
+
 
 def analyze_unknown_patterns() -> list[dict]:
     """
@@ -625,6 +680,7 @@ def analyze_unknown_patterns() -> list[dict]:
             )
 
         return suggestions
+
 
 def ensure_no_unknown_members() -> dict:
     """

@@ -183,7 +183,7 @@ Priorité P2 (Plus tard):
         try:
             with open(filepath, 'r') as f:
                 total_lines += len(f.readlines())
-        except:
+        except (IOError, OSError, UnicodeDecodeError):
             pass
     
     print(f"Lignes de code analysées: {total_lines:,}")

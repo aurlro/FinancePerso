@@ -54,17 +54,22 @@ class FieldEncryption:
         Returns:
             Fernet cipher instance
         """
-        # Use salt from environment variable for production, fallback to default for compatibility
-        # IMPORTANT: For production, set ENCRYPTION_SALT to a unique value and keep it secure
-        salt_str = os.getenv("ENCRYPTION_SALT", "financeperso_salt_v1")
-        salt = salt_str.encode("utf-8")
-
-        # Warn if using default salt in production
-        if salt_str == "financeperso_salt_v1" and os.getenv("ENVIRONMENT") == "production":
+        # En production, exiger un salt personnalisé
+        salt_str = os.getenv("ENCRYPTION_SALT")
+        if not salt_str:
+            if os.getenv("ENVIRONMENT") == "production":
+                raise ValueError(
+                    "ENCRYPTION_SALT environment variable is required in production. "
+                    "Run: export ENCRYPTION_SALT=$(python -c \"import secrets; print(secrets.token_hex(16))\")"
+                )
+            # En développement, utiliser le salt par défaut avec warning
+            salt_str = "financeperso_salt_v1"
             logger.warning(
-                "Using default encryption salt in production. "
+                "Using default encryption salt. "
                 "Set ENCRYPTION_SALT environment variable for better security."
             )
+
+        salt = salt_str.encode("utf-8")
 
         # Derive 32-byte key using PBKDF2
         kdf = PBKDF2HMAC(
@@ -77,6 +82,21 @@ class FieldEncryption:
 
         key = base64.urlsafe_b64encode(kdf.derive(master_key.encode()))
         return Fernet(key)
+
+    @staticmethod
+    def generate_salt() -> str:
+        """
+        Generate a new secure salt.
+
+        Returns:
+            Hex-encoded salt string (32 characters)
+
+        Example:
+            >>> salt = FieldEncryption.generate_salt()
+            >>> print(f"Add to .env: ENCRYPTION_SALT={salt}")
+        """
+        import secrets
+        return secrets.token_hex(16)
 
     def is_enabled(self) -> bool:
         """Check if encryption is enabled and working."""

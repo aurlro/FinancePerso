@@ -267,89 +267,17 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         if result['category_deleted']:
             print("Source category deleted successfully")
     """
-    with get_db_connection() as conn:
-        cursor = conn.cursor()
+    from modules.db.merge_utils import merge_categories_atomic
 
-        # Count transactions before update
-        cursor.execute(
-            "SELECT COUNT(*) FROM transactions WHERE category_validated = ? COLLATE NOCASE",
-            (source_category,),
-        )
-        cursor.fetchone()[0]
+    result = merge_categories_atomic(source_category, target_category)
 
-        # Update transactions (validated category)
-        cursor.execute(
-            "UPDATE transactions SET category_validated = ? WHERE category_validated = ? COLLATE NOCASE",
-            (target_category, source_category),
-        )
-        tx_updated = cursor.rowcount
-
-        # Update transactions (original category)
-        cursor.execute(
-            "UPDATE transactions SET original_category = ? WHERE original_category = ? COLLATE NOCASE",
-            (target_category, source_category),
-        )
-
-        # Update learning rules
-        cursor.execute(
-            "UPDATE learning_rules SET category = ? WHERE category = ? COLLATE NOCASE",
-            (target_category, source_category),
-        )
-        rule_count = cursor.rowcount
-
-        # Transfer budget if exists
-        budget_transferred = False
-        cursor.execute(
-            "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE", (source_category,)
-        )
-        source_budget = cursor.fetchone()
-
-        if source_budget:
-            source_amount = source_budget[0]
-
-            # Check if target has a budget
-            cursor.execute(
-                "SELECT amount FROM budgets WHERE category = ? COLLATE NOCASE", (target_category,)
-            )
-            target_budget = cursor.fetchone()
-
-            if target_budget:
-                # Add to existing budget
-                new_amount = target_budget[0] + source_amount
-                cursor.execute(
-                    "UPDATE budgets SET amount = ? WHERE category = ? COLLATE NOCASE",
-                    (new_amount, target_category),
-                )
-            else:
-                # Create new budget entry for target
-                cursor.execute(
-                    "INSERT INTO budgets (category, amount) VALUES (?, ?)",
-                    (target_category, source_amount),
-                )
-
-            # Delete source budget
-            cursor.execute(
-                "DELETE FROM budgets WHERE category = ? COLLATE NOCASE", (source_category,)
-            )
-            budget_transferred = True
-
-        # Delete the source category from categories table
-        cursor.execute("DELETE FROM categories WHERE name = ? COLLATE NOCASE", (source_category,))
-        category_deleted = cursor.rowcount > 0
-
-        conn.commit()
-
+    # Emit event for UI refresh
     EventBus.emit("categories.changed", action="merged")
-    logger.info(
-        f"Merged '{source_category}' → '{target_category}': "
-        f"{tx_updated} transactions, {rule_count} rules, "
-        f"budget transferred: {budget_transferred}, "
-        f"category deleted: {category_deleted}"
-    )
 
+    # Convert budget count to boolean for backward compatibility
     return {
-        "transactions": tx_updated,
-        "rules": rule_count,
-        "budgets_transferred": budget_transferred,
-        "category_deleted": category_deleted,
+        "transactions": result["transactions"],
+        "rules": result["rules"],
+        "budgets_transferred": result["budgets"] > 0,
+        "category_deleted": result["transactions"] > 0 or result["rules"] > 0 or result["budgets"] > 0,
     }

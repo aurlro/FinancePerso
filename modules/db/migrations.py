@@ -59,6 +59,7 @@ def init_db() -> None:
                 "ALTER TABLE transactions ADD COLUMN is_manually_ungrouped INTEGER DEFAULT 0",
             ),
             ("notes", "ALTER TABLE transactions ADD COLUMN notes TEXT"),
+            ("updated_at", "ALTER TABLE transactions ADD COLUMN updated_at TIMESTAMP"),
         ]
 
         for col, migration_sql in migrations:
@@ -333,6 +334,50 @@ def init_db() -> None:
                 ("default", default_layout_json, 1),
             )
             logger.info("Created default dashboard layout")
+
+        # Recycle Bin table for soft delete functionality
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS recycle_bin (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                original_id INTEGER NOT NULL,
+                table_name TEXT NOT NULL DEFAULT 'transactions',
+                data JSON NOT NULL,
+                deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                deleted_by TEXT,
+                expires_at TIMESTAMP,
+                restored_at TIMESTAMP,
+                restored BOOLEAN DEFAULT 0
+            )
+        """
+        )
+        
+        # Indexes for recycle bin
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_recycle_bin_original ON recycle_bin(original_id, restored)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_recycle_bin_expires ON recycle_bin(expires_at, restored)"
+        )
+        
+        # Recurrence Feedback table for subscription management
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS recurrence_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                label_pattern TEXT NOT NULL,
+                category TEXT,
+                user_feedback INTEGER,  -- 1 for confirm, 0 for reject
+                feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                notes TEXT,
+                UNIQUE(label_pattern, category)
+            )
+        """
+        )
+        
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_recurrence_feedback_lookup ON recurrence_feedback(label_pattern, category)"
+        )
 
         conn.commit()
         logger.info("Database initialized successfully")
