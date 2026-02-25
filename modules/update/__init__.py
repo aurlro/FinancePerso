@@ -11,7 +11,7 @@ Example:
     new_version = manager.bump_version(version, "minor")
 """
 
-from modules.update.manager import UpdateManager
+from modules.update.manager import UpdateManager, quick_update
 from modules.update.models import VersionEntry, ChangeType
 
 # Singleton instance for backward compatibility
@@ -26,4 +26,4 @@ def get_update_manager() -> UpdateManager:
     return _update_manager
 
 
-__all__ = ["UpdateManager", "VersionEntry", "ChangeType", "get_update_manager"]
+__all__ = ["UpdateManager", "VersionEntry", "ChangeType", "get_update_manager", "quick_update"]

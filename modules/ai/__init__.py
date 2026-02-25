@@ -34,6 +34,18 @@ try:
 except ImportError:
     detect_amount_anomalies = None
 
+# Trend analysis
+try:
+    from modules.ai.trend_analyzer import analyze_spending_trends
+except ImportError:
+    analyze_spending_trends = None
+
+# Conversational assistant
+try:
+    from modules.ai.conversational_assistant import chat_with_assistant
+except ImportError:
+    chat_with_assistant = None
+
 __all__ = [
     "LocalSLMProvider",
     "get_local_slm_provider",
@@ -41,4 +53,6 @@ __all__ = [
     "get_budget_alerts_summary",
     "predict_budget_overruns",
     "detect_amount_anomalies",
+    "analyze_spending_trends",
+    "chat_with_assistant",
 ]

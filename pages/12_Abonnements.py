@@ -307,30 +307,30 @@ def render_remaining_budget_calculator(subscriptions):
         with col1:
             st.metric(
                 label="Solde actuel",
-                value=f"{result['current_balance']:,.2f} €",
+                value=f"{result.current_balance:,.2f} €",
             )
         
         with col2:
             st.metric(
                 label=f"Charges à venir ({days_ahead}j)",
-                value=f"-{result['upcoming_charges']:,.2f} €",
+                value=f"-{result.total_upcoming:,.2f} €",
                 delta_color="inverse",
             )
         
         with col3:
-            color = "normal" if result['status'] == "healthy" else "inverse"
+            color = "normal" if result.status == "ok" else "inverse"
             st.metric(
                 label="🎯 Vrai Reste à Vivre",
-                value=f"{result['remaining_budget']:,.2f} €",
-                delta="Sain" if result['status'] == "healthy" else "Critique",
+                value=f"{result.remaining_budget:,.2f} €",
+                delta="Sain" if result.status == "ok" else "Critique",
                 delta_color=color,
             )
         
         # Détails des prélèvements à venir
-        if result['upcoming_subscriptions']:
+        if result.upcoming_charges:
             st.markdown("#### 📅 Prélèvements à venir")
             
-            upcoming_df = pd.DataFrame(result['upcoming_subscriptions'])
+            upcoming_df = pd.DataFrame(result.upcoming_charges)
             upcoming_df = upcoming_df.sort_values('date')
             
             st.dataframe(

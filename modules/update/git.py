@@ -77,9 +77,31 @@ class GitAnalyzer:
         if ref is None:
             ref = self.get_last_tag()
             if ref is None:
-                ref = "HEAD~10"  # Fallback to last 10 commits
+                # Fallback: try to get all commits from the beginning
+                ref = self._get_first_commit()
+                if ref is None:
+                    ref = "HEAD"  # Last resort
 
         return self._get_changes_from_git(ref)
+    
+    def _get_first_commit(self) -> Optional[str]:
+        """Get the first commit hash in the repository.
+        
+        Returns:
+            First commit hash or None
+        """
+        try:
+            result = subprocess.run(
+                ["git", "rev-list", "--max-parents=0", "HEAD"],
+                capture_output=True,
+                text=True,
+                cwd=self.repo_path,
+            )
+            if result.returncode == 0:
+                return result.stdout.strip().split('\n')[0]
+        except Exception:
+            pass
+        return None
 
     def _get_changes_from_git(self, ref: str) -> list[GitChange]:
         """Get changes from git diff.
@@ -167,7 +189,10 @@ class GitAnalyzer:
         if ref is None:
             ref = self.get_last_tag()
             if ref is None:
-                ref = "HEAD~10"
+                # Fallback: try to get all commits from the beginning
+                ref = self._get_first_commit()
+                if ref is None:
+                    return []  # No commits to show
 
         try:
             result = subprocess.run(
@@ -178,7 +203,8 @@ class GitAnalyzer:
             )
 
             if result.returncode == 0:
-                return result.stdout.strip().split("\n")
+                messages = result.stdout.strip().split("\n")
+                return [m for m in messages if m]  # Filter empty messages
 
         except Exception as e:
             logger.error(f"Error getting commit messages: {e}")

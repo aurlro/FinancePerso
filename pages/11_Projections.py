@@ -20,7 +20,7 @@ from datetime import datetime
 from typing import Dict
 
 from src.math_engine import MonteCarloSimulator, ScenarioType, quick_simulation, SCENARIO_PARAMS
-from src.visualizations import plot_wealth_projection, plot_scenario_comparison
+from src.visualizations import plot_wealth_projection, plot_scenario_comparison, plot_probability_distribution
 from src.subscription_engine import calculate_remaining_budget, SubscriptionDetector
 from modules.db.transactions import get_all_transactions
 from modules.logger import logger

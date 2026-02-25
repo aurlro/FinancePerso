@@ -279,7 +279,7 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
 
                 # Create update
                 with st.spinner("Mise à jour en cours..."):
-                    success, version = manager.create_update(
+                    success, version = manager.create_update_entry(
                         title=update_title,
                         changes=changes,
                         bump_type=bump_type,

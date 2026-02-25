@@ -5,6 +5,7 @@ and git analysis.
 """
 
 import os
+import re
 from typing import Optional
 
 from modules.logger import logger
@@ -157,6 +158,70 @@ class UpdateManager:
         """
         return self._creator.create_entry(version, title, since_ref)
 
+    def create_update_entry(
+        self,
+        title: str,
+        changes: dict[str, list[str]],
+        bump_type: str = "patch",
+        files_modified: list[str] | None = None,
+        breaking_changes: list[str] | None = None,
+        force: bool = False,
+    ) -> tuple[bool, str]:
+        """Create a complete update entry with changelog and version bump.
+
+        This is a high-level method that:
+        1. Bumps the version
+        2. Creates a VersionEntry with the provided changes
+        3. Adds the entry to CHANGELOG.md
+        4. Updates version in constants.py
+
+        Args:
+            title: Update title/description
+            changes: Dictionary with keys 'added', 'fixed', 'performance' containing lists of changes
+            bump_type: Type of version bump (patch, minor, major)
+            files_modified: List of files modified in this update
+            breaking_changes: List of breaking changes (if any)
+            force: Whether to force creation even if duplicate
+
+        Returns:
+            Tuple of (success, version_or_error_message)
+        """
+        try:
+            # Get current version and bump
+            current = self.get_current_version()
+            new_version = self.bump_version(current, bump_type)
+
+            # Create VersionEntry
+            from modules.update.models import VersionEntry
+            from datetime import datetime
+
+            entry = VersionEntry(
+                version=new_version,
+                title=title,
+                date=datetime.now().strftime('%Y-%m-%d'),
+                categories={
+                    "added": changes.get("added", []),
+                    "fixed": changes.get("fixed", []),
+                    "performance": changes.get("performance", []),
+                },
+                files_modified=files_modified or [],
+                breaking_changes=breaking_changes or [],
+            )
+
+            # Add to changelog
+            if not self.add_changelog_entry(entry):
+                return False, "Failed to add changelog entry"
+
+            # Update version in constants.py
+            if not self.update_version_in_files(new_version):
+                logger.warning("Failed to update version in constants.py")
+
+            return True, new_version
+
+        except Exception as e:
+            logger.error(f"Failed to create update: {e}")
+            return False, str(e)
+
     def suggest_version_bump(self, since_ref: Optional[str] = None) -> str:
         """Suggest version bump type based on changes.
 
@@ -302,9 +367,13 @@ class UpdateManager:
         has_config = any(f.endswith((".toml", ".cfg", ".ini", ".yaml", ".yml")) for f in all_files)
         
         # Generate suggested title based on dominant change type
+        # Include indicator if both committed and uncommitted changes exist
+        has_committed = len(commits) > 0 or len(changes) > 0
+        has_uncommitted = len(uncommitted_files) > 0
+        has_both = has_committed and has_uncommitted
         suggested_title = self._generate_suggested_title(
             commits, added, fixed, performance, all_files,
-            has_new_module, has_new_page
+            has_new_module, has_new_page, has_both
         )
         
         # Determine bump type
@@ -323,9 +392,12 @@ class UpdateManager:
         if not commits and uncommitted_files:
             added_items.extend(self._detect_changes_from_files(uncommitted_files))
         
+        # Generate "other" items (changed items without specific categorization)
+        other_items = self._generate_change_descriptions(changed, "other") if changed else []
+        
         return {
             "commits": commits,
-            "categories": {"added": added, "changed": changed, "fixed": fixed, "removed": []},
+            "categories": {"added": added, "changed": changed, "fixed": fixed, "removed": [], "other": changed},
             "bump_type": suggested_bump,
             "suggested_bump": suggested_bump,
             "files_modified": all_files,
@@ -333,6 +405,7 @@ class UpdateManager:
             "added": added_items,
             "fixed": fixed_items,
             "performance": perf_items,
+            "other": other_items,
             "has_committed_changes": len(commits) > 0,
             "has_uncommitted_changes": len(uncommitted_files) > 0,
             "committed_files": [c.file_path for c in changes],
@@ -341,37 +414,39 @@ class UpdateManager:
         }
     
     def _generate_suggested_title(self, commits, added, fixed, performance, files,
-                                  has_new_module, has_new_page) -> str:
+                                  has_new_module, has_new_page, has_both_committed_and_uncommitted: bool = False) -> str:
         """Generate a suggested title based on changes."""
+        title_suffix = " (commits + local)" if has_both_committed_and_uncommitted else ""
+        
         if not commits:
             if has_new_page:
-                return "Nouvelle page ajoutée"
+                return "Nouvelle page ajoutée" + title_suffix
             elif has_new_module:
-                return "Nouveau module ajouté"
+                return "Nouveau module ajouté" + title_suffix
             elif files:
-                return f"Mise à jour de {len(files)} fichier(s)"
-            return "Mise à jour"
+                return f"Mise à jour de {len(files)} fichier(s)" + title_suffix
+            return "Mise à jour" + title_suffix
         
         # Look for the most significant change
         if added and has_new_page:
-            return "Nouvelle page fonctionnelle"
+            return "Nouvelle page fonctionnelle" + title_suffix
         elif added and has_new_module:
-            return "Nouveau module fonctionnel"
+            return "Nouveau module fonctionnel" + title_suffix
         elif performance and len(performance) >= len(added) and len(performance) >= len(fixed):
-            return "Optimisations et améliorations de performance"
+            return "Optimisations et améliorations de performance" + title_suffix
         elif fixed and len(fixed) >= len(added):
-            return "Corrections de bugs et stabilisation"
+            return "Corrections de bugs et stabilisation" + title_suffix
         elif added:
             # Try to extract feature name from first added commit
             first_add = added[0]
             # Clean up common prefixes
             clean = re.sub(r'^(add|new|feature|implement|ajout|nouveau)\s*[:\-]?\s*', '', first_add, flags=re.I)
             if clean:
-                return clean.capitalize()
-            return "Nouvelles fonctionnalités"
+                return clean.capitalize() + title_suffix
+            return "Nouvelles fonctionnalités" + title_suffix
         
         # Default to first commit message
-        return commits[0].capitalize() if commits else "Mise à jour"
+        return (commits[0].capitalize() if commits else "Mise à jour") + title_suffix
     
     def _determine_bump_type(self, has_breaking, added, fixed, performance, changed,
                              has_new_module, has_new_page) -> str:
@@ -490,11 +565,36 @@ class UpdateManager:
         """Parse git status code (backward compatibility).
 
         Args:
-            code: Git status code
+            code: Git status code (can be 2-char format like 'M ', ' M', '??', etc.)
 
         Returns:
             Human-readable status
         """
+        # Handle 2-char porcelain format
+        if len(code) == 2:
+            staged, unstaged = code[0], code[1]
+            
+            # Check for both staged and unstaged changes first
+            if staged != " " and unstaged != " " and code != "??":
+                return "staged + unstaged changes"
+            elif code == "??":
+                return "untracked"
+            elif staged == "A":
+                return "staged (added)"
+            elif staged == "M":
+                return "staged (modified)"
+            elif staged == "D":
+                return "staged (deleted)"
+            elif unstaged == "M":
+                return "unstaged (modified)"
+            elif unstaged == "D":
+                return "unstaged (deleted)"
+            elif staged == "R":
+                return "renamed"
+            elif staged == "C":
+                return "copied"
+        
+        # Legacy single-char mapping
         mapping = {
             "M": "modified",
             "A": "added",
@@ -506,6 +606,120 @@ class UpdateManager:
         }
         return mapping.get(code, "unknown")
 
+    # ==================== Backward Compatibility Methods ====================
+    
+    def get_recent_changes(self, count: int = 5) -> list[dict]:
+        """Get recent changes from changelog (backward compatibility).
+        
+        Args:
+            count: Number of recent changes to return
+            
+        Returns:
+            List of recent change entries
+        """
+        try:
+            content = self._changelog.read()
+            if not content:
+                return []
+            
+            # Simple parsing - look for version entries
+            changes = []
+            lines = content.split('\n')
+            current_entry = None
+            
+            for line in lines:
+                if line.startswith('## ['):
+                    if current_entry:
+                        changes.append(current_entry)
+                        if len(changes) >= count:
+                            break
+                    version = line.split('[')[1].split(']')[0] if '[' in line else 'unknown'
+                    current_entry = {
+                        'version': version,
+                        'title': line,
+                        'content': []
+                    }
+                elif current_entry and line.strip():
+                    current_entry['content'].append(line)
+            
+            if current_entry and len(changes) < count:
+                changes.append(current_entry)
+            
+            # Convert content lists to strings
+            for entry in changes:
+                entry['content'] = '\n'.join(entry['content'])
+            
+            return changes
+        except Exception as e:
+            logger.warning(f"Could not get recent changes: {e}")
+            return []
+
 
 # Backward compatibility alias
 UpdateManagerClass = UpdateManager
+
+
+def quick_update(
+    bump_type: str = "patch",
+    title: Optional[str] = None,
+    changes: Optional[dict | list] = None,
+    project_root: Optional[str] = None
+) -> tuple[bool, str]:
+    """Quick update function for backward compatibility.
+    
+    Args:
+        bump_type: Type of version bump (patch, minor, major)
+        title: Update title (auto-generated if None)
+        changes: Dict with 'added', 'fixed', 'performance' lists, or a simple list of changes
+        project_root: Project root directory
+        
+    Returns:
+        Tuple of (success, version_or_error)
+    """
+    try:
+        manager = UpdateManager(project_root)
+        
+        # Get current version and bump
+        current = manager.get_current_version()
+        new_version = manager.bump_version(current, bump_type)
+        
+        # Generate title if not provided
+        if title is None:
+            title = f"Release {new_version}"
+        
+        # Normalize changes parameter
+        if changes is None:
+            added, fixed, performance = [], [], []
+        elif isinstance(changes, list):
+            # Simple list of changes -> treat as added
+            added = changes
+            fixed, performance = [], []
+        else:
+            # Dict with specific categories
+            added = changes.get('added', []) if isinstance(changes, dict) else []
+            fixed = changes.get('fixed', []) if isinstance(changes, dict) else []
+            performance = changes.get('performance', []) if isinstance(changes, dict) else []
+        
+        # Create update via creator
+        from modules.update.models import VersionEntry, ChangeType
+        entry = VersionEntry(
+            version=new_version,
+            title=title,
+            date=__import__('datetime').datetime.now().strftime('%Y-%m-%d'),
+            categories={
+                "added": added,
+                "fixed": fixed,
+                "performance": performance,
+            },
+        )
+        
+        # Add to changelog
+        if manager.add_changelog_entry(entry):
+            # Update version in files
+            manager.update_version_in_files(new_version)
+            return True, new_version
+        else:
+            return False, "Failed to add changelog entry"
+            
+    except Exception as e:
+        return False, str(e)

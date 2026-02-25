@@ -87,5 +87,11 @@ class VersionEntry:
             for change in self.breaking_changes:
                 lines.append(f"- ⚠️ {change}")
             lines.append("")
+        
+        if self.files_modified:
+            lines.append("**FICHIERS MODIFIÉS**")
+            for file_path in self.files_modified:
+                lines.append(f"- `{file_path}`")
+            lines.append("")
 
         return "\n".join(lines)

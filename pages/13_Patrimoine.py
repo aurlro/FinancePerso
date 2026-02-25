@@ -651,19 +651,38 @@ def _render_projections_tab(wealth_manager: WealthManager, monthly_income: float
                 n_simulations=1000,  # Réduit pour la démo
             )
             
-            # Objectifs de vie
-            life_goals = [
-                {"name": "Achat RP", "amount": 150000, "year": 5},
-                {"name": "Independance", "amount": 500000, "year": 15},
-            ]
+            # Créer un graphique simple avec les résultats
+            fig = go.Figure()
             
-            # Visualisation
-            fig = plot_wealth_projection(None, life_goals=life_goals)
+            # Ligne médiane
+            fig.add_trace(go.Scatter(
+                x=[0, years],
+                y=[initial_capital, result['median']],
+                mode='lines',
+                name='Scénario Médian (50%)',
+                line=dict(color='#0066CC', width=3),
+            ))
             
-            # Mettre à jour avec les vraies données
-            fig.data[0].y = [result['percentile_5']] * (years * 12 + 1)
-            fig.data[1].y = [result['median']] * (years * 12 + 1)
-            fig.data[2].y = [result['percentile_95']] * (years * 12 + 1)
+            # Bande de confiance 5%-95%
+            fig.add_trace(go.Scatter(
+                x=[0, years, years, 0],
+                y=[initial_capital, result['percentile_95'], result['percentile_5'], initial_capital],
+                fill='toself',
+                fillcolor='rgba(255, 165, 0, 0.15)',
+                line=dict(color='rgba(255, 165, 0, 0)'),
+                name='Zone Catastrophe → Optimiste (5%-95%)',
+                hoverinfo='skip',
+            ))
+            
+            fig.update_layout(
+                title="Projection Monte Carlo du Patrimoine",
+                xaxis_title="Années",
+                yaxis_title="Capital (€)",
+                yaxis_tickformat=",.0f",
+                hovermode="x unified",
+                showlegend=True,
+                height=500,
+            )
             
             st.plotly_chart(fig, use_container_width=True)
             

@@ -126,18 +126,26 @@ class VersionManager:
         Returns:
             True if updated successfully, False otherwise
         """
-        if not os.path.exists(self.constants_path):
-            return False
-
         try:
-            with open(self.constants_path, encoding="utf-8") as f:
-                content = f.read()
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(self.constants_path), exist_ok=True)
+            
+            if os.path.exists(self.constants_path):
+                # Update existing file
+                with open(self.constants_path, encoding="utf-8") as f:
+                    content = f.read()
 
-            new_content = re.sub(
-                r'APP_VERSION\s*=\s*["\']([^"\']+)["\']',
-                f'APP_VERSION = "{new_version}"',
-                content,
-            )
+                new_content = re.sub(
+                    r'APP_VERSION\s*=\s*["\']([^"\']+)["\']',
+                    f'APP_VERSION = "{new_version}"',
+                    content,
+                )
+            else:
+                # Create new file with default content
+                new_content = f'''"""Application constants."""
+
+APP_VERSION = "{new_version}"
+'''
 
             with open(self.constants_path, "w", encoding="utf-8") as f:
                 f.write(new_content)

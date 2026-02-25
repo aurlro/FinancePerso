@@ -6,6 +6,555 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+
+## [5.2.1] - 2026-02-24
+
+### Nouvelle page fonctionnelle (commits + local)
+
+**ADDED**
+- - Feat: Introduce backup/restore, customizable dashboard, audit tools, and AI suggestions, along with various UI and backend refinements.
+- - Feat: Migrate views to pages, introduce new UI config, and refactor loading states and database imports.
+- - Consolidate UI and DB modules, documentation, and various project files into a new dated archive directory.
+- - Feat: Introduce a consolidated application architecture, new core functionalities, expanded test coverage, and updated user documentation, while archiving previous project files.
+- - Feat: Introduce AI suggestion analyzers, a new `ui_v2` component library, and a dedicated update management module.
+- - And enhance various UI components, database operations, AI features, core modules, and testing infrastructure across the application.
+- - Feat: Rework application pages, introduce smart reminders and savings goals, and enhance UX with new components and audit assets.
+- - Feat: Introduce comprehensive UI feedback, error handling, and new components for empty states, tooltips, loading, and confirmation dialogs.
+- - Feat: Implement comprehensive Git change analysis in UpdateManager to detect committed and uncommitted changes, categorize commits, and suggest version bumps, accompanied by new tests.
+- - Feat: Refactor page structure by consolidating rules, recurrences, budgets, and AI audit into a new Intelligence page, and modularize import, validation, and search functionalities.
+- - Feat: implement offline mode for categorization, redesign the evolution chart, and reorganize project structure with new tests and scripts.
+- - Feat: Implement clickable category buttons in the dashboard to launch the explorer, refactoring parameter passing to use session state.
+- - Feat: Introduce new UI components for validation, including avatar and chip selectors, and refactor the notification system to V2.
+- - Feat: Implement a comprehensive notification system including UI, management logic, and dedicated pages.
+- - Feat: introduce recurrence feedback and management, and add new Explorer and Assistant UI modules
+- - ✨ feat: Add scroll-to-top button on all pages
+- - ✨ feat: Add comprehensive visual feedback system and quick actions popups
+- - Feat: Implement enhanced audit functionality with bulk actions, filtering, and a new analytics module.
+- - Feat: Add comprehensive input validation and security utilities
+- - Versionning and a new logic to present commits
+- - Feat: Implement `st.toast` for user feedback, refactor tag suggestion UI, and enhance rules auditor with stale rule detection and health scoring.
+- - Feat: Add a comprehensive AI suite for financial analysis and assistance, including anomaly detection, budget prediction, smart tagging, trend analysis, and a conversational assistant.
+- - Feat: Add a profile setup form for initial financial configuration, enhance transaction querying, and refine category management and assistant feedback.
+- - Feat: Add a comprehensive test suite for UI and database modules, introduce new UI dashboard and validation components, and update data management logic and dependencies.
+- - Feat: Add recurrence analysis page, undo last validation action, logs viewer in configuration, and a new audit script.
+- - Feat: Introduce bulk transaction group categorization and refine tag management with category-specific suggestions and creation.
+- - Automatic daily backup system with 1-year retention and restore UI
+- - Enhanced Import Wizard with duplicate preview, account selection, period filter
+
+**FIXED**
+- - (phase2): Corrections selon specifications exactes
+- - Feat: Introduce smart suggestions and enhance member identification with default member settings and repair capabilities.
+- - Feat(étape 5 - audit final): Correction des derniers fichiers UI et modules
+- - Lancement rapide si déjà installé - évite la réinstallation
+- - Ci: Ajoute debug et timeout au workflow de test
+- - Sépare test_is_enabled en deux tests distincts
+- - Améliore test_is_enabled avec meilleur message d'erreur
+- - Déplace la fixture reset_encryption_singleton dans conftest.py global
+- - Ajoute fixture pour réinitialiser le singleton encryption entre tests
+- - Corrige test_is_enabled qui échouait en CI à cause de ENCRYPTION_KEY définie
+- - Feat: dashboard personnalisable, recherche globale, onboarding + corrections sécurité
+- - Correction vue d'ensemble vide - ajout fallback et messages
+- - Déplacement de switch_to_tab avant son utilisation
+- - Feat: Update project to version 4.1.0, incorporating new features, bug fixes, and performance enhancements.
+- - Correction clés dupliquées dans explorer_filters
+- - Correction import update_budget → set_budget
+- - Amélioration scroll-to-top et graphique évolution mensuelle
+- - Correction imports modules/ui et analyse auto changements
+- - 🐛 fix: Correction imports render_scroll_to_top
+- - 🐛 fix: Correction erreur SQL merge_categories - colonne id budgets
+- - 🐛 fix: Système de logs - fichier et viewer
+- - 🔧 fix: Audit corrections - version sync, cleanup, docs
+- - 🔧 fix: Improve email notification error handling and user feedback
+- - Correct cache invalidation import errors
+- - Critical code cleanup - remove dead code and fix bugs
+- - Security: Fix critical security issues and improve error handling
+- - Audit query persistent flagging and sanitize UI keys
+- - Handle Income (Revenus) in transfer audit and fix duplicate SQL bug
+- - Allow custom category selection for bulk transfer corrections
+- - Enhance transfer audit with intelligent grouping and bulk correction
+- - Indentation error and Add dismissible recent import summary in Import page
+- - KeyError 'avg_amount' when no recurring items detected
+- - SyntaxError in f-string in 1_Import.py
+- - Dynamic year range (future-proof from 2024 to current+1)
+- - Init_db call + max_date type handling
+
+**FICHIERS MODIFIÉS**
+- `modules/ui/assistant/components.py`
+- `.env.example`
+- `docs/archive/UX_IMPROVEMENTS.md`
+- `MyFinance.command`
+- `pyproject.toml`
+- `migrations/migrate_meta_data.py`
+- `modules/performance/__init__.py`
+- `modules/performance/cache_advanced.py`
+- `docs/archive/COMPLETE_AUDIT_REPORT.md`
+- `.agents/skills/financeperso-specific/references/architecture.md`
+- `docs/archive/STABILIZATION_PLAN.md`
+- `modules/ui/validation/__init__.py`
+- `modules/ui/components/local_ml_manager.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/forms/__init__.py`
+- `modules/ui/assistant/state.py`
+- `scripts/repair_hashes.py`
+- `modules/db/members.py`
+- `scripts/create_tests_strategy.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/onboarding_modal.py`
+- `tests/ui/validation/test_grouping.py`
+- `modules/ai/suggestions/analyzers/__init__.py`
+- `"pages/99_Syst\303\250me.py"`
+- `demos/demo_local_ai.py`
+- `docs/archive/NEW_FEATURES.md`
+- `modules/ui/dashboard/smart_recommendations.py`
+- `modules/ui/dashboard/kpi_cards.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/special.py`
+- `modules/ai/suggestions/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/types.py`
+- `modules/ui/components/filters.py`
+- `modules/update/git.py`
+- `modules/ai/suggestions/analyzers/patterns.py`
+- `scripts/fix_dashboard_layouts.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/transaction_drill_down.py`
+- `tests/ai/test_rules_auditor.py`
+- `assets/style.css`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/empty_states.py`
+- `modules/ai/suggestions/analyzers/members.py`
+- `modules/ui/rules/__init__.py`
+- `.github/workflows/release.yml`
+- `docs/archive/audit_budgets_ux_archi.md`
+- `check_models.py => scripts/check_models.py`
+- `modules/ingestion.py`
+- `modules/ui/notifications/components.py`
+- `modules/ai/conversational_assistant.py`
+- `modules/ui/rules/rule_validator.py`
+- `pages/5_Assistant.py`
+- `docs/archive/PHASE3_RECURRENCE_ENGINE.md`
+- `tests/db/test_audit.py`
+- `.vscode/settings.json`
+- `modules/notifications.py`
+- `modules/performance_monitor.py`
+- `docs/archive/PROJECT_SUMMARY.md`
+- `modules/ui/components/onboarding_modal.py`
+- `docs/archive/GUIDE_UTILISATEUR.md`
+- `modules/db/migrations.py`
+- `scripts/audit_redux.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/widgets/savings_goals.py`
+- `docs/archive/IA_LOCALE.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/__init__.py`
+- `modules/ui/explorer/__init__.py`
+- `docs/archive/AUDIT_COHERENCE_360.md`
+- `modules/db/maintenance.py`
+- `modules/db/audit.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/__init__.py`
+- `modules/ai_manager_v2.py`
+- `archive/legacy_v5/modules/ai_manager.py`
+- `modules/data_manager.py`
+- `modules/ui/validation/main.py`
+- `modules/ui/recurrence_manager.py`
+- `tests/test_essential.py`
+- `"4.2 Composant : Table de d\303\251penses.md" => "docs/4.2 Composant : Table de d\303\251penses.md"`
+- `modules/savings_goals.py`
+- `modules/ui/dashboard/__init__.py`
+- `modules/db/transactions_batch.py`
+- `tests/db/test_tags.py`
+- `archive/consolidation_2026-02-22/docs/PUSH_FINAL.md`
+- `modules/ui/layout.py`
+- `archive/legacy_v5/modules/data_manager.py`
+- `modules/ai/__init__.py`
+- `modules/ui/components/empty_states.py`
+- `modules/ui/components/tooltips.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/repositories/transaction_repository.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/base/repository.py`
+- `.streamlit/config.toml`
+- `2. Palette.md => docs/2. Palette.md`
+- `docs/archive/PHASE5_WEALTH_AGENTIC.md`
+- `scripts/budget_redesign_prototype.py`
+- `setup_local_ai.sh`
+- `docs/archive/REPOSITORY_PATTERN_DESIGN.md`
+- `scripts/migrate_to_logging.py`
+- `modules/cache_monitor.py`
+- `modules/notifications_realtime.py`
+- `docs/archive/implementation_plan.md`
+- `1. PROJET.md => docs/1. PROJET.md`
+- `docs/archive/CHANGEMENTS_REVENUS_DEPENSES.md`
+- `archive/legacy_v5/modules/legacy_wrapper.py`
+- `docs/archive/FINAL_AUDIT_SUMMARY.md`
+- `modules/ai/category_insights.py`
+- `tests/test_update_manager.py`
+- `pages/4_Intelligence.py`
+- `tests/db/test_budgets.py`
+- `tests/ai/test_anomaly_detector.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/top_expenses.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/empty_states.py`
+- `tests/test_local_ai.py`
+- `tests/db/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/styles.py`
+- `modules/ui/notifications/types.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/toasts.py`
+- `modules/validators.py`
+- `scripts/pre-push.sh`
+- `tests/db/test_rules.py`
+- `tests/conftest.py`
+- `modules/categorization.py`
+- `modules/db/tags.py`
+- `modules/db/__init__.py`
+- `modules/ui/dashboard/top_expenses.py`
+- `modules/ai/audit_engine.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/layouts.py`
+- `modules/db/settings.py`
+- `modules/local_ml.py`
+- `docs/archive/AUDIT_CORRECTIONS_IMMEDIATES.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/manager.py`
+- `modules/onboarding.py`
+- `src/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/loading_states.py`
+- `src/visualizations.py`
+- `modules/ui/feedback_wrapper.py`
+- `docs/archive/FIX_WIDGETTYPE_V2.md`
+- `tests/db/test_migrations.py`
+- `modules/ui/intelligence/__init__.py`
+- `pages/4_Regles.py`
+- `modules/db/recurrence_feedback.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/smart_actions.py`
+- `4.4 Composant : Boutons.md => docs/4.4 Composant : Boutons.md`
+- `scripts/versioning.py`
+- `docs/archive/PROJECT_STATUS.md`
+- `docs/archive/ULTIMATE_FINAL_REPORT.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/atoms/icons.py`
+- `modules/ui/components/daily_widget.py`
+- `modules/update/version.py`
+- `modules/ai/suggestions/base.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/models/budget.py`
+- `docs/archive/TRANSACTION_TYPES_GUIDE.md`
+- `archive/consolidation_2026-02-22/modules/db_v2/__init__.py`
+- `modules/analytics.py`
+- `"pages/1_Op\303\251rations.py"`
+- `scripts/Lancer_App.command`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/selectors.py`
+- `requirements-ml.txt`
+- `docs/archive/ASSISTANT_UX_WIREFRAME.md`
+- `modules/ai/suggestions/engine.py`
+- `archive/consolidation_2026-02-22/docs/PLAN_ORCHESTRATION_REVISED.md`
+- `modules/db/transactions.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/notifications.py`
+- `modules/analytics_constants.py`
+- `requirements.txt`
+- `docs/audit_report.json`
+- `"4.3 Composant : Carte d\342\200\231insight IA.md" => "docs/4.3 Composant : Carte d\342\200\231insight IA.md"`
+- `odules/update/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/transactions/drill_down.py`
+- `archive/consolidation_2026-02-22/modules/ui.py`
+- `src/data_cleaning.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/transactions/diagnostic.py`
+- `pages/6_Audit.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/data_operations.py`
+- `modules/ai/suggestions/analyzers/budgets.py`
+- `modules/ui/notifications/center.py`
+- `archive/legacy_v5/modules/ui/backup_restore.py`
+- `docker-compose.yml`
+- `modules/ai/trend_analyzer.py`
+- `"3.2 Page : D\303\251penses \303\240 valider.md" => "docs/3.2 Page : D\303\251penses \303\240 valider.md"`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/category_charts.py`
+- `docs/archive/UAT_GUIDE.md`
+- `docs/archive/AUDIT_DEPENSES_REVENUS.md`
+- `modules/ui/components/smart_reminders_widget.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/__init__.py`
+- `4.1 Composant : Navigation principale.md => docs/4.1 Composant : Navigation principale.md`
+- `docs/archive/INDISPENSABILITY_UPGRADES.md`
+- `modules/encryption.py`
+- `tests/test_integration.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/atoms/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/flash_messages.py`
+- `modules/db/categories.py`
+- `archive/consolidation_2026-02-22/docs/CONSOLIDATION_FINAL_REPORT.md`
+- `docs/archive/PHASE2_NORMALISATION_CASCADE.md`
+- `modules/ui/explorer/explorer_main.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/loading_states.py`
+- `modules/backup_manager.py`
+- `docs/archive/RAPPORT_AUDIT_COMPLET.md`
+- `Makefile`
+- `modules/ui/config/audit_tools.py`
+- `assets/manifest.json`
+- `modules/core/events.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/tag_manager.py`
+- `modules/analytics_v2.py`
+- `modules/feature_flags.py`
+- `tests/ui/validation/__init__.py`
+- `modules/ui/components/member_selector.py`
+- `modules/ui/dashboard/budget_tracker.py`
+- `modules/ui/components/tag_manager.py`
+- `modules/budgets_dynamic.py`
+- `src/security_monitor.py`
+- `modules/ui/config/api_settings.py`
+- `tests/ui/test_ui_redesign.py`
+- `archive/legacy_v5/modules/ui/member_management.py`
+- `scripts/doctor.py`
+- `modules/ui/importing/main.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/toast.py`
+- `CONTRIBUTING.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/quick_actions.py`
+- `assets/pwa.js`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/tags/tag_selector_smart.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/filters.py`
+- `tests/ui/__init__.py`
+- `modules/privacy/gdpr_manager.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/forms/avatar_selector.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/tags/tag_selector_compact.py`
+- `archive/legacy_v5/modules/ui/__init__.py`
+- `docs/archive/AUDIT_FIXES_SUMMARY.md`
+- `modules/ui/global_search.py`
+- `scripts/analyze_dependencies.py`
+- `tests/integration/test_compliance.py`
+- `modules/transactions/__init__.py`
+- `pages/2_Validation.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/base/unit_of_work.py`
+- `"pages/3_Synth\303\250se.py"`
+- `archive/consolidation_2026-02-22/docs/GUIDE_EXECUTIF_CONSOLIDATION.md`
+- `modules/ui/assistant/audit_tab.py`
+- `docs/archive/ARCHITECTURE_EXPLORER.md`
+- `scripts/validate_consolidation.py`
+- `tests/unit/test_subscriptions.py`
+- `docs/archive/audit_report.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/backup_restore.py`
+- `modules/transaction_types.py`
+- `pages/5_Budgets.py`
+- `modules/ai/suggestions/analyzers/tags.py`
+- `migrations/add_meta_data_column.sql`
+- `modules/utils.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/repositories/budget_repository.py`
+- `docs/archive/gemini.md`
+- `docs/archive/IMPORTS_AUDIT_REPORT.md`
+- `modules/ui/components/confirm_dialog.py`
+- `modules/ui/validation/row_view.py`
+- `modules/db/repositories/__init__.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/models/category.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/budget_tracker.py`
+- `modules/ui/components/chip_selector.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/widgets/smart_reminders.py`
+- `scripts/setup_dev_env.sh`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/transactions/__init__.py`
+- `CHANGELOG.md`
+- `docs/archive/AUDIT_COMPLET_V6.md`
+- `pages/3_Synthese.py`
+- `docs/refactoring/phase1-imports.md`
+- `scripts/quick_integrate.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/legacy.py`
+- `"pages/10_Nouveaut\303\251s.py"`
+- `modules/ui/feedback.py`
+- `tests/unit/test_data_cleaning.py`
+- `modules/ai/suggestions/analyzers/income.py`
+- `modules/ui/components/tag_selector_compact.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/renderer.py`
+- `.agents/skills/financeperso-specific/SKILL.md`
+- `tests/unit/test_cache.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/evolution_chart.py`
+- `docs/archive/PLAN_ORCHESTRATION.md`
+- `modules/__init__.py`
+- `modules/ui/components/profile_form.py`
+- `tests/__init__.py`
+- `3.3 Page : Dashboard narratif.md => docs/3.3 Page : Dashboard narratif.md`
+- `conftest.py`
+- `modules/ui/dashboard/ai_insights.py`
+- `modules/ui/components/quick_actions.py`
+- `modules/import_analyzer.py`
+- `docs/archive/AUDIT_REVENUS_DEPENSES.md`
+- `modules/ai/budget_predictor.py`
+- `tests/integration/test_security.py`
+- `modules/ui/rules/rule_manager.py`
+- `modules/cache_manager.py`
+- `docs/archive/AGENTS.md`
+- `modules/db/dashboard_layouts.py`
+- `modules/db/rules.py`
+- `modules/ai/suggestions/models.py`
+- `tests/README.md`
+- `docs/archive/EMAIL_TROUBLESHOOTING.md`
+- `modules/ui/notifications/manager.py`
+- `tests/run_tests.sh`
+- `modules/cache_multitier.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/dialogs.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/__init__.py`
+- `docs/archive/FINAL_CORRECTIONS_REPORT.md`
+- `docs/ARCHITECTURE.md`
+- `tests/e2e/test_wealth_projection.py`
+- `scripts/run_production.sh`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/widgets/progress_tracker.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/atoms/colors.py`
+- `modules/impact_analyzer.py`
+- `modules/db/budgets.py`
+- `CLEANUP_REPORT.md`
+- `tests/integration/test_performance.py`
+- `docs/archive/EXPLORER_INTEGRATION.md`
+- `modules/privacy/__init__.py`
+- `pages/13_Patrimoine.py`
+- `modules/ui/notifications/README.md`
+- `modules/ui/dashboard/sections.py`
+- `modules/ui/assistant/analytics_tab.py`
+- `archive/legacy_v5/modules/ui/customizable_dashboard.py`
+- `modules/ui/explorer/explorer_results.py`
+- `3.1 Page : Import & Sources.md => docs/3.1 Page : Import & Sources.md`
+- `modules/ui/styles/global.css`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/banners.py`
+- `assets/service-worker.js`
+- `pages/1_Import.py`
+- `modules/ui/explorer/explorer_launcher.py`
+- `requirements-dev.txt`
+- `modules/exceptions.py`
+- `archive/legacy_v5/modules/ui/audit_tools.py`
+- `modules/update/models.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/legacy.py`
+- `modules/ui/intelligence/suggestions_panel.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/repositories/__init__.py`
+- `archive/legacy_v5/modules/ui/log_viewer.py`
+- `modules/ai/suggestions/analyzers/categories.py`
+- `scripts/cleanup_duplicates.py`
+- `modules/update/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/widgets/daily_widget.py`
+- `docs/archive/FIX_WIDGET_ERROR.md`
+- `modules/ui/config/backup_restore.py`
+- `modules/db/stats.py`
+- `modules/update/creator.py`
+- `scripts/migrate_module.py`
+- `archive/legacy_v5/modules/ui/category_management.py`
+- `tests/db/test_transactions.py`
+- `docs/archive/DASHBOARD_CLEANUP_GUIDE.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/tags_rules.py`
+- `.gitignore`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/confirm_dialog.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/member_management.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/models/__init__.py`
+- `scripts/benchmark.py`
+- `docs/archive/REFACTORING_PROGRESS.md`
+- `modules/ui/components/loading_states.py`
+- `modules/ui/dashboard/customizable_dashboard.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/tags/__init__.py`
+- `src/subscription_engine.py`
+- `archive/legacy_v5/modules/ui/config_mode.py`
+- `archive/consolidation_2026-02-22/docs/CONSOLIDATION_REPORT.md`
+- `archive/consolidation_2026-02-22/modules/db_v2/repositories/category_repository.py`
+- `docs/archive/N1_FIX_PLAN.md`
+- `pages/12_Abonnements.py`
+- `tests/db/test_categories.py`
+- `modules/ui/validation/sorting.py`
+- `docs/archive/MIGRATION_NOTES.md`
+- `modules/ui/components/transaction_diagnostic.py`
+- `modules/ui/components/transaction_drill_down.py`
+- `archive/legacy_v5/modules/ui/notifications.py`
+- `modules/ui/rules/budget_manager.py`
+- `modules/ui/enhanced_feedback.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/__init__.py`
+- `docs/architecture/v6-target.md`
+- `modules/ui/components/tag_selector_smart.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/smart_recommendations.py`
+- `modules/ui/validation/grouping.py`
+- `tests/test_encryption.py`
+- `modules/ai/smart_suggestions.py`
+- `src/math_engine.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/forms/profile_form.py`
+- `modules/transactions/services.py`
+- `archive/2026-02-22_cleanup/app.py.backup.20260221_165525`
+- `modules/ui/assistant/__init__.py`
+- `modules/ui/components/smart_actions.py`
+- `.vscode/extensions.json`
+- `archive/consolidation_2026-02-22/modules/db_v2/models/member.py`
+- `modules/db/connection.py`
+- `pages/8_Recherche.py`
+- `archive/legacy_v5/modules/ui/config_dashboard.py`
+- `docs/archive/PHASE6_FINAL_OPTIMIZATION.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/category_management.py`
+- `scripts/profile_db.py`
+- `modules/error_handlers.py`
+- `archive/consolidation_2026-02-22/docs/CONSOLIDATION_README.md`
+- `archive/consolidation_2026-02-22/modules/db_v2/base/__init__.py`
+- `modules/ui/assistant/dashboard_tab.py`
+- `modules/gamification.py`
+- `modules/logger.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/ai_insights.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/widgets/dashboard/kpi_cards.py`
+- `README.md`
+- `docs/archive/PHASE4_MONTE_CARLO.md`
+- `docs/archive/phase3_repository_pattern.md`
+- `modules/ai/anomaly_detector.py`
+- `modules/smart_reminders.py`
+- `modules/ui/__init__.py`
+- `Dockerfile`
+- `archive/consolidation_2026-02-22/modules/db_v2/models/transaction.py`
+- `archive/legacy_v5/modules/ui/api_settings.py`
+- `modules/ui/dashboard/category_charts.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/legacy.py`
+- `"3.4 Page : R\303\250gles & M\303\251moire.md" => "docs/3.4 Page : R\303\250gles & M\303\251moire.md"`
+- `tests/unit/test_wealth.py`
+- `src/agent_core.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/audit_tools.py`
+- `modules/update/changelog.py`
+- `archive/legacy_v5/modules/ui/data_operations.py`
+- `modules/update/manager.py`
+- `modules/ai/local_slm_provider.py`
+- `docs/USER_GUIDE.md`
+- `modules/ui/changelog_parser.py`
+- `archive/consolidation_2026-02-22/modules/db_v2/repositories/member_repository.py`
+- `docs/archive/PLAN_EXPERT.md`
+- `modules/ui/assistant/config_tab.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/templates/app_layout.py`
+- `tests/unit/test_ui.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/widgets/__init__.py`
+- `scripts/audit_codebase.py`
+- `modules/milestone_celebrations.py`
+- `tests/unit/test_transaction_types.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/__init__.py`
+- `pages/7_Assistant.py`
+- `pytest.ini`
+- `modules/ui/components/avatar_selector.py`
+- `modules/ui/components/savings_goals_widget.py`
+- `modules/ui/recurrence_tabs.py`
+- `src/wealth_manager.py`
+- `modules/categorization_cascade.py`
+- `4.5 Composant : Modale de validation.md => docs/4.5 Composant : Modale de validation.md`
+- `tests/db/test_stats.py`
+- `tests/core/test_events.py`
+- `assets/offline.html`
+- `tests/db/test_members.py`
+- `scripts/cleanup_backups.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/notifications/inline.py`
+- `modules/ui/components/__init__.py`
+- `tests/core/__init__.py`
+- `docs/refactoring/phase1-modules-god.md`
+- `modules/ui/explorer/explorer_filters.py`
+- `modules/error_tracking.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/tags/tag_manager.py`
+- `docs/archive/AUDIT_DATA_ENGINEERING.md`
+- `tests/e2e/test_transaction_lifecycle.py`
+- `docs/archive/WIDGETS_STATE_FIXES.md`
+- `docs/archive/Optimisation Suivi Financier Plan d'Action.md`
+- `archive/legacy_v5/modules/ui/tags_rules.py`
+- `modules/ui/rules/rule_audit.py`
+- `modules/ui/dashboard/filters.py`
+- `archive/legacy_v5/modules/update_manager.py`
+- `app.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/__init__.py`
+- `tests/core/test_events_extended.py`
+- `src/wealth_projection.py`
+- `modules/ui/design_system.py`
+- `pages/11_Projections.py`
+- `pages/9_Configuration.py`
+- `docs/archive/PHASE2_DATA_ENGINEERING.md`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/legacy.py`
+- `modules/ai/smart_tagger.py`
+- `modules/constants.py`
+- `modules/transactions/constants.py`
+- `modules/db/dashboard_cleanup.py`
+- `modules/ui/dashboard/evolution_chart.py`
+- `modules/core/__init__.py`
+- `docs/archive/roadmap.md`
+- `modules/ui/config/__init__.py`
+- `modules/ai/rules_auditor.py`
+- `.github/workflows/ci.yml`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/badges.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/molecules/components/legacy.py`
+- `docs/archive/RAPPORT_COMPLET_APPLICATION.md`
+- `modules/ui/components/progress_tracker.py`
+- `archive/consolidation_2026-02-22/docs/EXECUTION_ROADMAP.md`
+- `modules/ui/notifications/__init__.py`
+- `archive/consolidation_2026-02-22/modules/ui_v2/organisms/config/api_settings.py`
+
 ## [5.2.0] - 2026-02-08
 
 ### Nouvelles fonctionnalités - 4 ajouts (commits + local)
