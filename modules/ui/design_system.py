@@ -858,3 +858,53 @@ def vibe_badge(text: str, color: str = "primary"):
     """
     design = DesignSystem()
     st.markdown(design.create_badge(text, color), unsafe_allow_html=True)
+
+
+# ============================================================================
+# FONCTIONS DE COMPATIBILITÉ
+# ============================================================================
+
+def load_css():
+    """Charge les styles CSS personnalisés depuis assets/style.css.
+    
+    Cette fonction est utilisée par toutes les pages pour appliquer
+    les styles personnalisés de l'application.
+    
+    Usage:
+        from modules.ui import load_css
+        load_css()
+    """
+    try:
+        with open("assets/style.css") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        # Si le fichier n'existe pas, on continue sans erreur
+        pass
+
+
+def card_kpi(title, value, trend=None, trend_color="positive"):
+    """Rend une carte KPI avec style personnalisé.
+    
+    Args:
+        title: Titre de la métrique
+        value: Valeur à afficher
+        trend: Tendance optionnelle (ex: "+12%")
+        trend_color: "positive" (vert) ou "negative" (rouge)
+    
+    Usage:
+        card_kpi("Total", "1 234 €", "+5%", "positive")
+    """
+    trend_html = ""
+    if trend:
+        color_class = "card-trend-positive" if trend_color == "positive" else "card-trend-negative"
+        icon = "↗" if trend_color == "positive" else "↘"
+        trend_html = f'<div class="{color_class}">{icon} {trend}</div>'
+    
+    html = f"""
+    <div class="custom-card">
+        <div class="card-title">{title}</div>
+        <div class="card-value">{value}</div>
+        {trend_html}
+    </div>
+    """
+    st.markdown(html, unsafe_allow_html=True)

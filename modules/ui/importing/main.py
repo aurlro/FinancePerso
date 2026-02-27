@@ -93,19 +93,63 @@ def render_import_tab():
     # --- STEP 1: FILE UPLOAD ---
     st.subheader("1️⃣ Sélection du fichier")
 
-    import_mode = st.radio(
-        "Format de la banque", ["BoursoBank (Auto)", "Autre (Toutes banques)"], horizontal=True
-    )
+    # Import bank templates
+    from modules.ingestion.bank_templates import BANK_TEMPLATES, load_bank_csv
 
+    st.markdown("**🏦 Sélectionnez votre banque**")
+    
+    # Afficher les banques supportées dans une grille
+    bank_cols = st.columns(3)
+    selected_bank_key = None
+    
+    bank_icons = {
+        "boursorama": "🏦",
+        "ing_direct": "🟠", 
+        "credit_mutuel": "🔵",
+        "societe_generale": "🔴",
+        "caisse_epargne": "🟢",
+        "banque_populaire": "🟣",
+    }
+    
+    for i, (bank_key, template) in enumerate(BANK_TEMPLATES.items()):
+        with bank_cols[i % 3]:
+            icon = bank_icons.get(bank_key, "🏦")
+            if st.button(
+                f"{icon} {template.name}",
+                key=f"bank_btn_{bank_key}",
+                use_container_width=True,
+                type="primary" if st.session_state.get("selected_bank") == bank_key else "secondary"
+            ):
+                selected_bank_key = bank_key
+                st.session_state["selected_bank"] = bank_key
+                st.rerun()
+    
+    # Option configuration manuelle
+    with st.expander("⚙️ Configuration manuelle (autre banque)", expanded=False):
+        col1, col2, col3 = st.columns(3)
+        sep = col1.selectbox("Séparateur", [";", ",", "\t"], index=0)
+        decimal = col2.selectbox("Décimale", [",", "."], index=0)
+        skiprows = col3.number_input("Lignes à ignorer (en-tête)", min_value=0, value=0)
+        
+        if st.button("Utiliser configuration manuelle", key="manual_config_btn"):
+            st.session_state["selected_bank"] = "custom"
+            st.rerun()
+
+    # Afficher la banque sélectionnée
+    selected_bank_key = st.session_state.get("selected_bank")
     config = None
-    if import_mode == "Autre (Toutes banques)":
-        with st.expander("Configuration CSV avancée", expanded=True):
-            col1, col2, col3 = st.columns(3)
-            sep = col1.selectbox("Séparateur", [";", ",", "\t"], index=0)
-            decimal = col2.selectbox("Décimale", [",", "."], index=0)
-            skiprows = col3.number_input("Lignes à ignorer (en-tête)", min_value=0, value=0)
-
-            config = {"sep": sep, "decimal": decimal, "skiprows": skiprows, "mapping": {}}
+    
+    if selected_bank_key and selected_bank_key != "custom":
+        template = BANK_TEMPLATES[selected_bank_key]
+        st.success(f"✅ Banque sélectionnée : **{template.name}** | Délimiteur: '{template.delimiter}' | Encodage: {template.encoding}")
+        import_mode = "bank_template"
+    elif selected_bank_key == "custom":
+        st.info("📝 Mode configuration manuelle activé")
+        config = {"sep": sep, "decimal": decimal, "skiprows": skiprows, "mapping": {}}
+        import_mode = "custom"
+    else:
+        st.warning("👆 Veuillez sélectionner votre banque ci-dessus")
+        import_mode = None
 
     uploaded_file = st.file_uploader(
         "Choisir un fichier CSV", type=["csv"], key="file_uploader_ops"
@@ -122,7 +166,7 @@ def render_import_tab():
             return
 
         # Handle Column Mapping for Custom Mode
-        if import_mode == "Autre (Toutes banques)":
+        if import_mode == "custom":
             st.info("Veuillez mapper les colonnes de votre fichier.")
             try:
                 uploaded_file.seek(0)

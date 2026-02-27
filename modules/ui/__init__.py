@@ -1,81 +1,72 @@
+"""Modules UI - Interface utilisateur de FinancePerso.
 
-"""
-UI Module - Design System et composants
-========================================
-
-Ce module contient le design system et les composants UI réutilisables.
+Structure Atomic Design :
+- tokens/ : Design tokens (couleurs, typographie, espacements)
+- atoms/ : Éléments de base (Button, Badge, Icon)
+- molecules/ : Compositions simples (Card, EmptyState, Metric)
+- organisms/ : Sections complexes (Header, Sidebar, etc.)
+- templates/ : Layouts de pages
 
 Usage:
-    from modules.ui import DesignSystem, apply_vibe_theme
-    apply_vibe_theme()
+    # Design Tokens
+    from modules.ui.tokens import Colors, Typography, Spacing
+    
+    # Atomes
+    from modules.ui.atoms import Button, Badge, Icon
+    
+    # Molécules
+    from modules.ui.molecules import Card, EmptyState, Metric
+    
+    # Templates
+    from modules.ui.templates import PageLayout
 """
 
-import streamlit as st
-
-from modules.ui.design_system import (
-    DesignSystem,
-    ColorScheme,
-    Typography,
-    Spacing,
-    Animation,
-    apply_vibe_theme,
-    vibe_container,
-    vibe_metric,
-    vibe_badge,
-)
-from modules.ui.feedback import (
+# Import pour compatibilité (anciens composants)
+from .design_system import load_css, apply_vibe_theme, card_kpi
+from .feedback import (
     render_scroll_to_top,
     display_flash_messages,
     toast_success,
+    toast_error,
     toast_warning,
+    toast_info,
+    show_success,
+    show_error,
+    show_warning,
+    show_info,
+    confirm_dialog,
 )
 
-
-def load_css():
-    """Charge le CSS personnalisé depuis assets/style.css"""
-    try:
-        with open("assets/style.css") as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-    except FileNotFoundError:
-        pass
-
-
-def card_kpi(title, value, trend=None, trend_color="positive"):
-    """
-    Renders a custom HTML card for key metrics.
-    trend: str (e.g. "+12%")
-    trend_color: "positive" (green) or "negative" (red)
-    """
-    trend_html = ""
-    if trend:
-        color_class = "card-trend-positive" if trend_color == "positive" else "card-trend-negative"
-        icon = "↗" if trend_color == "positive" else "↘"
-        trend_html = f'<div class="{color_class}">{icon} {trend}</div>'
-
-    html = f"""
-    <div class="custom-card">
-        <div class="card-title">{title}</div>
-        <div class="card-value">{value}</div>
-        {trend_html}
-    </div>
-    """
-    st.markdown(html, unsafe_allow_html=True)
-
+# Version modernisée du feedback (avec fallback)
+try:
+    from .feedback_v2 import Feedback, Toast, Banner, ConfirmDialog
+    FEEDBACK_V2_AVAILABLE = True
+except ImportError:
+    FEEDBACK_V2_AVAILABLE = False
 
 __all__ = [
-    'DesignSystem',
-    'ColorScheme',
-    'Typography',
-    'Spacing',
-    'Animation',
-    'apply_vibe_theme',
-    'vibe_container',
-    'vibe_metric',
-    'vibe_badge',
-    'load_css',
-    'card_kpi',
-    'render_scroll_to_top',
-    'display_flash_messages',
-    'toast_success',
-    'toast_warning',
+    # Design System legacy
+    "load_css",
+    "apply_vibe_theme",
+    "card_kpi",
+    "render_scroll_to_top",
+    "display_flash_messages",
+    
+    # Feedback V2 (si disponible)
+    "Feedback",
+    "Toast",
+    "Banner",
+    "ConfirmDialog",
+    "FEEDBACK_V2_AVAILABLE",
+    
+    # Feedback legacy compatibility
+    "toast_success",
+    "toast_error",
+    "toast_warning",
+    "toast_info",
+    "show_success",
+    "show_error",
+    "show_warning",
+    "show_info",
+    "confirm_dialog",
 ]

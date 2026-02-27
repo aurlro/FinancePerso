@@ -1,0 +1,63 @@
+# 💰 Fichier de configuration du sponsoring GitHub
+#
+# Ce fichier configure les options de financement/sponsoring du projet.
+# GitHub affichera un bouton "Sponsor" sur la page du repository.
+#
+# 📚 Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# =============================================================================
+# GITHUB SPONSORS (Recommandé)
+# =============================================================================
+# Pour activer GitHub Sponsors:
+# 1. Créer un compte GitHub Sponsors: https://github.com/sponsors
+# 2. Compléter le profil et les informations fiscales
+# 3. Décommenter la ligne ci-dessous avec votre username GitHub
+#
+# github: [aurelien]
+
+# =============================================================================
+# PLATEFORMES EXTERNES
+# =============================================================================
+
+# ☕ Ko-fi - Plateforme simple pour recevoir des dons ponctuels
+# https://ko-fi.com/
+# ko_fi: votre_username_kofi
+
+# 💳 PayPal - Paiement direct
+# https://www.paypal.com/paypalme/
+# custom: ["https://www.paypal.me/votre_username"]
+
+# 🔄 LiberaPay - Donations récurrentes Open Source
+# https://liberapay.com/
+# liberapay: votre_username_liberapay
+
+# 🎯 Open Collective - Pour les projets communautaires
+# https://opencollective.com/
+# open_collective: votre_collective
+
+# 🅿️ Patreon - Soutien mensuel avec contreparties
+# https://www.patreon.com/
+# patreon: votre_username_patreon
+
+# =============================================================================
+# PLATEFORMES TECH/CRYPTO
+# =============================================================================
+
+# 🔗 Buy Me a Coffee - Alternative à Ko-fi
+# https://www.buymeacoffee.com/
+# custom: ["https://www.buymeacoffee.com/votre_username"]
+
+# ₿ Bitcoin/Crypto - Adresse de wallet
+# custom: ["bitcoin:votre_adresse_bitcoin"]
+
+# =============================================================================
+# EXEMPLE CONFIGURÉ
+# =============================================================================
+# Décommentez et modifiez selon vos préférences:
+
+# github: [aurelien]
+# ko_fi: aurelien_dev
+# liberapay: aurelien
+# custom:
+#   - "https://www.paypal.me/aurelien"
+#   - "https://www.buymeacoffee.com/aurelien"

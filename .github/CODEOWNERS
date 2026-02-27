@@ -1,0 +1,23 @@
+# Global owners - These owners will be the default owners for everything in
+# the repo unless a later match takes precedence.
+* @aurelien
+
+# Documentation files
+docs/ @aurelien
+*.md @aurelien
+
+# GitHub configuration
+.github/ @aurelien
+
+# Database schema changes require review
+modules/db/migrations.py @aurelien
+migrations/ @aurelien
+
+# Security-sensitive files
+modules/encryption.py @aurelien
+.env.example @aurelien
+
+# Core AI modules
+modules/ai/ @aurelien
+modules/ai_manager_v2.py @aurelien
+modules/categorization.py @aurelien
