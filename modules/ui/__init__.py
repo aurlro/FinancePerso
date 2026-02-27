@@ -22,7 +22,7 @@ Usage:
 """
 
 # Import pour compatibilité (anciens composants)
-from .design_system import load_css, apply_vibe_theme, card_kpi
+from .design_system import load_css, apply_vibe_theme, card_kpi, DesignSystem, ColorScheme
 from .feedback import (
     render_scroll_to_top,
     display_flash_messages,
@@ -45,7 +45,9 @@ except ImportError:
     FEEDBACK_V2_AVAILABLE = False
 
 __all__ = [
-    # Design System legacy
+    # Design System
+    "DesignSystem",
+    "ColorScheme",
     "load_css",
     "apply_vibe_theme",
     "card_kpi",

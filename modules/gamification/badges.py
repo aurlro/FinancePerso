@@ -11,6 +11,7 @@ import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
+from modules.ui.design_system import Colors, Spacing, Typography
 
 
 class BadgeRarity(Enum):
@@ -18,6 +19,22 @@ class BadgeRarity(Enum):
     RARE = "rare"
     EPIC = "epic"
     LEGENDARY = "legendary"
+
+
+# Color mapping for badge rarities using Design System
+RARITY_COLORS = {
+    BadgeRarity.COMMON: (Colors.TEXT_SECONDARY.value, Colors.BG_TERTIARY.value),
+    BadgeRarity.RARE: (Colors.INFO.value, "rgba(59, 130, 246, 0.2)"),
+    BadgeRarity.EPIC: (Colors.ACCENT.value, "rgba(245, 158, 11, 0.2)"),
+    BadgeRarity.LEGENDARY: (Colors.PRIMARY_LIGHT.value, "rgba(99, 102, 241, 0.3)"),
+}
+
+RARITY_LABELS = {
+    BadgeRarity.COMMON: "Commun",
+    BadgeRarity.RARE: "Rare",
+    BadgeRarity.EPIC: "Épique",
+    BadgeRarity.LEGENDARY: "Légendaire",
+}
 
 
 @dataclass
@@ -271,31 +288,230 @@ def has_badge(badge_id: str) -> bool:
     return badge_id in {b.id for b in get_user_badges()}
 
 
-def render_badges_collection():
-    """Render badge collection in Streamlit."""
-    st.subheader("🏆 Collection de badges")
+def _create_badge_card(badge: Badge, earned: bool = True) -> str:
+    """Create a styled badge card using Design System tokens."""
+    if earned:
+        text_color, bg_color = RARITY_COLORS.get(badge.rarity, RARITY_COLORS[BadgeRarity.COMMON])
+        border_color = text_color
+        opacity = "1"
+        lock_icon = ""
+    else:
+        text_color = Colors.TEXT_MUTED.value
+        bg_color = Colors.BG_SECONDARY.value
+        border_color = Colors.BORDER.value
+        opacity = "0.6"
+        lock_icon = "🔒 "
     
+    rarity_label = RARITY_LABELS.get(badge.rarity, "")
+    
+    return f"""
+    <div style="
+        background-color: {bg_color};
+        border: 1px solid {border_color};
+        border-radius: 12px;
+        padding: {Spacing.LG};
+        text-align: center;
+        opacity: {opacity};
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    " onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='{Colors.SHADOW_LG.value}'" 
+       onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        <div>
+            <div style="
+                font-size: 3rem;
+                margin-bottom: {Spacing.SM};
+            ">{lock_icon}{badge.icon}</div>
+            <div style="
+                font-size: {Typography.SIZE_SM};
+                font-weight: {Typography.WEIGHT_SEMIBOLD};
+                color: {text_color};
+                margin-bottom: {Spacing.XS};
+            ">{badge.name}</div>
+            <div style="
+                font-size: {Typography.SIZE_XS};
+                color: {Colors.TEXT_MUTED.value};
+                margin-bottom: {Spacing.SM};
+                min-height: 2.5em;
+            ">{badge.description}</div>
+        </div>
+        <div>
+            <span style="
+                display: inline-block;
+                padding: {Spacing.XS} {Spacing.SM};
+                border-radius: 9999px;
+                font-size: {Typography.SIZE_XS};
+                font-weight: {Typography.WEIGHT_MEDIUM};
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: {text_color};
+                background-color: {bg_color};
+                border: 1px solid {border_color};
+            ">{rarity_label}</span>
+        </div>
+    </div>
+    """
+
+
+def render_badges_collection():
+    """Render badge collection in Streamlit using Design System."""
     earned = get_user_badges()
     total = len([b for b in BADGES.values() if not b.hidden])
     
-    st.progress(len(earned) / total if total > 0 else 0)
-    st.caption(f"{len(earned)} / {total} badges")
+    # Progress section with Design System styling
+    progress_pct = len(earned) / total if total > 0 else 0
     
+    st.markdown(f"""
+    <div style="
+        background-color: {Colors.BG_SECONDARY.value};
+        border: 1px solid {Colors.BORDER.value};
+        border-radius: 12px;
+        padding: {Spacing.LG};
+        margin-bottom: {Spacing.LG};
+    ">
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: {Spacing.SM};
+        ">
+            <span style="
+                font-size: {Typography.SIZE_SM};
+                font-weight: {Typography.WEIGHT_MEDIUM};
+                color: {Colors.TEXT_SECONDARY.value};
+            ">Progression</span>
+            <span style="
+                font-size: {Typography.SIZE_LG};
+                font-weight: {Typography.WEIGHT_BOLD};
+                color: {Colors.TEXT_PRIMARY.value};
+                font-family: {Typography.FONT_MONO};
+            ">{len(earned)} / {total}</span>
+        </div>
+        <div style="
+            width: 100%;
+            height: 8px;
+            background-color: {Colors.BG_TERTIARY.value};
+            border-radius: 4px;
+            overflow: hidden;
+        ">
+            <div style="
+                width: {progress_pct * 100}%;
+                height: 100%;
+                background: linear-gradient(90deg, {Colors.PRIMARY.value} 0%, {Colors.PRIMARY_LIGHT.value} 100%);
+                border-radius: 4px;
+                transition: width 0.5s ease;
+            "></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Earned badges section
     if earned:
-        cols = st.columns(4)
-        for i, badge in enumerate(earned):
-            with cols[i % 4]:
-                st.markdown(f"**{badge.icon}**")
-                st.caption(badge.name)
-                if st.button("ℹ️", key=f"badge_info_{badge.id}"):
-                    st.info(badge.description)
+        st.markdown(f"""
+        <h3 style="
+            font-size: {Typography.SIZE_XL};
+            font-weight: {Typography.WEIGHT_SEMIBOLD};
+            color: {Colors.TEXT_PRIMARY.value};
+            margin-bottom: {Spacing.MD};
+            margin-top: {Spacing.LG};
+        ">🏆 Badges débloqués</h3>
+        """, unsafe_allow_html=True)
+        
+        # Display badges in a grid
+        cols_per_row = 4
+        for i in range(0, len(earned), cols_per_row):
+            cols = st.columns(cols_per_row)
+            for j, badge in enumerate(earned[i:i+cols_per_row]):
+                with cols[j]:
+                    st.markdown(_create_badge_card(badge, earned=True), unsafe_allow_html=True)
+                    
+                    # Info button using Design System button pattern
+                    if st.button(
+                        "ℹ️ Détails",
+                        key=f"badge_info_{badge.id}",
+                        use_container_width=True,
+                        type="secondary"
+                    ):
+                        st.info(f"**{badge.name}**\n\n{badge.description}")
     else:
-        st.info("Commencez à utiliser l'app pour gagner des badges!")
+        st.markdown(f"""
+        <div style="
+            background-color: {Colors.BG_SECONDARY.value};
+            border: 1px dashed {Colors.BORDER.value};
+            border-radius: 12px;
+            padding: {Spacing.XL};
+            text-align: center;
+            color: {Colors.TEXT_MUTED.value};
+        ">
+            <div style="font-size: 2rem; margin-bottom: {Spacing.SM};">🎯</div>
+            <div style="font-size: {Typography.SIZE_BASE}; font-weight: {Typography.WEIGHT_MEDIUM};">
+                Commencez à utiliser l'app pour gagner des badges!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
-    # Show next possible badges
-    st.divider()
-    st.subheader("🔒 Badges à débloquer")
+    # Locked badges section
+    st.markdown(f"""
+    <h3 style="
+        font-size: {Typography.SIZE_XL};
+        font-weight: {Typography.WEIGHT_SEMIBOLD};
+        color: {Colors.TEXT_PRIMARY.value};
+        margin-bottom: {Spacing.MD};
+        margin-top: {Spacing.XL};
+        padding-top: {Spacing.LG};
+        border-top: 1px solid {Colors.BORDER.value};
+    ">🔒 Badges à débloquer</h3>
+    """, unsafe_allow_html=True)
     
-    locked = [b for bid, b in BADGES.items() if bid not in {eb.id for eb in earned} and not b.hidden][:3]
-    for badge in locked:
-        st.markdown(f"🔒 **{badge.name}** - {badge.description}")
+    earned_ids = {b.id for b in earned}
+    locked = [b for bid, b in BADGES.items() 
+              if bid not in earned_ids and not b.hidden]
+    
+    if locked:
+        # Show first 3 locked badges
+        cols_per_row = 3
+        display_locked = locked[:3]
+        
+        for i in range(0, len(display_locked), cols_per_row):
+            cols = st.columns(cols_per_row)
+            for j, badge in enumerate(display_locked[i:i+cols_per_row]):
+                with cols[j]:
+                    st.markdown(_create_badge_card(badge, earned=False), unsafe_allow_html=True)
+        
+        # Show count of remaining badges
+        if len(locked) > 3:
+            remaining = len(locked) - 3
+            st.markdown(f"""
+            <div style="
+                text-align: center;
+                color: {Colors.TEXT_MUTED.value};
+                font-size: {Typography.SIZE_SM};
+                margin-top: {Spacing.MD};
+                padding: {Spacing.MD};
+                background-color: {Colors.BG_SECONDARY.value};
+                border-radius: 8px;
+            ">
+                + {remaining} autre{'s' if remaining > 1 else ''} badge{'s' if remaining > 1 else ''} secret{'s' if remaining > 1 else ''} à découvrir...
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid {Colors.SECONDARY.value};
+            border-radius: 12px;
+            padding: {Spacing.LG};
+            text-align: center;
+        ">
+            <div style="font-size: 2rem; margin-bottom: {Spacing.SM};">🎉</div>
+            <div style="
+                font-size: {Typography.SIZE_BASE};
+                font-weight: {Typography.WEIGHT_SEMIBOLD};
+                color: {Colors.SECONDARY.value};
+            ">
+                Félicitations! Vous avez débloqué tous les badges visibles!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)

@@ -584,42 +584,65 @@ def show_expanded_status(label: str):
 def render_scroll_to_top(anchor_id: str = "top"):
     """
     Render a floating scroll-to-top button at the bottom right of the page.
-    Uses an anchor-based approach for reliable navigation.
+    Uses JavaScript for smooth scrolling.
 
     Args:
         anchor_id: ID de l'ancre cible (défaut: "top")
     """
+    import streamlit as st
+    import time
+
+    # Clé unique pour cette page/ancre
+    page_key = st.session_state.get("current_page", "default")
+    scroll_key = f"scroll_trigger_{page_key}_{anchor_id}"
+
+    # Initialiser l'état de déclenchement du scroll
+    if scroll_key not in st.session_state:
+        st.session_state[scroll_key] = False
 
     # Créer l'ancre en haut de la page (invisible)
     st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
 
-    # Bouton en bas à droite (pas centré)
-    st.markdown("---")
+    # JavaScript pour effectuer le scroll (exécuté si le flag est True)
+    if st.session_state[scroll_key]:
+        # Réinitialiser le flag immédiatement
+        st.session_state[scroll_key] = False
+        # Exécuter le scroll via JavaScript
+        st.markdown(
+            """
+            <script>
+                (function() {
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                    // Alternative: scroll le conteneur principal de Streamlit
+                    const mainContainer = document.querySelector('.main .block-container');
+                    if (mainContainer) {
+                        mainContainer.scrollTo({top: 0, behavior: 'smooth'});
+                    }
+                    // Essayer aussi avec le body et html
+                    document.body.scrollTo({top: 0, behavior: 'smooth'});
+                    document.documentElement.scrollTo({top: 0, behavior: 'smooth'});
+                })();
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    # Layout avec le bouton aligné à droite
+    # Bouton en bas à droite
+    st.markdown("---")
     cols = st.columns([6, 1])
     with cols[1]:
-        page_key = st.session_state.get("current_page", "default")
         if st.button(
             "⬆️ Haut",
-            key=f"scroll_top_{page_key}_{anchor_id}",
+            key=f"scroll_top_{page_key}_{anchor_id}_{int(time.time() * 1000)}",
             use_container_width=True,
             type="secondary",
         ):
-            # Redirection vers l'ancre avec JavaScript
-            components.html(
-                f"""
-                <script>
-                    window.parent.location.hash = "#{anchor_id}";
-                    window.parent.scrollTo({{top: 0, behavior: 'smooth'}});
-                </script>
-            """,
-                height=0,
-            )
+            # Déclencher le scroll au prochain rerun
+            st.session_state[scroll_key] = True
             st.rerun()
 
-    # Bouton flottant permanent en bas à droite
-    components.html(
+    # Bouton flottant permanent en bas à droite avec JavaScript direct
+    st.markdown(
         """
         <style>
         .scroll-to-top-floating {
@@ -649,11 +672,17 @@ def render_scroll_to_top(anchor_id: str = "top"):
             transform: scale(0.95);
         }
         </style>
-        <button class="scroll-to-top-floating" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="Haut de page">
+        <button class="scroll-to-top-floating" onclick="
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            document.body.scrollTo({top: 0, behavior: 'smooth'});
+            document.documentElement.scrollTo({top: 0, behavior: 'smooth'});
+            const main = document.querySelector('.main .block-container');
+            if (main) main.scrollTo({top: 0, behavior: 'smooth'});
+        " title="Haut de page">
             ⬆️
         </button>
-    """,
-        height=0,
+        """,
+        unsafe_allow_html=True,
     )
 
 
@@ -662,10 +691,39 @@ def render_scroll_to_top_simple():
     Alternative: Render a simple text link at the bottom of the page.
     Less intrusive but requires being at the bottom to see it.
     """
+    import time
+
+    scroll_key = "scroll_trigger_simple"
+
+    if scroll_key not in st.session_state:
+        st.session_state[scroll_key] = False
+
+    # JavaScript pour effectuer le scroll si déclenché
+    if st.session_state[scroll_key]:
+        st.session_state[scroll_key] = False
+        st.markdown(
+            """
+            <script>
+                (function() {
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                    document.body.scrollTo({top: 0, behavior: 'smooth'});
+                    document.documentElement.scrollTo({top: 0, behavior: 'smooth'});
+                    const main = document.querySelector('.main .block-container');
+                    if (main) main.scrollTo({top: 0, behavior: 'smooth'});
+                })();
+            </script>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         if st.button(
-            "⬆️ Retour en haut de page", use_container_width=True, type="secondary", key="button_548"
+            "⬆️ Retour en haut de page",
+            use_container_width=True,
+            type="secondary",
+            key=f"scroll_simple_{int(time.time() * 1000)}",
         ):
-            st.markdown("<script>window.scrollTo(0, 0);</script>", unsafe_allow_html=True)
+            st.session_state[scroll_key] = True
+            st.rerun()

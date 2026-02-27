@@ -43,7 +43,10 @@ except ImportError:
 # Conversational assistant
 try:
     from modules.ai.conversational_assistant import chat_with_assistant
-except ImportError:
+except ImportError as _e:
+    from modules.logger import logger
+
+    logger.error(f"Failed to import chat_with_assistant: {_e}")
     chat_with_assistant = None
 
 __all__ = [

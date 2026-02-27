@@ -11,6 +11,7 @@ import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
+from modules.ui.design_system import Colors, Spacing, Typography
 
 
 class ChallengeStatus(Enum):
@@ -212,28 +213,127 @@ def get_active_challenges() -> list[Challenge]:
     return ChallengeManager.get_active_challenges()
 
 
+def _create_challenge_card(challenge: Challenge) -> str:
+    """Create a styled challenge card using Design System tokens."""
+    progress = min(challenge.current / challenge.target, 1.0)
+    progress_pct = int(progress * 100)
+    
+    days_left = (challenge.deadline - datetime.now()).days
+    days_color = Colors.DANGER.value if days_left <= 2 else (
+        Colors.WARNING.value if days_left <= 5 else Colors.TEXT_SECONDARY.value
+    )
+    
+    # Progress bar color based on completion
+    if progress >= 1.0:
+        bar_color = Colors.SECONDARY.value
+    elif progress >= 0.5:
+        bar_color = Colors.INFO.value
+    else:
+        bar_color = Colors.PRIMARY.value
+    
+    return f"""
+    <div style="
+        background-color: {Colors.BG_SECONDARY.value};
+        border: 1px solid {Colors.BORDER.value};
+        border-radius: 12px;
+        padding: {Spacing.LG};
+        margin-bottom: {Spacing.MD};
+        transition: all 0.3s ease;
+    " onmouseover="this.style.borderColor='{Colors.BORDER_LIGHT.value}';this.style.transform='translateY(-2px)'" 
+       onmouseout="this.style.borderColor='{Colors.BORDER.value}';this.style.transform='translateY(0)'">
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: {Spacing.MD};
+        ">
+            <div style="display: flex; align-items: center; gap: {Spacing.SM};">
+                <span style="font-size: 1.75rem;">{challenge.icon}</span>
+                <div>
+                    <div style="
+                        font-size: {Typography.SIZE_BASE};
+                        font-weight: {Typography.WEIGHT_SEMIBOLD};
+                        color: {Colors.TEXT_PRIMARY.value};
+                    ">{challenge.title}</div>
+                    <div style="
+                        font-size: {Typography.SIZE_SM};
+                        color: {Colors.TEXT_MUTED.value};
+                    ">{challenge.description}</div>
+                </div>
+            </div>
+            <span style="
+                font-size: {Typography.SIZE_XS};
+                color: {days_color};
+                font-weight: {Typography.WEIGHT_MEDIUM};
+                white-space: nowrap;
+            ">{days_left}j restants</span>
+        </div>
+        
+        <div style="margin-bottom: {Spacing.XS};">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                font-size: {Typography.SIZE_SM};
+                color: {Colors.TEXT_SECONDARY.value};
+                margin-bottom: {Spacing.XS};
+            ">
+                <span>Progression</span>
+                <span style="font-weight: {Typography.WEIGHT_SEMIBOLD};">{challenge.current}/{challenge.target} {challenge.unit}</span>
+            </div>
+            <div style="
+                width: 100%;
+                height: 8px;
+                background-color: {Colors.BG_TERTIARY.value};
+                border-radius: 4px;
+                overflow: hidden;
+            ">
+                <div style="
+                    width: {progress_pct}%;
+                    height: 100%;
+                    background-color: {bar_color};
+                    border-radius: 4px;
+                    transition: width 0.5s ease;
+                "></div>
+            </div>
+        </div>
+        
+        <div style="
+            font-size: {Typography.SIZE_XS};
+            color: {Colors.ACCENT.value};
+            margin-top: {Spacing.SM};
+            padding-top: {Spacing.SM};
+            border-top: 1px solid {Colors.BORDER.value};
+        ">
+            🎁 Récompense: {challenge.reward}
+        </div>
+    </div>
+    """
+
+
 def render_challenges_widget():
-    """Render active challenges in Streamlit."""
+    """Render active challenges in Streamlit using Design System."""
     challenges = get_active_challenges()
     
     if not challenges:
-        st.info("Aucun challenge actif pour le moment")
+        st.markdown(f"""
+        <div style="
+            background-color: {Colors.BG_SECONDARY.value};
+            border: 1px dashed {Colors.BORDER.value};
+            border-radius: 12px;
+            padding: {Spacing.XL};
+            text-align: center;
+            color: {Colors.TEXT_MUTED.value};
+        ">
+            <div style="font-size: 2rem; margin-bottom: {Spacing.SM};">🎯</div>
+            <div style="font-size: {Typography.SIZE_BASE}; font-weight: {Typography.WEIGHT_MEDIUM};">
+                Aucun challenge actif pour le moment
+            </div>
+            <div style="font-size: {Typography.SIZE_SM}; margin-top: {Spacing.XS};">
+                Revenez bientôt pour de nouveaux défis!
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         return
     
-    st.subheader("🎯 Challenges actifs")
-    
     for challenge in challenges:
-        with st.container():
-            cols = st.columns([0.1, 0.7, 0.2])
-            
-            cols[0].markdown(f"**{challenge.icon}**")
-            
-            with cols[1]:
-                st.write(f"**{challenge.title}**")
-                progress = min(challenge.current / challenge.target, 1.0)
-                st.progress(progress, text=f"{challenge.current}/{challenge.target} {challenge.unit}")
-            
-            days_left = (challenge.deadline - datetime.now()).days
-            cols[2].caption(f"{days_left}j restants")
-        
-        st.divider()
+        st.markdown(_create_challenge_card(challenge), unsafe_allow_html=True)

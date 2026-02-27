@@ -12,11 +12,23 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from modules.ai.rules_auditor import analyze_rules_integrity
+from modules.db.audit import (
+    get_duplicate_transactions,
+    get_old_pending_transactions,
+    ignore_transactions,
+    merge_duplicate_transactions,
+    validate_transactions_by_ids,
+)
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories
+from modules.db.connection import clear_db_cache
 from modules.db.migrations import init_db
 from modules.db.rules import get_learning_rules
-from modules.db.transactions import get_all_transactions
+from modules.db.transactions import (
+    delete_transaction,
+    get_all_transactions,
+    get_pending_transactions,
+)
 from modules.ui import load_css, render_scroll_to_top
 from modules.ui.layout import render_app_info
 
@@ -455,83 +467,194 @@ elif active_tab == "🔍 Qualité des Données":
 
         st.divider()
 
-        # Data quality checks
-        st.subheader("🔍 Vérifications de qualité")
-
-        checks = []
-
-        # Check 1: Duplicates
-        if (
-            not transactions_df.empty
-            and "date" in transactions_df.columns
-            and "label" in transactions_df.columns
-        ):
-            duplicates = transactions_df.groupby(["date", "label", "amount"]).size()
-            duplicates = duplicates[duplicates > 1]
-
-            if not duplicates.empty:
-                checks.append(
-                    {
-                        "status": "warning",
-                        "title": f"⚠️ {len(duplicates)} doublon(s) potentiel(s)",
-                        "description": "Des transactions identiques (même date, libellé, montant) ont été détectées.",
-                        "action": "Voir les doublons",
-                    }
-                )
-            else:
-                checks.append(
-                    {
-                        "status": "ok",
-                        "title": "✅ Pas de doublons détectés",
-                        "description": "Toutes vos transactions semblent uniques.",
-                    }
-                )
-
-        # Check 2: Missing members
-        if "member" in transactions_df.columns:
-            unassigned = transactions_df[
-                transactions_df["member"].isna() | (transactions_df["member"] == "")
-            ]
-            if len(unassigned) > 0:
-                checks.append(
-                    {
-                        "status": "info",
-                        "title": f"ℹ️ {len(unassigned)} transaction(s) sans membre assigné",
-                        "description": "Assigner un membre permet de suivre les dépenses par personne.",
-                        "action": "Assigner les membres",
-                    }
-                )
-
-        # Check 3: Old pending transactions
-        if "date" in transactions_df.columns and "status" in transactions_df.columns:
-            transactions_df["date"] = pd.to_datetime(transactions_df["date"])
-            old_pending = transactions_df[
-                (transactions_df["status"] != "validated")
-                & (transactions_df["date"] < datetime.now() - timedelta(days=30))
-            ]
-            if len(old_pending) > 0:
-                checks.append(
-                    {
-                        "status": "warning",
-                        "title": f"⚠️ {len(old_pending)} transaction(s) ancienne(s) non validée(s)",
-                        "description": "Certaines transactions datent de plus d'un mois et ne sont pas validées.",
-                        "action": "Valider maintenant",
-                    }
-                )
-
-        # Display checks
-        for check in checks:
-            icon = {"ok": "✅", "warning": "⚠️", "info": "ℹ️"}.get(check["status"], "ℹ️")
-
+        # ============================================================
+        # SECTION: TRANSACTIONS ANCIENNES NON VALIDÉES
+        # ============================================================
+        old_pending_df = get_old_pending_transactions(days=30)
+        
+        if not old_pending_df.empty:
             with st.container(border=True):
-                st.markdown(f"**{check['title']}**")
-                st.caption(check["description"])
-                if check.get("action"):
-                    st.button(
-                        check["action"],
-                        key=f"check_{check['title'][:20]}",
-                        use_container_width=True,
-                    )
+                col_header, col_badge = st.columns([4, 1])
+                with col_header:
+                    st.markdown("#### ⚠️ Transactions anciennes non validées")
+                    st.caption(f"{len(old_pending_df)} transaction(s) datent de plus d'un mois et ne sont pas validées.")
+                with col_badge:
+                    st.markdown(f"<div style='text-align:right'><span style='background:#ff6b6b;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(old_pending_df)}</span></div>", unsafe_allow_html=True)
+                
+                # Actions globales
+                col_actions = st.columns(3)
+                with col_actions[0]:
+                    if st.button("✅ Tout valider", type="primary", use_container_width=True, key="old_valider_tout"):
+                        count = validate_transactions_by_ids(old_pending_df["id"].tolist())
+                        clear_db_cache()
+                        get_all_transactions.clear()
+                        get_pending_transactions.clear()
+                        st.success(f"✅ {count} transaction(s) validée(s) !")
+                        st.rerun()
+                with col_actions[1]:
+                    if st.button("🚫 Tout ignorer", use_container_width=True, key="old_ignorer_tout"):
+                        count = ignore_transactions(old_pending_df["id"].tolist())
+                        clear_db_cache()
+                        st.success(f"🚫 {count} transaction(s) marquée(s) comme ignorée(s)")
+                        st.rerun()
+                with col_actions[2]:
+                    st.page_link("pages/1_Opérations.py", label="→ Aller à la validation", use_container_width=True)
+                
+                # Liste détaillée
+                with st.expander("📋 Voir les transactions", expanded=False):
+                    for _, tx in old_pending_df.head(10).iterrows():
+                        col_tx, col_actions_tx = st.columns([4, 1])
+                        with col_tx:
+                            amount_color = "green" if tx["amount"] > 0 else "red"
+                            st.markdown(f"**{tx['label']}** - <span style='color:{amount_color}'>{tx['amount']:.2f} €</span>", unsafe_allow_html=True)
+                            st.caption(f"📅 {tx['date']} | 📂 {tx.get('category_validated', 'Non catégorisé')} | 👤 {tx.get('member', 'Inconnu')}")
+                        with col_actions_tx:
+                            tx_col1, tx_col2 = st.columns(2)
+                            with tx_col1:
+                                if st.button("✅", key=f"old_validate_{tx['id']}", help="Valider cette transaction"):
+                                    validate_transactions_by_ids([tx["id"]])
+                                    clear_db_cache()
+                                    get_all_transactions.clear()
+                                    st.rerun()
+                            with tx_col2:
+                                if st.button("🚫", key=f"old_ignore_{tx['id']}", help="Ignorer cette transaction"):
+                                    ignore_transactions([tx["id"]])
+                                    clear_db_cache()
+                                    st.rerun()
+                    
+                    if len(old_pending_df) > 10:
+                        st.caption(f"... et {len(old_pending_df) - 10} autres transactions")
+
+        # ============================================================
+        # SECTION: DOUBLONS DE TRANSACTIONS
+        # ============================================================
+        duplicates_df = get_duplicate_transactions()
+        
+        if not duplicates_df.empty:
+            with st.container(border=True):
+                col_header, col_badge = st.columns([4, 1])
+                with col_header:
+                    st.markdown("#### ♻️ Doublons détectés")
+                    st.caption(f"{len(duplicates_df)} groupe(s) de transactions identiques (même date, libellé, montant).")
+                with col_badge:
+                    total_dups = duplicates_df["duplicate_count"].sum() - len(duplicates_df)
+                    st.markdown(f"<div style='text-align:right'><span style='background:#ffa502;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{total_dups}</span></div>", unsafe_allow_html=True)
+                
+                # Actions globales
+                col_actions = st.columns(2)
+                with col_actions[0]:
+                    if st.button("🔀 Tout fusionner", type="primary", use_container_width=True, key="dups_fusionner_tout"):
+                        merged_count = 0
+                        for _, dup in duplicates_df.iterrows():
+                            result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                            if result["success"]:
+                                merged_count += len(result["deleted_ids"])
+                        clear_db_cache()
+                        get_all_transactions.clear()
+                        st.success(f"✅ {merged_count} doublon(s) fusionné(s) !")
+                        st.rerun()
+                with col_actions[1]:
+                    if st.button("🎲 Fusionner auto (conservateur)", use_container_width=True, key="dups_fusionner_auto"):
+                        # Fusionner seulement les groupes avec plus de 2 doublons (évident)
+                        merged_count = 0
+                        for _, dup in duplicates_df[duplicates_df["duplicate_count"] > 2].iterrows():
+                            result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                            if result["success"]:
+                                merged_count += len(result["deleted_ids"])
+                        clear_db_cache()
+                        get_all_transactions.clear()
+                        st.success(f"✅ {merged_count} doublon(s) évident(s) fusionné(s) !")
+                        st.rerun()
+                
+                # Liste détaillée des doublons
+                with st.expander("📋 Voir les doublons détaillés", expanded=False):
+                    for _, dup in duplicates_df.head(10).iterrows():
+                        col_dup, col_actions_dup = st.columns([4, 1])
+                        with col_dup:
+                            amount_color = "green" if dup["amount"] > 0 else "red"
+                            st.markdown(f"**{dup['label']}** - <span style='color:{amount_color}'>{dup['amount']:.2f} €</span>", unsafe_allow_html=True)
+                            st.caption(f"📅 {dup['date']} | 🔄 {dup['duplicate_count']} copies | 👤 {dup.get('accounts', 'N/A')}")
+                        with col_actions_dup:
+                            if st.button("🔀 Fusionner", key=f"dup_merge_{dup['date']}_{dup['label'][:20]}"):
+                                result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                                if result["success"]:
+                                    clear_db_cache()
+                                    get_all_transactions.clear()
+                                    st.success(f"✅ {len(result['deleted_ids'])} doublon(s) supprimé(s)")
+                                    st.rerun()
+                                else:
+                                    st.info(result.get("message", "Pas de doublons"))
+                    
+                    if len(duplicates_df) > 10:
+                        st.caption(f"... et {len(duplicates_df) - 10} autres groupes de doublons")
+
+        # ============================================================
+        # SECTION: CHEVAUCHEMENTS DE RÈGLES
+        # ============================================================
+        if not rules_df.empty:
+            audit_results = analyze_rules_integrity(rules_df)
+            overlaps = audit_results.get("overlaps", [])
+            
+            if overlaps:
+                with st.container(border=True):
+                    col_header, col_badge = st.columns([4, 1])
+                    with col_header:
+                        st.markdown("#### ℹ️ Chevauchements de règles")
+                        st.caption(f"{len(overlaps)} pattern(s) imbriqué(s) détecté(s) entre règles de catégorisation.")
+                    with col_badge:
+                        st.markdown(f"<div style='text-align:right'><span style='background:#74b9ff;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(overlaps)}</span></div>", unsafe_allow_html=True)
+                    
+                    st.info("Un pattern est contenu dans un autre avec une catégorie différente. Cela peut créer des comportements inattendus selon l'ordre d'application des règles.")
+                    
+                    # Liste des chevauchements
+                    with st.expander("📋 Voir les détails et suggestions", expanded=False):
+                        for i, ov in enumerate(overlaps[:10]):
+                            st.markdown(f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) → **inclus dans** → **`{ov['longer_pattern']}`** ({ov['longer_category']})")
+                            
+                            # Suggestions
+                            col_suggestions = st.columns(2)
+                            with col_suggestions[0]:
+                                st.markdown("**💡 Suggestions:**")
+                                st.markdown(f"- Si '{ov['shorter_pattern']}' est plus spécifique, augmentez sa priorité")
+                                st.markdown(f"- Si '{ov['longer_pattern']}' est un cas général, gardez l'ordre actuel")
+                            with col_suggestions[1]:
+                                st.markdown("**🔧 Actions:**")
+                                st.page_link(
+                                    "pages/4_Intelligence.py", 
+                                    label=f"→ Modifier les règles",
+                                    help="Aller dans l'onglet Intelligence pour modifier les règles"
+                                )
+                            st.divider()
+                        
+                        if len(overlaps) > 10:
+                            st.caption(f"... et {len(overlaps) - 10} autres chevauchements")
+
+        # ============================================================
+        # SECTION: RÉCAP GLOBAL
+        # ============================================================
+        if old_pending_df.empty and duplicates_df.empty and (rules_df.empty or not overlaps):
+            st.success("🎉 **Tout est en ordre !** Aucun problème de qualité détecté.")
+        else:
+            st.divider()
+            st.subheader("📊 Récapitulatif des problèmes")
+            
+            recap_cols = st.columns(3)
+            with recap_cols[0]:
+                if not old_pending_df.empty:
+                    st.metric("⚠️ Anciennes non validées", len(old_pending_df))
+                else:
+                    st.markdown("✅ **Anciennes transactions**\nToutes validées")
+            with recap_cols[1]:
+                if not duplicates_df.empty:
+                    total_dup = duplicates_df["duplicate_count"].sum() - len(duplicates_df)
+                    st.metric("♻️ Doublons", f"{total_dup} en trop")
+                else:
+                    st.markdown("✅ **Doublons**\nAucun détecté")
+            with recap_cols[2]:
+                if overlaps:
+                    st.metric("ℹ️ Chevauchements", len(overlaps))
+                else:
+                    st.markdown("✅ **Règles**\nPas de chevauchement")
 
 st.divider()
 render_scroll_to_top()

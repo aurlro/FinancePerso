@@ -484,7 +484,7 @@ def render_daily_widget(force_show: bool = False):
 
         with col2:
             if insight.metric:
-                st.metric(label=insight.get("metric_label", ""), value=insight.metric)
+                st.metric(label=insight.metric_label or "", value=insight.metric)
 
             if insight.progress is not None:
                 st.progress(

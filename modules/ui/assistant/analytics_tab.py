@@ -63,13 +63,25 @@ def render_analytics_tab():
 
         # Get AI response
         from modules.ai import chat_with_assistant
+        from modules.ai_manager_v2 import get_ai_error_message, is_ai_available
 
         # Check if chat is available
         if chat_with_assistant is None:
             add_chat_message(
                 "assistant",
                 "⚠️ L'assistant conversationnel n'est pas disponible. "
-                "Vérifiez que la bibliothèque AI est installée (pip install google-genai).",
+                "Erreur d'initialisation du module IA. Vérifiez les logs.",
+            )
+            st.rerun()
+            return
+
+        # Check if AI provider is properly configured
+        if not is_ai_available():
+            error_msg = get_ai_error_message()
+            add_chat_message(
+                "assistant",
+                f"⚠️ **Service IA non disponible**\n\n{error_msg}\n\n"
+                "_Rendez-vous dans l'onglet **Configuration** pour vérifier vos paramètres IA._",
             )
             st.rerun()
             return

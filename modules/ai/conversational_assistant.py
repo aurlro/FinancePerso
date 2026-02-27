@@ -10,7 +10,6 @@ import re
 
 import pandas as pd
 
-from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories
 from modules.db.transactions import get_all_transactions
@@ -222,6 +221,9 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
     Returns:
         AI assistant's response
     """
+    # Import here to avoid circular import issues
+    from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
+
     try:
         provider = get_ai_provider()
         model_name = get_active_model_name()
