@@ -106,7 +106,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results-py${{ matrix.python-version }}
@@ -147,7 +147,7 @@ jobs:
           bandit -r modules/ -f screen
 
       - name: Upload Bandit report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bandit-security-report
@@ -160,7 +160,7 @@ jobs:
           safety check -r requirements.txt || true
 
       - name: Upload Safety report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: safety-vulnerability-report
