@@ -1,0 +1,93 @@
+# =============================================================================
+# Docker Ignore - Exclusions pour le build Docker
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+conftest.py
+pytest.ini
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Données locales (seront montées via volumes)
+Data/
+!Data/.gitkeep
+logs/
+*.db
+*.sqlite3
+*.backup
+*.bak
+
+# Fichiers de configuration locaux
+.env
+.env.*
+!.env.example
+
+# Streamlit
+.streamlit/*
+!.streamlit/config.toml
+
+# Scripts non nécessaires en production
+scripts/*.sh
+!scripts/deploy.sh
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+archive/
+legacy/
+demos/
+.agents/
+.claude/
+IMPROVEMENT_PLAN.md
+CLEANUP_REPORT.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+CHANGELOG.md
