@@ -63,7 +63,14 @@ FinancePerso/
 │   ├── ai_manager_v2.py       # Gestionnaire IA unifié
 │   ├── categorization.py      # Logique de catégorisation
 │   ├── encryption.py          # Chiffrement AES-256
-│   └── logger.py              # Système de logs
+│   ├── logger.py              # Système de logs
+│   └── notifications/         # NOUVEAU - Système de notifications V3
+│       ├── __init__.py
+│       ├── models.py
+│       ├── service.py
+│       ├── repository.py
+│       ├── detectors.py
+│       └── ui.py
 ├── tests/                      # Tests pytest
 │   ├── test_essential.py      # Tests critiques (rapides)
 │   ├── db/                    # Tests couche données
@@ -248,6 +255,29 @@ Chiffrement AES-256 des champs sensibles (notes, beneficiary) :
 - **Feedback** : Toasts, messages flash, états de chargement
 - **Layout** : Structure de page, navigation
 
+### Notifications V3 (`modules/notifications/`)
+
+Nouveau système unifié avec persistance DB:
+
+```python
+from modules.notifications import NotificationService, NotificationType
+
+service = NotificationService()
+service.notify(
+    type=NotificationType.BUDGET_WARNING,
+    title="Budget",
+    message="Message..."
+)
+```
+
+- **models.py** : Dataclasses Notification, NotificationLevel, NotificationType
+- **service.py** : NotificationService (singleton)
+- **repository.py** : Accès DB SQLite
+- **detectors.py** : 6 détecteurs de notifications
+- **ui.py** : Composants UI avec Design System
+
+Migration SQL: `migrations/007_notifications.sql`
+
 ---
 
 ## Configuration environnement
@@ -411,6 +441,15 @@ with st.form("mon_form"):
         pass
 ```
 
+### Notifications
+> **Note**: La version 3.0 du système de notifications est maintenant active par défaut.
+> Pour revenir à la version 2.0, modifiez `NOTIFICATION_SYSTEM_VERSION` dans 
+> `modules/notifications/__init__.py`
+
+- Toujours utiliser NotificationService V3 pour les nouvelles notifications
+- Les détecteurs s'exécutent automatiquement au démarrage
+- Voir docs/MIGRATION_NOTIFICATIONS_V3.md pour la migration depuis V2
+
 ---
 
 ## Ressources utiles
@@ -422,4 +461,4 @@ with st.form("mon_form"):
 
 ---
 
-Dernière mise à jour : 2026-02-25 (v5.2.1)
+Dernière mise à jour : 2026-02-28 (v5.2.1)

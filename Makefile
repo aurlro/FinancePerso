@@ -1,7 +1,7 @@
 # FinancePerso - Makefile
 # Standard commands for development
 
-.PHONY: help setup test test-cov lint format clean run check ci
+.PHONY: help setup test test-cov lint format clean run check ci doc-check doc-update doc-generate
 
 # Default target
 help:
@@ -16,6 +16,9 @@ help:
 	@echo "  make ci         - Run CI pipeline locally"
 	@echo "  make run        - Start Streamlit app"
 	@echo "  make clean      - Clean cache and temp files"
+	@echo "  make doc-check  - Check documentation consistency"
+	@echo "  make doc-update - Update documentation"
+	@echo "  make doc-generate MODULE=x - Generate module documentation"
 	@echo ""
 
 # Setup environment
@@ -65,3 +68,20 @@ clean:
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	@rm -rf .coverage coverage.xml htmlcov/
 	@echo "✨ Clean complete"
+
+# Documentation checks
+doc-check:
+	@echo "🔍 Checking documentation consistency..."
+	@python3 .agents/doc_agent.py --check
+
+doc-update:
+	@echo "📝 Updating documentation..."
+	@python3 .agents/doc_agent.py --update
+
+doc-generate:
+	@if [ -z "$(MODULE)" ]; then \
+		echo "❌ Usage: make doc-generate MODULE=<module_name>"; \
+		exit 1; \
+	fi
+	@echo "📚 Generating documentation for $(MODULE)..."
+	@python3 .agents/doc_agent.py --generate $(MODULE)"

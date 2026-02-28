@@ -5,6 +5,11 @@ import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.db.migrations import init_db
+from modules.notifications import NotificationService
+from modules.notifications.ui import (
+    render_notification_center,
+    render_notification_settings,
+)
 from modules.ui import load_css, render_scroll_to_top
 from modules.ui.layout import render_app_info
 
@@ -100,22 +105,16 @@ elif active_tab == "🐞 Debug":
 # TAB: NOTIFICATIONS
 # =============================================================================
 elif active_tab == "🔔 Notifications":
-    # Content extracted from 99_Notifications.py
-    from modules.ui.notifications import (
-        render_notification_center_full,
-        render_notification_settings,
-        success,
-        warning,
-    )
+    service = NotificationService()
 
-    notif_tabs = st.tabs(["📬 Centre", "⚙️ Paramètres", "🎮 Demo"])
-    with notif_tabs[0]:
-        render_notification_center_full()
-    with notif_tabs[1]:
-        render_notification_settings()
-    with notif_tabs[2]:
-        st.button("Test Success", on_click=lambda: success("Test OK"))
-        st.button("Test Warning", on_click=lambda: warning("Attention"))
+    # Sous-onglets
+    subtab_center, subtab_settings = st.tabs(["📬 Centre", "⚙️ Paramètres"])
+
+    with subtab_center:
+        render_notification_center(service)
+
+    with subtab_settings:
+        render_notification_settings(service)
 
 st.divider()
 render_scroll_to_top()

@@ -1,6 +1,9 @@
 # Application Version
 APP_VERSION = "5.5.0"
 
+# Feature flags
+USE_NOTIFICATIONS_V3 = True  # Active le système de notifications V3 par défaut
+
 
 class SystemCategory:
     """Predefined system categories that have special behavior."""

@@ -6,9 +6,44 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ---
 
+## [Unreleased]
 
+### 🚀 Nouveautés
 
+#### Système de notifications V3
+- **Nouveau système unifié** avec persistance en base de données SQLite
+- **20+ types de notifications** prédéfinis (Budget, Validation, Gamification, etc.)
+- **6 détecteurs automatiques** :
+  - BudgetAlertDetector : Surveille les dépassements de budget
+  - ValidationReminderDetector : Rappelle les transactions en attente
+  - ImportReminderDetector : Détecte l'inactivité d'import
+  - DuplicateDetector : Identifie les doublons
+  - AnomalyDetector : Détecte les variations anormales
+  - RecurringMissingDetector : Surveille les paiements récurrents
+- **API moderne** avec pattern singleton et type hints
+- **Composants UI** avec Design System (Card, Badge, Button)
+- **Déduplication intelligente** avec clés personnalisables
+- **Préférences utilisateur** granulaires par niveau et par type
+- **Migration SQL** : `migrations/007_notifications.sql`
+- **Page de test** : `pages/13_Notifications_V3.py`
+- **Documentation complète** : `docs/MIGRATION_NOTIFICATIONS_V3.md`
 
+#### Corrections de bugs
+- **DailyWidget** : Correction AttributeError 'DailyInsight' object has no attribute 'get'
+- **Scroll-to-top** : Correction du bouton "⬆️ Haut" qui ne fonctionnait pas
+- **Audit** : Ajout d'actions sur les problèmes détectés (fusion doublons, validation, etc.)
+- **Assistant IA** : Correction import circulaire et messages d'erreur améliorés
+- **Page Badges** : Cohérence visuelle avec Design System
+- **Page Abonnements** : Refonte avec Design System
+
+#### Améliorations
+- **Design System V2** : Création complète avec tokens, atomes, molécules
+  - `modules/ui/tokens/` : Colors, Typography, Spacing, BorderRadius
+  - `modules/ui/atoms/` : Button, Badge, Icon
+  - `modules/ui/molecules/` : Card, EmptyState, Metric
+  - `modules/ui/templates/` : PageLayout
+
+---
 
 ## [5.5.0] - 2026-02-27
 

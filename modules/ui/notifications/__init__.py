@@ -1,4 +1,14 @@
 """
+import warnings
+
+# Avertissement de déprécation pour V2
+warnings.warn(
+    "Notifications V2 is deprecated. Please migrate to V3.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+"""
 Système de notifications modernisé pour FinancePerso.
 
 Ce module fournit une expérience de notification complète et cohérente :

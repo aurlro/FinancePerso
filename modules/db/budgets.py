@@ -67,3 +67,31 @@ def delete_budget(category: str) -> bool:
         if deleted:
             logger.info(f"Budget deleted for {category}")
         return deleted
+
+
+def get_budget_spending(category: str) -> float:
+    """
+    Calculate total spending for a category in the current month.
+
+    Args:
+        category: Category name
+
+    Returns:
+        Total amount spent (absolute value) in current month for the category
+    """
+    from datetime import datetime
+    
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        current_month = datetime.now().strftime("%Y-%m")
+        
+        cursor.execute("""
+            SELECT SUM(ABS(amount)) 
+            FROM transactions 
+            WHERE category_validated = ? 
+            AND strftime('%Y-%m', date) = ?
+            AND amount < 0
+        """, (category, current_month))
+        
+        result = cursor.fetchone()[0]
+        return float(result) if result else 0.0

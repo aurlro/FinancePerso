@@ -1,0 +1,149 @@
+name: Documentation Check
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'modules/**'
+      - 'pages/**'
+      - 'AGENTS.md'
+      - 'CHANGELOG.md'
+      - '.agents/doc_agent.py'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'modules/**'
+      - 'pages/**'
+      - 'AGENTS.md'
+      - 'CHANGELOG.md'
+
+# Permissions minimales requises
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+env:
+  PYTHONUNBUFFERED: "1"
+  FORCE_COLOR: "1"
+
+jobs:
+  # =============================================================================
+  # Documentation Consistency Check
+  # =============================================================================
+  doc-check:
+    name: 📚 Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check documentation consistency
+        run: |
+          if [ -f ".agents/doc_agent.py" ]; then
+            python .agents/doc_agent.py --check
+          else
+            echo "⚠️ doc_agent.py not found, skipping documentation check"
+            exit 0
+          fi
+
+      - name: Comment PR on documentation issues
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## 📚 Documentation Check Failed
+            
+            ❌ Des incohérences ont été détectées entre le code et la documentation.
+            
+            **Pour corriger localement :**
+            \`\`\`bash
+            python .agents/doc_agent.py --update
+            \`\`\`
+            
+            **Pour voir les détails :**
+            \`\`\`bash
+            python .agents/doc_agent.py --check
+            \`\`\`
+            
+            Veuillez mettre à jour la documentation avant de merger cette PR.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  # =============================================================================
+  # Documentation Links Validation
+  # =============================================================================
+  doc-links:
+    name: 🔗 Link Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for broken internal links
+        run: |
+          echo "🔍 Checking for broken internal links in documentation..."
+          
+          # Find all markdown files
+          find docs -name "*.md" -type f 2>/dev/null | while read file; do
+            # Extract markdown links [text](path)
+            grep -oE '\[([^]]+)\]\(([^)]+)\)' "$file" | grep -vE '^\[.*\]\(http' | while read link; do
+              # Extract path from link
+              path=$(echo "$link" | sed -E 's/\[.*\]\((.*)\)/\1/')
+              
+              # Skip anchors
+              path=$(echo "$path" | sed 's/#.*$//')
+              
+              # Skip empty paths
+              [ -z "$path" ] && continue
+              
+              # Resolve relative path
+              dir=$(dirname "$file")
+              if [[ "$path" == /* ]]; then
+                full_path=".${path}"
+              else
+                full_path="${dir}/${path}"
+              fi
+              
+              # Check if file exists
+              if [ ! -f "$full_path" ] && [ ! -d "$full_path" ]; then
+                echo "❌ Broken link in $file: $path"
+                exit 1
+              fi
+            done
+          done
+          
+          echo "✅ All internal links are valid"
+
+  # =============================================================================
+  # Summary
+  # =============================================================================
+  doc-summary:
+    name: 📊 Documentation Summary
+    runs-on: ubuntu-latest
+    needs: [doc-check, doc-links]
+    if: always()
+    
+    steps:
+      - name: Summary
+        run: |
+          echo "## 📚 Documentation Workflow Summary"
+          echo ""
+          echo "| Check | Status |"
+          echo "|-------|--------|"
+          echo "| Consistency | ${{ needs.doc-check.result == 'success' && '✅' || '❌' }} |"
+          echo "| Link Validity | ${{ needs.doc-links.result == 'success' && '✅' || '❌' }} |"

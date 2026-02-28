@@ -29,11 +29,11 @@ from modules.ui.components.quick_actions import render_quick_actions_grid
 from modules.ui.components.smart_actions import render_smart_actions
 from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
 from modules.gamification.streaks import render_streak_badge, record_daily_login
-from modules.notifications import (
-    NotificationManager,
-    check_all_notifications,
-    render_notification_badge,
-)
+# ============================================================
+# SYSTÈME DE NOTIFICATIONS V3
+# ============================================================
+from modules.notifications import NotificationService, DetectorRegistry
+from modules.notifications.ui import render_notification_badge as render_notification_badge_v3
 
 # ============================================================
 # INTEGRATION PHASES 4-5-6 - Auto-generated
@@ -133,14 +133,36 @@ try:
 except Exception as e:
     logger.warning(f"Automated maintenance failed (non-critical): {e}")
 
-# Vérifier les notifications (budget alerts, daily digest, etc.)
-check_all_notifications()
+# Système de notifications V3 - exécuté une fois par jour maximum
+# Utiliser une clé session_state pour tracker la dernière exécution
+from datetime import date
+
+# Initialiser la clé si nécessaire
+if "notifications_v3_last_run" not in st.session_state:
+    st.session_state["notifications_v3_last_run"] = None
+
+# Vérifier si on doit exécuter les détecteurs (une fois par jour)
+today_str = date.today().isoformat()
+should_run_detectors = st.session_state["notifications_v3_last_run"] != today_str
+
+# Initialiser le service V3
+notification_service_v3 = NotificationService()
+
+if should_run_detectors:
+    try:
+        registry = DetectorRegistry(notification_service_v3)
+        detector_stats = registry.run_all()
+        st.session_state["notifications_v3_last_run"] = today_str
+        logger.info(f"Notifications V3 - Détecteurs exécutés: {detector_stats}")
+    except Exception as e:
+        logger.warning(f"Notifications V3 - Erreur lors de l'exécution des détecteurs: {e}")
 
 # Track daily login for streak
 record_daily_login()
 
 # Afficher le badge de notification et le streak dans la sidebar
-render_notification_badge()
+# Utiliser le nouveau système V3 avec le service
+render_notification_badge_v3(notification_service_v3)
 render_streak_badge()
 
 # Afficher les messages flash en attente
