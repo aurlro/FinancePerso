@@ -28,7 +28,7 @@ requests==2.32.5
 python-dotenv==1.1.1
 
 # Monitoring et Logging
-sentry-sdk==2.20.0
+sentry-sdk==2.53.0
 
 # Tests (inclus pour permettre les vérifications de santé)
 pytest==8.4.2
