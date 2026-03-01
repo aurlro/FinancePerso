@@ -2,7 +2,7 @@
 Exemple d'utilisation du composant WelcomeEmptyState.
 
 Ce fichier montre différentes façons d'utiliser le composant d'accueil.
-À intégrer dans une page Streamlit (par exemple app.py ou pages/3_Synthèse.py).
+À intégrer dans une page Streamlit (par exemple app.py ou pages/02_Dashboard.py).
 """
 
 import streamlit as st
@@ -30,7 +30,7 @@ def example_2_customized():
         subtitle="Votre nouveau tableau de bord financier",
         message="Importez vos premières transactions pour découvrir toutes les fonctionnalités.",
         primary_action_text="🚀 Commencer maintenant",
-        primary_action_link="pages/1_Opérations.py",
+        primary_action_link="pages/01_Import.py",
         secondary_action_text="❓ Besoin d'aide",
         secondary_action_link="https://docs.example.com/guide",
         show_steps=True,

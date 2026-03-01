@@ -63,7 +63,7 @@ def render_analytics_tab():
 
         # Get AI response
         from modules.ai import chat_with_assistant
-        from modules.ai_manager_v2 import get_ai_error_message, is_ai_available
+        from modules.ai_manager import get_ai_error_message, is_ai_available
 
         # Check if chat is available
         if chat_with_assistant is None:

@@ -583,8 +583,8 @@ def show_expanded_status(label: str):
 
 def render_scroll_to_top(anchor_id: str = "top"):
     """
-    Render a floating scroll-to-top button at the bottom right of the page.
-    Uses JavaScript for smooth scrolling.
+    Affiche un bouton flottant pour remonter en haut de page.
+    Le bouton n'apparaît que si l'utilisateur a scrollé de plus de 300px.
 
     Args:
         anchor_id: ID de l'ancre cible (défaut: "top")
@@ -592,60 +592,17 @@ def render_scroll_to_top(anchor_id: str = "top"):
     import streamlit as st
     import time
 
-    # Clé unique pour cette page/ancre
+    # Clé unique pour cette page
     page_key = st.session_state.get("current_page", "default")
-    scroll_key = f"scroll_trigger_{page_key}_{anchor_id}"
+    unique_id = f"{page_key}_{anchor_id}_{int(time.time() * 1000)}"
 
-    # Initialiser l'état de déclenchement du scroll
-    if scroll_key not in st.session_state:
-        st.session_state[scroll_key] = False
-
-    # Créer l'ancre en haut de la page (invisible)
-    st.markdown(f'<div id="{anchor_id}"></div>', unsafe_allow_html=True)
-
-    # JavaScript pour effectuer le scroll (exécuté si le flag est True)
-    if st.session_state[scroll_key]:
-        # Réinitialiser le flag immédiatement
-        st.session_state[scroll_key] = False
-        # Exécuter le scroll via JavaScript
-        st.markdown(
-            """
-            <script>
-                (function() {
-                    window.scrollTo({top: 0, behavior: 'smooth'});
-                    // Alternative: scroll le conteneur principal de Streamlit
-                    const mainContainer = document.querySelector('.main .block-container');
-                    if (mainContainer) {
-                        mainContainer.scrollTo({top: 0, behavior: 'smooth'});
-                    }
-                    // Essayer aussi avec le body et html
-                    document.body.scrollTo({top: 0, behavior: 'smooth'});
-                    document.documentElement.scrollTo({top: 0, behavior: 'smooth'});
-                })();
-            </script>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Bouton en bas à droite
-    st.markdown("---")
-    cols = st.columns([6, 1])
-    with cols[1]:
-        if st.button(
-            "⬆️ Haut",
-            key=f"scroll_top_{page_key}_{anchor_id}_{int(time.time() * 1000)}",
-            use_container_width=True,
-            type="secondary",
-        ):
-            # Déclencher le scroll au prochain rerun
-            st.session_state[scroll_key] = True
-            st.rerun()
-
-    # Bouton flottant permanent en bas à droite avec JavaScript direct
+    # Script JavaScript directement dans la page Streamlit
+    # Utilise window.parent pour communiquer avec le parent si dans un iframe
     st.markdown(
-        """
+        f"""
         <style>
-        .scroll-to-top-floating {
+        /* Bouton scroll-to-top */
+        #scroll-btn-{unique_id} {{
             position: fixed;
             bottom: 30px;
             right: 30px;
@@ -656,31 +613,97 @@ def render_scroll_to_top(anchor_id: str = "top"):
             border: none;
             border-radius: 50%;
             cursor: pointer;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             font-size: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 9999;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .scroll-to-top-floating:hover {
+            z-index: 999999;
+            transition: all 0.3s ease;
+        }}
+        #scroll-btn-{unique_id}:hover {{
             transform: scale(1.1);
             box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-        }
-        .scroll-to-top-floating:active {
-            transform: scale(0.95);
-        }
+        }}
+        #scroll-btn-{unique_id}.visible {{
+            display: flex !important;
+        }}
         </style>
-        <button class="scroll-to-top-floating" onclick="
-            window.scrollTo({top: 0, behavior: 'smooth'});
-            document.body.scrollTo({top: 0, behavior: 'smooth'});
-            document.documentElement.scrollTo({top: 0, behavior: 'smooth'});
-            const main = document.querySelector('.main .block-container');
-            if (main) main.scrollTo({top: 0, behavior: 'smooth'});
-        " title="Haut de page">
-            ⬆️
-        </button>
+        
+        <button id="scroll-btn-{unique_id}" title="Remonter en haut de page">⬆️</button>
+        
+        <script>
+            (function() {{
+                const btn = document.getElementById('scroll-btn-{unique_id}');
+                if (!btn) return;
+                
+                // Fonction pour trouver le conteneur scrollable
+                function getScrollContainer() {{
+                    const selectors = [
+                        '.main .block-container',
+                        '[data-testid="stAppViewContainer"]',
+                        '[data-testid="stMain"]',
+                        '.stApp',
+                        'body'
+                    ];
+                    
+                    for (const selector of selectors) {{
+                        const el = document.querySelector(selector);
+                        if (el && (el.scrollHeight > el.clientHeight || selector === 'body')) {{
+                            return el;
+                        }}
+                    }}
+                    return window;
+                }}
+                
+                // Fonction pour remonter en haut
+                function scrollToTop() {{
+                    const container = getScrollContainer();
+                    if (container && container.scrollTo) {{
+                        container.scrollTo({{top: 0, behavior: 'smooth'}});
+                    }}
+                    window.scrollTo({{top: 0, behavior: 'smooth'}});
+                    document.documentElement.scrollTo({{top: 0, behavior: 'smooth'}});
+                    document.body.scrollTo({{top: 0, behavior: 'smooth'}});
+                }}
+                
+                // Afficher/masquer selon le scroll
+                function checkScroll() {{
+                    const container = getScrollContainer();
+                    let scrollTop = 0;
+                    
+                    if (container === window) {{
+                        scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                    }} else {{
+                        scrollTop = container.scrollTop;
+                    }}
+                    
+                    if (scrollTop > 300) {{
+                        btn.classList.add('visible');
+                    }} else {{
+                        btn.classList.remove('visible');
+                    }}
+                }}
+                
+                // Event listeners
+                btn.addEventListener('click', function(e) {{
+                    e.preventDefault();
+                    scrollToTop();
+                }});
+                
+                // Vérifier le scroll
+                const container = getScrollContainer();
+                if (container === window) {{
+                    window.addEventListener('scroll', checkScroll);
+                }} else {{
+                    container.addEventListener('scroll', checkScroll);
+                }}
+                
+                // Vérifier immédiatement et périodiquement
+                checkScroll();
+                setInterval(checkScroll, 500);
+            }})();
+        </script>
         """,
         unsafe_allow_html=True,
     )

@@ -6,7 +6,7 @@ Configuration Tab - Paramétrage de l'IA et configuration automatique.
 import pandas as pd
 import streamlit as st
 
-from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
+from modules.ai_manager import get_active_model_name, get_ai_provider
 from modules.analytics import detect_financial_profile, detect_recurring_payments
 from modules.db.categories import get_categories
 from modules.db.rules import add_learning_rule

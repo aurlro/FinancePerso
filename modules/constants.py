@@ -4,6 +4,7 @@ APP_VERSION = "5.5.0"
 # Feature flags
 USE_NOTIFICATIONS_V3 = True  # Active le système de notifications V3 par défaut
 USE_V5_5_INTERFACE = True    # Active la nouvelle interface V5.5 (light mode, design FinCouple)
+TEST_DASHBOARD_ENABLED = True  # Active la page Test_Dashboard V5.5 en production
 
 
 class SystemCategory:

@@ -6,7 +6,7 @@ Usage:
     from modules.ui.v5_5.components.welcome_card import WelcomeCard
     
     WelcomeCard.render(
-        on_primary=lambda: st.switch_page("pages/1_Opérations.py"),
+        on_primary=lambda: st.switch_page("pages/01_Import.py"),
         on_secondary=lambda: show_guide()
     )
 """

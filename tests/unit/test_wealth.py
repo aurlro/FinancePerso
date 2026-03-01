@@ -5,7 +5,7 @@ Test Unit: Wealth Manager (Phase 5)
 
 import pytest
 from datetime import date
-from src import WealthManager, RealEstateAsset, MortgageSchedule
+from modules.wealth import WealthManager, RealEstateAsset, MortgageSchedule
 
 
 class TestWealthManager:

@@ -199,7 +199,7 @@ def render_audit_section():
                     st.rerun()
             with col_global[1]:
                 if st.button("🧠 Intelligence → Règles", use_container_width=True, key="overlap_voir_intelligence"):
-                    st.switch_page("pages/4_Intelligence.py")
+                    st.switch_page("pages/03_Intelligence.py")
             
             st.divider()
 

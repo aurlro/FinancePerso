@@ -6,7 +6,7 @@ Explorer Launcher - Boutons et utilitaires pour lancer l'explorateur.
 import streamlit as st
 
 
-def launch_explorer(explorer_type: str, value: str, from_page: str = "3_Synthèse") -> None:
+def launch_explorer(explorer_type: str, value: str, from_page: str = "02_Dashboard") -> None:
     """
     Launch explorer with given parameters.
 
@@ -21,13 +21,13 @@ def launch_explorer(explorer_type: str, value: str, from_page: str = "3_Synthès
     st.session_state["_explorer_from"] = from_page
 
     # Navigate
-    st.switch_page("pages/8_Recherche.py")
+    st.switch_page("pages/07_Recherche.py")
 
 
 def render_explore_button(
     explorer_type: str,
     value: str,
-    from_page: str = "3_Synthèse",
+    from_page: str = "02_Dashboard",
     label: str | None = None,
     use_container_width: bool = False,
     button_type: str = "secondary",
@@ -65,7 +65,7 @@ def render_explore_button(
 
 
 def render_explore_link(
-    explorer_type: str, value: str, from_page: str = "3_Synthèse", label: str | None = None
+    explorer_type: str, value: str, from_page: str = "02_Dashboard", label: str | None = None
 ) -> None:
     """
     Render a link that launches the explorer.
@@ -87,7 +87,7 @@ def render_explore_link(
 
 
 def render_category_pill(
-    category: str, amount: float, count: int, emoji: str = "📂", from_page: str = "3_Synthèse"
+    category: str, amount: float, count: int, emoji: str = "📂", from_page: str = "02_Dashboard"
 ) -> None:
     """
     Render a clickable category pill/card with explore button.
@@ -125,7 +125,7 @@ def render_category_pill(
             )
 
 
-def render_tag_pill(tag: str, amount: float, count: int, from_page: str = "3_Synthèse") -> None:
+def render_tag_pill(tag: str, amount: float, count: int, from_page: str = "02_Dashboard") -> None:
     """
     Render a clickable tag pill/card with explore button.
 
@@ -156,7 +156,7 @@ def render_tag_pill(tag: str, amount: float, count: int, from_page: str = "3_Syn
             )
 
 
-def get_explorer_url(explorer_type: str, value: str, from_page: str = "3_Synthèse") -> str:
+def get_explorer_url(explorer_type: str, value: str, from_page: str = "02_Dashboard") -> str:
     """
     Get the URL for the explorer with given parameters.
 
@@ -171,7 +171,7 @@ def get_explorer_url(explorer_type: str, value: str, from_page: str = "3_Synthè
     return f"/Recherche?type={explorer_type}&value={value}&from={from_page}"
 
 
-def render_back_button(from_page: str = "3_Synthèse") -> None:
+def render_back_button(from_page: str = "02_Dashboard") -> None:
     """
     Render a back button that returns to the origin page.
 
@@ -179,11 +179,11 @@ def render_back_button(from_page: str = "3_Synthèse") -> None:
         from_page: Page to return to
     """
     page_names = {
-        "1_Opérations": "Opérations",
-        "3_Synthèse": "Synthèse",
-        "4_Intelligence": "Intelligence",
-        "7_Assistant": "Assistant",
-        "8_Recherche": "Recherche",
+        "01_Import": "Opérations",
+        "02_Dashboard": "Synthèse",
+        "03_Intelligence": "Intelligence",
+        "06_Assistant": "Assistant",
+        "07_Recherche": "Recherche",
         "app": "Accueil",
     }
 

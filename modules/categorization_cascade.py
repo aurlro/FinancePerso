@@ -239,7 +239,7 @@ class TransactionCategorizer:
         """Lazy load du provider cloud."""
         if self._cloud_provider is None and self.use_cloud_fallback:
             try:
-                from modules.ai_manager_v2 import get_ai_provider
+                from modules.ai_manager import get_ai_provider
                 self._cloud_provider = get_ai_provider()
             except Exception as e:
                 logger.warning(f"Could not load cloud AI: {e}")

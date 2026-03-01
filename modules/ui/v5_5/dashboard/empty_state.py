@@ -212,7 +212,7 @@ def _show_guide_modal() -> None:
         
         with col1:
             if st.button("🚀 Commencer l'import", use_container_width=True, type="primary"):
-                st.switch_page("pages/1_Opérations.py")
+                st.switch_page("pages/01_Import.py")
         
         with col2:
             if st.button("✅ Fermer", use_container_width=True):

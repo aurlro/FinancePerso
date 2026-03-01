@@ -95,7 +95,7 @@ def get_primary_action(state):
             "icon": "📥",
             "label": "Importer mon premier relevé",
             "description": "Commencez par ajouter vos transactions bancaires",
-            "page": "1_Opérations",
+            "page": "01_Import",
             "priority": "high",
             "action_type": "primary",
             "tab": "📥 Importation",
@@ -107,7 +107,7 @@ def get_primary_action(state):
             "icon": "🏷️",
             "label": "Catégoriser ({} en attente)".format(state["uncategorized_count"]),
             "description": "Validez vos transactions non catégorisées",
-            "page": "1_Opérations",
+            "page": "01_Import",
             "priority": "high",
             "action_type": "primary",
             "tab": "✅ Validation",
@@ -119,7 +119,7 @@ def get_primary_action(state):
             "icon": "⚡",
             "label": "Créer une règle auto",
             "description": "Automatisez la catégorisation de vos dépenses",
-            "page": "4_Intelligence",
+            "page": "03_Intelligence",
             "priority": "medium",
             "action_type": "primary",
             "tab": "📋 Règles",
@@ -131,7 +131,7 @@ def get_primary_action(state):
             "icon": "🎯",
             "label": "Définir un budget",
             "description": "Suivez vos limites de dépenses par catégorie",
-            "page": "4_Intelligence",
+            "page": "03_Intelligence",
             "priority": "medium",
             "action_type": "primary",
             "tab": "🎯 Budgets",
@@ -144,7 +144,7 @@ def get_primary_action(state):
         "description": "{} transactions • {} règles • {} budgets".format(
             state["tx_count"], state["rules_count"], state["budgets_count"]
         ),
-        "page": "3_Synthèse",
+        "page": "02_Dashboard",
         "priority": "normal",
         "action_type": "secondary",
     }
@@ -157,36 +157,36 @@ def get_secondary_actions(state, primary_page):
     actions = []
 
     # Suggest adding rules if has transactions but few/no rules
-    if state["has_transactions"] and state["rules_count"] < 3 and primary_page != "4_Intelligence":
+    if state["has_transactions"] and state["rules_count"] < 3 and primary_page != "03_Intelligence":
         actions.append(
             {
                 "icon": "⚡",
                 "label": "Règles auto",
-                "page": "4_Intelligence",
+                "page": "03_Intelligence",
                 "help": "Créer des règles de catégorisation",
                 "tab": "📋 Règles",
             }
         )
 
     # Suggest budgets if has transactions but no budgets
-    if state["has_transactions"] and not state["has_budgets"] and primary_page != "4_Intelligence":
+    if state["has_transactions"] and not state["has_budgets"] and primary_page != "03_Intelligence":
         actions.append(
             {
                 "icon": "🎯",
                 "label": "Budgets",
-                "page": "4_Intelligence",
+                "page": "03_Intelligence",
                 "help": "Définir des limites de dépenses",
                 "tab": "🎯 Budgets",
             }
         )
 
     # Suggest import if has some transactions
-    if state["has_transactions"] and primary_page != "1_Opérations":
+    if state["has_transactions"] and primary_page != "01_Import":
         actions.append(
             {
                 "icon": "📥",
                 "label": "Importer",
-                "page": "1_Opérations",
+                "page": "01_Import",
                 "help": "Ajouter de nouvelles transactions",
                 "tab": "📥 Importation",
             }
@@ -196,25 +196,25 @@ def get_secondary_actions(state, primary_page):
     if (
         state["has_transactions"]
         and state["uncategorized_count"] > 0
-        and primary_page != "1_Opérations"
+        and primary_page != "01_Import"
     ):
         actions.append(
             {
                 "icon": "✅",
                 "label": "Valider",
-                "page": "1_Opérations",
+                "page": "01_Import",
                 "help": "{} à catégoriser".format(state["uncategorized_count"]),
                 "tab": "✅ Validation",
             }
         )
 
     # Suggest AI assistant
-    if state["has_transactions"] and primary_page != "7_Assistant":
+    if state["has_transactions"] and primary_page != "06_Assistant":
         actions.append(
             {
                 "icon": "🤖",
                 "label": "Assistant IA",
-                "page": "7_Assistant",
+                "page": "06_Assistant",
                 "help": "Poser une question sur vos finances",
             }
         )

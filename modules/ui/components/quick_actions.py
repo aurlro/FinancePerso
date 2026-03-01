@@ -9,7 +9,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from modules.ai_manager_v2 import is_ai_available
+from modules.ai_manager import is_ai_available
 from modules.categorization import categorize_transaction
 from modules.db.categories import add_category, get_categories
 from modules.db.members import add_member, get_members
@@ -125,7 +125,7 @@ def render_quick_validation_popover():
                 key="button_110",
             ):
                 st.session_state["active_op_tab"] = "✅ Validation"
-                st.switch_page("pages/1_Opérations.py")
+                st.switch_page("pages/01_Import.py")
 
         with col2:
             if pending_count > 5:
@@ -248,15 +248,15 @@ def render_quick_config_popover():
         with col1:
             if st.button("🧠 Intelligence", use_container_width=True, key="jump_rules"):
                 st.session_state["intel_active_tab"] = "📋 Règles"
-                st.switch_page("pages/4_Intelligence.py")
+                st.switch_page("pages/03_Intelligence.py")
         with col2:
             if st.button("💰 Budgets", use_container_width=True, key="jump_budgets"):
                 st.session_state["intel_active_tab"] = "🎯 Budgets"
-                st.switch_page("pages/4_Intelligence.py")
+                st.switch_page("pages/03_Intelligence.py")
         with col3:
             if st.button("🔔 Alertes", use_container_width=True, key="jump_notifs"):
                 st.session_state["config_jump_to"] = "🤖 IA & Services"
-                st.switch_page("pages/9_Configuration.py")
+                st.switch_page("pages/08_Configuration.py")
 
 
 def render_quick_import_popover():
@@ -426,7 +426,7 @@ def render_quick_stats_popover():
         st.divider()
         if st.button("Détails par catégorie →", use_container_width=True, key="jump_explorer"):
             st.session_state["research_active_tab"] = "📂 Explorateur"
-            st.switch_page("pages/8_Recherche.py")
+            st.switch_page("pages/07_Recherche.py")
 
 
 def render_quick_actions_grid():

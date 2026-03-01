@@ -4,7 +4,7 @@ Test Unit: Data Cleaning (Phase 2)
 """
 
 import pytest
-from src import clean_transaction_label, clean_merchant_name
+from modules.wealth import clean_transaction_label, clean_merchant_name
 
 
 class TestDataCleaning:
@@ -23,7 +23,7 @@ class TestDataCleaning:
     
     def test_extract_card_suffix(self):
         """Test: Extraction suffixe CB"""
-        from src.data_cleaning import extract_card_suffix
+        from modules.wealth.data_cleaning import extract_card_suffix
         
         result = extract_card_suffix("CB*1234 AMAZON")
         assert result == "1234"

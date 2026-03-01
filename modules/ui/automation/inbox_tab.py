@@ -14,7 +14,7 @@ import streamlit as st
 from datetime import datetime
 
 from modules.ai.smart_suggestions import get_smart_suggestions, Suggestion
-from modules.analytics_v2 import detect_recurring_payments_v2
+from modules.recurring_detector import detect_recurring_payments_v2
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories_with_emojis
 from modules.db.rules import get_learning_rules

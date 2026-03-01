@@ -23,7 +23,7 @@ if encryption.is_enabled():
 else:
     logger.warning("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
 
-from modules.ui import load_css, card_kpi, render_scroll_to_top, display_flash_messages
+from modules.ui import load_css, card_kpi, display_flash_messages
 from modules.ui.feedback import toast_success, show_success
 from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle, get_theme
 from modules.db.migrations import init_db
@@ -185,9 +185,6 @@ if "daily_login_recorded" not in st.session_state:
 render_notification_badge_v3(notification_service_v3)
 render_streak_badge()
 
-# Toggle de thème
-render_theme_toggle()
-
 # Afficher les messages flash en attente
 display_flash_messages()
 
@@ -240,7 +237,7 @@ else:
             subtitle="Bienvenue dans votre espace financier",
             message="Commencez par importer vos relevés bancaires pour visualiser vos finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
             primary_action_text="📥 Importer mes relevés",
-            primary_action_link="pages/1_Opérations.py",
+            primary_action_link="pages/01_Import.py",
             secondary_action_text="📖 Voir le guide",
             secondary_action_link=None,
             show_steps=True,
@@ -285,10 +282,10 @@ else:
                 key="btn_new_operations",
             ):
                 toast_success("Ouverture de la page Opérations...", icon="📥")
-                st.switch_page("pages/1_Opérations.py")
+                st.switch_page("pages/01_Import.py")
             if st.button("📊 Voir la Synthèse", use_container_width=True, key="btn_view_synthesis"):
                 toast_success("Ouverture du tableau de bord...", icon="📊")
-                st.switch_page("pages/3_Synthèse.py")
+                st.switch_page("pages/02_Dashboard.py")
 
         st.divider()
 
@@ -303,16 +300,25 @@ else:
             # 🆕 SMART ACTIONS - remplace le bouton "Revoir le guide" inutile
             render_smart_actions()
 
+    # Navigation vers Test_Dashboard V5.5 (Beta)
+    from modules.constants import TEST_DASHBOARD_ENABLED
+    if TEST_DASHBOARD_ENABLED:
+        st.sidebar.divider()
+        st.sidebar.markdown("### 🆕 Nouveau")
+        if st.sidebar.button(
+            "✨ Tester le nouveau dashboard",
+            use_container_width=True,
+            type="secondary",
+            help="Découvrez la nouvelle interface V5.5 avec design FinCouple",
+        ):
+            st.switch_page("pages/02_Dashboard.py")
+    
     st.sidebar.success("✅ Application Initialisée")
 
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
 
     render_app_info()
-
-    # Scroll to top button
-    render_scroll_to_top()
-
 
 
 

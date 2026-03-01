@@ -33,6 +33,11 @@ from .components import (
     DashboardHeader,
     get_current_month_name,
     get_last_12_months,
+    charts,
+    filters,
+    transactions,
+    SavingsGoalsWidget,
+    render_mini_savings_summary,
 )
 
 # Welcome screen
@@ -50,6 +55,13 @@ from .dashboard import (
     calculate_kpis,
     render_dashboard_empty,
 )
+
+# Pages (controllers)
+try:
+    from .pages import DashboardController
+    _PAGES_AVAILABLE = True
+except ImportError:
+    _PAGES_AVAILABLE = False
 
 __all__ = [
     # Theme
@@ -75,4 +87,6 @@ __all__ = [
     "render_kpi_grid",
     "calculate_kpis",
     "render_dashboard_empty",
+    # Pages
+    "DashboardController",
 ]

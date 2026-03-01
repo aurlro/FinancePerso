@@ -78,7 +78,7 @@ def render_dashboard_tab(
                     "📥 Importer des données",
                     lambda: (
                         st.session_state.update({"active_op_tab": "📥 Importation"}),
-                        st.switch_page("pages/1_Opérations.py"),
+                        st.switch_page("pages/01_Import.py"),
                     ),
                 ),
             ],

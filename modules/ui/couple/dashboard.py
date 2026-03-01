@@ -121,7 +121,7 @@ def render_setup_prompt():
         st.write(f"{icon} {step_info['label']}")
     
     st.divider()
-    st.page_link("pages/9_Configuration.py", label="🔧 Aller à la Configuration", icon="⚙️")
+    st.page_link("pages/08_Configuration.py", label="🔧 Aller à la Configuration", icon="⚙️")
 
 
 def render_global_summary(summary: dict):

@@ -5,8 +5,8 @@ Scénario: Import → Nettoyage → Catégorisation → Stockage
 """
 
 import pytest
-from src import clean_transaction_label
-from src import SubscriptionDetector
+from modules.wealth import clean_transaction_label
+from modules.wealth import SubscriptionDetector
 from modules.privacy import GDPRManager
 
 

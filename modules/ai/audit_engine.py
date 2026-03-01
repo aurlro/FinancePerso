@@ -8,7 +8,7 @@ from typing import Any
 
 import pandas as pd
 
-from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
+from modules.ai_manager import get_active_model_name, get_ai_provider
 from modules.categorization import clean_label
 from modules.logger import logger
 

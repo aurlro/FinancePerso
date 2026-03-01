@@ -77,7 +77,7 @@ def render_notification_badge(
         
         # Bouton vers centre complet
         if Button.secondary("Voir tout", key=f"{key}_see_all", use_container_width=True):
-            st.switch_page("pages/99_Système.py")
+            st.switch_page("pages/21_Systeme.py")
 
 
 def _render_mini_notification(

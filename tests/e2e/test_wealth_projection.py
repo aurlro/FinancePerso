@@ -5,8 +5,8 @@ Scénario: Actifs → Monte Carlo → Visualisation
 """
 
 import pytest
-from src import WealthManager, project_wealth_evolution
-from src.math_engine import ScenarioType
+from modules.wealth import WealthManager, project_wealth_evolution
+from modules.wealth.math_engine import ScenarioType
 
 
 class TestWealthProjection:

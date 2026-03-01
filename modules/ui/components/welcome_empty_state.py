@@ -12,7 +12,7 @@ Usage:
         title="👋 Bonjour !",
         subtitle="Bienvenue dans votre espace financier",
         message="Commencez par importer vos relevés bancaires pour visualiser vos finances.",
-        primary_action=("Importer mes relevés", "pages/1_Opérations.py"),
+        primary_action=("Importer mes relevés", "pages/01_Import.py"),
         secondary_action=("Voir le guide", "docs/USER_GUIDE.md"),
         icon="💰"
     )
@@ -452,7 +452,7 @@ def welcome_empty_state(
         welcome_empty_state(
             title="👋 Bonjour !",
             message="Importez vos relevés pour commencer.",
-            primary_action=("Importer", "pages/1_Opérations.py"),
+            primary_action=("Importer", "pages/01_Import.py"),
         )
     """
     component = WelcomeEmptyState()

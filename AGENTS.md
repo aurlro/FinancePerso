@@ -468,79 +468,281 @@ with st.form("mon_form"):
 
 ---
 
-## Skills & Agents disponibles
+## Skills, Agents & MCP - Architecture d'Orchestration
 
-Le projet utilise une architecture **Skills + Agents** pour garantir la qualité et la cohérence.
+Le projet utilise une architecture **5 couches** pour garantir qualité, cohérence et efficacité :
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  COUCHE 1: OUTILS NATIFS (ReadFile, Shell, Grep...)            │
+│  → Actions simples et directes                                 │
+├─────────────────────────────────────────────────────────────────┤
+│  COUCHE 2: MCP SERVERS (sqlite, filesystem, playwright...)     │
+│  → Capacités spécialisées avec état persistant                 │
+├─────────────────────────────────────────────────────────────────┤
+│  COUCHE 3: SKILLS (consistency-keeper, financeperso-...)       │
+│  → Connaissances contextuelles et conventions                  │
+├─────────────────────────────────────────────────────────────────┤
+│  COUCHE 4: AGENT-000 (Orchestrator)                            │
+│  → Routeur central - OBLIGATOIRE avant agents                  │
+├─────────────────────────────────────────────────────────────────┤
+│  COUCHE 5: SOUS-AGENTS (AGENT-001 à 021)                       │
+│  → Exécution spécialisée par domaine                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Documentation détaillée:**
+- Architecture complète: `.kimi/ARCHITECTURE_ORCHESTRATION.md`
+- Mapping MCP ↔ Agents: `.kimi/MCP_AGENTS_MAPPING.md`
+- Templates de prompts: `.kimi/PROMPT_TEMPLATES.md`
+- Démonstration: `.kimi/DEMO_ARCHITECTURE.md`
+
+---
+
+### MCP Servers (Extensions)
+
+| MCP | Capacité | Agents principaux | Usage typique |
+|-----|----------|-------------------|---------------|
+| `sqlite` | Requêtes SQL sur `finance.db` | AGENT-001, 004, 006, 014 | Analytics, debug DB, KPIs |
+| `filesystem` | Exploration fichiers avancée | AGENT-009, 021 | Lister composants, explorer docs |
+| `playwright` | Tests navigateur, screenshots | AGENT-006, 010, 012 | Test UI, validation visuelle |
+| `github` | Issues, PRs, repo | AGENT-003, 013 | Gestion tickets, releases |
+| `fetch` | Requêtes HTTP/API | AGENT-007, 018 | APIs IA, Open Banking |
+| `context7` | Documentation libraries | AGENT-005, 007 | Doc pandas, streamlit, etc. |
+
+**Configuration:** `~/.config/kimi/mcp.json`
+
+---
 
 ### Skills (Globaux)
 
 | Skill | Rôle | Quand l'utiliser |
 |-------|------|------------------|
-| `consistency-keeper` | **Gardien de la cohérence** - vérifie DRY, doc sync, rangement, performance | **Toujours invoquer en premier** avant toute modification significative |
-| `skills-orchestrator` | Coordination des skills entre eux | Quand plusieurs skills doivent collaborer |
-| `project-auditor` | Audit global du projet (sécurité, structure) | Avant déploiement ou nettoyage |
-| `python-app-auditor` | Audit technique Python | Pour vérifier la qualité du code Python |
-| `streamlit-app-auditor` | Audit fonctionnel Streamlit | Pour tester l'app en conditions réelles |
-| `ux-product-designer` | Design et UX | Pour améliorer l'expérience utilisateur |
-| `financeperso-specific` | **Conventions spécifiques FinancePerso** | TOUJOURS combiné avec un skill technique |
+| `consistency-keeper` | **Gardien de la cohérence** - vérifie DRY, doc sync, rangement, performance | **TOUJOURS en 1er et dernier** |
+| `skills-orchestrator` | Coordination des skills entre eux | Quand plusieurs skills collaborent |
+| `project-auditor` | Audit global (sécurité, structure) | Avant déploiement |
+| `python-app-auditor` | Audit technique Python | Audit code, refactoring |
+| `streamlit-app-auditor` | Audit fonctionnel Streamlit | Test app en conditions réelles |
+| `ux-product-designer` | Design et UX | Amélioration interface |
+| `financeperso-specific` | **Conventions FinancePerso** | **TOUJOURS combiné** avec skill technique |
+
+**Règles:**
+1. `consistency-keeper` = **1er et dernier** de chaque workflow
+2. `financeperso-specific` = **jamais seul**, toujours combiné
+3. `skills-orchestrator` = si plusieurs skills en parallèle
+
+---
 
 ### Agents (Spécialisés FinancePerso)
 
-**Orchestrateur central:** `AGENT-000` - Coordonne tous les agents spécialisés
+**⚠️ OBLIGATOIRE:** Toujours passer par `AGENT-000` avant tout agent spécialisé !
+
+**Orchestrateur:**
+| Agent | Rôle |
+|-------|------|
+| `AGENT-000` | **Orchestrateur** - Route vers agents spécialisés, coordonne dépendances |
 
 **Agents par domaine:**
-| Agent | Domaine | Fichier |
-|-------|---------|---------|
-| AGENT-001 | Database Architect | `.agents/subagents/AGENT-001-Database-Architect.md` |
-| AGENT-004 | Transaction Engine | `.agents/subagents/AGENT-004-Transaction-Engine-Specialist.md` |
-| AGENT-005 | Categorization AI | `.agents/subagents/AGENT-005-Categorization-AI-Specialist.md` |
-| AGENT-006 | Analytics Dashboard | `.agents/subagents/AGENT-006-Analytics-Dashboard-Engineer.md` |
-| AGENT-009 | UI Component Architect | `.agents/subagents/AGENT-009-UI-Component-Architect.md` |
-| AGENT-012 | Test Automation | `.agents/subagents/AGENT-012-Test-Automation-Engineer.md` |
-| *(+ 13 autres agents)* | | Voir `.agents/subagents/` |
+| Agent | Domaine | MCP utiles | Fichier |
+|-------|---------|------------|---------|
+| AGENT-001 | Database Architect | sqlite, filesystem | `.agents/subagents/AGENT-001*.md` |
+| AGENT-002 | Security Guardian | github, filesystem | `.agents/subagents/AGENT-002*.md` |
+| AGENT-003 | DevOps Engineer | filesystem, shell | `.agents/subagents/AGENT-003*.md` |
+| AGENT-004 | Transaction Engine | **sqlite** | `.agents/subagents/AGENT-004*.md` |
+| AGENT-005 | Categorization AI | sqlite, context7 | `.agents/subagents/AGENT-005*.md` |
+| AGENT-006 | Analytics Dashboard | **sqlite, playwright** | `.agents/subagents/AGENT-006*.md` |
+| AGENT-007 | AI Provider Manager | fetch, context7 | `.agents/subagents/AGENT-007*.md` |
+| AGENT-008 | AI Features Specialist | sqlite, fetch | `.agents/subagents/AGENT-008*.md` |
+| AGENT-009 | UI Component Architect | **filesystem, playwright** | `.agents/subagents/AGENT-009*.md` |
+| AGENT-010 | Navigation Experience | **playwright** | `.agents/subagents/AGENT-010*.md` |
+| AGENT-011 | Data Validation | sqlite | `.agents/subagents/AGENT-011*.md` |
+| AGENT-012 | Test Automation | **playwright, shell** | `.agents/subagents/AGENT-012*.md` |
+| AGENT-013 | QA Integration | **playwright, github** | `.agents/subagents/AGENT-013*.md` |
+| AGENT-014 | Budget Manager | sqlite | `.agents/subagents/AGENT-014*.md` |
+| AGENT-015 | Member Management | sqlite | `.agents/subagents/AGENT-015*.md` |
+| AGENT-016 | Notification System | sqlite | `.agents/subagents/AGENT-016*.md` |
+| AGENT-017 | Data Pipeline | sqlite, filesystem | `.agents/subagents/AGENT-017*.md` |
+| AGENT-018 | Open Banking API | **fetch** | `.agents/subagents/AGENT-018*.md` |
+| AGENT-019 | Performance Engineer | **playwright, sqlite** | `.agents/subagents/AGENT-019*.md` |
+| AGENT-020 | Accessibility Specialist | **playwright** | `.agents/subagents/AGENT-020*.md` |
+| AGENT-021 | Technical Writer | filesystem | `.agents/subagents/AGENT-021*.md` |
 
-### Coordination Skills ↔ Agents
+---
 
-**Document de référence:** `.agents/skills/SKILLS_AGENTS_COORDINATION.md`
-
-### Workflow recommandé
+### Workflow Standard (6 phases)
 
 ```
-1. consistency-keeper
-   └── Vérifie la cohérence actuelle du projet
-   └── Identifie les patterns existants à réutiliser
-
-2. AGENT-000 (Orchestrator)
-   └── Détermine quel(s) agent(s) est/sont nécessaire(s)
-   └── Coordonne l'exécution
-
-3. [Skill spécifique + financeperso-specific] + [Agent spécialisé]
-   └── Implémente la feature avec conventions projet
-
-4. consistency-keeper (validation)
-   └── Vérifie DRY, doc sync, rangement
-
-5. AGENT-012/013 (Tests/QA)
-   └── Validation finale
+┌─────────────────────────────────────────────────────────────────┐
+│ 1. ANALYSE (consistency-keeper)                                │
+│    └── Check cohérence actuelle                                │
+│    └── Identifie patterns existants à réutiliser               │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 2. AUDIT ([Skill] + financeperso-specific)                     │
+│    └── python-app-auditor: qualité code                        │
+│    └── streamlit-app-auditor: test runtime                     │
+│    └── ux-product-designer: design/UX                          │
+│    └── + conventions FinancePerso                              │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 3. ROUTAGE (AGENT-000)                                         │
+│    └── Détermine agent(s) spécialisé(s)                        │
+│    └── Planifie ordre d'exécution                              │
+│    └── Gère dépendances                                        │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 4. IMPLÉMENTATION ([Agent] + MCP)                              │
+│    └── Agent utilise MCP appropriés:                           │
+│        • sqlite → requêtes DB                                  │
+│        • filesystem → exploration fichiers                     │
+│        • playwright → test UI/screenshots                      │
+│        • fetch → APIs externes                                 │
+│        • github → gestion repo                                 │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 5. VALIDATION (consistency-keeper)                             │
+│    └── Vérifie DRY respecté                                    │
+│    └── Vérifie doc synchronisée                                │
+│    └── Vérifie rangement fichiers                              │
+│    └── Vérifie performance                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ 6. TESTS (AGENT-012/013)                                       │
+│    └── Tests unitaires                                         │
+│    └── Tests intégration                                       │
+│    └── Tests E2E (playwright)                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**⚠️ Règles importantes:**
-- **Toujours** invoquer `consistency-keeper` en premier
-- **Toujours** passer par `AGENT-000` avant un agent spécialisé
-- **Toujours** combiner `financeperso-specific` avec un skill technique
+---
+
+### Workflow par type de tâche
+
+#### Nouvelle Feature (30-60 min)
+```
+consistency-keeper → python-app-auditor+financeperso-specific 
+→ AGENT-000 → [Agent] → consistency-keeper → AGENT-012
+```
+
+#### Bug Fix (10-20 min)
+```
+AGENT-000 → [Agent] → python-app-auditor quick-check → AGENT-012
+```
+
+#### Hotfix Critique (5-10 min)
+```
+[Agent] → Fix minimal → Tests rapides → (consistency-keeper après)
+```
+
+#### Refactoring (45-90 min)
+```
+consistency-keeper --baseline → Plan → AGENT-000 coordonne 
+→ Étapes migration → consistency-keeper --compare → Tests
+```
+
+#### UI Maquette V5.5 (30-45 min)
+```
+consistency-keeper+ux-product-designer → streamlit-app-auditor 
+→ AGENT-000 → AGENT-009 → AGENT-006 → playwright validation
+```
+
+#### Analytics/KPI (20-30 min)
+```
+consistency-keeper → AGENT-000 → AGENT-001(sqlite) 
+→ AGENT-006 → AGENT-012
+```
+
+---
+
+### Exemples de prompts
+
+**Feature complète:**
+```
+"consistency-keeper analyse les patterns existants, puis 
+ python-app-auditor+financeperso-specific auditent le code. 
+ AGENT-000 route vers AGENT-009 pour créer un composant BudgetAlert. 
+ AGENT-006 intègre avec sqlite pour les données. 
+ consistency-keeper valide à la fin."
+```
+
+**Bug fix:**
+```
+"AGENT-000: Bug dans la catégorisation, route vers AGENT-005. 
+ Utilise MCP sqlite pour debug les transactions concernées. 
+ python-app-auditor vérifie pas d'impact négatif."
+```
+
+**UI maquette:**
+```
+"Implémente maquette V5.5: consistency-keeper+ux-product-designer 
+ analysent, AGENT-000 coordonne AGENT-009. 
+ Validation avec streamlit-app-auditor+playwright."
+```
+
+---
 
 ### Checklist Consistency Keeper
 
 Avant de finaliser une tâche, vérifier :
 
-- [ ] **DRY** - Pas de code dupliqué, réutilisation des composants existants
-- [ ] **Doc Sync** - AGENTS.md, README.md, CHANGELOG.md mis à jour si nécessaire
+- [ ] **DRY** - Pas de code dupliqué, composants réutilisés
+- [ ] **Doc Sync** - AGENTS.md, README.md, CHANGELOG.md à jour
 - [ ] **Rangement** - Fichiers au bon endroit, pas d'orphelins
-- [ ] **Performance** - Pas de requêtes inutiles, cache utilisé
+- [ ] **Performance** - Cache utilisé, pas de requêtes N+1
+- [ ] **MCP** - Utilisés efficacement (pas de `cat` quand `sqlite/read_query` existe)
+
+### Anti-patterns à éviter
+
+❌ **Ne jamais:**
+- Appeler un agent spécialisé sans passer par AGENT-000
+- Utiliser `Shell` pour `cat fichier` quand `filesystem/read_file` existe
+- Faire des requêtes SQL via `Shell(sqlite3...)` quand `sqlite/read_query` existe
+- Lancer consistency-keeper seul (sans skill technique combiné)
+- Oublier financeperso-specific sur du code FinancePerso
+
+✅ **Toujours:**
+- Passer par AGENT-000 avant tout agent spécialisé
+- Utiliser MCP quand disponible pour la capacité
+- Combiner financeperso-specific avec skill technique
+- Débuter et terminer par consistency-keeper
 
 ---
 
 ## Historique des changements majeurs (Consistency Keeper)
+
+### 2026-03-01 - Architecture d'Orchestration complète
+**Nouvelle organisation 5 couches: Outils → MCP → Skills → Agents → Sous-Agents**
+
+**Documentation créée:**
+- ✅ `.kimi/ARCHITECTURE_ORCHESTRATION.md` - Architecture 5 couches complète
+- ✅ `.kimi/MCP_AGENTS_MAPPING.md` - Mapping MCP ↔ Agents
+- ✅ `.kimi/PROMPT_TEMPLATES.md` - Templates de prompts par type de tâche
+- ✅ `.kimi/DEMO_ARCHITECTURE.md` - Démonstration sur feature réelle
+
+**MCP Servers configurés:**
+- ✅ `sqlite` - Requêtes SQL directes sur `Data/finance.db`
+- ✅ `filesystem` - Exploration fichiers avancée
+- ✅ `fetch` - Requêtes HTTP/API
+- ✅ Configuration: `~/.config/kimi/mcp.json`
+
+**Workflow standardisé (6 phases):**
+1. consistency-keeper (analyse)
+2. Skills techniques + financeperso-specific (audit)
+3. AGENT-000 (routage)
+4. Agent spécialisé + MCP (implémentation)
+5. consistency-keeper (validation)
+6. AGENT-012/013 (tests)
+
+**Règles établies:**
+- AGENT-000 OBLIGATOIRE avant tout agent spécialisé
+- consistency-keeper en 1er et dernier
+- financeperso-specific TOUJOURS combiné
+- MCP préférés aux outils natifs quand pertinent
 
 ### 2026-03-01 - Implémentation V5.5 (Maquettes FinCouple)
 **Nouvelle interface light mode avec design épuré**
@@ -600,6 +802,36 @@ Avant de finaliser une tâche, vérifier :
 - ✅ Fusion des deux implémentations dans `modules/db/connection.py`
 - ✅ API cohérente avec paramètre `allowed` optionnel
 
+### 2026-03-01 - Page Test_Dashboard V5.5 (Phase 1 & 2)
+**Migration du bac à sable vers production**
+
+**Phase 1 - Fondations:**
+- ✅ Création `modules/ui/v5_5/pages/` (controllers)
+- ✅ `dashboard_controller.py` - Logique métier centralisée
+- ✅ Feature flag `TEST_DASHBOARD_ENABLED` dans constants.py
+- ✅ Structure modulaire prête pour production
+
+**Phase 2 - Core Dashboard:**
+- ✅ `pages/Test_Dashboard.py` - Page production complète
+- ✅ Détection auto données (welcome ↔ dashboard)
+- ✅ Mode démo avec données fictives
+- ✅ Navigation depuis app.py ("✨ Tester le nouveau dashboard")
+- ✅ Intégration thème V5.5, notifications V3
+- ✅ Gestion erreurs et retry
+
+**URLs:**
+- Production: `http://localhost:8501/Test_Dashboard`
+- Bac à sable: `http://localhost:8501/99_Test_Dashboard` (legacy)
+
+**Architecture controller:**
+```python
+DashboardController(
+    user_name="Alex",
+    test_mode="auto",  # auto|dashboard|welcome
+    force_view=False
+)
+```
+
 ---
 
 ## Ressources utiles
@@ -612,4 +844,54 @@ Avant de finaliser une tâche, vérifier :
 
 ---
 
-Dernière mise à jour : 2026-03-01 (v5.5.0) - Implémentation V5.5 (Maquettes FinCouple)
+### 2026-03-01 - Dashboard V5.5 Phase 3 (Feature Parity)
+**Ajout des fonctionnalités manquantes pour parité avec dashboard legacy**
+
+**Nouveaux composants:**
+- ✅ `DonutChart` - Graphique donut avec couleurs par catégorie
+- ✅ `TransactionList` - Liste avec icônes par catégorie (25 catégories)
+- ✅ `SavingsGoalsWidget` - Objectifs d'épargne
+- ✅ `render_period_filter` - Filtres de période
+- ✅ `render_couple_summary` - Vue couple
+
+**Structure:**
+```
+modules/ui/v5_5/components/
+├── charts/donut.py          ✅
+├── filters/period_filter.py ✅
+├── transactions/            ✅
+└── savings_goals.py         ✅
+```
+
+### 2026-03-01 - Dashboard V5.5 Phase 4 (Tests & Intégration)
+**Préparation au remplacement du dashboard legacy**
+
+**Tests créés:**
+- `tests/v5_5/test_components.py` - 13 tests unitaires
+- `tests/v5_5/test_kpi_calculations.py` - 8 tests de calculs
+- `tests/e2e/test_dashboard_beta.py` - Tests E2E Playwright
+
+**Outils de migration:**
+- `scripts/migrate_to_v5_5.py` - Script avec --check / --apply / --rollback
+- `docs/MIGRATION_V5_5.md` - Guide de migration complet
+
+**Validation:** 21/21 tests passent ✅
+
+### 2026-03-01 - MIGRATION TERMINÉE ✅
+**Dashboard V5.5 en production**
+
+**Migration exécutée:**
+- ✅ `02_Dashboard.py` remplacé par version V5.5 (8,302 octets)
+- ✅ Sauvegarde créée: `02_Dashboard_backup.py`
+- ✅ `Dashboard_Beta.py` → `Dashboard_Beta.deprecated`
+- ✅ `99_Test_Dashboard.py` supprimé
+- ✅ Application fonctionnelle sur http://localhost:8501/Dashboard
+
+**Nouveau dashboard actif:**
+- URL: `http://localhost:8501/Dashboard`
+- Design: Light mode FinCouple
+- Features: 4 KPIs, Donut chart, Transactions, Objectifs épargne
+
+---
+
+Dernière mise à jour : 2026-03-01 (v5.5.5) - MIGRATION V5.5 TERMINÉE 🎉

@@ -5,7 +5,7 @@ Test Unit: Subscription Engine (Phase 3)
 
 import pytest
 from datetime import date
-from src import Subscription, SubscriptionDetector, SubscriptionStatus
+from modules.wealth import Subscription, SubscriptionDetector, SubscriptionStatus
 
 
 class TestSubscriptionEngine:
@@ -30,7 +30,7 @@ class TestSubscriptionEngine:
     
     def test_remaining_budget_calculation(self):
         """Test: Calcul Reste à Vivre"""
-        from src import calculate_remaining_budget
+        from modules.wealth import calculate_remaining_budget
         from datetime import datetime, timedelta
         
         # Créer un abonnement avec date future

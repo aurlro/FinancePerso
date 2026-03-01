@@ -19,6 +19,7 @@ from modules.db.transactions import get_transactions_count
 def render_welcome_screen(
     user_name: Optional[str] = None,
     redirect_to_dashboard: bool = True,
+    dashboard_page: str = "pages/02_Dashboard.py",
 ) -> None:
     """Affiche l'écran d'accueil ou redirige vers le dashboard.
     
@@ -30,12 +31,19 @@ def render_welcome_screen(
         user_name: Nom de l'utilisateur (affiché dans le titre)
         redirect_to_dashboard: Si True, redirige automatiquement vers 
                               le dashboard quand des données existent
+        dashboard_page: Page de destination (défaut: 02_Dashboard.py)
     
     Usage:
         # Dans app.py ou page d'accueil
         from modules.ui.v5_5.welcome import render_welcome_screen
         
         render_welcome_screen(user_name="Alex")
+        
+        # Pour rediriger vers Test_Dashboard:
+        render_welcome_screen(
+            user_name="Alex", 
+            dashboard_page="pages/Test_Dashboard.py"
+        )
     """
     
     # Vérifier si l'utilisateur a des transactions
@@ -49,12 +57,12 @@ def render_welcome_screen(
     # Si des données existent et redirection activée
     if transaction_count > 0 and redirect_to_dashboard:
         # Rediriger vers le dashboard
-        st.switch_page("pages/3_Synthèse.py")
+        st.switch_page(dashboard_page)
         return
     
     # Si des données existent mais pas de redirection
     if transaction_count > 0:
-        st.info("📊 Vous avez déjà des transactions. [Allez au dashboard](pages/3_Synthèse.py)")
+        st.info(f"📊 Vous avez déjà des transactions. [Allez au dashboard]({dashboard_page})")
         return
     
     # Afficher le WelcomeCard
@@ -66,12 +74,12 @@ def render_welcome_screen(
 
 def _navigate_to_import() -> None:
     """Navigue vers la page d'import."""
-    st.switch_page("pages/1_Opérations.py")
+    st.switch_page("pages/01_Import.py")
 
 
 def _navigate_to_dashboard() -> None:
     """Navigue vers le dashboard."""
-    st.switch_page("pages/3_Synthèse.py")
+    st.switch_page("pages/02_Dashboard.py")
 
 
 def has_transactions() -> bool:

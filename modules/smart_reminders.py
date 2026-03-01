@@ -99,7 +99,7 @@ class SmartReminderEngine:
                         message="Importez votre premier relevé bancaire pour découvrir vos finances.",
                         priority=Priority.HIGH,
                         action_type="navigate",
-                        action_target="pages/1_Opérations.py",
+                        action_target="pages/01_Import.py",
                         action_label="Importer",
                         icon="📥",
                     )
@@ -118,7 +118,7 @@ class SmartReminderEngine:
                         message=f"Dernière transaction il y a {days_since} jours. Mettez à jour vos données.",
                         priority=Priority.MEDIUM if days_since > 15 else Priority.LOW,
                         action_type="navigate",
-                        action_target="pages/1_Opérations.py",
+                        action_target="pages/01_Import.py",
                         action_label="Importer",
                         icon="📥",
                     )
@@ -147,7 +147,7 @@ class SmartReminderEngine:
                         message="Validez-les pour améliorer la précision de vos statistiques.",
                         priority=Priority.HIGH if pending_count > 20 else Priority.MEDIUM,
                         action_type="navigate",
-                        action_target="pages/1_Opérations.py",
+                        action_target="pages/01_Import.py",
                         action_label="Valider",
                         icon="🏷️",
                     )
@@ -197,7 +197,7 @@ class SmartReminderEngine:
                         message=f"Dépensé: {worst['actual']:.0f}€ / Budget: {worst['budget']:.0f}€ (+{worst['overspend_pct']:.0f}%)",
                         priority=Priority.HIGH,
                         action_type="navigate",
-                        action_target="pages/3_Synthèse.py",
+                        action_target="pages/02_Dashboard.py",
                         action_label="Voir budgets",
                         icon="🚨",
                     )
@@ -226,7 +226,7 @@ class SmartReminderEngine:
                         message=f"Plus que {goal.days_remaining} jours. Reste: {goal.remaining_amount:.0f}€ à atteindre.",
                         priority=Priority.MEDIUM,
                         action_type="navigate",
-                        action_target="pages/3_Synthèse.py",
+                        action_target="pages/02_Dashboard.py",
                         action_label="Contribuer",
                         icon=goal.emoji,
                     )
@@ -308,7 +308,7 @@ class SmartReminderEngine:
                         message=f"'{label[:30]}...' apparaît {count} fois. Créez une règle pour automatiser.",
                         priority=Priority.LOW,
                         action_type="navigate",
-                        action_target="pages/4_Intelligence.py",
+                        action_target="pages/03_Intelligence.py",
                         action_label="Créer",
                         icon="💡",
                     )

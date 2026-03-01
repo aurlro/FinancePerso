@@ -3,7 +3,7 @@ import datetime
 import pandas as pd
 import streamlit as st
 
-from modules.ai_manager_v2 import is_ai_available
+from modules.ai_manager import is_ai_available
 from modules.logger import logger
 from modules.categorization import categorize_transaction, categorize_transaction_batch
 from modules.db.stats import get_all_account_labels, get_recent_imports

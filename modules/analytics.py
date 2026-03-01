@@ -1,7 +1,7 @@
 
 import pandas as pd
 
-from modules.analytics_constants import (
+from modules.analytics.constants import (
     AMOUNT_TOLERANCE_ENERGY,
     AMOUNT_TOLERANCE_FIXED_THRESHOLD,
     AMOUNT_TOLERANCE_STANDARD,

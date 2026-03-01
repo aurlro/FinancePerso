@@ -23,19 +23,24 @@ Usage:
 
 # Import pour compatibilité (anciens composants)
 from .design_system import load_css, apply_vibe_theme, card_kpi, DesignSystem, ColorScheme
-from .feedback import (
-    render_scroll_to_top,
-    display_flash_messages,
-    toast_success,
-    toast_error,
-    toast_warning,
-    toast_info,
-    show_success,
-    show_error,
-    show_warning,
-    show_info,
-    confirm_dialog,
-)
+from .feedback import render_scroll_to_top, display_flash_messages
+try:
+    from .feedback import (
+        toast_success,
+        toast_error,
+        toast_warning,
+        toast_info,
+        show_success,
+        show_error,
+        show_warning,
+        show_info,
+        confirm_dialog,
+    )
+except ImportError:
+    # Fallback si fonctions non disponibles
+    toast_success = toast_error = toast_warning = toast_info = lambda *a, **k: None
+    show_success = show_error = show_warning = show_info = lambda *a, **k: None
+    confirm_dialog = lambda *a, **k: False
 
 # Version modernisée du feedback (avec fallback)
 try:
@@ -52,7 +57,6 @@ __all__ = [
     "apply_vibe_theme",
     "card_kpi",
     "render_scroll_to_top",
-    "display_flash_messages",
     
     # Feedback V2 (si disponible)
     "Feedback",
@@ -71,4 +75,5 @@ __all__ = [
     "show_warning",
     "show_info",
     "confirm_dialog",
+    "display_flash_messages",
 ]

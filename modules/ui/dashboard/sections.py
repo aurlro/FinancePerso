@@ -98,7 +98,7 @@ def render_budget_tab(
         st.caption("Configurez vos budgets pour recevoir des alertes intelligentes")
         if st.button("➕ Créer un budget", type="primary", key="btn_create_budget"):
             st.session_state["intel_active_tab"] = "🎯 Budgets"
-            st.switch_page("pages/4_Intelligence.py")
+            st.switch_page("pages/03_Intelligence.py")
     else:
         # Données du mois en cours
         import calendar

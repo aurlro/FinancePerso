@@ -313,6 +313,7 @@ def _create_challenge_card(challenge: Challenge) -> str:
 
 def render_challenges_widget():
     """Render active challenges in Streamlit using Design System."""
+    _palette = ColorPalette()
     challenges = get_active_challenges()
     
     if not challenges:

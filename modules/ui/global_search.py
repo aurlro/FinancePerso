@@ -127,7 +127,7 @@ class GlobalSearch:
                         ):
                             st.session_state["selected_transaction_id"] = row["id"]
                             st.session_state["active_op_tab"] = "✅ Validation"
-                            st.switch_page("pages/1_Opérations.py")
+                            st.switch_page("pages/01_Import.py")
 
                 if cat_results:
                     st.caption(f"🏷️ {len(cat_results)} catégorie(s)")
@@ -139,7 +139,7 @@ class GlobalSearch:
                         ):
                             st.session_state["filter_category"] = name
                             st.session_state["active_op_tab"] = "✅ Validation"
-                            st.switch_page("pages/1_Opérations.py")
+                            st.switch_page("pages/01_Import.py")
 
                 if tx_results.empty and not cat_results:
                     st.caption("Aucun résultat")
@@ -214,7 +214,7 @@ class GlobalSearch:
                             if st.button("Voir les transactions", key=f"cat_btn_{cat['name']}"):
                                 st.session_state["filter_category"] = cat["name"]
                                 st.session_state["active_op_tab"] = "✅ Validation"
-                                st.switch_page("pages/1_Opérations.py")
+                                st.switch_page("pages/01_Import.py")
 
 
 def render_global_search_compact():

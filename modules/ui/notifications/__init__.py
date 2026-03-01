@@ -1,51 +1,19 @@
-"""
+"""Systeme de notifications modernise pour FinancePerso."""
+
 import warnings
 
-# Avertissement de déprécation pour V2
 warnings.warn(
     "Notifications V2 is deprecated. Please migrate to V3.",
     DeprecationWarning,
     stacklevel=2
 )
 
-"""
-Système de notifications modernisé pour FinancePerso.
-
-Ce module fournit une expérience de notification complète et cohérente :
-- Types de notifications hiérarchisés (Critical, Warning, Success, Info, Achievement)
-- Notification Center avec historique
-- Préférences utilisateur personnalisables
-- Design moderne avec animations
-
-Usage basique:
-    from modules.ui.notifications import notify, success, warning, error
-
-    success("Opération réussie !")
-    warning("Budget presque atteint")
-    error("Une erreur est survenue", persistent=True)
-
-Dans chaque page:
-    from modules.ui.notifications import render_notifications_auto
-
-    # En début de page
-    render_notifications_auto()
-
-Dans la sidebar:
-    from modules.ui.notifications import render_notification_center_compact
-
-    render_notification_center_compact()
-"""
-
-# Types et classes
-# Centre de notifications
 from .center import (
     render_notification_badge_sidebar,
     render_notification_center_compact,
     render_notification_center_full,
     render_notification_settings,
 )
-
-# Composants visuels
 from .components import (
     render_achievement_unlock,
     render_empty_state,
@@ -57,8 +25,6 @@ from .components import (
     show_confirmation,
     show_native_toast,
 )
-
-# Manager
 from .manager import (
     NotificationManager,
     achievement,
@@ -82,14 +48,12 @@ from .types import (
 __version__ = "2.0.0"
 
 __all__ = [
-    # Types
     "Notification",
     "NotificationLevel",
     "NotificationAction",
     "NotificationPosition",
     "NotificationPreferences",
     "NotificationSound",
-    # Manager
     "NotificationManager",
     "get_notification_manager",
     "notify",
@@ -99,7 +63,6 @@ __all__ = [
     "info",
     "achievement",
     "loading",
-    # Composants
     "render_notifications_auto",
     "render_toast_container",
     "render_notification_toast",
@@ -109,7 +72,6 @@ __all__ = [
     "render_empty_state",
     "show_confirmation",
     "show_native_toast",
-    # Centre
     "render_notification_center_compact",
     "render_notification_center_full",
     "render_notification_settings",
@@ -118,13 +80,7 @@ __all__ = [
 
 
 def init_notification_system():
-    """
-    Initialise le système de notifications.
-    À appeler au démarrage de l'application.
-    """
+    """Initialise le systeme de notifications."""
     manager = get_notification_manager()
-
-    # Nettoyer les notifications expirées au démarrage
     manager.cleanup_expired()
-
     return manager

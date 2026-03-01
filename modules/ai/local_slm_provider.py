@@ -22,7 +22,7 @@ import os
 import re
 from typing import Any, Optional
 
-from modules.ai_manager_v2 import AIProvider
+from modules.ai_manager import AIProvider
 from modules.logger import logger
 
 # Optional imports with graceful fallback
@@ -153,7 +153,7 @@ class LocalSLMProvider(AIProvider):
     def _get_fallback_provider(self) -> AIProvider:
         """Initialize le provider de fallback (cloud)."""
         if self._fallback_provider is None:
-            from modules.ai_manager_v2 import GeminiProvider, OpenAICompatibleProvider
+            from modules.ai_manager import GeminiProvider, OpenAICompatibleProvider
             
             # Try Gemini first
             gemini_key = os.getenv("GEMINI_API_KEY")

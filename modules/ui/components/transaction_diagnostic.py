@@ -222,4 +222,4 @@ def render_compact_diagnostic_card():
             )
 
             if st.button("🔍 Voir le diagnostic", use_container_width=True):
-                st.switch_page("pages/99_Système.py")  # Diagnostics moved to Système/Debug
+                st.switch_page("pages/21_Systeme.py")  # Diagnostics moved to Système/Debug

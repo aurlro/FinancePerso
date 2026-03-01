@@ -36,8 +36,8 @@ Scénario: Import → Nettoyage → Catégorisation → Stockage
 """
 
 import pytest
-from src import clean_transaction_label
-from src import SubscriptionDetector
+from modules.wealth import clean_transaction_label
+from modules.wealth import SubscriptionDetector
 from modules.privacy import GDPRManager
 
 
@@ -78,8 +78,8 @@ Scénario: Actifs → Monte Carlo → Visualisation
 """
 
 import pytest
-from src import WealthManager, project_wealth_evolution
-from src.math_engine import ScenarioType
+from modules.wealth import WealthManager, project_wealth_evolution
+from modules.wealth.math_engine import ScenarioType
 
 
 class TestWealthProjection:
@@ -116,8 +116,8 @@ Test Intégration: Performance critique
 
 import time
 import pytest
-from src import quick_simulation, MonteCarloSimulator
-from src.math_engine import ScenarioType
+from modules.wealth import quick_simulation, MonteCarloSimulator
+from modules.wealth.math_engine import ScenarioType
 
 
 class TestPerformance:
@@ -170,7 +170,7 @@ Test Intégration: Sécurité et AML
 """
 
 import pytest
-from src.security_monitor import SecurityMonitor, RiskLevel
+from modules.wealth.security_monitor import SecurityMonitor, RiskLevel
 
 
 class TestSecurity:
@@ -261,7 +261,7 @@ Test Unit: Data Cleaning (Phase 2)
 """
 
 import pytest
-from src import clean_transaction_label, clean_merchant_name
+from modules.wealth import clean_transaction_label, clean_merchant_name
 
 
 class TestDataCleaning:
@@ -279,7 +279,7 @@ class TestDataCleaning:
     
     def test_extract_card_suffix(self):
         """Test: Extraction suffixe CB"""
-        from src.data_cleaning import extract_card_suffix
+        from modules.wealth.data_cleaning import extract_card_suffix
         
         result = extract_card_suffix("CB*1234 AMAZON")
         assert result == "1234"
@@ -292,7 +292,7 @@ Test Unit: Subscription Engine (Phase 3)
 
 import pytest
 from datetime import date
-from src import Subscription, SubscriptionDetector, SubscriptionStatus
+from modules.wealth import Subscription, SubscriptionDetector, SubscriptionStatus
 
 
 class TestSubscriptionEngine:
@@ -317,7 +317,7 @@ class TestSubscriptionEngine:
     
     def test_remaining_budget_calculation(self):
         """Test: Calcul Reste à Vivre"""
-        from src import calculate_remaining_budget
+        from modules.wealth import calculate_remaining_budget
         
         sub = Subscription(
             merchant="NETFLIX",
@@ -348,7 +348,7 @@ Test Unit: Wealth Manager (Phase 5)
 
 import pytest
 from datetime import date
-from src import WealthManager, RealEstateAsset, MortgageSchedule
+from modules.wealth import WealthManager, RealEstateAsset, MortgageSchedule
 
 
 class TestWealthManager:

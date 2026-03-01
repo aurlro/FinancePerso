@@ -3,7 +3,7 @@ import json
 import streamlit as st
 from dotenv import load_dotenv
 
-from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
+from modules.ai_manager import get_active_model_name, get_ai_provider
 from modules.db.categories import get_categories
 from modules.local_ml import get_classifier, is_local_ml_available
 from modules.logger import logger

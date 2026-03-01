@@ -29,7 +29,7 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
             if st.button("➕ Créer mon premier budget", type="primary", use_container_width=True):
                 toast_success("Ouverture de la configuration des budgets...", icon="🎯")
                 st.session_state["intel_active_tab"] = "🎯 Budgets"
-                st.switch_page("pages/4_Intelligence.py")
+                st.switch_page("pages/03_Intelligence.py")
         with col2:
             st.caption(
                 "💡 Conseil: Commencez par les catégories où vous dépensez le plus (Courses, Transport, Loisirs)"
@@ -192,4 +192,4 @@ def render_budget_tracker(df_exp: pd.DataFrame, cat_emoji_map: dict, df_full: pd
                             use_container_width=True,
                         ):
                             st.session_state["intel_active_tab"] = "🎯 Budgets"
-                            st.switch_page("pages/4_Intelligence.py")
+                            st.switch_page("pages/03_Intelligence.py")

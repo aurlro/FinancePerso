@@ -120,7 +120,7 @@ class OnboardingManager:
             )
 
             if st.button("➕ Ajouter des membres", key="onboarding_add_members"):
-                st.switch_page("pages/9_Configuration.py")
+                st.switch_page("pages/08_Configuration.py")
 
         with col2:
             st.markdown(
@@ -135,7 +135,7 @@ class OnboardingManager:
             )
 
             if st.button("⚙️ Configurer les catégories", key="onboarding_config_cats"):
-                st.switch_page("pages/9_Configuration.py")
+                st.switch_page("pages/08_Configuration.py")
 
         st.divider()
 
@@ -233,19 +233,19 @@ class OnboardingManager:
             st.metric("📊 Dashboard", "Disponible")
             st.caption("Visualisez vos finances en un coup d'œil")
             if st.button("Voir le Dashboard", key="goto_dashboard"):
-                st.switch_page("pages/3_Synthèse.py")
+                st.switch_page("pages/02_Dashboard.py")
 
         with col2:
             st.metric("🤖 Assistant IA", "Actif")
             st.caption("Posez des questions sur vos finances")
             if st.button("Essayer l'Assistant", key="goto_assistant"):
-                st.switch_page("pages/7_Assistant.py")
+                st.switch_page("pages/06_Assistant.py")
 
         with col3:
             st.metric("⚙️ Configuration", "Disponible")
             st.caption("Personnalisez vos catégories et membres")
             if st.button("Configurer", key="goto_config"):
-                st.switch_page("pages/9_Configuration.py")
+                st.switch_page("pages/08_Configuration.py")
 
         st.divider()
 
@@ -305,7 +305,7 @@ def render_onboarding_widget(user_id: str = "default", has_data: bool = False):
                 key="onboarding_widget_start",
             ):
                 st.session_state["active_op_tab"] = "📥 Importation"
-                st.switch_page("pages/1_Opérations.py")
+                st.switch_page("pages/01_Import.py")
 
         # Bouton pour fermer le widget
         if st.button("✕ Ignorer", key="dismiss_onboarding"):
@@ -319,7 +319,7 @@ def show_tour_button():
         st.session_state.onboarding_completed = False
         st.session_state.onboarding_step = 1
         st.session_state["active_op_tab"] = "📥 Importation"
-        st.switch_page("pages/1_Opérations.py")
+        st.switch_page("pages/01_Import.py")
 
 
 # Export pour compatibilité

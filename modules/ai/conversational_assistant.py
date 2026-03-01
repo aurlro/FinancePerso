@@ -222,7 +222,7 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
         AI assistant's response
     """
     # Import here to avoid circular import issues
-    from modules.ai_manager_v2 import get_active_model_name, get_ai_provider
+    from modules.ai_manager import get_active_model_name, get_ai_provider
 
     try:
         provider = get_ai_provider()
