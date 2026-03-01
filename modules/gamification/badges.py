@@ -300,7 +300,7 @@ def _create_badge_card(badge: Badge, earned: bool = True) -> str:
     else:
         text_color = _palette.text_muted
         bg_color = _palette.bg_secondary
-        border_color = Colors.BORDER.value
+        border_color = _palette.border
         opacity = "0.6"
         lock_icon = "🔒 "
     

@@ -2,7 +2,7 @@
 Page de test pour le thème V5.5
 
 Usage:
-    streamlit run pages/test_v5_theme.py
+    streamlit run tests/test_v5_theme.py
 """
 
 import streamlit as st

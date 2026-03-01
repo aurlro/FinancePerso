@@ -2,10 +2,10 @@
 WelcomeEmptyState - Composant Empty State réutilisable pour FinancePerso
 
 Style inspiré de FinCouple : design épuré, bordures fines, coins arrondis,
-couleur d'accent vert menthe (#10B981).
+couleur d'accent dynamique selon le thème.
 
 Usage:
-    from modules.ui.molecules.welcome_empty_state import WelcomeEmptyState
+    from modules.ui.components.welcome_empty_state import WelcomeEmptyState
     
     empty_state = WelcomeEmptyState()
     empty_state.render(
@@ -20,6 +20,7 @@ Usage:
 
 import streamlit as st
 from typing import Callable, Tuple, Optional
+from modules.ui.theme import get_theme, ThemeManager
 
 
 class WelcomeEmptyState:
@@ -34,21 +35,25 @@ class WelcomeEmptyState:
     - Boutons d'action primaire et secondaire
     """
     
-    # Couleurs du Design System
-    ACCENT_COLOR = "#10B981"  # Vert menthe
-    ACCENT_HOVER = "#059669"
-    TEXT_PRIMARY = "#1F2937"  # Gris foncé
-    TEXT_SECONDARY = "#6B7280"  # Gris moyen
-    BORDER_COLOR = "#E5E7EB"  # Gris clair
-    BG_CARD = "#FFFFFF"
-    BG_PAGE = "#F9FAFB"
+    # Les couleurs sont désormais dynamiques via theme_manager
     
     def __init__(self):
         """Initialise le composant avec les styles CSS."""
+        self.theme = get_theme()
         self._inject_styles()
     
     def _inject_styles(self) -> None:
-        """Injecte les styles CSS inline dans la page."""
+        """Injecte les styles CSS inline dans la page avec les couleurs du thème."""
+        theme = self.theme
+        
+        # Calculer les couleurs du gradient pour l'icône
+        if not theme.is_dark:
+            icon_gradient_start = theme.primary_light
+            icon_gradient_end = theme.primary + "40"  # 40 = 25% opacity
+        else:
+            icon_gradient_start = theme.primary + "30"
+            icon_gradient_end = theme.primary + "10"
+        
         styles = f"""
         <style>
         /* Conteneur principal centré */
@@ -63,15 +68,14 @@ class WelcomeEmptyState:
         
         /* Carte principale */
         .empty-state-card {{
-            background: {self.BG_CARD};
-            border: 1px solid {self.BORDER_COLOR};
+            background: {theme.bg_card};
+            border: 1px solid {theme.border};
             border-radius: 16px;
             padding: 3rem 2.5rem;
             max-width: 480px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 
-                        0 4px 12px rgba(0, 0, 0, 0.05);
+            box-shadow: {theme.shadow_md};
         }}
         
         /* Conteneur d'icône */
@@ -79,7 +83,7 @@ class WelcomeEmptyState:
             width: 80px;
             height: 80px;
             margin: 0 auto 1.5rem;
-            background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+            background: linear-gradient(135deg, {icon_gradient_start} 0%, {icon_gradient_end} 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -91,7 +95,7 @@ class WelcomeEmptyState:
         .empty-state-title {{
             font-size: 1.75rem;
             font-weight: 700;
-            color: {self.TEXT_PRIMARY};
+            color: {theme.text_primary};
             margin: 0 0 0.75rem 0;
             line-height: 1.3;
         }}
@@ -100,14 +104,14 @@ class WelcomeEmptyState:
         .empty-state-subtitle {{
             font-size: 1.125rem;
             font-weight: 500;
-            color: {self.TEXT_PRIMARY};
+            color: {theme.text_primary};
             margin: 0 0 0.5rem 0;
         }}
         
         /* Message descriptif */
         .empty-state-message {{
             font-size: 1rem;
-            color: {self.TEXT_SECONDARY};
+            color: {theme.text_secondary};
             line-height: 1.6;
             margin: 0 0 2rem 0;
         }}
@@ -119,9 +123,42 @@ class WelcomeEmptyState:
             gap: 0.75rem;
         }}
         
+        /* ==================== RESPONSIVE MOBILE ==================== */
+        @media (max-width: 768px) {{
+            .empty-state-container {{
+                min-height: 50vh;
+                padding: 1rem 0.5rem;
+            }}
+            
+            .empty-state-card {{
+                padding: 2rem 1.5rem;
+                max-width: 100%;
+                border-radius: 12px;
+            }}
+            
+            .empty-state-icon-wrapper {{
+                width: 64px;
+                height: 64px;
+                font-size: 2rem;
+            }}
+            
+            .empty-state-title {{
+                font-size: 1.5rem;
+            }}
+            
+            .empty-state-subtitle {{
+                font-size: 1rem;
+            }}
+            
+            .empty-state-message {{
+                font-size: 0.875rem;
+                margin-bottom: 1.5rem;
+            }}
+        }}
+        
         /* Bouton primaire */
         .btn-primary {{
-            background: {self.ACCENT_COLOR};
+            background: {theme.primary};
             color: white;
             border: none;
             border-radius: 10px;
@@ -138,16 +175,16 @@ class WelcomeEmptyState:
         }}
         
         .btn-primary:hover {{
-            background: {self.ACCENT_HOVER};
+            background: {theme.primary_hover};
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 4px 12px {theme.primary}40;
         }}
         
         /* Bouton secondaire */
         .btn-secondary {{
             background: transparent;
-            color: {self.TEXT_SECONDARY};
-            border: 1px solid {self.BORDER_COLOR};
+            color: {theme.text_secondary};
+            border: 1px solid {theme.border};
             border-radius: 10px;
             padding: 0.875rem 1.5rem;
             font-size: 1rem;
@@ -162,15 +199,15 @@ class WelcomeEmptyState:
         }}
         
         .btn-secondary:hover {{
-            background: {self.BG_PAGE};
-            border-color: {self.TEXT_SECONDARY};
-            color: {self.TEXT_PRIMARY};
+            background: {theme.bg_page};
+            border-color: {theme.text_secondary};
+            color: {theme.text_primary};
         }}
         
         /* Variante compacte (pour les sections) */
         .empty-state-compact {{
-            background: {self.BG_CARD};
-            border: 1px dashed {self.BORDER_COLOR};
+            background: {theme.bg_card};
+            border: 1px dashed {theme.border};
             border-radius: 12px;
             padding: 2rem;
             text-align: center;
@@ -208,20 +245,71 @@ class WelcomeEmptyState:
             animation: fadeInUp 0.5s ease-out;
         }}
         
-        /* Responsive */
-        @media (max-width: 640px) {{
+        /* Responsive - Mobile */
+        @media (max-width: 768px) {{
+            .empty-state-container {{
+                min-height: 50vh;
+                padding: 1rem 0.5rem;
+            }}
+            
             .empty-state-card {{
-                padding: 2rem 1.5rem;
+                max-width: 100% !important;
+                margin: 0.5rem !important;
+                padding: 2rem 1rem !important;
+                border-radius: 12px;
             }}
             
             .empty-state-title {{
-                font-size: 1.5rem;
+                font-size: 1.5rem !important;
+                line-height: 1.2;
+            }}
+            
+            .empty-state-subtitle {{
+                font-size: 1rem !important;
+            }}
+            
+            .empty-state-message {{
+                font-size: 0.9375rem !important;
+                margin-bottom: 1.5rem;
             }}
             
             .empty-state-icon-wrapper {{
                 width: 64px;
                 height: 64px;
                 font-size: 2rem;
+                margin-bottom: 1rem;
+            }}
+            
+            /* Boutons empilés sur mobile */
+            .empty-state-actions {{
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }}
+            
+            /* Variante compacte sur mobile */
+            .empty-state-compact {{
+                padding: 1.5rem 1rem;
+            }}
+            
+            .empty-state-compact .empty-state-title {{
+                font-size: 1.125rem !important;
+            }}
+        }}
+        
+        /* Petits mobiles */
+        @media (max-width: 480px) {{
+            .empty-state-card {{
+                padding: 1.5rem 0.875rem !important;
+            }}
+            
+            .empty-state-title {{
+                font-size: 1.375rem !important;
+            }}
+            
+            .empty-state-icon-wrapper {{
+                width: 56px;
+                height: 56px;
+                font-size: 1.75rem;
             }}
         }}
         </style>

@@ -96,30 +96,37 @@ pytest tests/db/ -v
 pytest tests/ai/ -v
 ```
 
-## Combinaison avec les skills globaux
+## Combinaison avec les skills globaux & agents
 
 Ce skill contient les conventions spécifiques à FinancePerso. Pour un audit complet, **toujours le combiner** avec:
 
+### Coordination générale
+→ **consistency-keeper** → **AGENT-000** → [Agents spécialisés]
+
+**Document de référence:** [SKILLS_AGENTS_COORDINATION.md](../SKILLS_AGENTS_COORDINATION.md)
+
 ### Audit technique code
-→ **python-app-auditor** + **financeperso-specific**
+→ **python-app-auditor** + **financeperso-specific** + **AGENT-001/004/005**
 
 ```
 1. Lire AGENTS.md + ce skill pour conventions
 2. Lancer python-app-auditor pour audit qualité/sécurité
-3. Appliquer les patterns spécifiques FinancePerso
+3. AGENT-000 route vers agent(s) spécialisé(s)
+4. Appliquer les patterns spécifiques FinancePerso
 ```
 
 ### Audit fonctionnel Streamlit  
-→ **streamlit-app-auditor** + **financeperso-specific**
+→ **streamlit-app-auditor** + **financeperso-specific** + **AGENT-009/010/006**
 
 ```
 1. Lancer l'app avec streamlit-app-auditor
-2. Tester les fonctionnalités métier
-3. Vérifier les patterns FinancePerso (session_state, cache, etc.)
+2. AGENT-000 coordonne agents UI/UX
+3. Tester les fonctionnalités métier
+4. Vérifier les patterns FinancePerso (session_state, cache, etc.)
 ```
 
 ### Audit UX
-→ **ux-product-designer** seul (pas besoin de ce skill)
+→ **ux-product-designer** + **AGENT-009/010** (UI/UX spécialisés)
 
 ### Audit produit/stratégie
 → **product-indispensability-audit** seul (pas besoin de ce skill)

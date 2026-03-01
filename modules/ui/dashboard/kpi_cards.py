@@ -201,6 +201,8 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
         trend_color: "positive" (vert), "negative" (rouge) ou "neutral" (gris)
         subtitle: Sous-titre (défaut: "Ce mois-ci")
     """
+    # Injecter les styles responsives une seule fois
+    _inject_kpi_responsive_styles()
     # Définir les couleurs selon le trend_color
     color_map = {
         "positive": "#10B981",  # Vert
@@ -223,31 +225,55 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
     
     trend_html = ""
     if trend and trend != "-":
+        # Description accessible de la tendance
+        trend_description = f"Tendance: {trend}"
+        if trend_color == "positive":
+            trend_description = f"En hausse de {trend}"
+        elif trend_color == "negative":
+            trend_description = f"En baisse de {trend}"
+        
         trend_html = f'''
         <div style="
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
             color: {trend_color_hex};
             margin-top: 0.25rem;
             display: flex;
             align-items: center;
             gap: 0.25rem;
-        ">
-            {arrow}{trend}
+        " 
+        aria-live="polite"
+        aria-label="{trend_description}">
+            <span aria-hidden="true">{arrow}</span>
+            <span>{trend}</span>
         </div>
         '''
     
+    # Construction du texte descriptif pour l'accessibilité
+    aria_description = f"{title}: {value}"
+    if trend_value and trend_value != "-":
+        aria_description += f", {trend_value}"
+    
     html = f'''
-    <div style="
-        background-color: #FFFFFF;
-        border: 1px solid #E5E7EB;
-        border-radius: 12px;
-        padding: 1.25rem;
-        height: 100%;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-    " onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'" 
-       onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1)'">
+    <div class="kpi-card" 
+         role="region" 
+         aria-label="Indicateur: {title}"
+         aria-describedby="kpi-desc-{title.lower().replace(' ', '-')}"
+         tabindex="0"
+         style="
+            background-color: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 1.25rem;
+            height: 100%;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            outline: none;
+            cursor: default;
+    " onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'; this.style.borderColor='var(--primary, #10B981)';" 
+       onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1)'; this.style.borderColor='#E5E7EB';"
+       onfocus="this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.3)'; this.style.borderColor='var(--primary, #10B981)';"
+       onblur="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1)'; this.style.borderColor='#E5E7EB';">
         <div style="
             display: flex;
             align-items: center;
@@ -257,24 +283,30 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
             color: #374151;
             margin-bottom: 0.75rem;
         ">
-            <span style="font-size: 1.125rem;">{icon}</span>
-            <span>{title}</span>
+            <span style="font-size: 1.125rem;" aria-hidden="true">{icon}</span>
+            <span class="kpi-label" id="kpi-label-{title.lower().replace(' ', '-')}">{title}</span>
         </div>
-        <div style="
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #111827;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.2;
-        ">
+        <div class="kpi-value" 
+             id="kpi-desc-{title.lower().replace(' ', '-')}"
+             style="
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #111827;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+                line-height: 1.2;
+             " 
+             aria-live="polite"
+             aria-atomic="true">
             {value}
         </div>
         {trend_html}
         <div style="
             font-size: 0.75rem;
-            color: #9CA3AF;
+            color: #6B7280;
             margin-top: 0.5rem;
-        ">
+            font-weight: 400;
+        "
+        aria-label="Période: {subtitle}">
             {subtitle}
         </div>
     </div>
@@ -282,11 +314,66 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
     st.markdown(html, unsafe_allow_html=True)
 
 
+# Styles CSS injectés une seule fois
+_KPI_STYLES_INJECTED = False
+
+def _inject_kpi_responsive_styles() -> None:
+    """Injecte les styles CSS responsives pour les KPI (une seule fois)."""
+    global _KPI_STYLES_INJECTED
+    if _KPI_STYLES_INJECTED:
+        return
+    
+    st.markdown("""
+    <style>
+    /* Grid responsive pour les KPI */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    /* Mobile: 1 colonne */
+    @media (max-width: 768px) {
+        .kpi-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        
+        .kpi-card {
+            padding: 1rem !important;
+        }
+        
+        .kpi-value {
+            font-size: 1.5rem !important;
+        }
+        
+        .kpi-label {
+            font-size: 0.8125rem !important;
+        }
+    }
+    
+    /* Petit mobile */
+    @media (max-width: 480px) {
+        .kpi-card {
+            padding: 0.875rem !important;
+            border-radius: 10px !important;
+        }
+        
+        .kpi-value {
+            font-size: 1.375rem !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    _KPI_STYLES_INJECTED = True
+
+
 def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
     """
-    Render 4 KPI cards with trend indicators in a 2x2 grid layout.
+    Render 4 KPI cards with trend indicators in a responsive grid layout.
     
-    Layout:
+    Layout Desktop (2x2 grid):
     ┌───────────────────┐  ┌───────────────────┐
     │ 💚 Reste à vivre  │  │ 💳 Dépenses       │
     │                   │  │                   │
@@ -301,6 +388,16 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
     │ ↑ 5.0% vs janv.   │  │ 🎉 1er versement! │
     │ Ce mois-ci        │  │ Ce mois-ci        │
     └───────────────────┘  └───────────────────┘
+    
+    Layout Mobile (1 colonne):
+    ┌───────────────────┐
+    │ 💚 Reste à vivre  │
+    │ 1 847.52 €        │
+    └───────────────────┘
+    ┌───────────────────┐
+    │ 💳 Dépenses       │
+    └───────────────────┘
+    ...
 
     Args:
         df_current: Current period transactions
@@ -316,51 +413,36 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
     # Calculate trends
     trends = calculate_trends(df_current, df_prev)
 
-    # Layout 2x2 grid
-    row1_col1, row1_col2 = st.columns(2)
-    row2_col1, row2_col2 = st.columns(2)
-
-    # Ligne 1: Reste à vivre (le plus important) + Dépenses
-    with row1_col1:
+    # Injecter les styles responsives
+    _inject_kpi_responsive_styles()
+    
+    # Utiliser un conteneur grid avec CSS responsive
+    st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
+    
+    # Les 4 cartes KPI
+    kpi_data = [
+        ("Reste à vivre", trends['reste_a_vivre']['value'], "💚", 
+         trends["reste_a_vivre"]["trend"], trends["reste_a_vivre"]["color"]),
+        ("Dépenses", trends['expenses']['value'], "💳",
+         trends["expenses"]["trend"], trends["expenses"]["color"]),
+        ("Revenus", trends['revenue']['value'], "💶",
+         trends["revenue"]["trend"], trends["revenue"]["color"]),
+        ("Épargne", trends['savings_amount']['value'], "🎯",
+         trends["savings_amount"]["trend"], trends["savings_amount"]["color"]),
+    ]
+    
+    for title, value, icon, trend, trend_color in kpi_data:
+        formatted_value = f"{value:,.2f} €".replace(",", " ")
         _render_kpi_card_html(
-            title="Reste à vivre",
-            value=f"{trends['reste_a_vivre']['value']:,.2f} €".replace(",", " "),
-            icon="💚",
-            trend=trends["reste_a_vivre"]["trend"],
-            trend_color=trends["reste_a_vivre"]["color"],
+            title=title,
+            value=formatted_value,
+            icon=icon,
+            trend=trend,
+            trend_color=trend_color,
             subtitle="Ce mois-ci"
         )
-
-    with row1_col2:
-        _render_kpi_card_html(
-            title="Dépenses",
-            value=f"{trends['expenses']['value']:,.2f} €".replace(",", " "),
-            icon="💳",
-            trend=trends["expenses"]["trend"],
-            trend_color=trends["expenses"]["color"],
-            subtitle="Ce mois-ci"
-        )
-
-    # Ligne 2: Revenus + Épargne (montant, pas %)
-    with row2_col1:
-        _render_kpi_card_html(
-            title="Revenus",
-            value=f"{trends['revenue']['value']:,.2f} €".replace(",", " "),
-            icon="💶",
-            trend=trends["revenue"]["trend"],
-            trend_color=trends["revenue"]["color"],
-            subtitle="Ce mois-ci"
-        )
-
-    with row2_col2:
-        _render_kpi_card_html(
-            title="Épargne",
-            value=f"{trends['savings_amount']['value']:,.2f} €".replace(",", " "),
-            icon="🎯",
-            trend=trends["savings_amount"]["trend"],
-            trend_color=trends["savings_amount"]["color"],
-            subtitle="Ce mois-ci"
-        )
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # Alias pour compatibilité avec l'ancien code qui pourrait importer card_kpi

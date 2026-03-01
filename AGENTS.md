@@ -468,9 +468,11 @@ with st.form("mon_form"):
 
 ---
 
-## Skills disponibles
+## Skills & Agents disponibles
 
-Le projet utilise les skills suivantes pour garantir la qualité et la cohérence :
+Le projet utilise une architecture **Skills + Agents** pour garantir la qualité et la cohérence.
+
+### Skills (Globaux)
 
 | Skill | Rôle | Quand l'utiliser |
 |-------|------|------------------|
@@ -480,25 +482,52 @@ Le projet utilise les skills suivantes pour garantir la qualité et la cohérenc
 | `python-app-auditor` | Audit technique Python | Pour vérifier la qualité du code Python |
 | `streamlit-app-auditor` | Audit fonctionnel Streamlit | Pour tester l'app en conditions réelles |
 | `ux-product-designer` | Design et UX | Pour améliorer l'expérience utilisateur |
+| `financeperso-specific` | **Conventions spécifiques FinancePerso** | TOUJOURS combiné avec un skill technique |
 
-### Workflow recommandé avec Consistency Keeper
+### Agents (Spécialisés FinancePerso)
 
-Avant toute modification majeure ou ajout de feature :
+**Orchestrateur central:** `AGENT-000` - Coordonne tous les agents spécialisés
+
+**Agents par domaine:**
+| Agent | Domaine | Fichier |
+|-------|---------|---------|
+| AGENT-001 | Database Architect | `.agents/subagents/AGENT-001-Database-Architect.md` |
+| AGENT-004 | Transaction Engine | `.agents/subagents/AGENT-004-Transaction-Engine-Specialist.md` |
+| AGENT-005 | Categorization AI | `.agents/subagents/AGENT-005-Categorization-AI-Specialist.md` |
+| AGENT-006 | Analytics Dashboard | `.agents/subagents/AGENT-006-Analytics-Dashboard-Engineer.md` |
+| AGENT-009 | UI Component Architect | `.agents/subagents/AGENT-009-UI-Component-Architect.md` |
+| AGENT-012 | Test Automation | `.agents/subagents/AGENT-012-Test-Automation-Engineer.md` |
+| *(+ 13 autres agents)* | | Voir `.agents/subagents/` |
+
+### Coordination Skills ↔ Agents
+
+**Document de référence:** `.agents/skills/SKILLS_AGENTS_COORDINATION.md`
+
+### Workflow recommandé
 
 ```
 1. consistency-keeper
    └── Vérifie la cohérence actuelle du projet
    └── Identifie les patterns existants à réutiliser
-   └── S'assure que la doc est à jour
 
-2. [Skill spécifique selon la tâche]
-   └── Implémente la feature/modification
+2. AGENT-000 (Orchestrator)
+   └── Détermine quel(s) agent(s) est/sont nécessaire(s)
+   └── Coordonne l'exécution
 
-3. consistency-keeper (again)
-   └── Vérifie que les principes DRY sont respectés
-   └── S'assure que la doc est synchronisée
-   └── Confirme que le projet reste bien rangé
+3. [Skill spécifique + financeperso-specific] + [Agent spécialisé]
+   └── Implémente la feature avec conventions projet
+
+4. consistency-keeper (validation)
+   └── Vérifie DRY, doc sync, rangement
+
+5. AGENT-012/013 (Tests/QA)
+   └── Validation finale
 ```
+
+**⚠️ Règles importantes:**
+- **Toujours** invoquer `consistency-keeper` en premier
+- **Toujours** passer par `AGENT-000` avant un agent spécialisé
+- **Toujours** combiner `financeperso-specific` avec un skill technique
 
 ### Checklist Consistency Keeper
 
@@ -512,6 +541,43 @@ Avant de finaliser une tâche, vérifier :
 ---
 
 ## Historique des changements majeurs (Consistency Keeper)
+
+### 2026-03-01 - Implémentation V5.5 (Maquettes FinCouple)
+**Nouvelle interface light mode avec design épuré**
+
+**Phase 0 - Design System:**
+- ✅ Création `modules/ui/v5_5/theme.py` (thème light mode)
+- ✅ Palette Emerald (#10B981) comme maquette
+- ✅ CSS global 9,812 caractères
+- ✅ Boutons style maquette (primaire foncé, secondaire bordure)
+
+**Phase 1 - Welcome Component:**
+- ✅ `modules/ui/v5_5/components/welcome_card.py`
+- ✅ Card centrée avec ombre
+- ✅ Icône 💰 dans cercle vert (#D1FAE5)
+- ✅ "👋 Bonjour [Nom] !"
+- ✅ 2 boutons : Importer + Guide
+- ✅ Modal guide intégré
+
+**Phase 2 - Dashboard:**
+- ✅ `modules/ui/v5_5/components/kpi_card.py` - 4 KPIs style maquette
+- ✅ `modules/ui/v5_5/components/dashboard_header.py` - "Bonjour, Alex 👋"
+- ✅ `modules/ui/v5_5/dashboard/dashboard_v5.py` - Dashboard complet
+- ✅ `modules/ui/v5_5/dashboard/kpi_grid.py` - Calcul KPIs depuis DB
+- ✅ `modules/ui/v5_5/dashboard/empty_state.py` - Onboarding 3 étapes
+- ✅ Graphique donut répartition dépenses
+- ✅ Liste transactions récentes
+
+**Phase 3 - Intégration:**
+- ✅ `app_v5_5.py` - Point d'entrée V5.5
+- ✅ Feature flag `USE_V5_5_INTERFACE` dans constants.py
+- ✅ Sidebar navigation moderne
+- ✅ Détection automatique welcome ↔ dashboard
+
+**Fichiers créés:**
+- `modules/ui/v5_5/` (2,249+ lignes)
+- `pages/test_v5_*.py` (pages de test)
+- `.agents/skills/SKILLS_AGENTS_COORDINATION.md`
 
 ### 2026-03-01 - Consolidation des modules feedback
 **Problème** : 4 modules de feedback coexistaient (`feedback.py`, `feedback_v2.py`, `feedback_wrapper.py`, `enhanced_feedback.py`)
@@ -546,4 +612,4 @@ Avant de finaliser une tâche, vérifier :
 
 ---
 
-Dernière mise à jour : 2026-03-01 (v5.2.1) - Consolidation modules UI
+Dernière mise à jour : 2026-03-01 (v5.5.0) - Implémentation V5.5 (Maquettes FinCouple)

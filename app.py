@@ -25,6 +25,7 @@ else:
 
 from modules.ui import load_css, card_kpi, render_scroll_to_top, display_flash_messages
 from modules.ui.feedback import toast_success, show_success
+from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle, get_theme
 from modules.db.migrations import init_db
 from modules.db.stats import is_app_initialized, get_global_stats
 from modules.db.members import add_member
@@ -88,12 +89,24 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 load_css()
+
+# Initialiser et appliquer le thème v5.5
+init_theme()
+ThemeManager.apply_theme_css()
+
+# Afficher le toggle de thème dans la sidebar
+render_theme_toggle()
 try:
     # Test d'accès critique (vérifie si l'OS bloque l'accès au dossier Data et logs)
     if os.path.exists("Data"):
         os.listdir("Data")
     
     init_db()
+    
+    # Initialiser les analytics
+    from modules.analytics import init_analytics
+    init_analytics()
+    
 except PermissionError:
     st.error("### 🛑 Sécurité macOS : Accès refusé")
     st.error("L'application ne peut pas accéder aux données. Vérifiez les permissions dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers**.")
@@ -171,6 +184,9 @@ if "daily_login_recorded" not in st.session_state:
 # Utiliser le nouveau système V3 avec le service
 render_notification_badge_v3(notification_service_v3)
 render_streak_badge()
+
+# Toggle de thème
+render_theme_toggle()
 
 # Afficher les messages flash en attente
 display_flash_messages()

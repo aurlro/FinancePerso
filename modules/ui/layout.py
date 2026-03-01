@@ -18,7 +18,7 @@ def render_app_info():
         c1, c2 = st.columns([3, 1])
         c1.caption(f"v{APP_VERSION}")
         if c2.button("ℹ️", key="btn_changelog_sidebar", help="Nouveautés"):
-            st.switch_page("pages/10_Nouveautés.py")
+            st.switch_page("pages/14_Nouveautés.py")
 
 
 __all__ = ["render_app_info"]

@@ -21,6 +21,8 @@ import pandas as pd
 import streamlit as st
 
 from modules.analytics import detect_financial_profile
+from modules.analytics.events import track_page_view, track_event, EventType
+from modules.analytics.metrics import MetricsCollector
 from modules.db.categories import get_categories_with_emojis
 from modules.db.members import get_orphan_labels, get_unique_members
 
@@ -61,6 +63,9 @@ from modules.ui.feedback import toast_info, toast_success
 st.set_page_config(page_title="Synthèse", page_icon="📊", layout="wide")
 load_css()
 init_db()
+
+# Tracker la vue de page
+track_page_view("Synthèse")
 
 # ============================================================================
 # CONSTANTES
