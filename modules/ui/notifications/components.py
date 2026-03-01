@@ -18,6 +18,7 @@ import streamlit as st
 # Import types for show_native_toast
 from modules.ui.notifications.types import DEFAULT_ICONS, NotificationLevel
 
+
 # Native implementations (formerly fallbacks)
 def render_toast_container():
     """Container for toasts - fallback implementation."""

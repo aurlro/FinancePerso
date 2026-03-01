@@ -1,7 +1,8 @@
 """Log viewer UI component - Simplified."""
 
-import streamlit as st
 from pathlib import Path
+
+import streamlit as st
 
 
 def render_log_viewer() -> None:

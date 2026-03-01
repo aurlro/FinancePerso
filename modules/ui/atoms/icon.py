@@ -9,7 +9,6 @@ Usage:
 """
 
 from enum import Enum
-from typing import Optional
 
 
 class IconSize(str, Enum):
@@ -139,27 +138,27 @@ class Icon:
     BOOKMARK = "🔖"
     
     @classmethod
-    def success(cls, size: Optional[IconSize] = None) -> str:
+    def success(cls, size: IconSize | None = None) -> str:
         """Icône succès."""
         return cls.SUCCESS
     
     @classmethod
-    def error(cls, size: Optional[IconSize] = None) -> str:
+    def error(cls, size: IconSize | None = None) -> str:
         """Icône erreur."""
         return cls.ERROR
     
     @classmethod
-    def warning(cls, size: Optional[IconSize] = None) -> str:
+    def warning(cls, size: IconSize | None = None) -> str:
         """Icône avertissement."""
         return cls.WARNING
     
     @classmethod
-    def info(cls, size: Optional[IconSize] = None) -> str:
+    def info(cls, size: IconSize | None = None) -> str:
         """Icône info."""
         return cls.INFO
     
     @classmethod
-    def loading(cls, size: Optional[IconSize] = None) -> str:
+    def loading(cls, size: IconSize | None = None) -> str:
         """Icône chargement."""
         return cls.LOADING
     

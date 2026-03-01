@@ -4,8 +4,8 @@ Tous les rayons de bordure et ombres doivent provenir de ce fichier.
 PAS DE VALEURS HARDCODÉES dans les composants.
 """
 
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 
 
 class BorderRadius(str, Enum):

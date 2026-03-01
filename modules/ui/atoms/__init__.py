@@ -13,8 +13,8 @@ Usage:
     Badge.success("Actif")
 """
 
-from .button import Button, ButtonVariant
 from .badge import Badge, BadgeVariant
+from .button import Button, ButtonVariant
 from .icon import Icon, IconSize
 
 __all__ = [

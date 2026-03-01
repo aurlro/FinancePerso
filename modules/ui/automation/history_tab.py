@@ -13,15 +13,12 @@ import re
 
 import pandas as pd
 import streamlit as st
-from datetime import datetime, timedelta
 
-from modules.db.recurrence_feedback import get_all_feedback, delete_feedback
+from modules.db.recurrence_feedback import delete_feedback, get_all_feedback
 from modules.db.rules import get_learning_rules
 from modules.db.transactions import get_all_transactions
-from modules.logger import logger
 from modules.ui.automation.alerts_section import render_remaining_budget_calculator
-from modules.ui.feedback import toast_error, toast_info, toast_success
-
+from modules.ui.feedback import toast_info, toast_success
 
 # =============================================================================
 # HISTORY TAB RENDERER

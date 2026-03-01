@@ -4,8 +4,8 @@ Customizable Dashboard Components.
 Provides configurable dashboard views.
 """
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 
 def render_dashboard_configurator():

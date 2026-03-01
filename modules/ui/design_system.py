@@ -16,10 +16,9 @@ Usage:
     design.apply_theme()  # Applique le thème complet
 """
 
-import base64
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+
 import streamlit as st
 
 
@@ -726,7 +725,7 @@ class DesignSystem:
         </div>
         """
     
-    def create_metric_card(self, label: str, value: str, delta: Optional[str] = None, 
+    def create_metric_card(self, label: str, value: str, delta: str | None = None, 
                           delta_positive: bool = True) -> str:
         """
         Crée une carte de métrique stylisée.
@@ -832,7 +831,7 @@ def vibe_container(title: str, content_func, icon: str = "📊"):
     content_func()
 
 
-def vibe_metric(label: str, value: str, delta: Optional[str] = None, 
+def vibe_metric(label: str, value: str, delta: str | None = None, 
                 delta_positive: bool = True):
     """
     Affiche une métrique avec le style Vibe.

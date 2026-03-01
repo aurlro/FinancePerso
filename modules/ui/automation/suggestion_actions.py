@@ -6,17 +6,16 @@ avec une interface commune pour faciliter l'ajout de nouvelles actions.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable
-import streamlit as st
-import pandas as pd
 from datetime import datetime
 
+import pandas as pd
+import streamlit as st
+
 from modules.ai.suggestions.base import Suggestion
-from modules.db.transactions import get_all_transactions
 from modules.db.rules import add_learning_rule
-from modules.db.categories import get_categories_with_emojis
-from modules.ui.feedback import toast_success, toast_info, toast_error
+from modules.db.transactions import get_all_transactions
 from modules.logger import logger
+from modules.ui.feedback import toast_error, toast_info, toast_success
 
 
 class SuggestionAction(ABC):

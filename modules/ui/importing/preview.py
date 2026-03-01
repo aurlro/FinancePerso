@@ -5,17 +5,17 @@ Permet aux utilisateurs de voir et valider les transactions avant import défini
 Particulièrement utile pour Sophie (débutante) qui a besoin de vérification.
 """
 
-import streamlit as st
-import pandas as pd
-from typing import Optional
 
-from modules.ui.feedback import toast_warning, toast_info
+import pandas as pd
+import streamlit as st
+
+from modules.ui.feedback import toast_info, toast_warning
 
 
 def render_import_preview(
     df: pd.DataFrame,
     detected_bank: str,
-    duplicates: Optional[pd.DataFrame] = None,
+    duplicates: pd.DataFrame | None = None,
     on_confirm=None,
     on_cancel=None,
     key: str = "import_preview"
@@ -241,7 +241,7 @@ def show_import_summary(imported: int, categorized: int, duplicates_skipped: int
     """
     Show a summary after import completion.
     """
-    st.success(f"✅ Import terminé avec succès!")
+    st.success("✅ Import terminé avec succès!")
     
     col1, col2, col3 = st.columns(3)
     

@@ -5,13 +5,12 @@ Provides UI for configuring AI providers and API keys.
 """
 
 import os
-from typing import Dict
 
 import streamlit as st
 from dotenv import find_dotenv, load_dotenv, set_key
 
 
-def load_env_vars() -> Dict[str, str]:
+def load_env_vars() -> dict[str, str]:
     """
     Securely load environment variables from .env file using python-dotenv.
     Returns a dictionary of all variables found in .env file.
@@ -24,7 +23,7 @@ def load_env_vars() -> Dict[str, str]:
     load_dotenv(env_file)
 
     # Return dictionary of vars from .env file
-    vars_dict: Dict[str, str] = {}
+    vars_dict: dict[str, str] = {}
     if os.path.exists(env_file):
         try:
             with open(env_file, encoding="utf-8") as f:

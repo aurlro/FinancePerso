@@ -4,9 +4,8 @@ Toutes les couleurs de l'application doivent provenir de ce fichier.
 PAS DE COULEURS HARDCODÉES dans les composants.
 """
 
-from enum import Enum
 from dataclasses import dataclass
-from typing import Tuple
+from enum import Enum
 
 
 class Colors(str, Enum):
@@ -156,16 +155,16 @@ class SemanticColors:
         danger_text, danger_bg, danger_border = colors.danger
     """
     # Tuple: (text_color, bg_color, border_color)
-    danger: Tuple[str, str, str] = (Colors.DANGER_DARK, Colors.DANGER_BG, Colors.DANGER)
-    warning: Tuple[str, str, str] = (Colors.WARNING_DARK, Colors.WARNING_BG, Colors.WARNING)
-    success: Tuple[str, str, str] = (Colors.SUCCESS_DARK, Colors.SUCCESS_BG, Colors.SUCCESS)
-    info: Tuple[str, str, str] = (Colors.INFO_DARK, Colors.INFO_BG, Colors.INFO)
+    danger: tuple[str, str, str] = (Colors.DANGER_DARK, Colors.DANGER_BG, Colors.DANGER)
+    warning: tuple[str, str, str] = (Colors.WARNING_DARK, Colors.WARNING_BG, Colors.WARNING)
+    success: tuple[str, str, str] = (Colors.SUCCESS_DARK, Colors.SUCCESS_BG, Colors.SUCCESS)
+    info: tuple[str, str, str] = (Colors.INFO_DARK, Colors.INFO_BG, Colors.INFO)
     
     # Muted versions (for subtle badges, etc.)
-    danger_muted: Tuple[str, str, str] = (Colors.DANGER, Colors.DANGER_BG, Colors.DANGER_LIGHT)
-    warning_muted: Tuple[str, str, str] = (Colors.WARNING, Colors.WARNING_BG, Colors.WARNING_LIGHT)
-    success_muted: Tuple[str, str, str] = (Colors.SUCCESS, Colors.SUCCESS_BG, Colors.SUCCESS_LIGHT)
-    info_muted: Tuple[str, str, str] = (Colors.INFO, Colors.INFO_BG, Colors.INFO_LIGHT)
+    danger_muted: tuple[str, str, str] = (Colors.DANGER, Colors.DANGER_BG, Colors.DANGER_LIGHT)
+    warning_muted: tuple[str, str, str] = (Colors.WARNING, Colors.WARNING_BG, Colors.WARNING_LIGHT)
+    success_muted: tuple[str, str, str] = (Colors.SUCCESS, Colors.SUCCESS_BG, Colors.SUCCESS_LIGHT)
+    info_muted: tuple[str, str, str] = (Colors.INFO, Colors.INFO_BG, Colors.INFO_LIGHT)
 
 
 # Gradients prédéfinis

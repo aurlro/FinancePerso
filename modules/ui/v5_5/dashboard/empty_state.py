@@ -2,40 +2,39 @@
 
 Usage:
     from modules.ui.v5_5.dashboard import render_dashboard_empty
-    
+
     render_dashboard_empty(user_name="Alex")
 """
 
-from typing import Optional
 import streamlit as st
 
-from modules.ui.v5_5.theme import apply_light_theme, LightColors
 from modules.ui.v5_5.components.dashboard_header import DashboardHeader
+from modules.ui.v5_5.theme import apply_light_theme
 
 
-def render_dashboard_empty(user_name: Optional[str] = None) -> None:
+def render_dashboard_empty(user_name: str | None = None) -> None:
     """Affiche le dashboard quand aucune transaction n'existe.
-    
+
     Affiche:
     - Header avec "Bonjour [Nom]"
     - Section "Vue d'ensemble" (vide)
     - Card onboarding avec 3 étapes
     - Bouton "Voir le guide"
-    
+
     Args:
         user_name: Nom de l'utilisateur
     """
     # Appliquer thème
     apply_light_theme()
-    
+
     # 1. Header (simplifié, sans sélecteur)
     DashboardHeader.render_simple(
-        user_name=user_name,
-        subtitle="Commencez votre parcours financier"
+        user_name=user_name, subtitle="Commencez votre parcours financier"
     )
-    
+
     # 2. Section Vue d'ensemble
-    st.markdown("""
+    st.markdown(
+        """
     <h2 style="
         font-size: 1.25rem;
         font-weight: 600;
@@ -45,17 +44,19 @@ def render_dashboard_empty(user_name: Optional[str] = None) -> None:
     ">
         📊 Vue d'ensemble
     </h2>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     # 3. Card onboarding
     _render_onboarding_card()
-    
+
     # 4. Bouton guide
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
         if st.button("📖 Voir le guide", use_container_width=True, key="empty_guide_btn"):
             _show_guide_modal()
-    
+
     # Footer
     st.divider()
     st.caption("FinancePerso V5.5 - En attente de données")
@@ -63,8 +64,9 @@ def render_dashboard_empty(user_name: Optional[str] = None) -> None:
 
 def _render_onboarding_card() -> None:
     """Rend la card avec les 3 étapes d'onboarding."""
-    
-    st.markdown("""
+
+    st.markdown(
+        """
     <style>
     .v5-onboarding-container {
         display: flex;
@@ -137,14 +139,16 @@ def _render_onboarding_card() -> None:
             <div class="v5-step">
                 <span class="v5-step-number">1</span>
                 <div class="v5-step-text">
-                    Importez vos relevés bancaires au <span class="v5-step-highlight">format CSV</span>
+                    Importez vos relevés bancaires au"
+                    " <span class="v5-step-highlight">format CSV</span>
                 </div>
             </div>
             
             <div class="v5-step">
                 <span class="v5-step-number">2</span>
                 <div class="v5-step-text">
-                    Laissez l'<span class="v5-step-highlight">IA catégoriser</span> automatiquement vos transactions
+                    Laissez l'<span class="v5-step-highlight">IA catégoriser</span>"
+                    " automatiquement vos transactions
                 </div>
             </div>
             
@@ -156,15 +160,18 @@ def _render_onboarding_card() -> None:
             </div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def _show_guide_modal() -> None:
     """Affiche le guide d'onboarding dans un dialog."""
-    
+
     @st.dialog("📖 Guide de démarrage", width="large")
     def guide_dialog():
-        st.markdown("""
+        st.markdown(
+            """
         ### Comment utiliser FinancePerso
         
         #### 1. 📥 Importez vos relevés
@@ -206,25 +213,27 @@ def _show_guide_modal() -> None:
         - Suivi budgétaire par catégorie
         - Prédictions et conseils d'épargne
         - Analyses tendances
-        """)
-        
+        """
+        )
+
         col1, col2 = st.columns(2)
-        
+
         with col1:
             if st.button("🚀 Commencer l'import", use_container_width=True, type="primary"):
                 st.switch_page("pages/01_Import.py")
-        
+
         with col2:
             if st.button("✅ Fermer", use_container_width=True):
                 st.rerun()
-    
+
     guide_dialog()
 
 
 def render_onboarding_mini() -> None:
     """Version compacte de l'onboarding (pour sidebar ou footer)."""
-    
-    st.markdown("""
+
+    st.markdown(
+        """
     <div style="
         background: #F0FDF4;
         border: 1px solid #10B981;
@@ -239,4 +248,6 @@ def render_onboarding_mini() -> None:
             Importez vos relevés CSV pour visualiser vos finances
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )

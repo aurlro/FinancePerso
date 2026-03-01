@@ -2,17 +2,17 @@
 Recycle Bin UI Component - Interface de gestion de la corbeille
 """
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 from modules.db.recycle_bin import (
     get_recycle_bin_contents,
-    restore_transaction,
+    get_recycle_bin_stats,
     permanently_delete,
     purge_expired_items,
-    get_recycle_bin_stats,
+    restore_transaction,
 )
-from modules.ui.feedback import toast_success, toast_error, toast_info
+from modules.ui.feedback import toast_error, toast_success
 
 
 def render_recycle_bin_manager():

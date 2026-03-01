@@ -11,7 +11,7 @@ import pandas as pd
 import streamlit as st
 
 from modules.ai.rules_auditor import analyze_rules_integrity
-from modules.db.rules import delete_learning_rule, get_learning_rules, update_learning_rule
+from modules.db.rules import delete_learning_rule, get_learning_rules
 from modules.logger import logger
 
 # Initialisation des variables de session
@@ -256,7 +256,7 @@ def render_audit_section():
                             if shorter_priority <= longer_priority:
                                 new_priority = longer_priority + 10
                                 if st.button(
-                                    f"⬆️ Priorité +10", 
+                                    "⬆️ Priorité +10", 
                                     key=f"overlap_up_{shorter_id}_{i}",
                                     help=f"Augmenter la priorité de '{ov['shorter_pattern']}' à {new_priority}"
                                 ):

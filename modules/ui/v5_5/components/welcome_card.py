@@ -4,30 +4,30 @@ Card centrée avec icône dans cercle coloré, inspirée des maquettes FinCouple
 
 Usage:
     from modules.ui.v5_5.components.welcome_card import WelcomeCard
-    
+
     WelcomeCard.render(
         on_primary=lambda: st.switch_page("pages/01_Import.py"),
         on_secondary=lambda: show_guide()
     )
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
 import streamlit as st
 
 from modules.ui.atoms import Button
-from modules.ui.v5_5.theme import LightColors, Spacing
 
 
 class WelcomeCard:
     """Card d'accueil centrée selon maquette V5.5.
-    
+
     Affiche une card blanche centrée avec:
     - Icône dans un cercle coloré (vert émeraude)
     - Titre "👋 Bonjour !"
     - Sous-titre "Bienvenue dans votre espace financier"
     - Description
     - Deux boutons : Primaire (Importer) + Secondaire (Guide)
-    
+
     Usage:
         WelcomeCard.render(
             on_primary=import_handler,
@@ -35,18 +35,18 @@ class WelcomeCard:
             user_name="Alex"  # Optionnel
         )
     """
-    
+
     @staticmethod
     def render(
-        on_primary: Optional[Callable] = None,
-        on_secondary: Optional[Callable] = None,
-        user_name: Optional[str] = None,
+        on_primary: Callable | None = None,
+        on_secondary: Callable | None = None,
+        user_name: str | None = None,
         primary_text: str = "▶️ Importer mes relevés",
         secondary_text: str = "📖 Voir le guide",
         key_prefix: str = "welcome",
     ) -> None:
         """Rend la card d'accueil centrée.
-        
+
         Args:
             on_primary: Callback bouton primaire (Importer)
             on_secondary: Callback bouton secondaire (Guide)
@@ -55,9 +55,10 @@ class WelcomeCard:
             secondary_text: Texte du bouton secondaire
             key_prefix: Préfixe pour les clés Streamlit
         """
-        
+
         # CSS personnalisé pour la card
-        st.markdown("""
+        st.markdown(
+            """
         <style>
         .v5-welcome-container {
             display: flex;
@@ -158,12 +159,14 @@ class WelcomeCard:
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         # Boutons (en dessous de la card, mais toujours centrés)
         # On utilise des colonnes pour centrer les boutons
         col_left, col_center, col_right = st.columns([1, 2, 1])
-        
+
         with col_center:
             # Bouton primaire (Importer)
             if Button.primary(
@@ -173,10 +176,10 @@ class WelcomeCard:
                 use_container_width=True,
             ):
                 pass  # Le callback est géré par on_click
-            
+
             # Petit espace entre les boutons
             st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-            
+
             # Bouton secondaire (Guide)
             if Button.secondary(
                 label=secondary_text,
@@ -185,18 +188,18 @@ class WelcomeCard:
                 use_container_width=True,
             ):
                 pass  # Le callback est géré par on_click
-    
+
     @classmethod
     def render_with_guide_modal(
         cls,
-        on_primary: Optional[Callable] = None,
-        user_name: Optional[str] = None,
+        on_primary: Callable | None = None,
+        user_name: str | None = None,
     ) -> None:
         """Rend la card avec modal guide intégré.
-        
+
         Cette variante gère automatiquement l'affichage du guide
         dans un dialog modal.
-        
+
         Args:
             on_primary: Callback bouton importer
             user_name: Nom de l'utilisateur
@@ -205,21 +208,22 @@ class WelcomeCard:
         if st.session_state.get("show_welcome_guide", False):
             cls._render_guide_modal()
             return
-        
+
         # Rendre la card normale
         cls.render(
             on_primary=on_primary,
             on_secondary=lambda: st.session_state.update(show_welcome_guide=True),
             user_name=user_name,
         )
-    
+
     @staticmethod
     def _render_guide_modal() -> None:
         """Affiche le guide d'onboarding dans un modal."""
-        
+
         @st.dialog("📖 Guide de démarrage")
         def guide_dialog():
-            st.markdown("""
+            st.markdown(
+                """
             ### Comment utiliser FinancePerso
             
             **1. 📥 Importez vos relevés**
@@ -241,18 +245,19 @@ class WelcomeCard:
             
             Consultez votre dashboard, suivez vos budgets et 
             atteignez vos objectifs d'épargne.
-            """)
-            
+            """
+            )
+
             if st.button("✅ J'ai compris", use_container_width=True):
                 st.session_state.show_welcome_guide = False
                 st.rerun()
-        
+
         guide_dialog()
 
 
 def render_welcome_simple():
     """Version simplifiée pour test rapide.
-    
+
     Usage:
         from modules.ui.v5_5.components.welcome_card import render_welcome_simple
         render_welcome_simple()

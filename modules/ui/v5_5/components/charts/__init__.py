@@ -2,7 +2,7 @@
 
 Usage:
     from modules.ui.v5_5.components.charts import DonutChart
-    
+
     DonutChart.render_expenses(df)
 """
 

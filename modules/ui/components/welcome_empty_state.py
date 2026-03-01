@@ -18,9 +18,11 @@ Usage:
     )
 """
 
+from collections.abc import Callable
+
 import streamlit as st
-from typing import Callable, Tuple, Optional
-from modules.ui.theme import get_theme, ThemeManager
+
+from modules.ui.theme import get_theme
 
 
 class WelcomeEmptyState:
@@ -319,14 +321,14 @@ class WelcomeEmptyState:
     def render(
         self,
         title: str = "👋 Bonjour !",
-        subtitle: Optional[str] = "Bienvenue dans votre espace financier",
+        subtitle: str | None = "Bienvenue dans votre espace financier",
         message: str = "Commencez par importer vos données pour visualiser vos finances.",
-        primary_action: Optional[Tuple[str, str]] = None,
-        secondary_action: Optional[Tuple[str, str]] = None,
+        primary_action: tuple[str, str] | None = None,
+        secondary_action: tuple[str, str] | None = None,
         icon: str = "💰",
         compact: bool = False,
-        on_primary_click: Optional[Callable] = None,
-        on_secondary_click: Optional[Callable] = None,
+        on_primary_click: Callable | None = None,
+        on_secondary_click: Callable | None = None,
     ) -> None:
         """
         Affiche l'empty state.
@@ -436,14 +438,14 @@ class WelcomeEmptyState:
 # Fonction helper pour usage rapide
 def welcome_empty_state(
     title: str = "👋 Bonjour !",
-    subtitle: Optional[str] = "Bienvenue dans votre espace financier",
+    subtitle: str | None = "Bienvenue dans votre espace financier",
     message: str = "Commencez par importer vos données pour visualiser vos finances.",
-    primary_action: Optional[Tuple[str, str]] = None,
-    secondary_action: Optional[Tuple[str, str]] = None,
+    primary_action: tuple[str, str] | None = None,
+    secondary_action: tuple[str, str] | None = None,
     icon: str = "💰",
     compact: bool = False,
-    on_primary_click: Optional[Callable] = None,
-    on_secondary_click: Optional[Callable] = None,
+    on_primary_click: Callable | None = None,
+    on_secondary_click: Callable | None = None,
 ) -> None:
     """
     Fonction helper pour afficher un empty state rapidement.

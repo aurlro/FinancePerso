@@ -16,10 +16,10 @@ from modules.db.members import add_member, get_members
 from modules.db.rules import add_learning_rule
 from modules.db.transactions import (
     bulk_update_transaction_status,
+    get_all_hashes,
     get_pending_transactions,
     save_transactions,
 )
-from modules.db.transactions import get_all_hashes
 from modules.ingestion import load_transaction_file
 from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 from modules.ui.feedback import (

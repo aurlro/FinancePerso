@@ -1,7 +1,8 @@
 """Composant toggle pour changer le thème."""
 
 import streamlit as st
-from modules.ui.theme import ThemeMode, ColorPalette, theme_manager
+
+from modules.ui.theme import ColorPalette, ThemeMode, theme_manager
 
 
 def render_theme_toggle():

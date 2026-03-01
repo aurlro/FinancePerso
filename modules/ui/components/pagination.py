@@ -9,8 +9,8 @@ Usage:
     st.dataframe(paginated_df)
 """
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 
 def paginated_dataframe(

@@ -3,9 +3,10 @@ Confirmation dialogs (Legacy wrapper).
 This module provides fallback implementations using native Streamlit components.
 """
 
-import streamlit as st
 import warnings
-from typing import Callable, Optional, Union
+from collections.abc import Callable
+
+import streamlit as st
 
 
 def _warn_deprecation():
@@ -25,7 +26,7 @@ def confirm_dialog(
     cancel_label: str = "Annuler",
     confirm_type: str = "primary",
     danger: bool = False,
-) -> Optional[bool]:
+) -> bool | None:
     """
     Affiche une boîte de dialogue de confirmation.
     
@@ -95,8 +96,8 @@ def confirm_dialog(
 def confirm_delete(
     entity_name: str,
     entity_description: str = "",
-    on_confirm: Optional[Callable] = None,
-) -> Optional[bool]:
+    on_confirm: Callable | None = None,
+) -> bool | None:
     """
     Dialog de confirmation pour une suppression.
     
@@ -133,8 +134,8 @@ def confirm_action(
     action: str,
     target: str,
     consequences: str = "",
-    on_confirm: Optional[Callable] = None,
-) -> Optional[bool]:
+    on_confirm: Callable | None = None,
+) -> bool | None:
     """
     Dialog de confirmation pour une action critique.
     

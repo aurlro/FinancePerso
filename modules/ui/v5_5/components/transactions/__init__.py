@@ -2,7 +2,7 @@
 
 Usage:
     from modules.ui.v5_5.components.transactions import TransactionList
-    
+
     TransactionList.render(df)
 """
 

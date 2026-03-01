@@ -2,32 +2,30 @@
 
 from __future__ import annotations
 
-import streamlit as st
-import pandas as pd
 from datetime import datetime
+
+import streamlit as st
 from dateutil.relativedelta import relativedelta
 
-from modules.ui.design_system import Colors
 from modules.couple.couple_settings import (
     get_couple_settings,
-    is_couple_configured,
     get_setup_progress,
+    is_couple_configured,
 )
 from modules.couple.privacy_filters import (
-    get_couple_dashboard_data,
-    get_transactions_with_privacy,
     can_see_partner_details,
+    get_couple_dashboard_data,
 )
 from modules.couple.transfer_detector import (
     get_pending_transfers,
     validate_transfer,
 )
+from modules.ui.couple.loans_view import render_loans_tab
 from modules.ui.couple.widgets import (
+    render_joint_transactions_section,
     render_personal_card,
     render_transfer_section,
-    render_joint_transactions_section,
 )
-from modules.ui.couple.loans_view import render_loans_tab
 from modules.utils import format_currency
 
 

@@ -27,19 +27,18 @@ if not TEST_DASHBOARD_ENABLED:
 # =============================================================================
 # IMPORTS
 # =============================================================================
-from modules.ui.v5_5 import (
-    DashboardController,
-    render_dashboard_v5,
-    render_welcome_screen,
-    has_transactions,
-    get_user_name,
-)
-from modules.ui import load_css
-from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle
 from modules.db.migrations import init_db
+from modules.logger import logger
 from modules.notifications import NotificationService
 from modules.notifications.ui import render_notification_badge as render_notification_badge_v3
-from modules.logger import logger
+from modules.ui import load_css
+from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle
+from modules.ui.v5_5 import (
+    get_user_name,
+    has_transactions,
+    render_dashboard_v5,
+    render_welcome_screen,
+)
 
 # =============================================================================
 # CONFIGURATION PAGE
@@ -60,6 +59,7 @@ init_db()
 init_theme()
 ThemeManager.apply_theme_css()
 
+
 # =============================================================================
 # RÉCUPÉRATION NOM UTILISATEUR
 # =============================================================================
@@ -68,7 +68,7 @@ def get_display_user_name() -> str:
     # 1. Essayer depuis session_state
     if "user_name" in st.session_state and st.session_state.user_name:
         return st.session_state.user_name
-    
+
     # 2. Essayer depuis le module couple
     try:
         name = get_user_name()
@@ -76,9 +76,10 @@ def get_display_user_name() -> str:
             return name
     except Exception:
         pass
-    
+
     # 3. Défaut
     return "Alex"
+
 
 user_name = get_display_user_name()
 
@@ -110,12 +111,12 @@ with st.sidebar.expander("🔧 Options de test", expanded=False):
         index=0,
         help="Mode Auto: détecte automatiquement si vous avez des données",
     )
-    
+
     user_name_input = st.text_input("Nom affiché", value=user_name)
     if user_name_input != user_name:
         user_name = user_name_input
         st.session_state.user_name = user_name
-    
+
     show_mock = st.checkbox("Mode démo (données fictives)", value=False)
 
 st.sidebar.divider()
@@ -124,13 +125,14 @@ st.sidebar.divider()
 notification_service_v3 = NotificationService()
 render_notification_badge_v3(notification_service_v3)
 
+
 # =============================================================================
 # LOGIQUE DE RENDU PRINCIPAL
 # =============================================================================
 def render_auto_mode():
     """Mode automatique: détecte les données et affiche la vue appropriée."""
     has_data = has_transactions()
-    
+
     if has_data:
         logger.info(f"Test_Dashboard: affichage dashboard pour {user_name}")
         render_dashboard_v5(user_name=user_name)
@@ -139,7 +141,7 @@ def render_auto_mode():
         render_welcome_screen(
             user_name=user_name,
             redirect_to_dashboard=False,  # Ne pas rediriger, rester sur cette page
-            dashboard_page="pages/Dashboard_Beta.py"
+            dashboard_page="pages/Dashboard_Beta.py",
         )
 
 
@@ -148,25 +150,25 @@ def render_forced_dashboard_mode():
     if show_mock or not has_transactions():
         # Mode démo avec données fictives
         st.info("💡 Mode démonstration avec données fictives")
-        
+
         from modules.ui.v5_5.components import KPICard, KPIData
         from modules.ui.v5_5.components.dashboard_header import (
             DashboardHeader,
             get_current_month_name,
         )
         from modules.ui.v5_5.theme import apply_light_theme
-        
+
         apply_light_theme()
-        
+
         # Header
         DashboardHeader.render(
             user_name=user_name,
             current_month=get_current_month_name(),
         )
-        
+
         # KPIs mock
         st.markdown("### 📊 Vue d'ensemble")
-        
+
         kpis = [
             KPIData(
                 "Reste à vivre",
@@ -205,12 +207,12 @@ def render_forced_dashboard_mode():
                 "🎉 Premier versement !",
             ),
         ]
-        
+
         cols = st.columns(4)
         for idx, kpi_data in enumerate(kpis):
             with cols[idx]:
                 KPICard.render(kpi_data)
-        
+
         st.success("✅ Dashboard affiché avec données de démonstration")
     else:
         render_dashboard_v5(user_name=user_name)
@@ -219,9 +221,7 @@ def render_forced_dashboard_mode():
 def render_forced_welcome_mode():
     """Mode welcome forcé (pour test)."""
     render_welcome_screen(
-        user_name=user_name,
-        redirect_to_dashboard=False,
-        dashboard_page="pages/Dashboard_Beta.py"
+        user_name=user_name, redirect_to_dashboard=False, dashboard_page="pages/Dashboard_Beta.py"
     )
 
 
@@ -235,12 +235,12 @@ try:
         render_forced_dashboard_mode()
     else:  # Welcome forcé
         render_forced_welcome_mode()
-        
+
 except Exception as e:
     logger.exception("Erreur dans Test_Dashboard")
     st.error("🚨 Une erreur est survenue lors du chargement du dashboard.")
     st.exception(e)
-    
+
     # Bouton de récupération
     if st.button("🔄 Réessayer"):
         st.rerun()

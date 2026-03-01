@@ -7,16 +7,39 @@ Usage:
     from modules.ui.v5_5.components import WelcomeCard, KPICard
     from modules.ui.v5_5.welcome import render_welcome_screen
     from modules.ui.v5_5.dashboard import render_dashboard_v5
-    
+
     # Appliquer le thème
     apply_light_theme()
-    
+
     # Afficher welcome ou dashboard
     render_welcome_screen()
     # ou
     render_dashboard_v5()
 """
 
+# Composants
+from .components import (
+    DashboardHeader,
+    KPICard,
+    KPIData,
+    SavingsGoalsWidget,
+    WelcomeCard,
+    charts,
+    filters,
+    format_currency,
+    get_current_month_name,
+    get_last_12_months,
+    render_mini_savings_summary,
+    transactions,
+)
+
+# Dashboard
+from .dashboard import (
+    calculate_kpis,
+    render_dashboard_empty,
+    render_dashboard_v5,
+    render_kpi_grid,
+)
 from .theme import (
     LightColors,
     ThemeV5,
@@ -24,41 +47,18 @@ from .theme import (
     get_light_theme_css,
 )
 
-# Composants
-from .components import (
-    WelcomeCard,
-    KPICard,
-    KPIData,
-    format_currency,
-    DashboardHeader,
-    get_current_month_name,
-    get_last_12_months,
-    charts,
-    filters,
-    transactions,
-    SavingsGoalsWidget,
-    render_mini_savings_summary,
-)
-
 # Welcome screen
 from .welcome import (
-    render_welcome_screen,
-    render_welcome_or_dashboard,
-    has_transactions,
     get_user_name,
-)
-
-# Dashboard
-from .dashboard import (
-    render_dashboard_v5,
-    render_kpi_grid,
-    calculate_kpis,
-    render_dashboard_empty,
+    has_transactions,
+    render_welcome_or_dashboard,
+    render_welcome_screen,
 )
 
 # Pages (controllers)
 try:
     from .pages import DashboardController
+
     _PAGES_AVAILABLE = True
 except ImportError:
     _PAGES_AVAILABLE = False
@@ -77,6 +77,11 @@ __all__ = [
     "DashboardHeader",
     "get_current_month_name",
     "get_last_12_months",
+    "SavingsGoalsWidget",
+    "render_mini_savings_summary",
+    "charts",
+    "filters",
+    "transactions",
     # Welcome
     "render_welcome_screen",
     "render_welcome_or_dashboard",

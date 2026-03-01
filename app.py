@@ -5,9 +5,10 @@ from pathlib import Path
 
 import streamlit as st
 
+from modules.encryption import get_encryption
+
 # --- ERROR TRACKING & SECURITY INITIALIZATION ---
 from modules.error_tracking import init_error_tracking
-from modules.encryption import get_encryption
 from modules.logger import logger
 
 # Initialize Sentry if DSN configured
@@ -23,22 +24,22 @@ if encryption.is_enabled():
 else:
     logger.warning("⚠️  Encryption disabled - add ENCRYPTION_KEY to .env for production")
 
-from modules.ui import load_css, card_kpi, display_flash_messages
-from modules.ui.feedback import toast_success, show_success
-from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle, get_theme
 from modules.db.migrations import init_db
-from modules.db.stats import is_app_initialized, get_global_stats
-from modules.db.members import add_member
-from modules.ui.components.onboarding_modal import should_show_onboarding, render_onboarding_modal
-from modules.ui.components.quick_actions import render_quick_actions_grid
-from modules.ui.components.smart_actions import render_smart_actions
-from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
-from modules.gamification.streaks import render_streak_badge, record_daily_login
+from modules.db.stats import get_global_stats, is_app_initialized
+from modules.gamification.streaks import record_daily_login, render_streak_badge
+
 # ============================================================
 # SYSTÈME DE NOTIFICATIONS V3
 # ============================================================
-from modules.notifications import NotificationService, DetectorRegistry
+from modules.notifications import DetectorRegistry, NotificationService
 from modules.notifications.ui import render_notification_badge as render_notification_badge_v3
+from modules.ui import card_kpi, display_flash_messages, load_css
+from modules.ui.components.daily_widget import render_daily_widget, render_quick_stats_row
+from modules.ui.components.onboarding_modal import render_onboarding_modal, should_show_onboarding
+from modules.ui.components.quick_actions import render_quick_actions_grid
+from modules.ui.components.smart_actions import render_smart_actions
+from modules.ui.feedback import toast_success
+from modules.ui.theme import ThemeManager, init_theme, render_theme_toggle
 
 # Ajouter le répertoire parent au path (utiliser append pour éviter le shadowing)
 project_root = str(Path(__file__).parent)
@@ -46,10 +47,10 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 
-
 # Imports Design System
 try:
     from modules.ui import apply_vibe_theme
+
     DESIGN_SYSTEM_AVAILABLE = True
 except ImportError:
     DESIGN_SYSTEM_AVAILABLE = False
@@ -63,7 +64,8 @@ st.set_page_config(
 )
 
 # PWA Support - Add meta tags for mobile
-st.markdown("""
+st.markdown(
+    """
     <meta name="theme-color" content="#1E88E5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -71,10 +73,13 @@ st.markdown("""
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="/assets/manifest.json">
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Register Service Worker for PWA
-st.markdown("""
+st.markdown(
+    """
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('assets/service-worker.js')
@@ -86,7 +91,9 @@ st.markdown("""
             });
     }
     </script>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 load_css()
 
@@ -100,16 +107,19 @@ try:
     # Test d'accès critique (vérifie si l'OS bloque l'accès au dossier Data et logs)
     if os.path.exists("Data"):
         os.listdir("Data")
-    
+
     init_db()
-    
+
     # Initialiser les analytics
     from modules.analytics import init_analytics
+
     init_analytics()
-    
+
 except PermissionError:
     st.error("### 🛑 Sécurité macOS : Accès refusé")
-    st.error("L'application ne peut pas accéder aux données. Vérifiez les permissions dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers**.")
+    st.error(
+        "L'application ne peut pas accéder aux données. Vérifiez les permissions dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers**."
+    )
     logger.error("PermissionError: Accès refusé au dossier Data")
     st.stop()
 except Exception:
@@ -209,13 +219,16 @@ if not is_app_initialized():
     )
 
     st.divider()
-    
+
     # Invitation à compléter la configuration
     st.warning("⚠️ Configuration requise pour commencer")
     st.markdown("Pour utiliser l'application, veuillez compléter la configuration initiale.")
-    
+
     if st.button(
-        "🚀 Compléter la configuration", type="primary", use_container_width=True, key="btn_complete_onboarding"
+        "🚀 Compléter la configuration",
+        type="primary",
+        use_container_width=True,
+        key="btn_complete_onboarding",
     ):
         st.session_state["onboarding_dismissed"] = False
         st.session_state["onboarding_step"] = 1
@@ -302,6 +315,7 @@ else:
 
     # Navigation vers Test_Dashboard V5.5 (Beta)
     from modules.constants import TEST_DASHBOARD_ENABLED
+
     if TEST_DASHBOARD_ENABLED:
         st.sidebar.divider()
         st.sidebar.markdown("### 🆕 Nouveau")
@@ -312,13 +326,10 @@ else:
             help="Découvrez la nouvelle interface V5.5 avec design FinCouple",
         ):
             st.switch_page("pages/02_Dashboard.py")
-    
+
     st.sidebar.success("✅ Application Initialisée")
 
     # Show App Info in Sidebar
     from modules.ui.layout import render_app_info
 
     render_app_info()
-
-
-

@@ -4,8 +4,8 @@ Toutes les tailles de police et familles doivent provenir de ce fichier.
 PAS DE TAILLES HARDCODÉES dans les composants.
 """
 
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 
 
 class FontFamily(str, Enum):

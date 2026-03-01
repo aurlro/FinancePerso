@@ -2,23 +2,23 @@
 
 Usage:
     from modules.ui.v5_5.components.filters import render_period_filter
-    
+
     start_date, end_date = render_period_filter()
 """
 
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+
 import streamlit as st
 
 
-def render_period_filter() -> Tuple[Optional[datetime], Optional[datetime]]:
+def render_period_filter() -> tuple[datetime | None, datetime | None]:
     """Affiche les filtres de période.
-    
+
     Returns:
         Tuple (start_date, end_date) ou (None, None) si pas de filtre
     """
     st.markdown("### 📅 Période")
-    
+
     # Préréglages rapides
     presets = {
         "Ce mois": (datetime.now().replace(day=1), datetime.now()),
@@ -27,9 +27,9 @@ def render_period_filter() -> Tuple[Optional[datetime], Optional[datetime]]:
         "Année dernière": _get_last_year(),
         "Tout": (None, None),
     }
-    
+
     col1, col2 = st.columns([1, 1])
-    
+
     with col1:
         preset = st.selectbox(
             "Préréglage",
@@ -37,38 +37,32 @@ def render_period_filter() -> Tuple[Optional[datetime], Optional[datetime]]:
             index=0,
             key="period_preset",
         )
-    
+
     start_date, end_date = presets[preset]
-    
+
     # Filtres personnalisés si "Tout" sélectionné
     if preset == "Tout":
         with col2:
             use_custom = st.checkbox("Personnaliser", key="use_custom_date")
-        
+
         if use_custom:
             col3, col4 = st.columns(2)
             with col3:
                 start_date = st.date_input(
-                    "Du",
-                    value=datetime.now() - timedelta(days=30),
-                    key="custom_start_date"
+                    "Du", value=datetime.now() - timedelta(days=30), key="custom_start_date"
                 )
             with col4:
-                end_date = st.date_input(
-                    "Au",
-                    value=datetime.now(),
-                    key="custom_end_date"
-                )
-    
+                end_date = st.date_input("Au", value=datetime.now(), key="custom_end_date")
+
     return start_date, end_date
 
 
-def get_date_range(months: int = 12) -> Tuple[datetime, datetime]:
+def get_date_range(months: int = 12) -> tuple[datetime, datetime]:
     """Retourne une plage de dates par défaut.
-    
+
     Args:
         months: Nombre de mois en arrière
-        
+
     Returns:
         Tuple (start_date, end_date)
     """
@@ -77,7 +71,7 @@ def get_date_range(months: int = 12) -> Tuple[datetime, datetime]:
     return start, end
 
 
-def _get_last_month() -> Tuple[datetime, datetime]:
+def _get_last_month() -> tuple[datetime, datetime]:
     """Retourne le mois dernier."""
     today = datetime.now()
     first_day = today.replace(day=1)
@@ -86,7 +80,7 @@ def _get_last_month() -> Tuple[datetime, datetime]:
     return last_month_start, last_month_end
 
 
-def _get_last_year() -> Tuple[datetime, datetime]:
+def _get_last_year() -> tuple[datetime, datetime]:
     """Retourne l'année dernière."""
     today = datetime.now()
     last_year = today.year - 1

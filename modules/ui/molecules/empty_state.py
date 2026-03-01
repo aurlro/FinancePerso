@@ -14,11 +14,12 @@ Usage:
     )
 """
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
 import streamlit as st
 
-from modules.ui.tokens import Colors, Typography, Spacing, BorderRadius
 from modules.ui.atoms import Button, Icon
+from modules.ui.tokens import BorderRadius, Colors, Spacing, Typography
 
 
 class EmptyState:
@@ -37,11 +38,11 @@ class EmptyState:
         title: str,
         message: str,
         icon: str = "📭",
-        action_text: Optional[str] = None,
-        on_action: Optional[Callable] = None,
-        secondary_action_text: Optional[str] = None,
-        on_secondary_action: Optional[Callable] = None,
-        key: Optional[str] = None,
+        action_text: str | None = None,
+        on_action: Callable | None = None,
+        secondary_action_text: str | None = None,
+        on_secondary_action: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """Rend un état vide standardisé.
         
@@ -105,8 +106,8 @@ class EmptyState:
     @classmethod
     def no_transactions(
         cls,
-        on_import: Optional[Callable] = None,
-        key: Optional[str] = None,
+        on_import: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """État vide spécifique: aucune transaction.
         
@@ -125,8 +126,8 @@ class EmptyState:
     @classmethod
     def no_budgets(
         cls,
-        on_create: Optional[Callable] = None,
-        key: Optional[str] = None,
+        on_create: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """État vide spécifique: aucun budget.
         
@@ -146,8 +147,8 @@ class EmptyState:
     def no_search_results(
         cls,
         search_term: str = "",
-        on_clear: Optional[Callable] = None,
-        key: Optional[str] = None,
+        on_clear: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """État vide spécifique: recherche sans résultat.
         
@@ -168,8 +169,8 @@ class EmptyState:
     def no_data(
         cls,
         data_type: str = "données",
-        on_action: Optional[Callable] = None,
-        key: Optional[str] = None,
+        on_action: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """État vide générique.
         

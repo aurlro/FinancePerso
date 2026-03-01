@@ -5,66 +5,65 @@ ou redirige vers le dashboard si des données sont présentes.
 
 Usage:
     from modules.ui.v5_5.welcome import render_welcome_screen
-    
+
     render_welcome_screen()
 """
 
-from typing import Optional
 import streamlit as st
 
-from modules.ui.v5_5.components.welcome_card import WelcomeCard
 from modules.db.transactions import get_transactions_count
+from modules.ui.v5_5.components.welcome_card import WelcomeCard
 
 
 def render_welcome_screen(
-    user_name: Optional[str] = None,
+    user_name: str | None = None,
     redirect_to_dashboard: bool = True,
     dashboard_page: str = "pages/02_Dashboard.py",
 ) -> None:
     """Affiche l'écran d'accueil ou redirige vers le dashboard.
-    
+
     Cette fonction vérifie si l'utilisateur a des transactions:
     - Si NON: Affiche le WelcomeCard avec CTA import/guide
     - Si OUI: Redirige vers le dashboard (optionnel)
-    
+
     Args:
         user_name: Nom de l'utilisateur (affiché dans le titre)
-        redirect_to_dashboard: Si True, redirige automatiquement vers 
+        redirect_to_dashboard: Si True, redirige automatiquement vers
                               le dashboard quand des données existent
         dashboard_page: Page de destination (défaut: 02_Dashboard.py)
-    
+
     Usage:
         # Dans app.py ou page d'accueil
         from modules.ui.v5_5.welcome import render_welcome_screen
-        
+
         render_welcome_screen(user_name="Alex")
-        
+
         # Pour rediriger vers Test_Dashboard:
         render_welcome_screen(
-            user_name="Alex", 
+            user_name="Alex",
             dashboard_page="pages/Test_Dashboard.py"
         )
     """
-    
+
     # Vérifier si l'utilisateur a des transactions
     try:
         transaction_count = get_transactions_count()
-    except Exception as e:
+    except Exception:
         # En cas d'erreur DB, on affiche le welcome quand même
         transaction_count = 0
         st.warning("⚠️ Impossible de vérifier vos transactions. Veuillez réessayer.")
-    
+
     # Si des données existent et redirection activée
     if transaction_count > 0 and redirect_to_dashboard:
         # Rediriger vers le dashboard
         st.switch_page(dashboard_page)
         return
-    
+
     # Si des données existent mais pas de redirection
     if transaction_count > 0:
         st.info(f"📊 Vous avez déjà des transactions. [Allez au dashboard]({dashboard_page})")
         return
-    
+
     # Afficher le WelcomeCard
     WelcomeCard.render_with_guide_modal(
         on_primary=lambda: _navigate_to_import(),
@@ -84,10 +83,10 @@ def _navigate_to_dashboard() -> None:
 
 def has_transactions() -> bool:
     """Vérifie si l'utilisateur a des transactions.
-    
+
     Returns:
         True si au moins une transaction existe
-    
+
     Usage:
         if has_transactions():
             show_dashboard()
@@ -100,41 +99,42 @@ def has_transactions() -> bool:
         return False
 
 
-def get_user_name() -> Optional[str]:
+def get_user_name() -> str | None:
     """Récupère le nom de l'utilisateur courant.
-    
+
     Returns:
         Nom de l'utilisateur ou None si non défini
     """
     # Essayer de récupérer depuis la session
     if "user_name" in st.session_state:
         return st.session_state.user_name
-    
+
     # Essayer depuis les paramètres couple
     try:
         from modules.couple import get_current_user
+
         user = get_current_user()
         if user:
             return user.get("name")
     except Exception:
         pass
-    
+
     return None
 
 
-def render_welcome_or_dashboard(user_name: Optional[str] = None) -> None:
+def render_welcome_or_dashboard(user_name: str | None = None) -> None:
     """Affiche welcome ou dashboard selon les données.
-    
+
     Fonction utilitaire qui combine la logique de détection
     et d'affichage en une seule fonction.
-    
+
     Args:
         user_name: Nom de l'utilisateur
     """
     # Si pas de nom fourni, essayer de le récupérer
     if user_name is None:
         user_name = get_user_name()
-    
+
     # Vérifier les transactions
     if has_transactions():
         # Rediriger vers dashboard

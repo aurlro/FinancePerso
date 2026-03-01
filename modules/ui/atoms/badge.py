@@ -9,10 +9,10 @@ Usage:
 """
 
 from enum import Enum
-from typing import Optional
+
 import streamlit as st
 
-from modules.ui.tokens import Colors, Typography, Spacing, BorderRadius, Shadow
+from modules.ui.tokens import BorderRadius, Colors, Spacing, Typography
 
 
 class BadgeVariant(str, Enum):
@@ -48,9 +48,9 @@ class Badge:
         cls,
         text: str,
         variant: BadgeVariant = BadgeVariant.DEFAULT,
-        count: Optional[int] = None,
-        icon: Optional[str] = None,
-        key: Optional[str] = None,
+        count: int | None = None,
+        icon: str | None = None,
+        key: str | None = None,
     ) -> None:
         """Rendu interne du badge.
         
@@ -110,9 +110,9 @@ class Badge:
     def default(
         cls,
         text: str,
-        icon: Optional[str] = None,
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = None,
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge par défaut (neutre).
         
@@ -125,9 +125,9 @@ class Badge:
     def success(
         cls,
         text: str,
-        icon: Optional[str] = "✓",
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = "✓",
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge succès.
         
@@ -140,9 +140,9 @@ class Badge:
     def warning(
         cls,
         text: str,
-        icon: Optional[str] = "⚠",
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = "⚠",
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge avertissement.
         
@@ -155,9 +155,9 @@ class Badge:
     def danger(
         cls,
         text: str,
-        icon: Optional[str] = "✕",
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = "✕",
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge danger.
         
@@ -170,9 +170,9 @@ class Badge:
     def info(
         cls,
         text: str,
-        icon: Optional[str] = "ℹ",
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = "ℹ",
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge info.
         
@@ -185,9 +185,9 @@ class Badge:
     def neutral(
         cls,
         text: str,
-        icon: Optional[str] = None,
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = None,
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge neutre (subtil).
         
@@ -200,9 +200,9 @@ class Badge:
     def primary(
         cls,
         text: str,
-        icon: Optional[str] = None,
-        count: Optional[int] = None,
-        key: Optional[str] = None,
+        icon: str | None = None,
+        count: int | None = None,
+        key: str | None = None,
     ) -> None:
         """Badge primaire (marque).
         
@@ -215,7 +215,7 @@ class Badge:
     def status(
         cls,
         status: str,
-        key: Optional[str] = None,
+        key: str | None = None,
     ) -> None:
         """Badge de statut automatique.
         

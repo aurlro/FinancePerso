@@ -3,9 +3,9 @@ Daily Widget - Creates a daily engagement hook.
 Displays personalized insights to encourage daily app usage.
 """
 
-from datetime import date, datetime
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st

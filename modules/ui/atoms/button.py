@@ -8,11 +8,12 @@ Usage:
     Button.danger("Supprimer", confirm=True)
 """
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Optional
+
 import streamlit as st
 
-from modules.ui.tokens import Colors, Typography, Spacing, BorderRadius, Shadow
+from modules.ui.tokens import Colors
 
 
 class ButtonVariant(str, Enum):
@@ -34,11 +35,11 @@ class Button:
     def _render(
         label: str,
         variant: ButtonVariant = ButtonVariant.PRIMARY,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
         use_container_width: bool = True,
-        icon: Optional[str] = None,
+        icon: str | None = None,
     ) -> bool:
         """Rendu interne du bouton.
         
@@ -98,11 +99,11 @@ class Button:
     def primary(
         cls,
         label: str,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
         use_container_width: bool = True,
-        icon: Optional[str] = None,
+        icon: str | None = None,
     ) -> bool:
         """Bouton primaire (action principale).
         
@@ -124,11 +125,11 @@ class Button:
     def secondary(
         cls,
         label: str,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
         use_container_width: bool = True,
-        icon: Optional[str] = None,
+        icon: str | None = None,
     ) -> bool:
         """Bouton secondaire (action alternative).
         
@@ -150,11 +151,11 @@ class Button:
     def danger(
         cls,
         label: str,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
         use_container_width: bool = True,
-        icon: Optional[str] = None,
+        icon: str | None = None,
         confirm: bool = False,
         confirm_message: str = "Êtes-vous sûr ? Cette action est irréversible.",
     ) -> bool:
@@ -214,11 +215,11 @@ class Button:
     def ghost(
         cls,
         label: str,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
         use_container_width: bool = False,
-        icon: Optional[str] = None,
+        icon: str | None = None,
     ) -> bool:
         """Bouton ghost (action légère/subtile).
         
@@ -240,10 +241,10 @@ class Button:
     def icon_button(
         cls,
         icon: str,
-        key: Optional[str] = None,
-        on_click: Optional[Callable] = None,
+        key: str | None = None,
+        on_click: Callable | None = None,
         disabled: bool = False,
-        help: Optional[str] = None,
+        help: str | None = None,
     ) -> bool:
         """Bouton icône seul (sans texte).
         

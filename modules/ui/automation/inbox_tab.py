@@ -9,36 +9,34 @@ Regroupe :
 Objectif : Inbox Zero - tout traiter depuis un seul endroit
 """
 
-import pandas as pd
-import streamlit as st
 from datetime import datetime
 
-from modules.ai.smart_suggestions import get_smart_suggestions, Suggestion
-from modules.recurring_detector import detect_recurring_payments_v2
+import pandas as pd
+import streamlit as st
+
+from modules.ai.smart_suggestions import Suggestion, get_smart_suggestions
 from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories_with_emojis
-from modules.db.rules import get_learning_rules
 from modules.db.members import (
+    add_account_member_mapping,
     add_member,
     add_member_mapping,
-    add_account_member_mapping,
     get_members,
 )
 from modules.db.recurrence_feedback import (
     get_all_feedback,
     set_recurrence_feedback,
-    delete_feedback,
 )
+from modules.db.rules import get_learning_rules
+from modules.db.transactions import get_all_transactions
+from modules.logger import logger
+from modules.recurring_detector import detect_recurring_payments_v2
 from modules.ui.automation.alerts_section import render_alerts_section as render_alerts_panel
 from modules.ui.automation.suggestion_actions import (
     execute_suggestion_action,
     render_action_inline_view,
 )
-from modules.db.transactions import get_all_transactions
-from modules.logger import logger
-from modules.transaction_types import is_expense_category, is_income_category
 from modules.ui.feedback import toast_error, toast_info, toast_success
-
 
 # =============================================================================
 # INBOX STATE MANAGEMENT

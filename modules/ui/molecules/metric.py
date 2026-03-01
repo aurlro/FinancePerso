@@ -12,10 +12,10 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Optional
+
 import streamlit as st
 
-from modules.ui.tokens import Colors, Typography, Spacing, BorderRadius, Shadow
+from modules.ui.tokens import BorderRadius, Colors, Shadow, Spacing, Typography
 
 
 @dataclass
@@ -58,10 +58,10 @@ class Metric:
     def render(
         label: str,
         value: str,
-        trend: Optional[MetricTrend] = None,
-        subtitle: Optional[str] = None,
-        icon: Optional[str] = None,
-        help_text: Optional[str] = None,
+        trend: MetricTrend | None = None,
+        subtitle: str | None = None,
+        icon: str | None = None,
+        help_text: str | None = None,
     ) -> None:
         """Rend une métrique.
         
@@ -125,7 +125,7 @@ class Metric:
         label: str,
         current_value: str,
         previous_value: str,
-        icon: Optional[str] = None,
+        icon: str | None = None,
     ) -> None:
         """Métrique avec comparaison.
         
@@ -167,7 +167,7 @@ class Metric:
         cls,
         label: str,
         value: str,
-        trend: Optional[str] = None,
+        trend: str | None = None,
         trend_positive: bool = True,
     ) -> None:
         """Version compacte pour tableaux/listes.

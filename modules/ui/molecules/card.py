@@ -23,15 +23,14 @@ Usage:
     )
 """
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Optional, Any
+from typing import Any
+
 import streamlit as st
 
-from modules.ui.tokens import (
-    Colors, Typography, Spacing, BorderRadius, Shadow,
-    GRADIENTS
-)
-from modules.ui.atoms import Button, Badge, Icon
+from modules.ui.atoms import Badge, Button, Icon
+from modules.ui.tokens import GRADIENTS, BorderRadius, Colors, Shadow, Spacing, Typography
 
 
 class CardVariant(str, Enum):
@@ -78,14 +77,14 @@ class Card:
     
     @staticmethod
     def render(
-        title: Optional[str] = None,
-        content: Optional[Any] = None,
-        icon: Optional[str] = None,
-        badge: Optional[tuple[str, str]] = None,  # (text, variant)
-        footer: Optional[str] = None,
-        key: Optional[str] = None,
+        title: str | None = None,
+        content: Any | None = None,
+        icon: str | None = None,
+        badge: tuple[str, str] | None = None,  # (text, variant)
+        footer: str | None = None,
+        key: str | None = None,
         variant: CardVariant = CardVariant.DEFAULT,
-        on_click: Optional[Callable] = None,
+        on_click: Callable | None = None,
         clickable: bool = False,
     ) -> bool:
         """Rend une carte standardisée.
@@ -217,11 +216,11 @@ class Card:
         cls,
         title: str,
         value: str,
-        subtitle: Optional[str] = None,
-        trend: Optional[str] = None,
-        trend_up: Optional[bool] = None,
-        icon: Optional[str] = None,
-        key: Optional[str] = None,
+        subtitle: str | None = None,
+        trend: str | None = None,
+        trend_up: bool | None = None,
+        icon: str | None = None,
+        key: str | None = None,
     ) -> None:
         """Carte de métrique avec valeur, tendance et icône.
         
@@ -302,9 +301,9 @@ class Card:
         description: str,
         button_text: str,
         on_click: Callable,
-        icon: Optional[str] = None,
-        button_icon: Optional[str] = None,
-        key: Optional[str] = None,
+        icon: str | None = None,
+        button_icon: str | None = None,
+        key: str | None = None,
         variant: str = "primary",
     ) -> None:
         """Carte avec action (bouton).
@@ -377,10 +376,10 @@ class Card:
         title: str,
         message: str,
         severity: str = "warning",  # info, success, warning, error
-        icon: Optional[str] = None,
-        action_text: Optional[str] = None,
-        on_action: Optional[Callable] = None,
-        key: Optional[str] = None,
+        icon: str | None = None,
+        action_text: str | None = None,
+        on_action: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """Carte d'alerte/notification.
         
@@ -457,9 +456,9 @@ class Card:
         title: str,
         message: str,
         icon: str = "📭",
-        action_text: Optional[str] = None,
-        on_action: Optional[Callable] = None,
-        key: Optional[str] = None,
+        action_text: str | None = None,
+        on_action: Callable | None = None,
+        key: str | None = None,
     ) -> None:
         """Carte d'état vide.
         

@@ -1,9 +1,7 @@
 """Data operations UI component - Simplified."""
 
-from io import BytesIO
 
 import streamlit as st
-import pandas as pd
 
 from modules.db.transactions import get_all_transactions
 

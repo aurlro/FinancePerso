@@ -5,104 +5,105 @@ inspirée des maquettes Figma.
 
 Usage:
     from modules.ui.v5_5.theme import LightColors, apply_light_theme
-    
+
     # Appliquer le thème global
     apply_light_theme()
-    
+
     # Utiliser les couleurs
     bg = LightColors.BG_PAGE
     primary = LightColors.PRIMARY
 """
 
 import streamlit as st
-from modules.ui.tokens import Spacing, Typography, BorderRadius, Shadow
+
+from modules.ui.tokens import BorderRadius, Shadow, Spacing, Typography
 
 
 class LightColors:
     """Palette de couleurs Light Mode - Maquette V5.5.
-    
+
     Couleurs principales:
     - Primary: Emerald (#10B981) - vert émeraude comme dans la maquette
     - Background: Gris très clair (#F9FAFB) - fond de page
     - Cards: Blanc pur (#FFFFFF) - fond des cartes
     - Text: Gris foncé (#1F2937) - texte principal
     """
-    
+
     # ============================================================
     # COULEURS PRINCIPALES
     # ============================================================
-    
+
     # Primary - Emerald (comme dans la maquette)
-    PRIMARY = "#10B981"           # Vert émeraude
-    PRIMARY_LIGHT = "#34D399"     # Vert clair
-    PRIMARY_DARK = "#059669"      # Vert foncé
-    PRIMARY_BG = "#D1FAE5"        # Vert très clair (fond icônes)
-    
+    PRIMARY = "#10B981"  # Vert émeraude
+    PRIMARY_LIGHT = "#34D399"  # Vert clair
+    PRIMARY_DARK = "#059669"  # Vert foncé
+    PRIMARY_BG = "#D1FAE5"  # Vert très clair (fond icônes)
+
     # Secondary - Indigo (pour variante)
     SECONDARY = "#6366F1"
     SECONDARY_LIGHT = "#818CF8"
     SECONDARY_DARK = "#4F46E5"
     SECONDARY_BG = "#E0E7FF"
-    
+
     # ============================================================
     # COULEURS SÉMANTIQUES
     # ============================================================
-    
+
     # Success (vert)
     SUCCESS = "#10B981"
     SUCCESS_LIGHT = "#34D399"
     SUCCESS_DARK = "#059669"
     SUCCESS_BG = "#DCFCE7"
-    
+
     # Danger (rouge)
     DANGER = "#EF4444"
     DANGER_LIGHT = "#F87171"
     DANGER_DARK = "#DC2626"
     DANGER_BG = "#FEE2E2"
-    
+
     # Warning (orange)
     WARNING = "#F59E0B"
     WARNING_LIGHT = "#FBBF24"
     WARNING_DARK = "#D97706"
     WARNING_BG = "#FEF3C7"
-    
+
     # Info (bleu)
     INFO = "#3B82F6"
     INFO_LIGHT = "#60A5FA"
     INFO_DARK = "#2563EB"
     INFO_BG = "#DBEAFE"
-    
+
     # ============================================================
     # COULEURS DE FOND
     # ============================================================
-    
-    BG_PAGE = "#F9FAFB"           # Gris très clair (fond page)
-    BG_CARD = "#FFFFFF"           # Blanc pur (fond cartes)
-    BG_SECONDARY = "#F3F4F6"      # Gris clair (fond secondaire)
-    BG_TERTIARY = "#E5E7EB"       # Gris (fond tertiaire)
-    BG_ELEVATED = "#FFFFFF"       # Blanc (éléments surélevés)
-    
+
+    BG_PAGE = "#F9FAFB"  # Gris très clair (fond page)
+    BG_CARD = "#FFFFFF"  # Blanc pur (fond cartes)
+    BG_SECONDARY = "#F3F4F6"  # Gris clair (fond secondaire)
+    BG_TERTIARY = "#E5E7EB"  # Gris (fond tertiaire)
+    BG_ELEVATED = "#FFFFFF"  # Blanc (éléments surélevés)
+
     # ============================================================
     # COULEURS DE TEXTE
     # ============================================================
-    
-    TEXT_PRIMARY = "#1F2937"      # Gris foncé (titres)
-    TEXT_SECONDARY = "#6B7280"    # Gris moyen (sous-titres)
-    TEXT_MUTED = "#9CA3AF"        # Gris clair (texte hint)
-    TEXT_DISABLED = "#D1D5DB"     # Gris très clair (désactivé)
-    
+
+    TEXT_PRIMARY = "#1F2937"  # Gris foncé (titres)
+    TEXT_SECONDARY = "#6B7280"  # Gris moyen (sous-titres)
+    TEXT_MUTED = "#9CA3AF"  # Gris clair (texte hint)
+    TEXT_DISABLED = "#D1D5DB"  # Gris très clair (désactivé)
+
     # ============================================================
     # COULEURS DE BORDURE
     # ============================================================
-    
-    BORDER = "#E5E7EB"            # Gris clair (bordures standard)
-    BORDER_LIGHT = "#F3F4F6"      # Gris très clair (bordures subtiles)
-    BORDER_FOCUS = "#10B981"      # Vert (bordure focus)
-    
+
+    BORDER = "#E5E7EB"  # Gris clair (bordures standard)
+    BORDER_LIGHT = "#F3F4F6"  # Gris très clair (bordures subtiles)
+    BORDER_FOCUS = "#10B981"  # Vert (bordure focus)
+
     # ============================================================
     # NUANCES DE GRIS (pour compatibilité)
     # ============================================================
-    
+
     GRAY_50 = "#F9FAFB"
     GRAY_100 = "#F3F4F6"
     GRAY_200 = "#E5E7EB"
@@ -117,23 +118,23 @@ class LightColors:
 
 class ThemeV5:
     """Thème complet V5.5 - Light Mode.
-    
+
     Classe principale qui regroupe tous les tokens de design
     pour la nouvelle interface.
-    
+
     Usage:
         theme = ThemeV5()
         bg_color = theme.colors.BG_PAGE
         padding = theme.spacing.MD
     """
-    
+
     def __init__(self):
         self.colors = LightColors
         self.spacing = Spacing
         self.typography = Typography
         self.radius = BorderRadius
         self.shadow = Shadow
-    
+
     def apply(self):
         """Applique le thème light mode à l'application."""
         st.markdown(get_light_theme_css(), unsafe_allow_html=True)
@@ -141,13 +142,13 @@ class ThemeV5:
 
 def apply_light_theme():
     """Applique le thème light mode V5.5.
-    
+
     Fonction utilitaire rapide pour appliquer le thème.
-    
+
     Usage:
         import streamlit as st
         from modules.ui.v5_5 import apply_light_theme
-        
+
         st.set_page_config(page_title="FinancePerso", layout="wide")
         apply_light_theme()
     """
@@ -157,7 +158,7 @@ def apply_light_theme():
 
 def get_light_theme_css() -> str:
     """Génère le CSS complet pour le thème light mode.
-    
+
     Returns:
         Chaîne CSS à injecter dans Streamlit
     """

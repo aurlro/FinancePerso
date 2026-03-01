@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import streamlit as st
-from modules.ui.design_system import Colors
 
 from modules.couple.card_mappings import (
     detect_cards_from_transactions,
@@ -13,9 +12,8 @@ from modules.couple.card_mappings import (
 )
 from modules.couple.couple_settings import (
     get_couple_settings,
-    save_couple_settings,
     get_setup_progress,
-    is_couple_configured,
+    save_couple_settings,
 )
 from modules.db.members import get_members
 

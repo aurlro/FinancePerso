@@ -17,11 +17,12 @@ Usage:
     )
 """
 
-from typing import Callable, List, Optional, Any
+from collections.abc import Callable
+
 import streamlit as st
 
-from modules.ui.tokens import Colors, Typography, Spacing
 from modules.ui.atoms import Button
+from modules.ui.tokens import Colors
 
 
 class PageLayout:
@@ -34,9 +35,9 @@ class PageLayout:
     def render(
         title: str,
         content: Callable,
-        subtitle: Optional[str] = None,
-        icon: Optional[str] = None,
-        actions: Optional[List[dict]] = None,
+        subtitle: str | None = None,
+        icon: str | None = None,
+        actions: list[dict] | None = None,
         full_width: bool = False,
     ) -> None:
         """Rend une page avec la structure standard.

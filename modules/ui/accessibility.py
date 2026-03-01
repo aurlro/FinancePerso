@@ -4,7 +4,6 @@ Vérification des contrastes WCAG et utilitaires d'accessibilité
 """
 
 from dataclasses import dataclass
-from typing import Tuple, Dict, List
 
 
 @dataclass
@@ -19,7 +18,7 @@ class ContrastRatio:
     passes_aaa_large: bool
 
 
-def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+def hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     """Convertit une couleur hex en RGB."""
     hex_color = hex_color.lstrip('#')
     if len(hex_color) == 3:
@@ -27,7 +26,7 @@ def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 
-def relative_luminance(rgb: Tuple[int, int, int]) -> float:
+def relative_luminance(rgb: tuple[int, int, int]) -> float:
     """Calcule la luminance relative d'une couleur (WCAG 2.1)."""
     def channel_luminance(c: int) -> float:
         c = c / 255
@@ -76,7 +75,7 @@ def check_contrast(foreground: str, background: str) -> ContrastRatio:
     )
 
 
-def validate_theme_contrast(theme_config: Dict[str, str]) -> List[ContrastRatio]:
+def validate_theme_contrast(theme_config: dict[str, str]) -> list[ContrastRatio]:
     """
     Valide tous les contrastes d'un thème.
     
@@ -127,7 +126,7 @@ def validate_theme_contrast(theme_config: Dict[str, str]) -> List[ContrastRatio]
     return checks
 
 
-def get_accessibility_report(theme_config: Dict[str, str]) -> Dict:
+def get_accessibility_report(theme_config: dict[str, str]) -> dict:
     """Génère un rapport d'accessibilité complet."""
     checks = validate_theme_contrast(theme_config)
     
@@ -200,11 +199,11 @@ if __name__ == "__main__":
     }
     
     report = get_accessibility_report(test_theme)
-    print(f"Vérification accessibilité:")
+    print("Vérification accessibilité:")
     print(f"  Total: {report['total_checks']} vérifications")
     print(f"  Conforme AA: {report['passes_all_aa']}")
     
     if report['failures']:
-        print(f"  Échecs:")
+        print("  Échecs:")
         for f in report['failures']:
             print(f"    - {f['foreground']} sur {f['background']}: {f['ratio']}:1 (requis: {f['required']}:1)")

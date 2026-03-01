@@ -3,8 +3,9 @@ Transaction Drill-Down Component (Legacy wrapper).
 This module provides fallback implementations when ui_v2 is not available.
 """
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
+
 from modules.db.transactions import get_transaction_by_id
 
 

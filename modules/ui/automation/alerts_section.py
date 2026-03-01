@@ -7,14 +7,12 @@ Fonctionnalités issues de l'ancienne page Abonnements :
 - Calculatrice "Reste à vivre"
 """
 
+from datetime import datetime, timedelta
+
 import pandas as pd
 import streamlit as st
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
 
 from modules.db.transactions import get_all_transactions
-from modules.logger import logger
-
 
 # =============================================================================
 # DATA MODELS
@@ -35,7 +33,7 @@ class SubscriptionAlert:
 # ALERT DETECTORS
 # =============================================================================
 
-def detect_zombie_subscriptions(df: pd.DataFrame, confirmed_patterns: List[Dict]) -> List[SubscriptionAlert]:
+def detect_zombie_subscriptions(df: pd.DataFrame, confirmed_patterns: list[dict]) -> list[SubscriptionAlert]:
     """
     Detect subscriptions that haven't had a payment recently.
     
@@ -104,7 +102,7 @@ def detect_zombie_subscriptions(df: pd.DataFrame, confirmed_patterns: List[Dict]
     return alerts
 
 
-def detect_price_increases(df: pd.DataFrame, confirmed_patterns: List[Dict]) -> List[SubscriptionAlert]:
+def detect_price_increases(df: pd.DataFrame, confirmed_patterns: list[dict]) -> list[SubscriptionAlert]:
     """
     Detect significant price increases in subscriptions.
     

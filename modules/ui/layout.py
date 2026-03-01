@@ -2,8 +2,8 @@
 UI Layout Components.
 """
 
+
 import streamlit as st
-import warnings
 
 from modules.constants import APP_VERSION
 

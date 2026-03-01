@@ -4,7 +4,7 @@ Supporte Light/Dark mode et personnalisation des couleurs
 """
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+
 import streamlit as st
 
 
@@ -64,7 +64,7 @@ PALETTES = {
 
 
 # Thèmes complets
-THEMES: Dict[str, ThemeConfig] = {
+THEMES: dict[str, ThemeConfig] = {
     "light_green": ThemeConfig(
         name="light_green",
         is_dark=False,

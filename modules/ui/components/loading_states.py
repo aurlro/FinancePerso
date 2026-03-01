@@ -3,8 +3,9 @@ Loading States Component (Legacy wrapper).
 Ce module fournit des implémentations de fallback simples pour la compatibilité.
 """
 
-import streamlit as st
 from contextlib import contextmanager
+
+import streamlit as st
 
 
 def render_skeleton_card(height: int = 100, key: str = None):

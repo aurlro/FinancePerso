@@ -3,18 +3,16 @@
 from __future__ import annotations
 
 import streamlit as st
-from modules.ui.design_system import Colors
 
 from modules.couple.loans import (
-    get_all_loans,
-    get_loan,
     create_loan,
-    update_loan,
     delete_loan,
-    link_transaction_to_loan,
-    get_loan_transactions,
     detect_loan_payments,
+    get_all_loans,
+    get_loan_transactions,
     get_loans_summary,
+    link_transaction_to_loan,
+    update_loan,
 )
 from modules.db.members import get_members
 from modules.utils import format_currency

@@ -3,18 +3,12 @@ import datetime
 import pandas as pd
 import streamlit as st
 
-from modules.ai_manager import is_ai_available
-from modules.logger import logger
-from modules.categorization import categorize_transaction, categorize_transaction_batch
+from modules.categorization import categorize_transaction_batch
 from modules.db.stats import get_all_account_labels, get_recent_imports
 from modules.db.transactions import get_all_hashes, get_all_transactions, save_transactions
 from modules.ingestion import load_transaction_file
+from modules.logger import logger
 from modules.onboarding import render_onboarding_widget
-from modules.ui.feedback import (
-    import_feedback,
-    toast_success,
-    toast_error,
-)
 from modules.ui.importing.preview import (
     render_import_preview,
     show_import_progress,
@@ -95,7 +89,7 @@ def render_import_tab():
     st.subheader("1️⃣ Sélection du fichier")
 
     # Import bank templates
-    from modules.ingestion.bank_templates import BANK_TEMPLATES, load_bank_csv
+    from modules.ingestion.bank_templates import BANK_TEMPLATES
 
     st.markdown("**🏦 Sélectionnez votre banque**")
     
@@ -460,4 +454,4 @@ def render_import_tab():
                 st.error(f"❌ Colonne manquante dans le fichier : {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error during import: {e}")
-                st.error(f"❌ Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support.")
+                st.error("❌ Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support.")

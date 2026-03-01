@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import streamlit as st
 import pandas as pd
-from modules.ui.design_system import Colors
+import streamlit as st
 
+from modules.ui.design_system import Colors
 from modules.utils import format_currency
 
 

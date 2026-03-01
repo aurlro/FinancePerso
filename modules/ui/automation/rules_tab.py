@@ -9,17 +9,16 @@ Regroupe :
 Objectif : Un seul endroit pour dire "comment l'app doit automatiser"
 """
 
+
 import pandas as pd
 import streamlit as st
-from datetime import datetime
 
-from modules.db.categories import get_categories, get_categories_with_emojis
-from modules.db.recurrence_feedback import get_all_feedback, delete_feedback
+from modules.db.categories import get_categories
+from modules.db.recurrence_feedback import delete_feedback, get_all_feedback
 from modules.db.rules import add_learning_rule, delete_learning_rule, get_learning_rules
 from modules.logger import logger
-from modules.ui.feedback import toast_error, toast_success, toast_info
+from modules.ui.feedback import toast_error, toast_info, toast_success
 from modules.utils import validate_regex_pattern
-
 
 # =============================================================================
 # RULES TAB RENDERER
@@ -230,7 +229,6 @@ def _render_rule_card(rule: pd.Series):
 
 def _render_subscriptions_manager():
     """Render confirmed subscriptions management."""
-    from modules.db.transactions import get_all_transactions
     
     st.subheader("🔁 Abonnements confirmés")
     st.caption("Ces paiements récurrents ont été validés par vos soins.")

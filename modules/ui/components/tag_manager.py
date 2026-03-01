@@ -3,10 +3,10 @@ Tag Manager Component.
 Gestion des tags avec sélection intelligente et application par lot.
 """
 
-import streamlit as st
 import warnings
 from difflib import SequenceMatcher
-from typing import Optional
+
+import streamlit as st
 
 # Couleurs par défaut pour les tags
 DEFAULT_TAG_COLORS = {
@@ -25,7 +25,7 @@ DEFAULT_TAG_COLORS = {
 DEFAULT_COLOR = "#95A5A6"
 
 
-def get_tag_color(tag_name: str, tag_colors: Optional[dict] = None) -> str:
+def get_tag_color(tag_name: str, tag_colors: dict | None = None) -> str:
     """
     Retourne la couleur associée à un tag.
     
@@ -40,7 +40,7 @@ def get_tag_color(tag_name: str, tag_colors: Optional[dict] = None) -> str:
     return colors.get(tag_name.lower(), DEFAULT_COLOR)
 
 
-def render_pill_tags(tags: list, tag_colors: Optional[dict] = None):
+def render_pill_tags(tags: list, tag_colors: dict | None = None):
     """
     Affiche les tags sous forme de pills colorés.
     
@@ -93,7 +93,7 @@ def find_similar_transactions(description: str, transactions_df, threshold: floa
     return similar_indices
 
 
-def render_smart_tag_selector(transaction: dict, all_tags: list, tag_colors: Optional[dict] = None):
+def render_smart_tag_selector(transaction: dict, all_tags: list, tag_colors: dict | None = None):
     """
     Affiche un sélecteur de tags intelligent pour une transaction.
     

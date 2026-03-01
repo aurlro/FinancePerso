@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from modules.db.members import get_all_member_names, add_member
+from modules.db.members import add_member, get_all_member_names
 
 
 def render_member_management() -> None:
