@@ -302,7 +302,7 @@ def _get_top_category_insight() -> DailyInsight | None:
             icon="📊",
             priority=8,
             action_label="Explorer",
-            action=lambda: st.switch_page("pages/6_Recherche.py"),
+            action=lambda: st.switch_page("pages/8_Recherche.py"),
             color="blue",
             metric=f"{cat_amount:.2f}€",
             metric_label=cat_name,

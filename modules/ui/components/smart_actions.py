@@ -209,12 +209,12 @@ def get_secondary_actions(state, primary_page):
         )
 
     # Suggest AI assistant
-    if state["has_transactions"] and primary_page != "5_Assistant":
+    if state["has_transactions"] and primary_page != "7_Assistant":
         actions.append(
             {
                 "icon": "🤖",
                 "label": "Assistant IA",
-                "page": "5_Assistant",
+                "page": "7_Assistant",
                 "help": "Poser une question sur vos finances",
             }
         )

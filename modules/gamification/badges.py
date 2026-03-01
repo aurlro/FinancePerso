@@ -11,7 +11,8 @@ import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-from modules.ui.tokens import Colors, Spacing, Typography
+from modules.ui.tokens import ColorPalette, Colors, Spacing, Typography
+from modules.ui.design_system import Colors as DesignColors
 
 
 class BadgeRarity(Enum):
@@ -22,8 +23,9 @@ class BadgeRarity(Enum):
 
 
 # Color mapping for badge rarities using Design System
+_palette = ColorPalette()
 RARITY_COLORS = {
-    BadgeRarity.COMMON: (Colors.TEXT_SECONDARY.value, Colors.BG_TERTIARY.value),
+    BadgeRarity.COMMON: (_palette.text_secondary, _palette.bg_tertiary),
     BadgeRarity.RARE: (Colors.INFO.value, "rgba(59, 130, 246, 0.2)"),
     BadgeRarity.EPIC: (Colors.ACCENT.value, "rgba(245, 158, 11, 0.2)"),
     BadgeRarity.LEGENDARY: (Colors.PRIMARY_LIGHT.value, "rgba(99, 102, 241, 0.3)"),
@@ -296,8 +298,8 @@ def _create_badge_card(badge: Badge, earned: bool = True) -> str:
         opacity = "1"
         lock_icon = ""
     else:
-        text_color = Colors.TEXT_MUTED.value
-        bg_color = Colors.BG_SECONDARY.value
+        text_color = _palette.text_muted
+        bg_color = _palette.bg_secondary
         border_color = Colors.BORDER.value
         opacity = "0.6"
         lock_icon = "🔒 "
@@ -317,7 +319,7 @@ def _create_badge_card(badge: Badge, earned: bool = True) -> str:
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-    " onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='{Colors.SHADOW_LG.value}'" 
+    " onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='{DesignColors.SHADOW_LG.value}'" 
        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
         <div>
             <div style="
@@ -332,7 +334,7 @@ def _create_badge_card(badge: Badge, earned: bool = True) -> str:
             ">{badge.name}</div>
             <div style="
                 font-size: {Typography.SIZE_XS};
-                color: {Colors.TEXT_MUTED.value};
+                color: {_palette.text_muted};
                 margin-bottom: {Spacing.SM};
                 min-height: 2.5em;
             ">{badge.description}</div>
@@ -365,8 +367,8 @@ def render_badges_collection():
     
     st.markdown(f"""
     <div style="
-        background-color: {Colors.BG_SECONDARY.value};
-        border: 1px solid {Colors.BORDER.value};
+        background-color: {_palette.bg_secondary};
+        border: 1px solid {_palette.border};
         border-radius: 12px;
         padding: {Spacing.LG};
         margin-bottom: {Spacing.LG};
@@ -380,19 +382,19 @@ def render_badges_collection():
             <span style="
                 font-size: {Typography.SIZE_SM};
                 font-weight: {Typography.WEIGHT_MEDIUM};
-                color: {Colors.TEXT_SECONDARY.value};
+                color: {_palette.text_secondary};
             ">Progression</span>
             <span style="
                 font-size: {Typography.SIZE_LG};
                 font-weight: {Typography.WEIGHT_BOLD};
-                color: {Colors.TEXT_PRIMARY.value};
-                font-family: {Typography.FONT_MONO};
+                color: {_palette.text_primary};
+                font-family: {Typography.FAMILY_MONO};
             ">{len(earned)} / {total}</span>
         </div>
         <div style="
             width: 100%;
             height: 8px;
-            background-color: {Colors.BG_TERTIARY.value};
+            background-color: {_palette.bg_tertiary};
             border-radius: 4px;
             overflow: hidden;
         ">
@@ -413,7 +415,7 @@ def render_badges_collection():
         <h3 style="
             font-size: {Typography.SIZE_XL};
             font-weight: {Typography.WEIGHT_SEMIBOLD};
-            color: {Colors.TEXT_PRIMARY.value};
+            color: {_palette.text_primary};
             margin-bottom: {Spacing.MD};
             margin-top: {Spacing.LG};
         ">🏆 Badges débloqués</h3>
@@ -438,12 +440,12 @@ def render_badges_collection():
     else:
         st.markdown(f"""
         <div style="
-            background-color: {Colors.BG_SECONDARY.value};
-            border: 1px dashed {Colors.BORDER.value};
+            background-color: {_palette.bg_secondary};
+            border: 1px dashed {_palette.border};
             border-radius: 12px;
             padding: {Spacing.XL};
             text-align: center;
-            color: {Colors.TEXT_MUTED.value};
+            color: {_palette.text_muted};
         ">
             <div style="font-size: 2rem; margin-bottom: {Spacing.SM};">🎯</div>
             <div style="font-size: {Typography.SIZE_BASE}; font-weight: {Typography.WEIGHT_MEDIUM};">
@@ -457,11 +459,11 @@ def render_badges_collection():
     <h3 style="
         font-size: {Typography.SIZE_XL};
         font-weight: {Typography.WEIGHT_SEMIBOLD};
-        color: {Colors.TEXT_PRIMARY.value};
+        color: {_palette.text_primary};
         margin-bottom: {Spacing.MD};
         margin-top: {Spacing.XL};
         padding-top: {Spacing.LG};
-        border-top: 1px solid {Colors.BORDER.value};
+        border-top: 1px solid {_palette.border};
     ">🔒 Badges à débloquer</h3>
     """, unsafe_allow_html=True)
     
@@ -486,11 +488,11 @@ def render_badges_collection():
             st.markdown(f"""
             <div style="
                 text-align: center;
-                color: {Colors.TEXT_MUTED.value};
+                color: {_palette.text_muted};
                 font-size: {Typography.SIZE_SM};
                 margin-top: {Spacing.MD};
                 padding: {Spacing.MD};
-                background-color: {Colors.BG_SECONDARY.value};
+                background-color: {_palette.bg_secondary};
                 border-radius: 8px;
             ">
                 + {remaining} autre{'s' if remaining > 1 else ''} badge{'s' if remaining > 1 else ''} secret{'s' if remaining > 1 else ''} à découvrir...

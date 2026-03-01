@@ -22,7 +22,7 @@ from modules.ui.layout import render_app_info
 # =============================================================================
 
 st.set_page_config(
-    page_title="Automatisation",
+    page_title="🤖 Automatisation",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -37,7 +37,7 @@ init_recurrence_feedback_table()
 # HEADER
 # =============================================================================
 
-st.title("🧠 Automatisation")
+st.title("🤖 Automatisation")
 st.markdown("""
 Centre de contrôle pour l'automatisation de vos finances. 
 L'IA analyse vos transactions et vous propose des actions.

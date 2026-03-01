@@ -52,34 +52,14 @@ def render_customizable_overview(
         cat_emoji_map: Category to emoji mapping
         df_all: All transactions
     """
-    # Default simple overview
+    from modules.ui.dashboard.kpi_cards import render_kpi_cards
+    
     st.markdown("### 📊 Vue d'ensemble")
     
-    # Calculate basic metrics
     if not df_current.empty:
-        total_income = df_current[df_current['amount'] > 0]['amount'].sum()
-        total_expense = abs(df_current[df_current['amount'] < 0]['amount'].sum())
-        balance = total_income - total_expense
-        
-        # KPI cards
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric(
-                "Revenus",
-                f"€{total_income:,.2f}",
-                delta=None
-            )
-        with col2:
-            st.metric(
-                "Dépenses",
-                f"€{total_expense:,.2f}",
-                delta=None
-            )
-        with col3:
-            st.metric(
-                "Solde",
-                f"€{balance:,.2f}",
-                delta=None
-            )
+        # Utiliser le composant KPI unifié (4 KPIs avec tendances)
+        render_kpi_cards(df_current, df_prev)
     else:
-        st.info("💡 Aucune transaction pour la période sélectionnée.")
+        # Utiliser le composant EmptyState du design system
+        from modules.ui.molecules.empty_state import EmptyState
+        EmptyState.no_data(data_type="transaction")

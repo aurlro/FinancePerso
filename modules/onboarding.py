@@ -239,7 +239,7 @@ class OnboardingManager:
             st.metric("🤖 Assistant IA", "Actif")
             st.caption("Posez des questions sur vos finances")
             if st.button("Essayer l'Assistant", key="goto_assistant"):
-                st.switch_page("pages/5_Assistant.py")
+                st.switch_page("pages/7_Assistant.py")
 
         with col3:
             st.metric("⚙️ Configuration", "Disponible")

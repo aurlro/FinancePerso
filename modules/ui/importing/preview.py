@@ -263,5 +263,9 @@ def show_import_summary(imported: int, categorized: int, duplicates_skipped: int
     st.info("👉 Rendez-vous dans la page **Opérations** pour valider les transactions importées.")
     
     if st.button("🔄 Importer un autre fichier", type="primary"):
-        st.session_state.clear()
+        # Reset uniquement les clés liées à l'import (pas tout l'état utilisateur)
+        import_keys = [k for k in st.session_state.keys() if k.startswith(("import_", "df_to_import", "selected_bank"))]
+        for key in import_keys:
+            del st.session_state[key]
+        st.session_state.import_step = 0
         st.rerun()

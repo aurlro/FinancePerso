@@ -18,17 +18,18 @@ from modules.ui.config.data_operations import render_export_section
 from modules.ui.config.log_viewer import render_log_viewer
 from modules.ui.config.member_management import render_member_management
 from modules.ui.config.notifications import render_notification_settings
+from modules.ui.couple.setup_wizard import render_couple_setup
 from modules.ui.feedback import display_flash_messages, toast_info
 
 # Page Setup
-st.set_page_config(page_title="Configuration", page_icon="⚙️", layout="wide")
+st.set_page_config(page_title="⚙️ Paramètres", page_icon="⚙️", layout="wide")
 load_css()
 init_db()  # Ensure tables exist
 
 # Afficher les messages flash en attente
 display_flash_messages()
 
-st.title("⚙️ Configuration")
+st.title("⚙️ Paramètres")
 toast_info("Page de configuration chargée", icon="⚙️")
 
 # --- MODE TOGGLE (Simple vs Advanced) ---
@@ -42,10 +43,10 @@ jump_to = st.session_state.get("config_jump_to", None)
 # Create tabs based on mode
 if is_advanced_mode():
     # Full tabs in advanced mode
-    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "🤖 IA & Services", "🔧 Maintenance"]
+    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "💑 Couple", "🤖 IA & Services", "🔧 Maintenance"]
 else:
     # Simplified tabs in simple mode
-    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "🤖 IA & Services"]
+    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "💑 Couple", "🤖 IA & Services"]
 
 # Set default tab if jump requested
 default_index = 0
@@ -76,8 +77,12 @@ with tabs[1]:
     st.subheader("Catégories de dépenses", divider="blue")
     render_category_management()
 
-# --- TAB 3: AI & SERVICES (API + ML Local + Notifications) ---
+# --- TAB 3: COUPLE ---
 with tabs[2]:
+    render_couple_setup()
+
+# --- TAB 4: AI & SERVICES (API + ML Local + Notifications) ---
+with tabs[3]:
     st.header("🤖 Intelligence Artificielle")
     st.markdown("Configurez les services de catégorisation et notifications.")
 
@@ -132,9 +137,9 @@ with tabs[2]:
     st.subheader("Paramètres des alertes", divider="blue")
     render_notification_settings()
 
-# --- TAB 4: MAINTENANCE (Advanced only) ---
+# --- TAB 5: MAINTENANCE (Advanced only) ---
 if is_advanced_mode():
-    with tabs[3]:
+    with tabs[4]:
         st.header("🔧 Maintenance et Outils")
 
         # Export Section (extracted from data_operations)

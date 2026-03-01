@@ -10,6 +10,33 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 
 ### 🚀 Nouveautés
 
+#### Couple Edition - Vue Couple & Confidentialité
+- **Configuration initiale** dans ⚙️ Configuration → 💑 Couple :
+  - Définition des membres A et B
+  - Sélection de l'utilisateur actuel
+  - Mapping automatique des cartes bancaires
+  - Attribution Perso A / Perso B / Commun
+- **Dashboard Couple** dans 📊 Synthèse → 💑 Vue Couple :
+  - Onglet **Vue d'ensemble** : Résumé global, comparatif confidentialité
+  - Onglet **Emprunts** : Suivi des prêts et remboursements
+- **Confidentialité respectée** :
+  - **Moi** : Tous les détails visibles
+  - **Partenaire** : Agrégats uniquement (catégories, totaux) 🔒
+  - **Commun** : Transactions détaillées visibles par tous
+- **Détection des virements internes** :
+  - Algo de détection automatique (même montant, dates proches)
+  - Validation manuelle des virements détectés
+  - Exclusion des stats de "reste à vivre"
+- **Gestion des emprunts** :
+  - CRUD complet (nom, organisme, capital, mensualité, taux)
+  - Attribution par membre ou commun
+  - Suivi progression remboursement
+  - Liaison transactions ↔ emprunts
+  - Détection auto des paiements
+- **Migrations SQL** : `migrations/008_couple_edition.sql`, `migrations/009_loans.sql`
+- **Tests** : 20 nouveaux tests (33 tests au total)
+- **Documentation** : `docs/COUPLE_EDITION_PLAN.md`
+
 #### Système de notifications V3
 - **Nouveau système unifié** avec persistance en base de données SQLite
 - **20+ types de notifications** prédéfinis (Budget, Validation, Gamification, etc.)

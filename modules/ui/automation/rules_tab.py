@@ -199,15 +199,33 @@ def _render_rule_card(rule: pd.Series):
                     st.caption(f"Créé le {created.strftime('%d/%m/%Y') if hasattr(created, 'strftime') else str(created)[:10]}")
         
         with cols[3]:
-            if st.button("🗑️", key=f"del_rule_{rule['id']}", help="Supprimer cette règle"):
-                try:
-                    if delete_learning_rule(rule["id"]):
-                        toast_success("Règle supprimée")
+            # Confirmation dialog for delete rule
+            confirm_key = f"confirm_delete_rule_{rule['id']}"
+            
+            if not st.session_state.get(confirm_key):
+                if st.button("🗑️", key=f"del_rule_{rule['id']}", help="Supprimer cette règle"):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+            else:
+                st.warning("Êtes-vous sûr ?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Oui, supprimer", key=f"confirm_del_rule_{rule['id']}", type="primary"):
+                        try:
+                            if delete_learning_rule(rule["id"]):
+                                toast_success("Règle supprimée")
+                                del st.session_state[confirm_key]
+                                st.rerun()
+                            else:
+                                toast_error("Erreur lors de la suppression")
+                                del st.session_state[confirm_key]
+                        except Exception as e:
+                            toast_error(f"Erreur : {e}")
+                            del st.session_state[confirm_key]
+                with col2:
+                    if st.button("Annuler", key=f"cancel_del_rule_{rule['id']}"):
+                        del st.session_state[confirm_key]
                         st.rerun()
-                    else:
-                        toast_error("Erreur lors de la suppression")
-                except Exception as e:
-                    toast_error(f"Erreur : {e}")
 
 
 def _render_subscriptions_manager():
@@ -285,10 +303,26 @@ def _render_subscription_card(sub: dict):
                 st.caption(f"Validé le {str(validated_at)[:10]}")
         
         with cols[3]:
-            if st.button("🗑️", key=f"del_sub_{sub['id']}", help="Retirer de mes abonnements"):
-                delete_feedback(sub["label_pattern"], sub.get("category"))
-                toast_info("Abonnement retiré")
-                st.rerun()
+            # Confirmation dialog for delete subscription
+            confirm_key = f"confirm_delete_sub_{sub['id']}"
+            
+            if not st.session_state.get(confirm_key):
+                if st.button("🗑️", key=f"del_sub_{sub['id']}", help="Retirer de mes abonnements"):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+            else:
+                st.warning("Êtes-vous sûr ?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Oui, supprimer", key=f"confirm_del_sub_{sub['id']}", type="primary"):
+                        delete_feedback(sub["label_pattern"], sub.get("category"))
+                        toast_info("Abonnement retiré")
+                        del st.session_state[confirm_key]
+                        st.rerun()
+                with col2:
+                    if st.button("Annuler", key=f"cancel_del_sub_{sub['id']}"):
+                        del st.session_state[confirm_key]
+                        st.rerun()
 
 
 def _render_manual_subscription_form():

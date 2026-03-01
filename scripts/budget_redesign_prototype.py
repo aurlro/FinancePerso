@@ -177,7 +177,7 @@ def render_enhanced_budget_tracker(df_exp, cat_emoji_map, historical_data=None):
         st.info("📝 **Aucun budget défini**")
         st.caption("Configurez vos budgets pour suivre vos dépenses")
         if st.button("➕ Créer mon premier budget", type="primary"):
-            st.switch_page("pages/4_Regles.py")
+            st.switch_page("pages/4_Intelligence.py")
         return
     
     # Calcul période

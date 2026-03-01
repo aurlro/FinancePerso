@@ -312,7 +312,7 @@ if active_tab == "📊 Dashboard Santé":
                 "title": f"Catégoriser {scores['completeness']['uncategorized']} transactions",
                 "description": "Des transactions n'ont pas de catégorie assignée.",
                 "action": "Voir les transactions",
-                "link": "pages/6_Recherche.py",
+                "link": "pages/8_Recherche.py",
             }
         )
 

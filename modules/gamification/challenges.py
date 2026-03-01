@@ -11,7 +11,7 @@ import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-from modules.ui.tokens import Colors, Spacing, Typography
+from modules.ui.tokens import ColorPalette, Colors, Spacing, Typography
 
 
 class ChallengeStatus(Enum):
@@ -219,8 +219,9 @@ def _create_challenge_card(challenge: Challenge) -> str:
     progress_pct = int(progress * 100)
     
     days_left = (challenge.deadline - datetime.now()).days
+    _palette = ColorPalette()
     days_color = Colors.DANGER.value if days_left <= 2 else (
-        Colors.WARNING.value if days_left <= 5 else Colors.TEXT_SECONDARY.value
+        Colors.WARNING.value if days_left <= 5 else _palette.text_secondary
     )
     
     # Progress bar color based on completion
@@ -233,14 +234,14 @@ def _create_challenge_card(challenge: Challenge) -> str:
     
     return f"""
     <div style="
-        background-color: {Colors.BG_SECONDARY.value};
-        border: 1px solid {Colors.BORDER.value};
+        background-color: {_palette.bg_secondary};
+        border: 1px solid {_palette.border};
         border-radius: 12px;
         padding: {Spacing.LG};
         margin-bottom: {Spacing.MD};
         transition: all 0.3s ease;
-    " onmouseover="this.style.borderColor='{Colors.BORDER_LIGHT.value}';this.style.transform='translateY(-2px)'" 
-       onmouseout="this.style.borderColor='{Colors.BORDER.value}';this.style.transform='translateY(0)'">
+    " onmouseover="this.style.borderColor='{_palette.border_light}';this.style.transform='translateY(-2px)'" 
+       onmouseout="this.style.borderColor='{_palette.border}';this.style.transform='translateY(0)'">
         <div style="
             display: flex;
             justify-content: space-between;
@@ -253,11 +254,11 @@ def _create_challenge_card(challenge: Challenge) -> str:
                     <div style="
                         font-size: {Typography.SIZE_BASE};
                         font-weight: {Typography.WEIGHT_SEMIBOLD};
-                        color: {Colors.TEXT_PRIMARY.value};
+                        color: {_palette.text_primary};
                     ">{challenge.title}</div>
                     <div style="
                         font-size: {Typography.SIZE_SM};
-                        color: {Colors.TEXT_MUTED.value};
+                        color: {_palette.text_muted};
                     ">{challenge.description}</div>
                 </div>
             </div>
@@ -274,7 +275,7 @@ def _create_challenge_card(challenge: Challenge) -> str:
                 display: flex;
                 justify-content: space-between;
                 font-size: {Typography.SIZE_SM};
-                color: {Colors.TEXT_SECONDARY.value};
+                color: {_palette.text_secondary};
                 margin-bottom: {Spacing.XS};
             ">
                 <span>Progression</span>
@@ -283,7 +284,7 @@ def _create_challenge_card(challenge: Challenge) -> str:
             <div style="
                 width: 100%;
                 height: 8px;
-                background-color: {Colors.BG_TERTIARY.value};
+                background-color: {_palette.bg_tertiary};
                 border-radius: 4px;
                 overflow: hidden;
             ">
@@ -317,12 +318,12 @@ def render_challenges_widget():
     if not challenges:
         st.markdown(f"""
         <div style="
-            background-color: {Colors.BG_SECONDARY.value};
-            border: 1px dashed {Colors.BORDER.value};
+            background-color: {_palette.bg_secondary};
+            border: 1px dashed {_palette.border};
             border-radius: 12px;
             padding: {Spacing.XL};
             text-align: center;
-            color: {Colors.TEXT_MUTED.value};
+            color: {_palette.text_muted};
         ">
             <div style="font-size: 2rem; margin-bottom: {Spacing.SM};">🎯</div>
             <div style="font-size: {Typography.SIZE_BASE}; font-weight: {Typography.WEIGHT_MEDIUM};">

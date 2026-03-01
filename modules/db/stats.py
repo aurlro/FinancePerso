@@ -6,11 +6,13 @@ Provides high-level stats for dashboards and initialization checks.
 import datetime
 
 import pandas as pd
+import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 
 
+@st.cache_data(ttl=60)
 def is_app_initialized() -> bool:
     """
     Check if the app has any data.
@@ -33,6 +35,7 @@ def is_app_initialized() -> bool:
         return cursor.fetchone() is not None
 
 
+@st.cache_data(ttl=300)
 def get_global_stats() -> dict:
     """
     Get high-level stats for the homepage dashboard.

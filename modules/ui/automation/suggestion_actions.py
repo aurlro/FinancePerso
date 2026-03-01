@@ -484,6 +484,137 @@ class ViewDuplicatesAction(SuggestionAction):
 
 
 # =============================================================================
+# Analyze Recurring Action
+# =============================================================================
+
+class AnalyzeRecurringAction(SuggestionAction):
+    """Handler for analyze_recurring action type.
+    
+    Analyzes a recurring expense to show historical data, trends,
+    and provide insights for potential savings.
+    """
+    
+    action_type = "analyze_recurring"
+    
+    def can_handle(self, action_type: str) -> bool:
+        return action_type == self.action_type
+    
+    def execute(self, suggestion: Suggestion, action_data: dict) -> dict:
+        label = action_data.get("label", "")
+        monthly_amount = action_data.get("amount", 0)
+        
+        if not label:
+            return {"success": False, "message": "❌ Libellé manquant"}
+        
+        try:
+            # Get all transactions matching this label
+            df = get_all_transactions()
+            if df.empty:
+                return {"success": False, "message": "❌ Aucune transaction"}
+            
+            # Find transactions matching the label pattern
+            matching = df[df["label"].str.contains(label[:20], case=False, na=False)]
+            
+            if matching.empty:
+                return {"success": False, "message": f"❌ Aucune transaction trouvée pour '{label}'"}
+            
+            # Calculate statistics
+            matching["date"] = pd.to_datetime(matching["date"])
+            matching = matching.sort_values("date")
+            
+            total_spent = abs(matching["amount"].sum())
+            avg_amount = abs(matching["amount"].mean())
+            count = len(matching)
+            first_date = matching["date"].min()
+            last_date = matching["date"].max()
+            
+            # Calculate monthly cost
+            months_active = max(1, (last_date - first_date).days / 30)
+            monthly_cost = total_spent / months_active
+            
+            # Annual projection
+            annual_cost = monthly_cost * 12
+            
+            return {
+                "success": True,
+                "message": f"📊 Analyse de '{label[:30]}...'",
+                "view_data": {
+                    "label": label,
+                    "monthly_amount": monthly_amount,
+                    "total_spent": total_spent,
+                    "avg_amount": avg_amount,
+                    "count": count,
+                    "monthly_cost": monthly_cost,
+                    "annual_cost": annual_cost,
+                    "first_date": first_date.strftime("%Y-%m-%d"),
+                    "last_date": last_date.strftime("%Y-%m-%d"),
+                    "transactions": matching[["date", "label", "amount", "category_validated"]].tail(6).to_dict("records"),
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error analyzing recurring expense: {e}")
+            return {"success": False, "message": f"❌ Erreur lors de l'analyse : {str(e)[:50]}"}
+    
+    def render_inline_view(self, view_data: dict) -> bool:
+        """Render inline view for recurring expense analysis."""
+        label = view_data.get("label", "")
+        monthly_amount = view_data.get("monthly_amount", 0)
+        total_spent = view_data.get("total_spent", 0)
+        monthly_cost = view_data.get("monthly_cost", 0)
+        annual_cost = view_data.get("annual_cost", 0)
+        count = view_data.get("count", 0)
+        first_date = view_data.get("first_date", "")
+        last_date = view_data.get("last_date", "")
+        transactions = view_data.get("transactions", [])
+        
+        with st.container(border=True):
+            st.markdown(f"### 📈 Analyse : {label[:40]}...")
+            
+            # Key metrics
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("💰 Mensuel", f"{monthly_cost:.0f}€")
+            with col2:
+                st.metric("📅 Annuel", f"{annual_cost:.0f}€")
+            with col3:
+                st.metric("🔢 Occurrences", f"{count}")
+            with col4:
+                st.metric("💸 Total dépensé", f"{total_spent:.0f}€")
+            
+            st.caption(f"🗓️ Période : {first_date} → {last_date}")
+            
+            # Insights
+            st.markdown("#### 💡 Insights")
+            
+            if annual_cost > 500:
+                st.warning(f"⚠️ Cette dépense vous coûte **{annual_cost:.0f}€ par an** !")
+            elif annual_cost > 200:
+                st.info(f"ℹ️ Soit environ **{annual_cost:.0f}€ par an**.")
+            else:
+                st.success(f"✅ Une dépense modeste à **{annual_cost:.0f}€ par an**.")
+            
+            # Recent transactions
+            if transactions:
+                st.markdown("#### 📝 Dernières occurrences")
+                for txn in transactions:
+                    date_str = txn["date"].strftime("%d/%m/%Y") if isinstance(txn["date"], pd.Timestamp) else str(txn["date"])[:10]
+                    amount = abs(txn["amount"])
+                    st.caption(f"{date_str} : {txn['label'][:40]}... ({amount:.2f}€)")
+            
+            # Action suggestions
+            st.markdown("#### 🎯 Actions suggérées")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🔍 Voir toutes les occurrences", key=f"recurring_all_{label[:20]}"):
+                    toast_info("🚧 Navigation vers la recherche en cours de développement")
+            with col2:
+                if st.button("💡 Chercher des alternatives", key=f"recurring_alt_{label[:20]}"):
+                    toast_info("🚧 Fonctionnalité en cours de développement")
+            
+            return True
+
+
+# =============================================================================
 # REGISTRY - Auto-discovery of action handlers
 # =============================================================================
 
@@ -494,6 +625,7 @@ _ACTION_HANDLERS: list[SuggestionAction] = [
     ViewTransactionAction(),
     MergeCategoriesAction(),
     ViewDuplicatesAction(),
+    AnalyzeRecurringAction(),
 ]
 
 

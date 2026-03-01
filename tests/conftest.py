@@ -53,6 +53,20 @@ def temp_db():
     from modules.db.migrations import init_db
 
     init_db()  # Utilise le vrai schéma de production via DB_PATH
+    
+    # Appliquer les migrations SQL depuis le dossier migrations/
+    import glob
+    migrations_dir = os.path.join(os.path.dirname(__file__), '..', 'migrations')
+    if os.path.exists(migrations_dir):
+        migration_files = sorted(glob.glob(os.path.join(migrations_dir, '*.sql')))
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        for migration_file in migration_files:
+            with open(migration_file, 'r') as f:
+                sql = f.read()
+                cursor.executescript(sql)
+        conn.commit()
+        conn.close()
 
     # Insert test defaults (categories, members)
     conn = sqlite3.connect(db_path)

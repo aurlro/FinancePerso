@@ -426,7 +426,7 @@ def render_quick_stats_popover():
         st.divider()
         if st.button("Détails par catégorie →", use_container_width=True, key="jump_explorer"):
             st.session_state["research_active_tab"] = "📂 Explorateur"
-            st.switch_page("pages/6_Recherche.py")
+            st.switch_page("pages/8_Recherche.py")
 
 
 def render_quick_actions_grid():

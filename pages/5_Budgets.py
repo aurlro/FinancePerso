@@ -68,14 +68,17 @@ if active_tab == "📊 Vue d'ensemble":
     st.header("📊 Suivi mensuel de vos budgets")
 
     if budgets_df.empty or transactions_df.empty:
-        st.info(
-            """
-        📭 **Aucun budget ou transaction à analyser.**
-        
-        Pour commencer :
-        1. Allez dans l'onglet **⚙️ Gérer les budgets** pour définir vos objectifs
-        2. Importez vos transactions via la page **Opérations**
-        """
+        from modules.ui.components.welcome_empty_state import WelcomeEmptyState
+
+        WelcomeEmptyState.render(
+            title="🎯 Aucun budget défini",
+            subtitle="Prenez le contrôle de vos dépenses",
+            message="Les budgets vous aident à suivre vos dépenses par catégorie et à recevoir des alertes quand vous approchez de vos limites.",
+            primary_action_text="➕ Créer mon premier budget",
+            primary_action_link=None,
+            secondary_action_text="📥 Importer des transactions",
+            secondary_action_link="pages/1_Opérations.py",
+            show_steps=False,
         )
     else:
         # Calculate current month spending

@@ -424,6 +424,22 @@ logger.error("Erreur: %s", erreur)
 
 5. **Gestion des erreurs** : Toujours capturer les erreurs critiques au démarrage (voir `app.py` pour l'exemple macOS permission)
 
+6. **Feedback UI** : Utiliser uniquement `modules/ui/feedback.py` (les versions `_v2`, `_wrapper`, `enhanced_` ont été supprimées) :
+```python
+from modules.ui.feedback import toast_success, toast_error, show_success, confirm_dialog
+
+# Toasts éphémères
+toast_success("Opération réussie!")
+toast_error("Une erreur s'est produite")
+
+# Banners persistants
+show_success("Titre", "Message détaillé")
+
+# Dialogues de confirmation
+if confirm_dialog("Êtes-vous sûr ?", "Cette action est irréversible", danger=True):
+    delete_item()
+```
+
 ### Patterns courants
 
 ```python
@@ -452,13 +468,82 @@ with st.form("mon_form"):
 
 ---
 
+## Skills disponibles
+
+Le projet utilise les skills suivantes pour garantir la qualité et la cohérence :
+
+| Skill | Rôle | Quand l'utiliser |
+|-------|------|------------------|
+| `consistency-keeper` | **Gardien de la cohérence** - vérifie DRY, doc sync, rangement, performance | **Toujours invoquer en premier** avant toute modification significative |
+| `skills-orchestrator` | Coordination des skills entre eux | Quand plusieurs skills doivent collaborer |
+| `project-auditor` | Audit global du projet (sécurité, structure) | Avant déploiement ou nettoyage |
+| `python-app-auditor` | Audit technique Python | Pour vérifier la qualité du code Python |
+| `streamlit-app-auditor` | Audit fonctionnel Streamlit | Pour tester l'app en conditions réelles |
+| `ux-product-designer` | Design et UX | Pour améliorer l'expérience utilisateur |
+
+### Workflow recommandé avec Consistency Keeper
+
+Avant toute modification majeure ou ajout de feature :
+
+```
+1. consistency-keeper
+   └── Vérifie la cohérence actuelle du projet
+   └── Identifie les patterns existants à réutiliser
+   └── S'assure que la doc est à jour
+
+2. [Skill spécifique selon la tâche]
+   └── Implémente la feature/modification
+
+3. consistency-keeper (again)
+   └── Vérifie que les principes DRY sont respectés
+   └── S'assure que la doc est synchronisée
+   └── Confirme que le projet reste bien rangé
+```
+
+### Checklist Consistency Keeper
+
+Avant de finaliser une tâche, vérifier :
+
+- [ ] **DRY** - Pas de code dupliqué, réutilisation des composants existants
+- [ ] **Doc Sync** - AGENTS.md, README.md, CHANGELOG.md mis à jour si nécessaire
+- [ ] **Rangement** - Fichiers au bon endroit, pas d'orphelins
+- [ ] **Performance** - Pas de requêtes inutiles, cache utilisé
+
+---
+
+## Historique des changements majeurs (Consistency Keeper)
+
+### 2026-03-01 - Consolidation des modules feedback
+**Problème** : 4 modules de feedback coexistaient (`feedback.py`, `feedback_v2.py`, `feedback_wrapper.py`, `enhanced_feedback.py`)
+
+**Solution** :
+- ✅ Suppression de `modules/ui/feedback_v2.py` (non utilisé, dépendances manquantes)
+- ✅ Suppression de `modules/ui/feedback_wrapper.py` (non utilisé)
+- ✅ Suppression de `modules/ui/enhanced_feedback.py` (non utilisé)
+- ✅ Conservation de `modules/ui/feedback.py` (seul utilisé dans le codebase)
+
+**Impact** : -3 fichiers, API unique, moins de confusion
+
+### 2026-03-01 - Nettoyage des dossiers vides
+- ✅ Suppression de `views/` (vide)
+- ✅ Suppression de `modules/ui/charts/` (vide)
+- ✅ Suppression des dossiers malformés `tests/{ui,unit,integration}/{helpers}/`
+- ✅ Nettoyage des caches Python (~2000 fichiers .pyc)
+
+### 2026-03-01 - Uniformisation validate_sql_identifier
+- ✅ Fusion des deux implémentations dans `modules/db/connection.py`
+- ✅ API cohérente avec paramètre `allowed` optionnel
+
+---
+
 ## Ressources utiles
 
 - **Documentation utilisateur** : `docs/USER_GUIDE.md`
 - **Guide contribution** : `CONTRIBUTING.md`
 - **Changelog** : `CHANGELOG.md`
 - **Architecture détaillée** : `docs/ARCHITECTURE.md`
+- **Guide Consistency Keeper** : `~/.config/agents/skills/consistency-keeper/SKILL.md`
 
 ---
 
-Dernière mise à jour : 2026-02-28 (v5.2.1)
+Dernière mise à jour : 2026-03-01 (v5.2.1) - Consolidation modules UI

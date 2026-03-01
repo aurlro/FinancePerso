@@ -15,7 +15,15 @@ from datetime import datetime
 
 from modules.ai.smart_suggestions import get_smart_suggestions, Suggestion
 from modules.analytics_v2 import detect_recurring_payments_v2
+from modules.db.budgets import get_budgets
 from modules.db.categories import get_categories_with_emojis
+from modules.db.rules import get_learning_rules
+from modules.db.members import (
+    add_member,
+    add_member_mapping,
+    add_account_member_mapping,
+    get_members,
+)
 from modules.db.recurrence_feedback import (
     get_all_feedback,
     set_recurrence_feedback,
@@ -27,11 +35,6 @@ from modules.ui.automation.suggestion_actions import (
     render_action_inline_view,
 )
 from modules.db.transactions import get_all_transactions
-from modules.db.members import (
-    add_member,
-    add_member_mapping,
-    add_account_member_mapping,
-)
 from modules.logger import logger
 from modules.transaction_types import is_expense_category, is_income_category
 from modules.ui.feedback import toast_error, toast_info, toast_success
@@ -53,33 +56,54 @@ def init_inbox_state():
         st.session_state.active_suggestion_result = None  # Stores {suggestion_id, result}}
 
 
+@st.cache_data(ttl=60)
+def _fetch_inbox_data() -> tuple:
+    """
+    Fetch raw data for inbox count calculation with caching.
+    
+    Returns:
+        tuple: (transactions_df, feedback_list, suggestions_list)
+    """
+    df = get_all_transactions()
+    
+    if df.empty:
+        return df, [], []
+    
+    # Get recurring payments data
+    validated_df = df[df["status"] == "validated"]
+    recurring_df = detect_recurring_payments_v2(validated_df) if not validated_df.empty else pd.DataFrame()
+    
+    # Get feedback map
+    feedback = get_all_feedback()
+    
+    # Get suggestions
+    suggestions = get_smart_suggestions(df, get_learning_rules(), get_budgets(), get_members())
+    
+    return df, feedback, recurring_df, suggestions
+
+
 def get_inbox_count() -> dict:
     """Get counts for inbox badge."""
     try:
-        df = get_all_transactions()
+        with st.spinner("Chargement..."):
+            df, feedback, recurring_df, suggestions = _fetch_inbox_data()
+        
         if df.empty:
             return {"total": 0, "recurrences": 0, "suggestions": 0, "alerts": 0}
 
-        # Count recurrences to validate
-        validated_df = df[df["status"] == "validated"]
-        recurring_df = detect_recurring_payments_v2(validated_df) if not validated_df.empty else pd.DataFrame()
-        
-        feedback = get_all_feedback()
+        # Count recurrences to validate using vectorized operation
         feedback_map = {(f["label_pattern"], f["category"]): f["user_feedback"] for f in feedback}
         
         pending_recs = 0
         if not recurring_df.empty:
-            for _, row in recurring_df.iterrows():
-                key = (row["label"], row.get("category", ""))
-                if key not in feedback_map:
-                    pending_recs += 1
+            # Vectorized operation instead of iterrows()
+            pending_mask = recurring_df.apply(
+                lambda row: (row["label"], row.get("category", "")) not in feedback_map,
+                axis=1
+            )
+            pending_recs = pending_mask.sum()
 
-        # Count suggestions
-        from modules.db.budgets import get_budgets
-        from modules.db.members import get_members
-        from modules.db.rules import get_learning_rules
-        
-        suggestions = get_smart_suggestions(df, get_learning_rules(), get_budgets(), get_members())
+        # Filter out dismissed suggestions
         suggestions = [s for s in suggestions if s.id not in st.session_state.get("inbox_dismissed", set())]
 
         return {
@@ -274,10 +298,6 @@ def _render_recurrence_card(row: pd.Series, cat_emoji_map: dict):
 
 def _render_suggestions_section(standalone: bool = False):
     """Render smart suggestions with inline actions and results."""
-    from modules.db.budgets import get_budgets
-    from modules.db.members import get_members
-    from modules.db.rules import get_learning_rules
-    
     df = get_all_transactions()
     if df.empty:
         if standalone:
@@ -408,20 +428,35 @@ def _render_suggestion_card(suggestion: Suggestion):
                         st.rerun()
         
         with cols[3]:
-            if st.button("🗑️", key=f"sugg_dismiss_{suggestion.id}", help="Ignorer cette suggestion"):
-                st.session_state.inbox_dismissed.add(suggestion.id)
-                # Nettoyer les états si cette suggestion était active
-                if st.session_state.get("active_suggestion_id") == suggestion.id:
-                    del st.session_state["active_suggestion_id"]
-                if st.session_state.get("active_suggestion_result", {}).get("suggestion_id") == suggestion.id:
-                    st.session_state.active_suggestion_result = None
-                toast_info("Suggestion ignorée")
-                st.rerun()
+            # Confirmation dialog for dismiss suggestion
+            confirm_key = f"confirm_dismiss_sugg_{suggestion.id}"
+            
+            if not st.session_state.get(confirm_key):
+                if st.button("🗑️", key=f"sugg_dismiss_{suggestion.id}", help="Ignorer cette suggestion"):
+                    st.session_state[confirm_key] = True
+                    st.rerun()
+            else:
+                st.warning("Êtes-vous sûr de vouloir ignorer cette suggestion ?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Oui, ignorer", key=f"confirm_del_sugg_{suggestion.id}", type="primary"):
+                        st.session_state.inbox_dismissed.add(suggestion.id)
+                        # Nettoyer les états si cette suggestion était active
+                        if st.session_state.get("active_suggestion_id") == suggestion.id:
+                            del st.session_state["active_suggestion_id"]
+                        if st.session_state.get("active_suggestion_result", {}).get("suggestion_id") == suggestion.id:
+                            st.session_state.active_suggestion_result = None
+                        toast_info("Suggestion ignorée")
+                        del st.session_state[confirm_key]
+                        st.rerun()
+                with col2:
+                    if st.button("Annuler", key=f"cancel_del_sugg_{suggestion.id}"):
+                        del st.session_state[confirm_key]
+                        st.rerun()
 
 
 def _render_member_mapping_form(suggestion: Suggestion, card_key: str, active_state_key: str = None):
     """Render inline form for mapping a card/account to a member."""
-    from modules.db.members import get_members, add_member, add_member_mapping, add_account_member_mapping
     
     action_data = suggestion.action_data
     card_suffix = action_data.get("card_suffix", "")
@@ -513,7 +548,6 @@ def _handle_suggestion_action(suggestion: Suggestion) -> dict:
     Returns:
         dict with action result including success, message, and optional view_data
     """
-    from modules.ui.automation.suggestion_actions import execute_suggestion_action
     
     result = execute_suggestion_action(suggestion)
     
@@ -554,7 +588,6 @@ def _render_inline_action_result(suggestion_id: str):
 
 def _render_alerts_section(standalone: bool = False):
     """Render alerts (zombies, increases, etc.)."""
-    from modules.db.recurrence_feedback import get_all_feedback
     
     confirmed = get_all_feedback(status="confirmed")
     if not confirmed:

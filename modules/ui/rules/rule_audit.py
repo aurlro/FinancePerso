@@ -233,18 +233,20 @@ def render_audit_section():
                     with col2:
                         st.markdown("**💡 Actions:**")
                         
-                        # Get rule IDs for the patterns
-                        cursor.execute(
-                            "SELECT id, priority FROM learning_rules WHERE pattern = ?",
-                            (ov['shorter_pattern'],)
-                        )
-                        shorter_rule = cursor.fetchone()
-                        
-                        cursor.execute(
-                            "SELECT id, priority FROM learning_rules WHERE pattern = ?",
-                            (ov['longer_pattern'],)
+                        # Get rule IDs for the patterns (need new connection)
+                        with get_db_connection() as conn:
+                            cursor = conn.cursor()
+                            cursor.execute(
+                                "SELECT id, priority FROM learning_rules WHERE pattern = ?",
+                                (ov['shorter_pattern'],)
                             )
-                        longer_rule = cursor.fetchone()
+                            shorter_rule = cursor.fetchone()
+                            
+                            cursor.execute(
+                                "SELECT id, priority FROM learning_rules WHERE pattern = ?",
+                                (ov['longer_pattern'],)
+                            )
+                            longer_rule = cursor.fetchone()
                         
                         # Action: Increase priority of shorter pattern
                         if shorter_rule and longer_rule:

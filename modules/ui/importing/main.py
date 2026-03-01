@@ -4,7 +4,8 @@ import pandas as pd
 import streamlit as st
 
 from modules.ai_manager_v2 import is_ai_available
-from modules.categorization import categorize_transaction
+from modules.logger import logger
+from modules.categorization import categorize_transaction, categorize_transaction_batch
 from modules.db.stats import get_all_account_labels, get_recent_imports
 from modules.db.transactions import get_all_hashes, get_all_transactions, save_transactions
 from modules.ingestion import load_transaction_file
@@ -175,14 +176,14 @@ def render_import_tab():
 
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
-                    col_date = st.selectbox("Colonne Date", cols, key="selectbox_81")
+                    col_date = st.selectbox("Colonne Date", cols, key="import_custom_col_date")
                 with c2:
-                    col_amt = st.selectbox("Colonne Montant", cols, key="selectbox_83")
+                    col_amt = st.selectbox("Colonne Montant", cols, key="import_custom_col_amount")
                 with c3:
-                    col_label = st.selectbox("Colonne Libellé", cols, key="selectbox_85")
+                    col_label = st.selectbox("Colonne Libellé", cols, key="import_custom_col_label")
                 with c4:
                     col_member = st.selectbox(
-                        "Colonne Carte (optionnel)", ["-- Ignorer --"] + cols, key="selectbox_87"
+                        "Colonne Carte (optionnel)", ["-- Ignorer --"] + cols, key="import_custom_col_member"
                     )
 
                 config["mapping"] = {
@@ -268,7 +269,7 @@ def render_import_tab():
             st.subheader("3️⃣ Prévisualisation & Doublons")
 
             try:
-                mode_arg = "bourso_preset" if "Bourso" in import_mode else "custom"
+                mode_arg = "bourso_preset" if selected_bank_key == "boursorama" else "custom"
                 df = load_transaction_file(uploaded_file, mode=mode_arg, config=config)
 
                 if isinstance(df, tuple):
@@ -299,6 +300,11 @@ def render_import_tab():
                     # --- DUPLICATE DETECTION ---
                     existing_hashes = get_all_hashes()
                     force_import = False
+                    
+                    # Initialiser duplicates_mask par défaut
+                    duplicates_mask = pd.Series(False, index=df.index)
+                    num_duplicates = 0
+                    num_new = len(df)
 
                     if existing_hashes:
                         duplicates_mask = df["tx_hash"].isin(existing_hashes)
@@ -319,7 +325,7 @@ def render_import_tab():
                     st.session_state.import_step = 3
                     
                     # Préparer les données pour le composant de preview
-                    detected_bank = "BoursoBank" if "Bourso" in import_mode else "Banque personnalisée"
+                    detected_bank = "BoursoBank" if selected_bank_key == "boursorama" else "Banque personnalisée"
                     duplicates_df = df[duplicates_mask].copy() if existing_hashes and num_duplicates > 0 else None
                     
                     # Callbacks pour les actions
@@ -382,25 +388,32 @@ def render_import_tab():
                             show_import_progress(1, len(import_steps), import_steps[0])
                             
                             # Étape 2: Catégorisation (si activée)
-                            all_results = []
                             if auto_cat:
                                 show_import_progress(2, len(import_steps), import_steps[1])
                                 
+                                # Préparer les données pour le batch
+                                tx_data = [
+                                    (row["label"], row["amount"], row["date"])
+                                    for _, row in df_import.iterrows()
+                                ]
+                                
+                                # Catégorisation en batch (beaucoup plus rapide)
                                 progress_bar = st.progress(0)
-                                for i, (_, row) in enumerate(df_import.iterrows()):
-                                    try:
-                                        cat, source, conf = categorize_transaction(
-                                            row["label"], row["amount"], row["date"]
-                                        )
-                                        all_results.append((cat, source, conf))
-                                        categorized_count += 1
-                                    except Exception as e:
-                                        errors.append(f"Ligne {i}: {str(e)}")
-                                        all_results.append(("Inconnu", "error", 0.0))
+                                update_interval = max(1, len(tx_data) // 20)  # Tous les 5%
+                                
+                                try:
+                                    all_results = categorize_transaction_batch(tx_data)
+                                    categorized_count = len([r for r in all_results if r[0] != "Inconnu"])
                                     
-                                    # Mise à jour de la barre de progression
-                                    progress_bar.progress((i + 1) / len(df_import))
-
+                                    # Simuler une progression pour l'UX
+                                    for i in range(0, len(tx_data), update_interval):
+                                        progress_bar.progress(min((i + update_interval) / len(tx_data), 1.0))
+                                    
+                                except Exception as e:
+                                    logger.error(f"Batch categorization failed: {e}")
+                                    # Fallback: marquer tout comme Inconnu
+                                    all_results = [("Inconnu", "error", 0.0)] * len(tx_data)
+                                
                                 df_import["category_validated"] = [
                                     r[0] if r[0] else "Inconnu" for r in all_results
                                 ]
@@ -436,5 +449,15 @@ def render_import_tab():
                                 st.session_state["just_imported"] = True
                                 st.rerun()
 
+            except pd.errors.ParserError as e:
+                logger.error(f"CSV parse error: {e}")
+                st.error(f"❌ Format CSV invalide : {e}")
+            except ValueError as e:
+                logger.error(f"Validation error: {e}")
+                st.error(f"❌ Données invalides : {e}")
+            except KeyError as e:
+                logger.error(f"Missing column error: {e}")
+                st.error(f"❌ Colonne manquante dans le fichier : {e}")
             except Exception as e:
-                st.error(f"Une erreur est survenue : {e}")
+                logger.exception(f"Unexpected error during import: {e}")
+                st.error(f"❌ Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support.")

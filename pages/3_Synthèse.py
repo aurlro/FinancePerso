@@ -52,6 +52,7 @@ from modules.ui.dashboard.sections import (
     render_analysis_tab,
     render_budget_tab,
 )
+from modules.ui.couple.dashboard import render_couple_dashboard
 from modules.ui.feedback import toast_info, toast_success
 
 # ============================================================================
@@ -281,14 +282,15 @@ def main():
 
     # État vide
     if df.empty:
-        st.info("📭 Aucune donnée disponible. Commencez par importer des relevés.")
-        st.button(
-            "➕ Nouvelles Opérations",
-            on_click=lambda: (
-                st.session_state.update({"active_op_tab": "📥 Importation"}),
-                st.switch_page("pages/1_Opérations.py"),
-            ),
-            type="primary",
+        from modules.ui.components.welcome_empty_state import WelcomeEmptyState
+
+        WelcomeEmptyState.render(
+            title="👋 Bonjour !",
+            subtitle="Bienvenue dans votre tableau de bord",
+            message="Importez vos premiers relevés pour visualiser vos finances et suivre vos objectifs.",
+            primary_action_text="📥 Importer mes relevés",
+            primary_action_link="pages/1_Opérations.py",
+            show_steps=True,
         )
         return
 
@@ -319,14 +321,29 @@ def main():
     # =========================================================================
     # ONGLETS ORGANISÉS
     # =========================================================================
-    tab_overview, tab_budget, tab_analysis, tab_ai = st.tabs(
-        [
-            "📈 **Vue d'ensemble**",
-            "🎯 **Budgets & Prévisions**",
-            "👥 **Analyses**",
-            "🔮 **IA & Rapports**",
-        ]
-    )
+    # Vérifier si le mode couple est configuré pour afficher l'onglet
+    from modules.couple.couple_settings import is_couple_configured
+    show_couple_tab = is_couple_configured()
+    
+    if show_couple_tab:
+        tab_overview, tab_couple, tab_budget, tab_analysis, tab_ai = st.tabs(
+            [
+                "📈 **Vue d'ensemble**",
+                "💑 **Vue Couple**",
+                "🎯 **Budgets & Prévisions**",
+                "👥 **Analyses**",
+                "🔮 **IA & Rapports**",
+            ]
+        )
+    else:
+        tab_overview, tab_budget, tab_analysis, tab_ai = st.tabs(
+            [
+                "📈 **Vue d'ensemble**",
+                "🎯 **Budgets & Prévisions**",
+                "👥 **Analyses**",
+                "🔮 **IA & Rapports**",
+            ]
+        )
 
     # -------------------------------------------------------------------------
     # Onglet 1: Vue d'ensemble personnalisable
@@ -356,7 +373,14 @@ def main():
         render_savings_goals_summary()
 
     # -------------------------------------------------------------------------
-    # Onglet 2: Budgets & Prévisions
+    # Onglet 2: Vue Couple (si configuré)
+    # -------------------------------------------------------------------------
+    if show_couple_tab:
+        with tab_couple:
+            render_couple_dashboard()
+
+    # -------------------------------------------------------------------------
+    # Onglet 3: Budgets & Prévisions
     # -------------------------------------------------------------------------
     with tab_budget:
         render_budget_tab(

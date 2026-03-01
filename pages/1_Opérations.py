@@ -6,7 +6,7 @@ from modules.ui.components.tooltips import IMPORT_HELP, VALIDATION_HELP, render_
 from modules.ui.importing.main import render_import_tab
 from modules.ui.validation.main import render_validation_tab
 
-st.set_page_config(page_title="Opérations", page_icon="🧾", layout="wide")
+st.set_page_config(page_title="💳 Import & Validation", page_icon="💳", layout="wide")
 load_css()
 init_db()
 
@@ -34,7 +34,7 @@ if st.session_state.get("just_imported"):
     st.session_state["active_op_tab"] = "✅ Validation"
     st.session_state["just_imported"] = False
 
-st.title("🧾 Opérations")
+st.title("💳 Import & Validation")
 
 # Navigation
 tabs = ["📥 Importation", "✅ Validation"]

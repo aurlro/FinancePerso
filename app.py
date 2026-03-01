@@ -1,5 +1,9 @@
-import streamlit as st
 import os
+import sys
+from datetime import date
+from pathlib import Path
+
+import streamlit as st
 
 # --- ERROR TRACKING & SECURITY INITIALIZATION ---
 from modules.error_tracking import init_error_tracking
@@ -35,15 +39,10 @@ from modules.gamification.streaks import render_streak_badge, record_daily_login
 from modules.notifications import NotificationService, DetectorRegistry
 from modules.notifications.ui import render_notification_badge as render_notification_badge_v3
 
-# ============================================================
-# INTEGRATION PHASES 4-5-6 - Auto-generated
-# ============================================================
-
-import sys
-from pathlib import Path
-
-# Ajouter le répertoire parent au path
-sys.path.insert(0, str(Path(__file__).parent))
+# Ajouter le répertoire parent au path (utiliser append pour éviter le shadowing)
+project_root = str(Path(__file__).parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 
 
@@ -91,18 +90,19 @@ st.markdown("""
 load_css()
 try:
     # Test d'accès critique (vérifie si l'OS bloque l'accès au dossier Data et logs)
-    import os
     if os.path.exists("Data"):
         os.listdir("Data")
     
     init_db()
-except PermissionError as e:
+except PermissionError:
     st.error("### 🛑 Sécurité macOS : Accès refusé")
-    st.error(f"L'application ne peut pas lire vos données.\n\n**Détail :** `{e}`\n\n👉 **Solution :** Allez dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers** (ou *Accès complet au disque*) et autorisez votre Terminal ou Éditeur de code (VSCode, Cursor, etc.). Redémarrez l'application ensuite.")
+    st.error("L'application ne peut pas accéder aux données. Vérifiez les permissions dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers**.")
+    logger.error("PermissionError: Accès refusé au dossier Data")
     st.stop()
-except Exception as e:
+except Exception:
     st.error("### 🛑 Erreur fatale au démarrage")
-    st.error(f"Impossible d'initialiser l'application : `{e}`")
+    st.error("Impossible d'initialiser l'application. Veuillez réessayer ou contacter le support.")
+    logger.exception("Fatal startup error")
     st.stop()
 
 # --- SESSION STATE INITIALIZATION (AVANT toute utilisation) ---
@@ -116,26 +116,31 @@ if "onboarding_step" not in st.session_state:
     st.session_state["onboarding_step"] = None
 
 # --- DASHBOARD CLEANUP (Auto-repair on startup) ---
-try:
-    from modules.db.dashboard_cleanup import run_startup_cleanup
+# Exécuté une seule fois par session pour éviter les ralentissements
+if "startup_cleanup_done" not in st.session_state:
+    try:
+        from modules.db.dashboard_cleanup import run_startup_cleanup
 
-    cleanup_result = run_startup_cleanup()
-    if cleanup_result.widgets_fixed > 0 or cleanup_result.widgets_removed > 0:
-        logger.info(f"Dashboard auto-cleanup: {cleanup_result.message}")
-except Exception as e:
-    logger.warning(f"Dashboard cleanup failed (non-critical): {e}")
+        cleanup_result = run_startup_cleanup()
+        if cleanup_result.widgets_fixed > 0 or cleanup_result.widgets_removed > 0:
+            logger.info(f"Dashboard auto-cleanup: {cleanup_result.message}")
+        st.session_state["startup_cleanup_done"] = True
+    except Exception as e:
+        logger.warning(f"Dashboard cleanup failed (non-critical): {e}")
 
 # --- AUTOMATED MAINTENANCE (Weekly Cleanup) ---
-try:
-    from modules.db.maintenance import check_and_perform_maintenance
+# Exécuté une seule fois par session pour éviter les ralentissements
+if "maintenance_checked" not in st.session_state:
+    try:
+        from modules.db.maintenance import check_and_perform_maintenance
 
-    check_and_perform_maintenance()
-except Exception as e:
-    logger.warning(f"Automated maintenance failed (non-critical): {e}")
+        check_and_perform_maintenance()
+        st.session_state["maintenance_checked"] = True
+    except Exception as e:
+        logger.warning(f"Automated maintenance failed (non-critical): {e}")
 
 # Système de notifications V3 - exécuté une fois par jour maximum
 # Utiliser une clé session_state pour tracker la dernière exécution
-from datetime import date
 
 # Initialiser la clé si nécessaire
 if "notifications_v3_last_run" not in st.session_state:
@@ -157,8 +162,10 @@ if should_run_detectors:
     except Exception as e:
         logger.warning(f"Notifications V3 - Erreur lors de l'exécution des détecteurs: {e}")
 
-# Track daily login for streak
-record_daily_login()
+# Track daily login for streak (une fois par session)
+if "daily_login_recorded" not in st.session_state:
+    record_daily_login()
+    st.session_state["daily_login_recorded"] = True
 
 # Afficher le badge de notification et le streak dans la sidebar
 # Utiliser le nouveau système V3 avec le service
@@ -175,75 +182,31 @@ if should_show_onboarding():
 # --- MAIN LOGIC ---
 
 if not is_app_initialized():
-    # === ONBOARDING MODE (Fallback if modal was dismissed) ===
+    # === ONBOARDING MODE - Invitation à compléter la configuration ===
     st.title("👋 Bienvenue sur MyFinance Companion")
     st.markdown("### Votre assistant personnel pour une gestion financière sereine.")
 
-    col_l, col_r = st.columns([1, 1])
-
-    with col_l:
-        st.info(
-            """
-        **Pourquoi cette application ?**
-        - 🔒 **Données locales** : Vos comptes ne quittent jamais votre ordinateur.
-        - 🧠 **Intelligence Artificielle** : Catégorisation automatique et conseils personnalisés.
-        - 📊 **Tableaux de bord** : Visualisez où part votre argent.
+    st.info(
         """
-        )
+    **Pourquoi cette application ?**
+    - 🔒 **Données locales** : Vos comptes ne quittent jamais votre ordinateur.
+    - 🧠 **Intelligence Artificielle** : Catégorisation automatique et conseils personnalisés.
+    - 📊 **Tableaux de bord** : Visualisez où part votre argent.
+    """
+    )
 
-        st.divider()
-        st.subheader("🚀 Démarrage Rapide")
-
-        with st.form("onboarding_form"):
-            st.write("Pour commencer, créons votre profil principal.")
-            user_name = st.text_input("Votre Prénom", value="Moi", key="text_input_78")
-            account_name = st.text_input(
-                "Nom de votre compte principal", value="Compte Principal", key="text_input_79"
-            )
-
-            submit = st.form_submit_button("Commencer l'aventure ➡️", type="primary")
-
-            if submit:
-                # Create the first member
-                add_member(user_name, "HOUSEHOLD")
-                # We can't really "create" the account here as it's created on first import,
-                # but we can store it in session state to pre-fill the import page.
-                st.session_state["default_account_name"] = account_name
-                st.session_state["onboarding_complete"] = True
-                toast_success(f"Bienvenue {user_name} ! Configuration initiale créée.", icon="👋")
-                st.rerun()
-
-    with col_r:
-        # Show a static image or features list
-        st.markdown("#### Fonctionnalités Clés")
-        st.markdown(
-            """
-        - **Import Universel** : BoursoBank, CSV générique...
-        - **Nettoyage Intelligent** : Détection de doublons.
-        - **Budgets** : Définissez vos limites par catégorie.
-        """
-        )
-
-        # --- NEW: PROFILE SETUP FORM ---
-        st.divider()
-        from modules.ui.components.profile_form import render_profile_setup_form
-
-        render_profile_setup_form(key_prefix="onboarding")
-
-        # Button to reopen onboarding modal
-        st.divider()
-        if st.button(
-            "🎯 Guide de démarrage", use_container_width=True, type="secondary", key="button_109"
-        ):
-            st.session_state["onboarding_dismissed"] = False
-            st.session_state["onboarding_step"] = 1
-            st.rerun()
-
-    if st.session_state.get("onboarding_complete"):
-        show_success(f"Parfait {user_name} ! Passons à l'import de vos premières données.")
-        if st.button("Aller aux opérations 📥", type="primary", key="button_116"):
-            toast_success("Redirection vers les opérations...", icon="📥")
-            st.switch_page("pages/1_Opérations.py")
+    st.divider()
+    
+    # Invitation à compléter la configuration
+    st.warning("⚠️ Configuration requise pour commencer")
+    st.markdown("Pour utiliser l'application, veuillez compléter la configuration initiale.")
+    
+    if st.button(
+        "🚀 Compléter la configuration", type="primary", use_container_width=True, key="btn_complete_onboarding"
+    ):
+        st.session_state["onboarding_dismissed"] = False
+        st.session_state["onboarding_step"] = 1
+        st.rerun()
 
 else:
     # === DASHBOARD MODE ===
@@ -253,16 +216,19 @@ else:
 
     # Check if user has data
     if stats.get("total_transactions", 0) == 0:
-        # Empty state for new users
-        from modules.ui.components.empty_states import render_no_transactions_state
-        from modules.ui.components.tooltips import render_info_box
+        # Empty state for new users - WelcomeEmptyState
+        from modules.ui.components.welcome_empty_state import WelcomeEmptyState
 
-        render_info_box(
-            title="Bienvenue sur MyFinance Companion !",
-            content="Commencez par importer vos relevés bancaires pour visualiser vos finances et suivre vos dépenses.",
-            type="info",
+        WelcomeEmptyState.render(
+            title="👋 Bonjour !",
+            subtitle="Bienvenue dans votre espace financier",
+            message="Commencez par importer vos relevés bancaires pour visualiser vos finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
+            primary_action_text="📥 Importer mes relevés",
+            primary_action_link="pages/1_Opérations.py",
+            secondary_action_text="📖 Voir le guide",
+            secondary_action_link=None,
+            show_steps=True,
         )
-        render_no_transactions_state(key="dashboard_empty")
     else:
         # 🆕 DAILY WIDGET - Crée l'habitude quotidienne
         render_daily_widget()
@@ -300,11 +266,11 @@ else:
                 "📥 Nouvelles Opérations",
                 use_container_width=True,
                 type="primary",
-                key="button_148",
+                key="btn_new_operations",
             ):
                 toast_success("Ouverture de la page Opérations...", icon="📥")
                 st.switch_page("pages/1_Opérations.py")
-            if st.button("📊 Voir la Synthèse", use_container_width=True, key="button_150"):
+            if st.button("📊 Voir la Synthèse", use_container_width=True, key="btn_view_synthesis"):
                 toast_success("Ouverture du tableau de bord...", icon="📊")
                 st.switch_page("pages/3_Synthèse.py")
 

@@ -106,7 +106,7 @@ def render_category_bar_chart(df_current: pd.DataFrame, cat_emoji_map: dict):
                         key=f"cat_btn_{raw_cat}_{idx}",
                         use_container_width=True,
                     ):
-                        launch_explorer("category", raw_cat, "6_Recherche")
+                        launch_explorer("category", raw_cat, "8_Recherche")
 
 
 def render_category_pie_chart(

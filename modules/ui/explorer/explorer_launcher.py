@@ -21,7 +21,7 @@ def launch_explorer(explorer_type: str, value: str, from_page: str = "3_Synthès
     st.session_state["_explorer_from"] = from_page
 
     # Navigate
-    st.switch_page("pages/6_Recherche.py")
+    st.switch_page("pages/8_Recherche.py")
 
 
 def render_explore_button(
@@ -182,8 +182,8 @@ def render_back_button(from_page: str = "3_Synthèse") -> None:
         "1_Opérations": "Opérations",
         "3_Synthèse": "Synthèse",
         "4_Intelligence": "Intelligence",
-        "5_Assistant": "Assistant",
-        "6_Recherche": "Recherche",
+        "7_Assistant": "Assistant",
+        "8_Recherche": "Recherche",
         "app": "Accueil",
     }
 

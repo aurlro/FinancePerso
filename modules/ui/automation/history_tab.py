@@ -9,6 +9,8 @@ Affiche :
 Objectif : Donner à l'utilisateur la vision et le contrôle sur ce que l'IA fait
 """
 
+import re
+
 import pandas as pd
 import streamlit as st
 from datetime import datetime, timedelta
@@ -78,15 +80,22 @@ def _render_automation_stats():
     # Estimer les transactions auto-catégorisées
     auto_categorized = 0
     if not transactions_df.empty and not rules_df.empty:
-        import re
-        for _, tx in transactions_df.iterrows():
-            for _, rule in rules_df.iterrows():
-                try:
-                    if re.search(rule["pattern"], str(tx.get("label", "")), re.IGNORECASE):
-                        auto_categorized += 1
-                        break
-                except re.error:
-                    continue
+        # Pre-compile valid regex patterns for efficiency
+        valid_patterns = []
+        for _, rule in rules_df.iterrows():
+            try:
+                pattern = rule["pattern"]
+                # Validate pattern by compiling it
+                re.compile(pattern, re.IGNORECASE)
+                valid_patterns.append(pattern)
+            except re.error:
+                continue
+        
+        if valid_patterns:
+            # Combine all patterns into a single regex for vectorized matching
+            combined_pattern = "|".join(f"({p})" for p in valid_patterns)
+            labels = transactions_df["label"].fillna("").astype(str)
+            auto_categorized = labels.str.contains(combined_pattern, case=False, regex=True).sum()
     
     # Affichage
     cols = st.columns(4)
