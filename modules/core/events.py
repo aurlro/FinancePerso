@@ -17,8 +17,9 @@ Example:
         pass
 """
 
-from typing import Callable, Dict, List, Optional, Any
+from collections.abc import Callable
 from functools import wraps
+from typing import Any, Optional
 
 
 class EventBus:
@@ -34,7 +35,7 @@ class EventBus:
     """
 
     _instance: Optional["EventBus"] = None
-    _listeners: Dict[str, List[Callable]] = {}
+    _listeners: dict[str, list[Callable]] = {}
 
     def __new__(cls) -> "EventBus":
         """Ensure singleton pattern."""
@@ -98,7 +99,7 @@ class EventBus:
                 logger.error(f"Event handler error for '{event}': {e}")
 
     @classmethod
-    def clear(cls, event: Optional[str] = None) -> None:
+    def clear(cls, event: str | None = None) -> None:
         """Clear all listeners or listeners for a specific event.
 
         Args:
@@ -111,7 +112,7 @@ class EventBus:
             del cls._listeners[event]
 
     @classmethod
-    def get_subscribers(cls, event: Optional[str] = None) -> List[str]:
+    def get_subscribers(cls, event: str | None = None) -> list[str]:
         """Get list of subscribed events or handlers for a specific event.
 
         Args:

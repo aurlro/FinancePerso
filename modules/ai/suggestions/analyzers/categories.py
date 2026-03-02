@@ -1,6 +1,5 @@
 """Category-related analyzers."""
 
-import pandas as pd
 
 from modules.ai.suggestions.base import BaseAnalyzer
 from modules.ai.suggestions.models import AnalysisContext, Priority, Suggestion, SuggestionType
@@ -161,7 +160,10 @@ class MissingRuleAnalyzer(BaseAnalyzer):
                         type=SuggestionType.RULE.value,
                         priority=Priority.MEDIUM.value,
                         title=f"📝 Règle manquante : '{pattern}...' → {row['category_validated']}",
-                        description=f"{row['count']} transactions manuellement catégorisées. Une règle automatiserait cela.",
+                        description=(
+                            f"{row['count']} transactions manuellement catégorisées. "
+                            f"Une règle automatiserait cela."
+                        ),
                         action_label="Créer règle",
                         action_data={
                             "pattern": pattern,
@@ -208,7 +210,10 @@ class CategoryConsolidationAnalyzer(BaseAnalyzer):
                     type=SuggestionType.CATEGORY.value,
                     priority=Priority.LOW.value,
                     title=f"🏷️ Catégories similaires : '{cat1}' et '{cat2}'",
-                    description=f"Ces catégories ont des noms similaires ({count1} et {count2} transactions). Envisagez de les fusionner.",
+                    description=(
+                        f"Ces catégories ont des noms similaires ({count1} et "
+                        f"{count2} transactions). Envisagez de les fusionner."
+                    ),
                     action_label="Fusionner",
                     action_data={"source": cat1, "target": cat2, "type": "merge_categories"},
                     impact_score=40,

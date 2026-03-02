@@ -6,18 +6,17 @@ import json
 from datetime import datetime, timedelta
 
 import pandas as pd
-import pytest
 
 from modules.db.recycle_bin import (
-    init_recycle_bin,
-    soft_delete_transaction,
-    restore_transaction,
     get_recycle_bin_contents,
-    purge_expired_items,
     get_recycle_bin_count,
     hard_delete_transaction,
+    init_recycle_bin,
+    purge_expired_items,
+    restore_transaction,
+    soft_delete_transaction,
 )
-from modules.db.transactions import save_transactions, get_all_transactions
+from modules.db.transactions import save_transactions
 
 
 class TestInitRecycleBin:

@@ -3,7 +3,6 @@
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from modules.logger import logger
 
@@ -45,7 +44,7 @@ class GitAnalyzer:
         git_dir = self.repo_path / ".git"
         return git_dir.exists()
 
-    def get_last_tag(self) -> Optional[str]:
+    def get_last_tag(self) -> str | None:
         """Get the most recent git tag.
 
         Returns:
@@ -65,7 +64,7 @@ class GitAnalyzer:
 
         return None
 
-    def get_changes_since(self, ref: Optional[str] = None) -> list[GitChange]:
+    def get_changes_since(self, ref: str | None = None) -> list[GitChange]:
         """Get changes since a git reference.
 
         Args:
@@ -84,7 +83,7 @@ class GitAnalyzer:
 
         return self._get_changes_from_git(ref)
 
-    def _get_first_commit(self) -> Optional[str]:
+    def _get_first_commit(self) -> str | None:
         """Get the first commit hash in the repository.
 
         Returns:
@@ -177,7 +176,7 @@ class GitAnalyzer:
 
         return changes
 
-    def get_commit_messages(self, ref: Optional[str] = None) -> list[str]:
+    def get_commit_messages(self, ref: str | None = None) -> list[str]:
         """Get commit messages since reference.
 
         Args:

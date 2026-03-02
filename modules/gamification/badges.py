@@ -2,17 +2,16 @@
 Badge system for achievements.
 """
 
-from datetime import datetime
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
 
 import streamlit as st
 
 from modules.db.connection import get_db_connection
 from modules.logger import logger
-from modules.ui.tokens import ColorPalette, Colors, Spacing, Typography
 from modules.ui.design_system import Colors as DesignColors
+from modules.ui.tokens import ColorPalette, Colors, Spacing, Typography
 
 
 class BadgeRarity(Enum):

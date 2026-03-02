@@ -19,88 +19,87 @@ Usage:
 """
 
 # Phase 2: Data Engineering
+# Phase 5: Agentic AI
+from modules.wealth.agent_core import (
+    Action,
+    ActionType,
+    # Classes principales
+    AgentOrchestrator,
+    DocumentGenerator,
+    Mission,
+    MissionPriority,
+    MissionStatus,
+    TriggerDetector,
+    # Enums
+    TriggerType,
+    # Fonctions utilitaires
+    quick_analyze,
+)
 from modules.wealth.data_cleaning import (
+    batch_clean_labels,
     clean_merchant_name,
     clean_transaction_label,
     extract_card_suffix,
     extract_location,
     extract_transaction_metadata,
     normalize_merchant_name,
-    batch_clean_labels,
-)
-
-# Phase 3: Subscription Engine
-from modules.wealth.subscription_engine import (
-    Subscription,
-    SubscriptionStatus,
-    FrequencyType,
-    SubscriptionDetector,
-    RemainingBudgetResult,
-    calculate_remaining_budget,
 )
 
 # Phase 4: Monte Carlo Engine
 from modules.wealth.math_engine import (
+    MonteCarloSimulator,
     ScenarioType,
     SimulationResult,
-    MonteCarloSimulator,
-    quick_simulation,
     get_default_monthly_contribution,
+    quick_simulation,
+)
+
+# Phase 3: Subscription Engine
+from modules.wealth.subscription_engine import (
+    FrequencyType,
+    RemainingBudgetResult,
+    Subscription,
+    SubscriptionDetector,
+    SubscriptionStatus,
+    calculate_remaining_budget,
 )
 
 # Phase 4: Visualizations
 from modules.wealth.visualizations import (
-    plot_wealth_projection,
-    plot_scenario_comparison,
     plot_probability_distribution,
+    plot_scenario_comparison,
+    plot_wealth_projection,
 )
 
 # Phase 5: Wealth Management
 from modules.wealth.wealth_manager import (
-    # Classes principales
-    WealthManager,
-    RealEstateAsset,
-    FinancialAsset,
-    CryptoAsset,
-    Liability,
-    MortgageSchedule,
+    AssetLiquidity,
     # Enums
     AssetType,
+    CryptoAsset,
+    FinancialAsset,
+    Liability,
     LiabilityType,
-    AssetLiquidity,
+    MortgageSchedule,
+    RealEstateAsset,
+    # Classes principales
+    WealthManager,
+    calculate_debt_to_income_ratio,
     # Fonctions utilitaires
     calculate_monthly_debt_service,
-    calculate_debt_to_income_ratio,
     calculate_savings_rate,
 )
 
 # Phase 5: Wealth Projections (Integration Phase 4 × Phase 5)
 from modules.wealth.wealth_projection import (
-    project_wealth_evolution,
-    compare_allocation_strategies,
-    project_asset_class,
-    generate_projection_summary,
-    calculate_required_contribution,
-    WealthProjectionResult,
-    AssetProjection,
     DEFAULT_ASSET_RETURNS,
-)
-
-# Phase 5: Agentic AI
-from modules.wealth.agent_core import (
-    # Classes principales
-    AgentOrchestrator,
-    Mission,
-    Action,
-    TriggerDetector,
-    DocumentGenerator,
-    # Enums
-    TriggerType,
-    MissionPriority,
-    MissionStatus,
-    ActionType,
-    # Fonctions utilitaires
-    quick_analyze,
+    AssetProjection,
+    WealthProjectionResult,
+    calculate_required_contribution,
+    compare_allocation_strategies,
+    generate_projection_summary,
+    project_asset_class,
+    project_wealth_evolution,
 )
 
 __all__ = [

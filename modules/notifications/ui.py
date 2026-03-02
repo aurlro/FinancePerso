@@ -3,11 +3,10 @@
 Utilise le Design System pour une interface cohérente.
 """
 
-from typing import Callable, Optional
 
 import streamlit as st
 
-from modules.ui.atoms import Badge, Button, Icon
+from modules.ui.atoms import Badge, Button
 from modules.ui.molecules import Card
 from modules.ui.tokens import Colors, Spacing, Typography
 
@@ -16,7 +15,7 @@ from .service import NotificationService
 
 
 def render_notification_badge(
-    service: Optional[NotificationService] = None,
+    service: NotificationService | None = None,
     key: str = "notif_badge",
 ) -> None:
     """Rend le badge de notification pour la sidebar.
@@ -115,7 +114,7 @@ def _render_mini_notification(
 
 
 def render_notification_center(
-    service: Optional[NotificationService] = None,
+    service: NotificationService | None = None,
 ) -> None:
     """Rend le centre de notifications complet.
 
@@ -308,7 +307,7 @@ def _handle_action(
 
 
 def render_notification_settings(
-    service: Optional[NotificationService] = None,
+    service: NotificationService | None = None,
 ) -> None:
     """Rend les paramètres de notification."""
     if service is None:

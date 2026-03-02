@@ -3,13 +3,12 @@ Recurring transaction detection and management.
 Identifies regular income and expenses for forecasting.
 """
 
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Literal
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from modules.db.transactions import get_all_transactions
 from modules.logger import logger

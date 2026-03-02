@@ -4,7 +4,7 @@ Test Unit: Cache Advanced (Phase 6)
 """
 
 import time
-import pytest
+
 from modules.performance import AdvancedCache
 
 

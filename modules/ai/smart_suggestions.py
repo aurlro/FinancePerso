@@ -5,7 +5,7 @@ Redirects to the new suggestions engine.
 """
 
 from modules.ai.suggestions import Suggestion, SuggestionEngine
-from modules.ai.suggestions.models import SuggestionType, Priority
+from modules.ai.suggestions.models import Priority, SuggestionType
 
 __all__ = ["Suggestion", "SuggestionEngine", "SuggestionType", "Priority", "get_smart_suggestions"]
 

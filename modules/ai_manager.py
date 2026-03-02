@@ -127,7 +127,7 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             self._on_success()
             return result
-        except Exception as e:
+        except Exception:
             self._on_failure()
             raise
 
@@ -447,7 +447,10 @@ class OllamaProvider(AIProvider):
             return resp.json()["response"]
         except requests.ConnectionError:
             logger.error(f"Ollama connection error - is Ollama running at {self.base_url}?")
-            return f"⚠️ Impossible de se connecter à Ollama à {self.base_url}. Le serveur est-il démarré ?"
+            return (
+                f"⚠️ Impossible de se connecter à Ollama à {self.base_url}. "
+                f"Le serveur est-il démarré ?"
+            )
         except requests.Timeout:
             logger.error("Ollama request timeout")
             return "⚠️ Délai d'attente dépassé. Réessayez plus tard."
@@ -809,7 +812,10 @@ def get_ai_error_message() -> str:
 
         if provider_type == "gemini":
             if not os.getenv("GEMINI_API_KEY"):
-                return "🔑 Clé API Gemini non configurée. Ajoutez GEMINI_API_KEY dans votre fichier .env"
+                return (
+                    "🔑 Clé API Gemini non configurée. "
+                    "Ajoutez GEMINI_API_KEY dans votre fichier .env"
+                )
             if not GENAI_AVAILABLE:
                 return (
                     "📦 Bibliothèque google-genai non installée. Exécutez: pip install google-genai"
@@ -824,11 +830,17 @@ def get_ai_error_message() -> str:
                 "🔑 Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans votre fichier .env"
             )
         elif provider_type == "deepseek":
-            return "🔑 Clé API DeepSeek non configurée. Ajoutez DEEPSEEK_API_KEY dans votre fichier .env"
+            return (
+                "🔑 Clé API DeepSeek non configurée. "
+                "Ajoutez DEEPSEEK_API_KEY dans votre fichier .env"
+            )
         elif provider_type == "kimi":
             return "🔑 Clé API KIMI non configurée. Ajoutez KIMI_API_KEY dans votre fichier .env"
         elif provider_type in ("local", "slm"):
-            return "🖥️ Modèle local non disponible. Vérifiez qu'Unsloth est installé (pip install unsloth) et que vous avez un GPU compatible."
+            return (
+                "🖥️ Modèle local non disponible. Vérifiez qu'Unsloth est "
+                "installé (pip install unsloth) et que vous avez un GPU compatible."
+            )
 
         return "🤖 Service IA non disponible"
     except Exception as e:

@@ -8,8 +8,8 @@ Requirements:
     - Playwright doit être installé
 """
 
+
 import pytest
-import time
 from playwright.sync_api import Page, expect
 
 BASE_URL = "http://localhost:8501"

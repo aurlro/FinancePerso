@@ -6,7 +6,8 @@ Usage:
 """
 
 import streamlit as st
-from modules.ui.v5_5 import apply_light_theme, LightColors
+
+from modules.ui.v5_5 import LightColors, apply_light_theme
 
 # Configuration
 st.set_page_config(

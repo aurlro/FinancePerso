@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 import pandas as pd
 
 from modules.db.connection import get_db_connection
 
 
 def detect_internal_transfers(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     threshold_days: int = 3,
     min_amount: float = 10.0,
 ) -> list[dict]:
@@ -166,8 +164,8 @@ def get_pending_transfers() -> list[dict]:
 
 
 def get_validated_transfers(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> list[dict]:
     """Récupère les virements validés.
 
@@ -213,8 +211,8 @@ def get_validated_transfers(
 
 def exclude_transfers_from_stats(
     transactions_df: pd.DataFrame,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> pd.DataFrame:
     """Exclut les transactions de virements internes d'un DataFrame.
 
@@ -243,7 +241,7 @@ def exclude_transfers_from_stats(
     return transactions_df[~transactions_df["id"].isin(exclude_ids)]
 
 
-def get_transfer_summary(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
+def get_transfer_summary(start_date: str | None = None, end_date: str | None = None) -> dict:
     """Calcule un résumé des virements pour la période.
 
     Returns:

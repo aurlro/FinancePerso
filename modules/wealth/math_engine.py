@@ -30,11 +30,10 @@ Usage:
     print(f"Intervalle confiance 90%: [{stats['percentile_5']:.2f}, {stats['percentile_95']:.2f}]€")
 """
 
-import numpy as np
-import pandas as pd
 from dataclasses import dataclass
-from typing import Optional, Dict, Tuple, List
 from enum import Enum
+
+import numpy as np
 
 from modules.logger import logger
 
@@ -73,8 +72,8 @@ class SimulationResult:
 
     simulations: np.ndarray
     time_points: np.ndarray
-    params: Dict
-    statistics: Optional[Dict] = None
+    params: dict
+    statistics: dict | None = None
 
     def get_trajectory(self, index: int) -> np.ndarray:
         """Retourne une trajectoire spécifique."""
@@ -200,7 +199,7 @@ class MonteCarloSimulator:
     def run_simulation(
         self,
         n_simulations: int = 10000,
-        seed: Optional[int] = None,
+        seed: int | None = None,
     ) -> SimulationResult:
         """
         Lance la simulation Monte Carlo.
@@ -279,7 +278,7 @@ class MonteCarloSimulator:
 
         return result
 
-    def get_statistics(self, result: SimulationResult) -> Dict:
+    def get_statistics(self, result: SimulationResult) -> dict:
         """
         Calcule les statistiques descriptives des simulations.
 
@@ -337,7 +336,7 @@ class MonteCarloSimulator:
         result: SimulationResult,
         target: float,
         percentile: float = 50,
-    ) -> Optional[int]:
+    ) -> int | None:
         """
         Calcule le temps nécessaire pour atteindre un objectif.
 
@@ -360,10 +359,10 @@ class MonteCarloSimulator:
 
     def run_what_if_scenarios(
         self,
-        base_params: Dict,
-        variations: List[Dict],
+        base_params: dict,
+        variations: list[dict],
         n_simulations: int = 5000,
-    ) -> List[SimulationResult]:
+    ) -> list[SimulationResult]:
         """
         Lance plusieurs scénarios "What-If" pour comparaison.
 
@@ -396,7 +395,7 @@ def quick_simulation(
     years: int,
     scenario: ScenarioType = ScenarioType.MODERE,
     n_simulations: int = 10000,
-) -> Dict:
+) -> dict:
     """
     Fonction utilitaire rapide pour lancer une simulation.
 
@@ -431,7 +430,7 @@ ASSET_PROFILES = {
 }
 
 
-def get_asset_profile(asset_type: str) -> Dict:
+def get_asset_profile(asset_type: str) -> dict:
     """Retourne le profil de risque/rendement pour un type d'actif."""
     return ASSET_PROFILES.get(asset_type, ASSET_PROFILES["action"])
 
@@ -444,14 +443,14 @@ def get_asset_profile(asset_type: str) -> Dict:
 }
 
 
-def get_asset_profile(asset_type: str) -> Dict:
+def get_asset_profile(asset_type: str) -> dict:
     """Retourne le profil de risque/rendement pour un type d'actif."""
     return ASSET_PROFILES.get(asset_type, ASSET_PROFILES["action"])
 
 
 def get_default_monthly_contribution(
     current_balance: float = 1500.0,
-    subscriptions: Optional[List] = None,
+    subscriptions: list | None = None,
     saving_rate: float = 0.30,
     min_contribution: float = 50.0,
 ) -> float:

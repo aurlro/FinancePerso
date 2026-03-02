@@ -3,8 +3,8 @@ Daily login streak tracking.
 Motivates regular app usage.
 """
 
-from datetime import datetime, date, timedelta
 from dataclasses import dataclass
+from datetime import date, datetime
 
 import streamlit as st
 

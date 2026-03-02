@@ -4,9 +4,7 @@ Abstraction de la couche de persistance (SQLite).
 """
 
 import json
-import uuid
 from datetime import datetime, timedelta
-from typing import Optional
 
 from modules.db.connection import get_db_connection
 
@@ -74,7 +72,7 @@ class NotificationRepository:
             conn.commit()
         return notification
 
-    def get_by_id(self, notification_id: str) -> Optional[Notification]:
+    def get_by_id(self, notification_id: str) -> Notification | None:
         """Récupère une notification par son ID."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -94,7 +92,7 @@ class NotificationRepository:
         user_id: int = 1,
         limit: int = 50,
         offset: int = 0,
-        category: Optional[str] = None,
+        category: str | None = None,
     ) -> list[Notification]:
         """Récupère les notifications non lues."""
         query = """

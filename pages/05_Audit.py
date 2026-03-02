@@ -25,7 +25,6 @@ from modules.db.connection import clear_db_cache
 from modules.db.migrations import init_db
 from modules.db.rules import get_learning_rules
 from modules.db.transactions import (
-    delete_transaction,
     get_all_transactions,
     get_pending_transactions,
 )
@@ -692,7 +691,7 @@ elif active_tab == "🔍 Qualité des Données":
                                 st.markdown("**🔧 Actions:**")
                                 st.page_link(
                                     "pages/03_Intelligence.py",
-                                    label=f"→ Modifier les règles",
+                                    label="→ Modifier les règles",
                                     help="Aller dans l'onglet Intelligence pour modifier les règles",
                                 )
                             st.divider()

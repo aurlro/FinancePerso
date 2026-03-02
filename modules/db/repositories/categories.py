@@ -2,15 +2,15 @@
 
 from typing import Any
 
-from modules.db.repositories.base import BaseRepository
 from modules.db.categories import (
-    get_categories_df,
     add_category,
+    delete_category,
+    get_categories_df,
+    merge_categories,
     update_category_emoji,
     update_category_fixed,
-    delete_category,
-    merge_categories,
 )
+from modules.db.repositories.base import BaseRepository
 
 
 class CategoryRepository(BaseRepository[dict]):

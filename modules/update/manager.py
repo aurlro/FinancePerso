@@ -6,7 +6,6 @@ and git analysis.
 
 import os
 import re
-from typing import Optional
 
 from modules.logger import logger
 from modules.update.changelog import ChangelogManager
@@ -38,7 +37,7 @@ class UpdateManager:
         manager.add_changelog_entry(entry)
     """
 
-    def __init__(self, project_root: Optional[str] = None):
+    def __init__(self, project_root: str | None = None):
         """Initialize update manager.
 
         Args:
@@ -74,7 +73,7 @@ class UpdateManager:
         """
         return self._version.get_current_version()
 
-    def bump_version(self, version: Optional[str] = None, bump_type: str = "patch") -> str:
+    def bump_version(self, version: str | None = None, bump_type: str = "patch") -> str:
         """Bump version number.
 
         Args:
@@ -144,7 +143,7 @@ class UpdateManager:
         self,
         version: str,
         title: str,
-        since_ref: Optional[str] = None,
+        since_ref: str | None = None,
     ) -> VersionEntry:
         """Create a version entry from git changes.
 
@@ -192,8 +191,9 @@ class UpdateManager:
             new_version = self.bump_version(current, bump_type)
 
             # Create VersionEntry
-            from modules.update.models import VersionEntry
             from datetime import datetime
+
+            from modules.update.models import VersionEntry
 
             entry = VersionEntry(
                 version=new_version,
@@ -222,7 +222,7 @@ class UpdateManager:
             logger.error(f"Failed to create update: {e}")
             return False, str(e)
 
-    def suggest_version_bump(self, since_ref: Optional[str] = None) -> str:
+    def suggest_version_bump(self, since_ref: str | None = None) -> str:
         """Suggest version bump type based on changes.
 
         Args:
@@ -238,7 +238,7 @@ class UpdateManager:
     def create_release(
         self,
         bump_type: str = "patch",
-        title: Optional[str] = None,
+        title: str | None = None,
         auto_commit: bool = False,
     ) -> tuple[bool, str]:
         """Create a complete release.
@@ -317,7 +317,6 @@ class UpdateManager:
             Dictionary with change analysis including suggested title,
             categorized changes, and version bump recommendation
         """
-        import re
 
         ref = None if since_tag else "HEAD~10"
         changes = self._git.get_changes_since(ref)
@@ -573,7 +572,6 @@ class UpdateManager:
         Returns:
             Dictionary with detected changes from file analysis
         """
-        import os
         from pathlib import Path
 
         changed_files = []
@@ -718,9 +716,9 @@ UpdateManagerClass = UpdateManager
 
 def quick_update(
     bump_type: str = "patch",
-    title: Optional[str] = None,
-    changes: Optional[dict | list] = None,
-    project_root: Optional[str] = None,
+    title: str | None = None,
+    changes: dict | list | None = None,
+    project_root: str | None = None,
 ) -> tuple[bool, str]:
     """Quick update function for backward compatibility.
 
@@ -758,7 +756,7 @@ def quick_update(
             performance = changes.get("performance", []) if isinstance(changes, dict) else []
 
         # Create update via creator
-        from modules.update.models import VersionEntry, ChangeType
+        from modules.update.models import VersionEntry
 
         entry = VersionEntry(
             version=new_version,

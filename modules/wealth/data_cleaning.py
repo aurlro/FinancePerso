@@ -17,10 +17,8 @@ Usage:
 """
 
 import re
-from typing import Optional, Tuple
 
 # Import existing clean_label for base cleaning
-from modules.utils import clean_label as base_clean_label
 
 # Patterns pour le nettoyage avancé
 TERMINAL_PATTERNS = [
@@ -155,7 +153,7 @@ def clean_merchant_name(label: str, aggressive: bool = True) -> str:
     return cleaned.title()
 
 
-def extract_location(label: str) -> Optional[str]:
+def extract_location(label: str) -> str | None:
     """
     Extrait la localisation géographique d'un libellé.
 
@@ -187,7 +185,7 @@ def extract_location(label: str) -> Optional[str]:
     return None
 
 
-def extract_card_suffix(label: str) -> Optional[str]:
+def extract_card_suffix(label: str) -> str | None:
     """
     Extrait le suffixe de carte (4 derniers chiffres) d'un libellé.
 
@@ -254,7 +252,7 @@ def normalize_merchant_name(merchant: str) -> str:
     return normalized.strip()
 
 
-def extract_transaction_metadata(label: str, amount: float = 0) -> Tuple[str, dict]:
+def extract_transaction_metadata(label: str, amount: float = 0) -> tuple[str, dict]:
     """
     Nettoyage complet d'un libellé de transaction avec métadonnées.
 
@@ -287,7 +285,7 @@ def extract_transaction_metadata(label: str, amount: float = 0) -> Tuple[str, di
     return cleaned, metadata
 
 
-def batch_clean_labels(labels: list[str], amounts: list[float] = None) -> list[Tuple[str, dict]]:
+def batch_clean_labels(labels: list[str], amounts: list[float] = None) -> list[tuple[str, dict]]:
     """
     Nettoie une liste de libellés en batch.
 

@@ -40,7 +40,10 @@ class MissingTagAnalyzer(BaseAnalyzer):
                     type=SuggestionType.CATEGORY.value,
                     priority=Priority.LOW.value,
                     title=f"🏷️ Transactions sans tags : {category} ({count})",
-                    description=f"{count} transactions dans '{category}' n'ont pas de tags. Les tags améliorent l'analyse.",
+                    description=(
+                        f"{count} transactions dans '{category}' n'ont pas de "
+                        f"tags. Les tags améliorent l'analyse."
+                    ),
                     action_label="Ajouter tags",
                     action_data={"category": category, "type": "add_tags"},
                     impact_score=min(count * 2, 40),

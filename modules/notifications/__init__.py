@@ -29,16 +29,16 @@ Architecture:
     - ui.py : Composants d'interface
 """
 
+from .detectors import DetectorRegistry
 from .models import (
-    NotificationLevel,
-    NotificationType,
     Notification,
     NotificationAction,
+    NotificationLevel,
     NotificationPreferences,
+    NotificationType,
 )
-from .service import NotificationService
 from .repository import NotificationRepository
-from .detectors import DetectorRegistry
+from .service import NotificationService
 
 __all__ = [
     # Enums

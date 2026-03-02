@@ -3,12 +3,10 @@ Scenario simulation for financial planning.
 What-if analysis for major financial decisions.
 """
 
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 
-import pandas as pd
-
-from modules.cashflow.predictor import predict_monthly_cashflow, CashflowPrediction
+from modules.cashflow.predictor import CashflowPrediction, predict_monthly_cashflow
 from modules.logger import logger
 
 

@@ -19,7 +19,7 @@ Usage:
 import re
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -38,8 +38,8 @@ class CategorizationResult:
     source: str  # "heuristic", "similarity", "local_ai", "cloud_ai"
     is_recurring_candidate: bool = False
     risk_flag: int = 0
-    similar_transaction_id: Optional[int] = None
-    similarity_score: Optional[float] = None
+    similar_transaction_id: int | None = None
+    similarity_score: float | None = None
 
 
 class TransactionCategorizer:
@@ -213,7 +213,7 @@ class TransactionCategorizer:
         self.cat_repo = None
 
         # Cache historique
-        self._history_cache: Optional[pd.DataFrame] = None
+        self._history_cache: pd.DataFrame | None = None
 
         # Provider IA (lazy load)
         self._local_provider = None
@@ -263,7 +263,7 @@ class TransactionCategorizer:
         cleaned = re.sub(r"^(CB|VIR|PRLV|RETRAIT|CHEQUE)\s*", "", cleaned)
         return cleaned
 
-    def _check_heuristics(self, label: str, amount: float) -> Optional[CategorizationResult]:
+    def _check_heuristics(self, label: str, amount: float) -> CategorizationResult | None:
         """
         Étape 1: Vérifie les règles heuristiques.
 
@@ -291,7 +291,7 @@ class TransactionCategorizer:
 
         return None
 
-    def _check_similarity(self, label: str) -> Optional[CategorizationResult]:
+    def _check_similarity(self, label: str) -> CategorizationResult | None:
         """
         Étape 2: Compare avec l'historique via SequenceMatcher.
 

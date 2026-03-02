@@ -27,26 +27,17 @@ Usage:
         print(f"🎯 {mission.title}: {mission.description}")
 """
 
-import json
-import re
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date, timedelta
-from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Any, Callable
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from enum import Enum
 from pathlib import Path
-
-import pandas as pd
+from typing import Any
 
 # Imports locaux
 from modules.logger import logger
 from modules.wealth.subscription_engine import Subscription, SubscriptionStatus
 from modules.wealth.wealth_manager import (
     WealthManager,
-    AssetType,
-    LiabilityType,
-    FinancialAsset,
-    RealEstateAsset,
-    CryptoAsset,
 )
 
 
@@ -115,11 +106,11 @@ class Action:
 
     type: ActionType
     label: str
-    payload: Dict[str, Any] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)
     requires_human_validation: bool = True
     auto_executable: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "type": self.type.value,
             "label": self.label,
@@ -164,11 +155,11 @@ class Mission:
     potential_savings: float = 0.0
     effort_level: int = 3  # 1 (facile) à 5 (difficile)
     time_to_complete: int = 15  # minutes
-    actions: List[Action] = field(default_factory=list)
-    data_sources: List[str] = field(default_factory=list)
+    actions: list[Action] = field(default_factory=list)
+    data_sources: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    expires_at: datetime | None = None
+    completed_at: datetime | None = None
     user_notes: str = ""
 
     def __post_init__(self):
@@ -176,7 +167,7 @@ class Mission:
             # Par défaut, expire après 30 jours
             self.expires_at = self.created_at + timedelta(days=30)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "trigger_type": self.trigger_type.value,
@@ -243,9 +234,9 @@ class TriggerDetector:
 
     def detect_price_increases(
         self,
-        subscriptions: List[Subscription],
-        price_history: Optional[Dict[str, List[Tuple[date, float]]]] = None,
-    ) -> List[Dict]:
+        subscriptions: list[Subscription],
+        price_history: dict[str, list[tuple[date, float]]] | None = None,
+    ) -> list[dict]:
         """
         Détecte les hausses de prix sur les abonnements.
 
@@ -288,8 +279,8 @@ class TriggerDetector:
 
     def detect_duplicate_subscriptions(
         self,
-        subscriptions: List[Subscription],
-    ) -> List[Dict]:
+        subscriptions: list[Subscription],
+    ) -> list[dict]:
         """
         Détecte les doublons d'abonnements (ex: 2 assurances mobiles).
 
@@ -311,7 +302,7 @@ class TriggerDetector:
         }
 
         # Grouper les abonnements par catégorie
-        sub_by_category: Dict[str, List[Subscription]] = {cat: [] for cat in categories}
+        sub_by_category: dict[str, list[Subscription]] = {cat: [] for cat in categories}
 
         for sub in subscriptions:
             merchant_upper = sub.merchant.upper()
@@ -337,8 +328,8 @@ class TriggerDetector:
 
     def detect_unused_subscriptions(
         self,
-        subscriptions: List[Subscription],
-    ) -> List[Dict]:
+        subscriptions: list[Subscription],
+    ) -> list[dict]:
         """
         Détecte les abonnements zombies (non utilisés).
 
@@ -366,8 +357,8 @@ class TriggerDetector:
 
     def detect_better_alternatives(
         self,
-        subscriptions: List[Subscription],
-    ) -> List[Dict]:
+        subscriptions: list[Subscription],
+    ) -> list[dict]:
         """
         Détecte les opportunités de meilleures offres.
 
@@ -440,7 +431,7 @@ class TriggerDetector:
         self,
         wealth_manager: WealthManager,
         threshold_ratio: float = 0.2,  # 20% du patrimoine
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Détecte si trop de cash est inactif.
 
@@ -478,7 +469,7 @@ class TriggerDetector:
         self,
         wealth_manager: WealthManager,
         monthly_income: float,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Détecte les problèmes d'endettement.
 
@@ -519,7 +510,7 @@ class TriggerDetector:
     def detect_portfolio_diversification(
         self,
         wealth_manager: WealthManager,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Vérifie la diversification du portefeuille.
 
@@ -578,10 +569,10 @@ class DocumentGenerator:
     def generate_cancellation_letter(
         self,
         merchant_name: str,
-        contract_number: Optional[str] = None,
+        contract_number: str | None = None,
         subscriber_name: str = "",
         subscriber_address: str = "",
-        effective_date: Optional[date] = None,
+        effective_date: date | None = None,
     ) -> str:
         """
         Génère une lettre de résiliation type.
@@ -640,7 +631,7 @@ Pièce jointe : Copie de la pièce d'identité (si nécessaire)
         self,
         merchant_name: str,
         issue_description: str,
-        amount_claimed: Optional[float] = None,
+        amount_claimed: float | None = None,
         subscriber_name: str = "",
         subscriber_address: str = "",
     ) -> str:
@@ -705,8 +696,8 @@ Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distin
 
     def generate_investment_proposal(
         self,
-        current_allocation: Dict,
-        proposal: Dict,
+        current_allocation: dict,
+        proposal: dict,
         risk_profile: str = "modéré",
     ) -> str:
         """
@@ -811,11 +802,11 @@ class AgentOrchestrator:
 
     def analyze_and_generate_missions(
         self,
-        subscriptions: List[Subscription],
+        subscriptions: list[Subscription],
         wealth_manager: WealthManager,
         monthly_income: float = 3000.0,
-        price_history: Optional[Dict] = None,
-    ) -> List[Mission]:
+        price_history: dict | None = None,
+    ) -> list[Mission]:
         """
         Analyse les données et génère des missions d'optimisation.
 
@@ -892,7 +883,7 @@ class AgentOrchestrator:
         self.logger.info(f"{len(missions)} missions générées")
         return missions
 
-    def _create_price_increase_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_price_increase_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour une hausse de prix."""
         merchant = trigger["merchant"]
         increase = trigger["increase_pct"]
@@ -928,7 +919,7 @@ class AgentOrchestrator:
             data_sources=["subscriptions", "price_history"],
         )
 
-    def _create_duplicate_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_duplicate_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour un doublon d'abonnement."""
         category = trigger["category"]
         count = trigger["count"]
@@ -972,7 +963,7 @@ class AgentOrchestrator:
             data_sources=["subscriptions"],
         )
 
-    def _create_unused_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_unused_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour un abonnement inutilisé."""
         merchant = trigger["merchant"]
         amount = trigger["amount"]
@@ -1004,7 +995,7 @@ class AgentOrchestrator:
             data_sources=["subscriptions"],
         )
 
-    def _create_alternative_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_alternative_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour une meilleure alternative."""
         current = trigger["current"]
         alt = trigger["alternative"]
@@ -1038,7 +1029,7 @@ class AgentOrchestrator:
             data_sources=["subscriptions", "market_data"],
         )
 
-    def _create_cash_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_cash_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour optimiser le cash dormant."""
         excess = trigger["excess_cash"]
         ratio = trigger["cash_ratio"]
@@ -1065,7 +1056,7 @@ class AgentOrchestrator:
             data_sources=["wealth_manager"],
         )
 
-    def _create_debt_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_debt_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour un problème d'endettement."""
         ratio = trigger["debt_ratio"]
         severity = trigger["severity"]
@@ -1092,7 +1083,7 @@ class AgentOrchestrator:
             data_sources=["wealth_manager", "liabilities"],
         )
 
-    def _create_diversification_mission(self, trigger: Dict) -> Optional[Mission]:
+    def _create_diversification_mission(self, trigger: dict) -> Mission | None:
         """Crée une mission pour un problème de diversification."""
         issue = trigger["issue"]
         current_pct = trigger["current_percentage"]
@@ -1126,9 +1117,9 @@ class AgentOrchestrator:
         self,
         mission: Mission,
         action_index: int,
-        user_data: Optional[Dict] = None,
+        user_data: dict | None = None,
         output_dir: str = "documents",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Exécute une action d'une mission.
 
@@ -1204,7 +1195,7 @@ class AgentOrchestrator:
 
         return result
 
-    def get_mission_summary(self, missions: List[Mission]) -> Dict[str, Any]:
+    def get_mission_summary(self, missions: list[Mission]) -> dict[str, Any]:
         """
         Génère un résumé des missions.
 
@@ -1245,10 +1236,10 @@ class AgentOrchestrator:
 
 
 def quick_analyze(
-    subscriptions: List[Subscription],
+    subscriptions: list[Subscription],
     wealth_manager: WealthManager,
     monthly_income: float = 3000.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Analyse rapide et retourne un résumé des opportunités.
 

@@ -4,10 +4,7 @@ Test E2E: Cycle de vie complet d'une transaction
 Scénario: Import → Nettoyage → Catégorisation → Stockage
 """
 
-import pytest
-from modules.wealth import clean_transaction_label
-from modules.wealth import SubscriptionDetector
-from modules.privacy import GDPRManager
+from modules.wealth import SubscriptionDetector, clean_transaction_label
 
 
 class TestTransactionLifecycle:

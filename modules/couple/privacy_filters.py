@@ -5,13 +5,10 @@ Implémente les règles de visibilité entre partenaires.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import pandas as pd
 
-from modules.couple.couple_settings import get_couple_settings, get_current_user_role
 from modules.couple.card_mappings import get_card_mapping
-from modules.db.connection import get_db_connection
+from modules.couple.couple_settings import get_couple_settings
 
 # Règles de confidentialité par rôle
 COUPLE_PRIVACY_RULES = {
@@ -52,7 +49,7 @@ COUPLE_PRIVACY_RULES = {
 
 def get_transaction_visibility_role(
     transaction,
-    current_user_id: Optional[int] = None,
+    current_user_id: int | None = None,
 ) -> str:
     """Détermine le rôle de visibilité pour une transaction.
 
@@ -106,8 +103,8 @@ def get_transaction_visibility_role(
 
 
 def get_transactions_with_privacy(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     exclude_transfers: bool = True,
 ) -> dict[str, pd.DataFrame]:
     """Récupère les transactions filtrées par confidentialité.
@@ -120,8 +117,8 @@ def get_transactions_with_privacy(
     Returns:
         Dict avec 'me', 'partner', 'joint', 'unknown'
     """
-    from modules.db.transactions import get_all_transactions
     from modules.couple.transfer_detector import exclude_transfers_from_stats
+    from modules.db.transactions import get_all_transactions
 
     # Récupérer toutes les transactions
     df = get_all_transactions()
@@ -151,8 +148,8 @@ def get_transactions_with_privacy(
 
 
 def get_aggregated_partner_data(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     group_by: str = "category",
 ) -> pd.DataFrame:
     """Récupère les données agrégées du partenaire (vue confidentielle).
@@ -204,8 +201,8 @@ def get_aggregated_partner_data(
 
 
 def get_personal_summary(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict:
     """Calcule le résumé personnel avec distinction Me/Partner/Joint.
 
@@ -247,8 +244,8 @@ def get_personal_summary(
 
 
 def get_couple_dashboard_data(
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> dict:
     """Récupère toutes les données nécessaires au dashboard couple.
 

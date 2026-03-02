@@ -2,7 +2,6 @@
 
 import os
 import re
-from typing import Optional
 
 from modules.logger import logger
 
@@ -40,7 +39,7 @@ class VersionManager:
 
         return self.DEFAULT_VERSION
 
-    def _get_version_from_constants(self) -> Optional[str]:
+    def _get_version_from_constants(self) -> str | None:
         """Try to extract version from constants.py.
 
         Returns:
@@ -60,7 +59,7 @@ class VersionManager:
 
         return None
 
-    def _get_version_from_changelog(self) -> Optional[str]:
+    def _get_version_from_changelog(self) -> str | None:
         """Try to extract version from CHANGELOG.md.
 
         Returns:

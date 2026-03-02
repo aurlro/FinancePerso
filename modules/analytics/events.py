@@ -8,7 +8,7 @@ import sqlite3
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 import streamlit as st
 
@@ -88,7 +88,7 @@ class AnalyticsTracker:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id)")
 
     def track(
-        self, event_type: EventType, properties: Optional[Dict] = None, page: Optional[str] = None
+        self, event_type: EventType, properties: dict | None = None, page: str | None = None
     ) -> None:
         """Enregistre un événement."""
         try:
@@ -154,7 +154,7 @@ class AnalyticsTracker:
         except Exception:
             pass
 
-    def get_stats(self, days: int = 30) -> Dict[str, Any]:
+    def get_stats(self, days: int = 30) -> dict[str, Any]:
         """Récupère les statistiques sur les derniers jours."""
         try:
             with sqlite3.connect(self.DB_PATH) as conn:
@@ -211,7 +211,7 @@ class AnalyticsTracker:
 
 
 # Instance singleton
-_tracker: Optional[AnalyticsTracker] = None
+_tracker: AnalyticsTracker | None = None
 
 
 def get_tracker() -> AnalyticsTracker:
@@ -223,14 +223,14 @@ def get_tracker() -> AnalyticsTracker:
 
 
 def track_event(
-    event_type: EventType, properties: Optional[Dict] = None, page: Optional[str] = None
+    event_type: EventType, properties: dict | None = None, page: str | None = None
 ) -> None:
     """Fonction utilitaire pour tracker un événement."""
     tracker = get_tracker()
     tracker.track(event_type, properties, page)
 
 
-def get_analytics_summary(days: int = 30) -> Dict[str, Any]:
+def get_analytics_summary(days: int = 30) -> dict[str, Any]:
     """Récupère un résumé des analytics."""
     tracker = get_tracker()
     return tracker.get_stats(days)

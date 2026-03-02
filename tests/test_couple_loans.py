@@ -1,17 +1,17 @@
 """Tests pour la gestion des emprunts (Module 4)."""
 
+
 import pytest
-from datetime import datetime, timedelta
 
 from modules.couple.loans import (
+    create_loan,
+    delete_loan,
     get_all_loans,
     get_loan,
-    create_loan,
-    update_loan,
-    delete_loan,
-    link_transaction_to_loan,
     get_loan_transactions,
     get_loans_summary,
+    link_transaction_to_loan,
+    update_loan,
 )
 from modules.db.members import add_member, get_members
 
@@ -122,8 +122,8 @@ class TestLoanTransactions:
         loan_id = create_loan(name="Test", monthly_payment=500.0, principal_amount=10000.0)
 
         # Créer une transaction
-        import sqlite3
         import os
+        import sqlite3
 
         conn = sqlite3.connect(os.environ.get("DB_PATH"))
         cursor = conn.cursor()

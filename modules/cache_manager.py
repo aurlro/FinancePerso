@@ -21,7 +21,7 @@ def _on_transactions_changed(**kwargs):
     """Handle transaction changes by clearing related caches."""
     try:
         # Import inside handler to avoid circular dependency at module level
-        from modules.db.transactions import get_all_transactions, get_all_hashes
+        from modules.db.transactions import get_all_hashes, get_all_transactions
 
         get_all_transactions.clear()
         get_all_hashes.clear()
@@ -35,8 +35,8 @@ def _on_transactions_batch_changed(**kwargs):
     """Handle batch transaction changes."""
     try:
         from modules.db.transactions import (
-            get_all_transactions,
             get_all_hashes,
+            get_all_transactions,
             get_transactions_count,
         )
 
@@ -138,8 +138,8 @@ def invalidate_rule_caches():
     # Clear Streamlit caches for rules
     try:
         from modules.db.rules import (
-            get_learning_rules,
             get_compiled_learning_rules,
+            get_learning_rules,
             get_rules_for_category,
         )
 

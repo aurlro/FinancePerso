@@ -3,7 +3,6 @@ Test Intégration: Conformité RGPD
 ==================================
 """
 
-import pytest
 from modules.privacy import GDPRManager
 
 

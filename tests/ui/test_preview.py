@@ -3,12 +3,6 @@ Tests for preview.py module.
 """
 
 import pandas as pd
-import pytest
-
-from modules.ui.importing.preview import (
-    calculate_import_stats,
-    format_preview_dataframe,
-)
 
 
 class TestCalculateImportStats:

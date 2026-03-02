@@ -14,48 +14,39 @@ Usage:
     render_wealth_dashboard()
 """
 
-import json
-from datetime import date, datetime
-from typing import Dict, List, Optional, Any
+from datetime import date
 
-import streamlit as st
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
+import streamlit as st
+
+from modules.wealth.agent_core import (
+    AgentOrchestrator,
+    MissionPriority,
+)
+
+# Imports Phase 4 pour projections
+from modules.wealth.math_engine import ScenarioType, quick_simulation
+from modules.wealth.subscription_engine import Subscription
 
 # Imports des modules Phase 5
 from modules.wealth.wealth_manager import (
-    WealthManager,
-    RealEstateAsset,
-    FinancialAsset,
-    CryptoAsset,
-    Liability,
-    MortgageSchedule,
     AssetType,
+    CryptoAsset,
+    FinancialAsset,
+    Liability,
     LiabilityType,
-    calculate_debt_to_income_ratio,
+    MortgageSchedule,
+    RealEstateAsset,
+    WealthManager,
     calculate_monthly_debt_service,
 )
-from modules.wealth.agent_core import (
-    AgentOrchestrator,
-    Mission,
-    MissionPriority,
-    MissionStatus,
-    ActionType,
-    quick_analyze,
-)
-from modules.wealth.subscription_engine import Subscription
-
-# Imports Phase 4 pour projections
-from modules.wealth.math_engine import MonteCarloSimulator, ScenarioType, quick_simulation
-from modules.wealth.visualizations import plot_wealth_projection
-
-from modules.logger import logger
 
 
 def render_wealth_dashboard(
-    wealth_manager: Optional[WealthManager] = None,
-    subscriptions: Optional[List[Subscription]] = None,
+    wealth_manager: WealthManager | None = None,
+    subscriptions: list[Subscription] | None = None,
     monthly_income: float = 3000.0,
 ):
     """
@@ -185,7 +176,7 @@ def _create_demo_wealth_manager() -> WealthManager:
     return manager
 
 
-def _create_demo_subscriptions() -> List[Subscription]:
+def _create_demo_subscriptions() -> list[Subscription]:
     """Crée des abonnements de démo."""
     return [
         Subscription(
@@ -364,7 +355,7 @@ def _render_overview_tab(wealth_manager: WealthManager):
 
 def _render_missions_tab(
     wealth_manager: WealthManager,
-    subscriptions: List[Subscription],
+    subscriptions: list[Subscription],
     monthly_income: float,
 ):
     """Rend l'onglet des missions agentiques."""

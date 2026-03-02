@@ -2,7 +2,6 @@
 Extended tests for events.py module (EventBus).
 """
 
-import pytest
 from modules.core.events import EventBus, on_event
 
 

@@ -2,8 +2,6 @@
 
 from datetime import datetime
 
-import pandas as pd
-
 from modules.ai.suggestions.base import BaseAnalyzer
 from modules.ai.suggestions.models import AnalysisContext, Priority, Suggestion, SuggestionType
 
@@ -36,7 +34,11 @@ class DuplicateAnalyzer(BaseAnalyzer):
                     type=SuggestionType.DUPLICATE.value,
                     priority=Priority.HIGH.value if total_duplicates > 5 else Priority.MEDIUM.value,
                     title=f"⚠️ {total_duplicates} transaction(s) potentiellement en double",
-                    description="Certaines transactions apparaissent plusieurs fois avec la même date, libellé et montant. Vérifiez s'il s'agit de vrais doublons.",
+                    description=(
+                        "Certaines transactions apparaissent plusieurs fois avec "
+                        "la même date, libellé et montant. Vérifiez s'il s'agit "
+                        "de vrais doublons."
+                    ),
                     action_label="Voir les doublons",
                     action_data={"type": "view_duplicates", "count": total_duplicates},
                     impact_score=min(total_duplicates * 15, 100),
@@ -95,7 +97,11 @@ class SpendingAnomalyAnalyzer(BaseAnalyzer):
                         type=SuggestionType.PATTERN.value,
                         priority=Priority.MEDIUM.value,
                         title=f"📈 Pic de dépenses : {category} (+{spike_pct}%)",
-                        description=f"Ce mois : {current_total:.0f}€ vs moyenne : {avg_monthly:.0f}€. Vérifiez s'il s'agit de dépenses exceptionnelles.",
+                        description=(
+                            f"Ce mois : {current_total:.0f}€ vs moyenne : "
+                            f"{avg_monthly:.0f}€. Vérifiez s'il s'agit de "
+                            f"dépenses exceptionnelles."
+                        ),
                         action_label="Explorer",
                         action_data={"category": category, "type": "explore_category"},
                         impact_score=min(spike_pct, 100),
@@ -155,7 +161,11 @@ class SubscriptionAnalyzer(BaseAnalyzer):
                                 if len(label) > 40
                                 else f"💳 Augmentation : {label}"
                             ),
-                            description=f"L'abonnement a augmenté de {increase_pct}% ({first_avg:.0f}€ → {last_avg:.0f}€). Vérifiez si c'est justifié ou négociez.",
+                            description=(
+                                f"L'abonnement a augmenté de {increase_pct}% "
+                                f"({first_avg:.0f}€ → {last_avg:.0f}€). Vérifiez "
+                                f"si c'est justifié ou négociez."
+                            ),
                             action_label="Voir l'évolution",
                             action_data={"label": label, "type": "view_subscription"},
                             impact_score=min(increase_pct, 100),
@@ -213,7 +223,11 @@ class LargeAmountAnalyzer(BaseAnalyzer):
                         type=SuggestionType.PATTERN.value,
                         priority=Priority.MEDIUM.value,
                         title=f"💰 Montant inhabituel : {amount:.0f}€ ({category})",
-                        description=f"Cette transaction est anormalement élevée pour la catégorie '{category}'. Vérifiez qu'elle est correctement catégorisée.",
+                        description=(
+                            f"Cette transaction est anormalement élevée pour la "
+                            f"catégorie '{category}'. Vérifiez qu'elle est "
+                            f"correctement catégorisée."
+                        ),
                         action_label="Vérifier",
                         action_data={"transaction_id": txn["id"], "type": "view_transaction"},
                         impact_score=min(int(amount / q50), 100),
@@ -280,7 +294,11 @@ class RecurringPatternAnalyzer(BaseAnalyzer):
                             if len(label) > 40
                             else f"🔄 Récurrente : {label}"
                         ),
-                        description=f"Environ {avg_amount:.0f}€/mois sur {int(row['unique_months'])} mois. Créez une règle pour suivre automatiquement.",
+                        description=(
+                            f"Environ {avg_amount:.0f}€/mois sur "
+                            f"{int(row['unique_months'])} mois. Créez une règle "
+                            f"pour suivre automatiquement."
+                        ),
                         action_label="Créer règle",
                         action_data={
                             "pattern": label[:25],

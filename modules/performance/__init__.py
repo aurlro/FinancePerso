@@ -19,9 +19,9 @@ from modules.performance.cache_advanced import (
     cache_monte_carlo,
     cache_transactions,
     cache_wealth_projection,
-    invalidate_cache_pattern,
-    get_cache_stats,
     clear_all_cache,
+    get_cache_stats,
+    invalidate_cache_pattern,
     render_cache_stats,
 )
 

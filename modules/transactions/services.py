@@ -21,23 +21,22 @@ Usage:
 """
 
 import json
-from dataclasses import dataclass, asdict
-from datetime import datetime
-from typing import Optional, Dict, Any, List
 import sqlite3
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
-from modules.transactions.constants import (
-    CategorizationMethod,
-    PFCV2_CATEGORIES,
-    get_category_type,
-    is_expense_category,
+from modules.categorization_cascade import (
+    CategorizationResult as CascadeResult,
 )
 from modules.categorization_cascade import (
     TransactionCategorizer,
-    CategorizationResult as CascadeResult,
 )
 from modules.db.connection import get_db_connection
 from modules.logger import logger
+from modules.transactions.constants import (
+    CategorizationMethod,
+)
 
 TransactionRepository = None
 
@@ -69,9 +68,9 @@ class CategorizationServiceResult:
     method: CategorizationMethod
     is_income: bool
     is_expense: bool
-    metadata: Dict[str, Any]
-    similar_transaction_id: Optional[int] = None
-    similarity_score: Optional[float] = None
+    metadata: dict[str, Any]
+    similar_transaction_id: int | None = None
+    similarity_score: float | None = None
 
     def to_json(self) -> str:
         """Convertit le résultat en JSON pour stockage."""
@@ -169,7 +168,7 @@ class CategorizationService:
         label: str,
         amount: float,
         date: str,
-        transaction_id: Optional[int] = None,
+        transaction_id: int | None = None,
     ) -> CategorizationServiceResult:
         """
         Catégorise une transaction.
@@ -289,7 +288,7 @@ class CategorizationService:
     def get_categorization_metadata(
         self,
         transaction_id: int,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Récupère les métadonnées de catégorisation d'une transaction.
 
@@ -315,9 +314,9 @@ class CategorizationService:
 
     def batch_categorize(
         self,
-        transactions: List[Dict[str, Any]],
+        transactions: list[dict[str, Any]],
         save: bool = True,
-    ) -> List[CategorizationServiceResult]:
+    ) -> list[CategorizationServiceResult]:
         """
         Catégorise plusieurs transactions en batch.
 
@@ -349,7 +348,7 @@ class CategorizationService:
         label: str,
         threshold: float = 0.85,
         limit: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Trouve les transactions similaires dans l'historique.
 
@@ -399,7 +398,7 @@ class CategorizationService:
 
 
 # Singleton pour faciliter l'utilisation
-_categorization_service: Optional[CategorizationService] = None
+_categorization_service: CategorizationService | None = None
 
 
 def get_categorization_service() -> CategorizationService:
@@ -414,7 +413,7 @@ def categorize_transaction(
     label: str,
     amount: float,
     date: str,
-    transaction_id: Optional[int] = None,
+    transaction_id: int | None = None,
 ) -> CategorizationServiceResult:
     """
     Fonction utilitaire pour catégoriser une transaction.

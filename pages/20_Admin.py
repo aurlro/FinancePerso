@@ -4,9 +4,10 @@ Accessible uniquement via le menu Système ou directement
 """
 
 import streamlit as st
-from modules.analytics.metrics import MetricsCollector
+
 from modules.analytics.events import get_analytics_summary
-from modules.ui.accessibility import validate_theme_contrast, get_accessibility_report
+from modules.analytics.metrics import MetricsCollector
+from modules.ui.accessibility import get_accessibility_report
 from modules.ui.theme import get_theme
 
 st.set_page_config(page_title="Admin - Analytics & Accessibilité", page_icon="🔧", layout="wide")

@@ -32,7 +32,11 @@ class UnknownMemberAnalyzer(BaseAnalyzer):
                         type=SuggestionType.MEMBER.value,
                         priority=Priority.MEDIUM.value,
                         title=f"💳 Carte non identifiée : ...{card_suffix}",
-                        description=f"{count} transactions avec cette carte n'ont pas de membre attribué. Mappez cette carte pour une attribution automatique.",
+                        description=(
+                            f"{count} transactions avec cette carte n'ont pas de "
+                            f"membre attribué. Mappez cette carte pour une "
+                            f"attribution automatique."
+                        ),
                         action_label="Mapper la carte",
                         action_data={"card_suffix": card_suffix, "type": "map_card"},
                         impact_score=min(count * 8, 90),
@@ -53,7 +57,10 @@ class UnknownMemberAnalyzer(BaseAnalyzer):
                         type=SuggestionType.MEMBER.value,
                         priority=Priority.HIGH.value,
                         title=f"🏦 Compte sans membre par défaut : {account}",
-                        description=f"{count} transactions 'Inconnu' sur ce compte. Définissez un membre par défaut pour ce compte.",
+                        description=(
+                            f"{count} transactions 'Inconnu' sur ce compte. "
+                            f"Définissez un membre par défaut pour ce compte."
+                        ),
                         action_label="Définir membre",
                         action_data={"account_label": account, "type": "map_account"},
                         impact_score=min(count * 5, 85),
@@ -106,7 +113,10 @@ class BeneficiaryAnalyzer(BaseAnalyzer):
                         type=SuggestionType.MEMBER.value,
                         priority=Priority.LOW.value,
                         title=f"👤 Bénéficiaire fréquent : {beneficiary}",
-                        description=f"{count} transactions vers '{beneficiary}'. Ajoutez comme membre pour de meilleures statistiques.",
+                        description=(
+                            f"{count} transactions vers '{beneficiary}'. Ajoutez "
+                            f"comme membre pour de meilleures statistiques."
+                        ),
                         action_label="Ajouter membre",
                         action_data={"name": beneficiary, "type": "add_member"},
                         impact_score=min(count * 5, 60),

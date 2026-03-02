@@ -4,9 +4,9 @@ Page de collection de badges et récompenses.
 
 import streamlit as st
 
-from modules.gamification.badges import render_badges_collection, BadgeManager
+from modules.gamification.badges import BadgeManager, render_badges_collection
 from modules.ui import load_css, render_scroll_to_top
-from modules.ui.design_system import apply_vibe_theme, Colors, Typography, Spacing
+from modules.ui.design_system import Colors, Spacing, Typography, apply_vibe_theme
 from modules.ui.layout import render_app_info
 
 # Page Setup

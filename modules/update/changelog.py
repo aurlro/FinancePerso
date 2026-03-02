@@ -2,8 +2,6 @@
 
 import os
 import re
-from datetime import datetime
-from typing import Optional
 
 from modules.logger import logger
 from modules.update.models import VersionEntry
@@ -116,7 +114,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
         new_lines = lines[:insert_idx] + ["", entry_md] + lines[insert_idx:]
         return "\n".join(new_lines)
 
-    def get_latest_version(self) -> Optional[str]:
+    def get_latest_version(self) -> str | None:
         """Get latest version from changelog.
 
         Returns:

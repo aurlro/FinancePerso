@@ -25,13 +25,13 @@ import functools
 import hashlib
 import json
 import pickle
-import time
-import zlib
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, Generic, Optional, TypeVar, List
-from collections import OrderedDict
 import threading
+import zlib
+from collections import OrderedDict
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, TypeVar
 
 import streamlit as st
 
@@ -61,7 +61,7 @@ class CacheEntry:
     created_at: datetime
     ttl_seconds: int
     access_count: int = 0
-    last_accessed: Optional[datetime] = None
+    last_accessed: datetime | None = None
     compressed: bool = False
     size_bytes: int = 0
 
@@ -140,7 +140,7 @@ class AdvancedCache:
         self.compression_threshold = compression_threshold
 
         # Stockage
-        self._cache: Dict[str, CacheEntry] = {}
+        self._cache: dict[str, CacheEntry] = {}
         self._access_order: OrderedDict[str, None] = OrderedDict()
 
         # Statistiques
@@ -150,7 +150,7 @@ class AdvancedCache:
         self._lock = threading.RLock()
 
         # TTL par type de donnée
-        self._ttl_by_type: Dict[str, int] = {
+        self._ttl_by_type: dict[str, int] = {
             "monte_carlo": 600,  # 10 min - simulations lourdes
             "transactions": 60,  # 1 min - données fréquemment modifiées
             "categories": 300,  # 5 min
@@ -252,7 +252,7 @@ class AdvancedCache:
         if expired_keys:
             logger.debug(f"Cache cleanup: {len(expired_keys)} entrées expirées supprimées")
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """
         Récupère une valeur du cache.
 
@@ -290,8 +290,8 @@ class AdvancedCache:
         self,
         key: str,
         value: Any,
-        ttl_seconds: Optional[int] = None,
-        data_type: Optional[str] = None,
+        ttl_seconds: int | None = None,
+        data_type: str | None = None,
     ):
         """
         Stocke une valeur dans le cache.
@@ -378,7 +378,7 @@ class AdvancedCache:
                 f"Cache invalidation: {len(keys_to_delete)} entrées pour pattern '{pattern}'"
             )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Retourne les statistiques du cache.
 
@@ -401,9 +401,9 @@ class AdvancedCache:
 
     def decorator(
         self,
-        ttl_seconds: Optional[int] = None,
-        data_type: Optional[str] = None,
-        key_func: Optional[Callable] = None,
+        ttl_seconds: int | None = None,
+        data_type: str | None = None,
+        key_func: Callable | None = None,
     ):
         """
         Décorateur pour mettre en cache le résultat d'une fonction.
@@ -497,7 +497,7 @@ def invalidate_cache_pattern(pattern: str):
     cache.invalidate_by_pattern(pattern)
 
 
-def get_cache_stats() -> Dict[str, Any]:
+def get_cache_stats() -> dict[str, Any]:
     """Retourne les statistiques du cache global."""
     return cache.get_stats()
 
@@ -512,7 +512,6 @@ def clear_all_cache():
 
 def render_cache_stats():
     """Affiche les statistiques du cache dans Streamlit."""
-    import streamlit as st
 
     stats = get_cache_stats()
 

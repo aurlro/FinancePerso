@@ -16,7 +16,6 @@ Usage:
 """
 
 from enum import Enum
-from typing import Dict, List, Optional
 
 
 class CategoryType(Enum):
@@ -44,7 +43,7 @@ class CategorizationMethod(Enum):
 # Structure conforme au standard Plaid PFCv2
 # Référence: https://plaid.com/docs/transactions/pfc-migration/
 
-PFC_TAXONOMY: Dict[str, List[str]] = {
+PFC_TAXONOMY: dict[str, list[str]] = {
     # Revenus
     "INCOME": [
         "Salary",
@@ -225,7 +224,7 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
 # Mapping des catégories vers leur type (revenu/dépense)
 # ============================================================================
 
-CATEGORY_TO_TYPE: Dict[str, CategoryType] = {
+CATEGORY_TO_TYPE: dict[str, CategoryType] = {
     "Income": CategoryType.INCOME,
     "Transfer In": CategoryType.INCOME,
     "Transfer Out": CategoryType.TRANSFER,
@@ -254,7 +253,7 @@ CATEGORY_TO_TYPE: Dict[str, CategoryType] = {
 # Patterns heuristiques pour la catégorisation automatique
 # ============================================================================
 
-HEURISTIC_PATTERNS: Dict[str, tuple] = {
+HEURISTIC_PATTERNS: dict[str, tuple] = {
     # Food & Drink
     r"(?i)(carrefour|auchan|leclerc|lidl|aldi|casino|monoprix|franprix|intermarche|super u|match|colruyt)": (
         "Food & Drink",
@@ -368,12 +367,12 @@ def is_income_category(category: str) -> bool:
     return get_category_type(category) == CategoryType.INCOME
 
 
-def get_all_categories() -> List[str]:
+def get_all_categories() -> list[str]:
     """Retourne toutes les catégories principales."""
     return list(PFC_TAXONOMY.keys())
 
 
-def get_subcategories(main_category: str) -> List[str]:
+def get_subcategories(main_category: str) -> list[str]:
     """
     Retourne les sous-catégories d'une catégorie principale.
 

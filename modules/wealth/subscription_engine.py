@@ -21,17 +21,15 @@ Contraintes:
 """
 
 import json
-from dataclasses import dataclass, asdict
+import statistics
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, List, Dict, Tuple
-import statistics
 
 import pandas as pd
-import numpy as np
 
-from modules.wealth.data_cleaning import clean_transaction_label
 from modules.logger import logger
+from modules.wealth.data_cleaning import clean_transaction_label
 
 
 class SubscriptionStatus(Enum):
@@ -104,10 +102,10 @@ class Subscription:
     confidence_score: float
     status: str
     transaction_count: int
-    category: Optional[str] = None
-    metadata: Optional[Dict] = None
+    category: str | None = None
+    metadata: dict | None = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit l'abonnement en dictionnaire."""
         return {
             "merchant": self.merchant,
@@ -146,14 +144,14 @@ class RemainingBudgetResult:
 
     current_balance: float
     days_ahead: int
-    upcoming_charges: List[Dict]
+    upcoming_charges: list[dict]
     total_upcoming: float
     remaining_budget: float
     percentage_remaining: float
     status: str
     daily_budget: float
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit le résultat en dictionnaire."""
         return {
             "current_balance": round(self.current_balance, 2),
@@ -212,8 +210,8 @@ class SubscriptionDetector:
     def detect_subscriptions(
         self,
         df: pd.DataFrame,
-        reference_date: Optional[datetime] = None,
-    ) -> List[Subscription]:
+        reference_date: datetime | None = None,
+    ) -> list[Subscription]:
         """
         Détecte tous les abonnements dans un DataFrame de transactions.
 
@@ -282,7 +280,7 @@ class SubscriptionDetector:
         merchant: str,
         group: pd.DataFrame,
         reference_date: datetime,
-    ) -> Optional[Subscription]:
+    ) -> Subscription | None:
         """
         Analyse un groupe de transactions pour un commerçant.
 
@@ -367,7 +365,7 @@ class SubscriptionDetector:
             metadata=metadata,
         )
 
-    def _detect_frequency(self, intervals: List[int]) -> Tuple[FrequencyType, float]:
+    def _detect_frequency(self, intervals: list[int]) -> tuple[FrequencyType, float]:
         """
         Détecte la fréquence basée sur les intervalles.
 
@@ -413,7 +411,7 @@ class SubscriptionDetector:
 
         return best_match, best_confidence
 
-    def _check_amount_stability(self, amounts: List[float]) -> float:
+    def _check_amount_stability(self, amounts: list[float]) -> float:
         """
         Vérifie la stabilité des montants.
 
@@ -490,8 +488,8 @@ class SubscriptionDetector:
 
     def detect_zombie_subscriptions(
         self,
-        subscriptions: List[Subscription],
-    ) -> List[Subscription]:
+        subscriptions: list[Subscription],
+    ) -> list[Subscription]:
         """Filtre les abonnements ZOMBIE."""
         return [s for s in subscriptions if s.status == SubscriptionStatus.ZOMBIE.value]
 
@@ -499,7 +497,7 @@ class SubscriptionDetector:
         self,
         df: pd.DataFrame,
         threshold_percent: float = 15.0,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Détecte les augmentations de montant suspects.
 
@@ -543,7 +541,7 @@ class SubscriptionDetector:
 
     def calculate_monthly_fixed_charges(
         self,
-        subscriptions: List[Subscription],
+        subscriptions: list[Subscription],
     ) -> float:
         """
         Calcule le total mensualisé des charges fixes.
@@ -572,7 +570,7 @@ class SubscriptionDetector:
 def detect_subscriptions_simple(
     df: pd.DataFrame,
     min_occurrences: int = 3,
-) -> List[Dict]:
+) -> list[dict]:
     """
     Fonction utilitaire simple pour détecter les abonnements.
 
@@ -588,7 +586,7 @@ def detect_subscriptions_simple(
 
 def calculate_remaining_budget(
     current_balance: float,
-    subscriptions: List[Subscription],
+    subscriptions: list[Subscription],
     days_ahead: int = 30,
 ) -> RemainingBudgetResult:
     """

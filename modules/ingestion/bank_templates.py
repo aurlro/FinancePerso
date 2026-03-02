@@ -3,8 +3,8 @@ Bank import templates for French banks.
 Maps CSV formats to standardized transaction format.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import pandas as pd
 

@@ -3,9 +3,10 @@ Tests pour les fonctionnalités v5.5 - FinCouple Edition
 Thème, Analytics, Accessibilité, Responsive
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Ajouter le répertoire parent au path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -16,7 +17,7 @@ class TestThemeSystem:
 
     def test_theme_imports(self):
         """Vérifie que tous les imports du thème fonctionnent."""
-        from modules.ui.theme import ThemeConfig, ThemeManager, get_theme, THEMES
+        from modules.ui.theme import THEMES
 
         assert len(THEMES) == 6  # 2 modes × 3 palettes
 
@@ -77,7 +78,7 @@ class TestAccessibility:
 
     def test_contrast_ratio_calculation(self):
         """Test le calcul des ratios de contraste."""
-        from modules.ui.accessibility import contrast_ratio, check_contrast
+        from modules.ui.accessibility import contrast_ratio
 
         # Blanc sur noir devrait être 21:1
         ratio = contrast_ratio("#FFFFFF", "#000000")
@@ -137,7 +138,7 @@ class TestAnalytics:
 
     def test_analytics_imports(self):
         """Vérifie les imports analytics."""
-        from modules.analytics import AnalyticsTracker, track_event, EventType
+        from modules.analytics import EventType
 
         assert EventType.IMPORT_COMPLETE is not None
 
@@ -187,7 +188,7 @@ class TestKPICards:
 
     def test_kpi_cards_import(self):
         """Vérifie l'import des KPI cards."""
-        from modules.ui.dashboard.kpi_cards import render_kpi_cards, _render_kpi_card_html
+        from modules.ui.dashboard.kpi_cards import render_kpi_cards
 
         assert render_kpi_cards is not None
 

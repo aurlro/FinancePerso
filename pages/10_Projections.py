@@ -14,25 +14,23 @@ Usage:
     render_projections_page()
 """
 
-import streamlit as st
-import numpy as np
-from datetime import datetime
-from typing import Dict
 
-from modules.wealth.math_engine import (
-    MonteCarloSimulator,
-    ScenarioType,
-    quick_simulation,
-    SCENARIO_PARAMS,
-)
-from modules.wealth.visualizations import (
-    plot_wealth_projection,
-    plot_scenario_comparison,
-    plot_probability_distribution,
-)
-from modules.wealth.subscription_engine import calculate_remaining_budget, SubscriptionDetector
+import numpy as np
+import streamlit as st
+
 from modules.db.transactions import get_all_transactions
 from modules.logger import logger
+from modules.wealth.math_engine import (
+    SCENARIO_PARAMS,
+    MonteCarloSimulator,
+    ScenarioType,
+)
+from modules.wealth.subscription_engine import SubscriptionDetector
+from modules.wealth.visualizations import (
+    plot_probability_distribution,
+    plot_scenario_comparison,
+    plot_wealth_projection,
+)
 
 
 def render_projections_page():
@@ -258,7 +256,7 @@ def create_what_if_scenarios(
     base_return: float,
     base_volatility: float,
     years: int,
-) -> Dict:
+) -> dict:
     """Crée les variations de scénarios What-If."""
     scenarios = {}
 
@@ -363,7 +361,7 @@ def display_simulation_results(result, stats, target_amount):
             prob_success = np.mean(final_values >= target_amount)
 
             st.metric(
-                label=f"Probabilité d'atteindre l'objectif",
+                label="Probabilité d'atteindre l'objectif",
                 value=f"{prob_success:.1%}",
                 help=f"Chances d'atteindre €{target_amount:,.0f}",
             )

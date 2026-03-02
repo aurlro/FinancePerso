@@ -1,10 +1,7 @@
 """Couche de données pour les analytics."""
 
 import json
-import os
-import sqlite3
 from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 import streamlit as st
@@ -60,7 +57,7 @@ def init_analytics_tables():
         logger.debug("Tables analytics initialisées")
 
 
-def track_event(event_type: str, event_data: Optional[dict] = None) -> bool:
+def track_event(event_type: str, event_data: dict | None = None) -> bool:
     """Enregistre un événement analytics.
 
     Args:
@@ -87,7 +84,7 @@ def track_event(event_type: str, event_data: Optional[dict] = None) -> bool:
         return False
 
 
-def start_session(session_id: str, device_type: Optional[str] = None) -> bool:
+def start_session(session_id: str, device_type: str | None = None) -> bool:
     """Démarre une nouvelle session analytics.
 
     Args:
@@ -161,7 +158,7 @@ def increment_session_interactions(session_id: str) -> bool:
         return False
 
 
-def get_events_count(event_type: Optional[str] = None, since: Optional[datetime] = None) -> int:
+def get_events_count(event_type: str | None = None, since: datetime | None = None) -> int:
     """Compte les événements.
 
     Args:
@@ -199,14 +196,14 @@ def get_daily_stats(days: int = 30) -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql(
-            """SELECT 
+            f"""SELECT 
                 DATE(timestamp) as date,
                 event_type,
                 COUNT(*) as count
             FROM analytics_events
-            WHERE timestamp > datetime('now', '-{} days')
+            WHERE timestamp > datetime('now', '-{days} days')
             GROUP BY DATE(timestamp), event_type
-            ORDER BY date DESC""".format(days),
+            ORDER BY date DESC""",
             conn,
         )
 
@@ -222,21 +219,21 @@ def get_session_stats(days: int = 30) -> dict:
     """
     with get_db_connection() as conn:
         # Nombre total de sessions
-        cursor = conn.execute("""SELECT COUNT(*) FROM analytics_sessions 
-               WHERE start_time > datetime('now', '-{} days')""".format(days))
+        cursor = conn.execute(f"""SELECT COUNT(*) FROM analytics_sessions 
+               WHERE start_time > datetime('now', '-{days} days')""")
         total_sessions = cursor.fetchone()[0]
 
         # Durée moyenne des sessions (en minutes)
-        cursor = conn.execute("""SELECT AVG(
+        cursor = conn.execute(f"""SELECT AVG(
                 (julianday(end_time) - julianday(start_time)) * 24 * 60
             ) FROM analytics_sessions 
             WHERE end_time IS NOT NULL 
-            AND start_time > datetime('now', '-{} days')""".format(days))
+            AND start_time > datetime('now', '-{days} days')""")
         avg_duration = cursor.fetchone()[0] or 0
 
         # Interactions moyennes par session
-        cursor = conn.execute("""SELECT AVG(total_interactions) FROM analytics_sessions 
-               WHERE start_time > datetime('now', '-{} days')""".format(days))
+        cursor = conn.execute(f"""SELECT AVG(total_interactions) FROM analytics_sessions 
+               WHERE start_time > datetime('now', '-{days} days')""")
         avg_interactions = cursor.fetchone()[0] or 0
 
         return {
@@ -257,13 +254,13 @@ def get_events_by_type(days: int = 30) -> pd.DataFrame:
     """
     with get_db_connection() as conn:
         return pd.read_sql(
-            """SELECT 
+            f"""SELECT 
                 event_type,
                 COUNT(*) as count
             FROM analytics_events
-            WHERE timestamp > datetime('now', '-{} days')
+            WHERE timestamp > datetime('now', '-{days} days')
             GROUP BY event_type
-            ORDER BY count DESC""".format(days),
+            ORDER BY count DESC""",
             conn,
         )
 
@@ -279,26 +276,26 @@ def get_conversion_funnel(days: int = 30) -> dict:
     """
     with get_db_connection() as conn:
         # Sessions
-        cursor = conn.execute("""SELECT COUNT(DISTINCT session_id) FROM analytics_events 
-               WHERE timestamp > datetime('now', '-{} days')""".format(days))
+        cursor = conn.execute(f"""SELECT COUNT(DISTINCT session_id) FROM analytics_events 
+               WHERE timestamp > datetime('now', '-{days} days')""")
         sessions = cursor.fetchone()[0]
 
         # Imports démarrés
-        cursor = conn.execute("""SELECT COUNT(*) FROM analytics_events 
+        cursor = conn.execute(f"""SELECT COUNT(*) FROM analytics_events 
                WHERE event_type = 'import_started'
-               AND timestamp > datetime('now', '-{} days')""".format(days))
+               AND timestamp > datetime('now', '-{days} days')""")
         imports_started = cursor.fetchone()[0]
 
         # Imports complétés
-        cursor = conn.execute("""SELECT COUNT(*) FROM analytics_events 
+        cursor = conn.execute(f"""SELECT COUNT(*) FROM analytics_events 
                WHERE event_type = 'import_completed'
-               AND timestamp > datetime('now', '-{} days')""".format(days))
+               AND timestamp > datetime('now', '-{days} days')""")
         imports_completed = cursor.fetchone()[0]
 
         # Validations complétées
-        cursor = conn.execute("""SELECT COUNT(*) FROM analytics_events 
+        cursor = conn.execute(f"""SELECT COUNT(*) FROM analytics_events 
                WHERE event_type = 'validation_completed'
-               AND timestamp > datetime('now', '-{} days')""".format(days))
+               AND timestamp > datetime('now', '-{days} days')""")
         validations = cursor.fetchone()[0]
 
         return {
@@ -329,8 +326,8 @@ def cleanup_old_events(days_to_keep: int = 90) -> int:
     """
     try:
         with get_db_connection() as conn:
-            cursor = conn.execute("""DELETE FROM analytics_events 
-                   WHERE timestamp < datetime('now', '-{} days')""".format(days_to_keep))
+            cursor = conn.execute(f"""DELETE FROM analytics_events 
+                   WHERE timestamp < datetime('now', '-{days_to_keep} days')""")
             conn.commit()
             deleted = cursor.rowcount
             logger.info(f"Nettoyage analytics: {deleted} événements supprimés")

@@ -2,8 +2,8 @@
 Tests for anomaly_detector.py module.
 """
 
-import pytest
 import pandas as pd
+
 from modules.ai.anomaly_detector import detect_amount_anomalies
 
 

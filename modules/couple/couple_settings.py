@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from modules.db.connection import get_db_connection
 
@@ -47,12 +46,12 @@ def get_couple_settings() -> dict:
 
 
 def save_couple_settings(
-    member_a_id: Optional[int] = None,
-    member_b_id: Optional[int] = None,
-    current_user_id: Optional[int] = None,
-    joint_account_labels: Optional[list] = None,
-    show_partner_details: Optional[bool] = None,
-    transfer_detection_days: Optional[int] = None,
+    member_a_id: int | None = None,
+    member_b_id: int | None = None,
+    current_user_id: int | None = None,
+    joint_account_labels: list | None = None,
+    show_partner_details: bool | None = None,
+    transfer_detection_days: int | None = None,
 ) -> bool:
     """Met à jour les paramètres couple.
 
@@ -150,7 +149,7 @@ def is_couple_configured() -> bool:
     )
 
 
-def get_partner_id() -> Optional[int]:
+def get_partner_id() -> int | None:
     """Récupère l'ID du partenaire de l'utilisateur actuel.
 
     Returns:

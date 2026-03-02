@@ -2,9 +2,10 @@
 Tests d'intégration pour v5.5 - Vérifie que tout fonctionne ensemble
 """
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -15,26 +16,20 @@ class TestV55Integration:
     def test_all_imports_work_together(self):
         """Vérifie que tous les modules peuvent être importés ensemble."""
         # Thème
-        from modules.ui.theme import ThemeManager, get_theme, THEMES
 
         # Composants UI
-        from modules.ui.components.welcome_empty_state import WelcomeEmptyState
-        from modules.ui.dashboard.kpi_cards import render_kpi_cards, calculate_reste_a_vivre
 
         # Analytics
-        from modules.analytics import AnalyticsTracker, EventType, MetricsCollector
-        from modules.analytics.events import track_event, get_analytics_summary
 
         # Accessibilité
-        from modules.ui.accessibility import check_contrast, validate_theme_contrast
 
         # Si on arrive ici, tous les imports fonctionnent
         assert True
 
     def test_theme_with_components(self):
         """Test que les composants utilisent bien le thème."""
-        from modules.ui.theme import get_theme, THEMES
         from modules.ui.components.welcome_empty_state import WelcomeEmptyState
+        from modules.ui.theme import THEMES
 
         # Récupérer un thème
         theme = THEMES["light_green"]
@@ -66,8 +61,8 @@ class TestV55Integration:
 
     def test_accessibility_with_theme(self):
         """Test que les couleurs du thème sont accessibles."""
-        from modules.ui.theme import THEMES
         from modules.ui.accessibility import validate_theme_contrast
+        from modules.ui.theme import THEMES
 
         # Tester tous les thèmes
         for theme_name, theme in THEMES.items():
@@ -92,6 +87,7 @@ class TestV55Integration:
     def test_kpi_calculation(self):
         """Test que les calculs de KPI fonctionnent avec des données complètes."""
         import pandas as pd
+
         from modules.ui.dashboard.kpi_cards import calculate_reste_a_vivre
 
         # Créer des données de test avec toutes les colonnes requises
@@ -120,7 +116,8 @@ class TestV55Performance:
     def test_theme_loading_performance(self):
         """Test que le chargement du thème est rapide."""
         import time
-        from modules.ui.theme import THEMES, get_theme
+
+        from modules.ui.theme import THEMES
 
         start = time.time()
 
@@ -137,6 +134,7 @@ class TestV55Performance:
     def test_contrast_calculation_performance(self):
         """Test que le calcul de contraste est rapide."""
         import time
+
         from modules.ui.accessibility import contrast_ratio
 
         start = time.time()

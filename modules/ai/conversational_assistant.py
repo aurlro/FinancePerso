@@ -235,7 +235,8 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
 
         # System Prompt definition
         system_prompt = f"""  # noqa: E501
-        Tu es un assistant financier expert. Tu as accès aux données réelles de l'utilisateur via des outils.
+        Tu es un assistant financier expert. Tu as accès aux données réelles de
+        l'utilisateur via des outils.
         
         CONTEXTE ACTUEL :
         - Date : {today} (Mois : {current_month})
@@ -315,7 +316,10 @@ def chat_with_assistant(user_message: str, conversation_history: list = None) ->
                 # No tool call, this is the final answer
                 return cleaned_response
 
-        return "J'ai essayé de récupérer les informations, mais je n'y suis pas parvenu après plusieurs tentatives."
+        return (
+            "J'ai essayé de récupérer les informations, mais je n'y suis pas "
+            "parvenu après plusieurs tentatives."
+        )
 
     except Exception as e:
         logger.error(f"Error in conversational assistant: {e}")

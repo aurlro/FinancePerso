@@ -4,9 +4,7 @@ Test E2E: Projection patrimoniale complète
 Scénario: Actifs → Monte Carlo → Visualisation
 """
 
-import pytest
 from modules.wealth import WealthManager, project_wealth_evolution
-from modules.wealth.math_engine import ScenarioType
 
 
 class TestWealthProjection:

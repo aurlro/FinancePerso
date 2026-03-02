@@ -23,17 +23,14 @@ Usage:
 """
 
 import json
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date
-from decimal import Decimal
-from enum import Enum, auto
-from typing import Dict, List, Optional, Tuple, Union, Any
-from pathlib import Path
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from enum import Enum
+from typing import Any
 
 import pandas as pd
-import numpy as np
 
-from modules.encryption import encrypt_field, decrypt_field
+from modules.encryption import encrypt_field
 from modules.logger import logger
 
 
@@ -95,7 +92,7 @@ class MortgageSchedule:
     interest_rate: float
     start_date: date
     duration_months: int
-    schedule_df: Optional[pd.DataFrame] = None
+    schedule_df: pd.DataFrame | None = None
 
     def __post_init__(self):
         if self.schedule_df is None:
@@ -153,7 +150,7 @@ class MortgageSchedule:
         )
         return date(year, month, day)
 
-    def get_remaining_balance(self, as_of_date: Optional[date] = None) -> float:
+    def get_remaining_balance(self, as_of_date: date | None = None) -> float:
         """
         Retourne le capital restant dû à une date donnée.
 
@@ -179,7 +176,7 @@ class MortgageSchedule:
 
         return float(self.schedule_df.iloc[months_elapsed]["remaining_balance"])
 
-    def get_equity(self, property_value: float, as_of_date: Optional[date] = None) -> float:
+    def get_equity(self, property_value: float, as_of_date: date | None = None) -> float:
         """
         Calcule l'équité nette immobilière.
 
@@ -195,17 +192,17 @@ class MortgageSchedule:
         remaining = self.get_remaining_balance(as_of_date)
         return property_value - remaining
 
-    def get_paid_principal(self, as_of_date: Optional[date] = None) -> float:
+    def get_paid_principal(self, as_of_date: date | None = None) -> float:
         """Retourne le capital déjà remboursé."""
         remaining = self.get_remaining_balance(as_of_date)
         return self.principal - remaining
 
-    def get_progress_percentage(self, as_of_date: Optional[date] = None) -> float:
+    def get_progress_percentage(self, as_of_date: date | None = None) -> float:
         """Pourcentage de remboursement effectué."""
         paid = self.get_paid_principal(as_of_date)
         return (paid / self.principal * 100) if self.principal > 0 else 0.0
 
-    def get_interest_paid(self, as_of_date: Optional[date] = None) -> float:
+    def get_interest_paid(self, as_of_date: date | None = None) -> float:
         """Total des intérêts payés à ce jour."""
         if as_of_date is None:
             as_of_date = date.today()
@@ -221,7 +218,7 @@ class MortgageSchedule:
 
         return float(self.schedule_df.iloc[:months_elapsed]["interest_part"].sum())
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "principal": self.principal,
@@ -254,23 +251,23 @@ class RealEstateAsset:
     purchase_price: float
     current_value: float
     purchase_date: date
-    mortgage: Optional[MortgageSchedule] = None
-    metadata: Dict = field(default_factory=dict)
+    mortgage: MortgageSchedule | None = None
+    metadata: dict = field(default_factory=dict)
 
-    def get_equity(self, as_of_date: Optional[date] = None) -> float:
+    def get_equity(self, as_of_date: date | None = None) -> float:
         """Calcule l'équité nette immobilière."""
         if self.mortgage:
             return self.mortgage.get_equity(self.current_value, as_of_date)
         return self.current_value
 
-    def get_loan_to_value(self, as_of_date: Optional[date] = None) -> float:
+    def get_loan_to_value(self, as_of_date: date | None = None) -> float:
         """Ratio LTV (Loan-to-Value)."""
         if not self.mortgage:
             return 0.0
         remaining = self.mortgage.get_remaining_balance(as_of_date)
         return (remaining / self.current_value * 100) if self.current_value > 0 else 0.0
 
-    def get_value_change(self) -> Tuple[float, float]:
+    def get_value_change(self) -> tuple[float, float]:
         """
         Retourne l'évolution de valeur absolue et en pourcentage.
 
@@ -281,13 +278,13 @@ class RealEstateAsset:
         pct = (change / self.purchase_price * 100) if self.purchase_price > 0 else 0.0
         return change, pct
 
-    def is_underwater(self, as_of_date: Optional[date] = None) -> bool:
+    def is_underwater(self, as_of_date: date | None = None) -> bool:
         """Vérifie si le bien est 'sous l'eau' (valeur < crédit restant)."""
         if not self.mortgage:
             return False
         return self.current_value < self.mortgage.get_remaining_balance(as_of_date)
 
-    def to_dict(self, encrypt_sensitive: bool = True) -> Dict:
+    def to_dict(self, encrypt_sensitive: bool = True) -> dict:
         """Convertit en dictionnaire."""
         address = encrypt_field(self.address) if encrypt_sensitive else self.address
         return {
@@ -325,9 +322,9 @@ class FinancialAsset:
     current_value: float
     invested_amount: float = 0.0
     liquidity: AssetLiquidity = AssetLiquidity.MEDIUM_TERM
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def get_unrealized_gain(self) -> Tuple[float, float]:
+    def get_unrealized_gain(self) -> tuple[float, float]:
         """
         Retourne la plus-value latente absolue et en pourcentage.
 
@@ -348,7 +345,7 @@ class FinancialAsset:
             return 0.0
         return (self.current_value / self.invested_amount) ** (1 / years) - 1
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "id": self.id,
@@ -384,7 +381,7 @@ class CryptoAsset:
     current_price: float
     avg_buy_price: float = 0.0
     platform: str = ""
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
     @property
     def current_value(self) -> float:
@@ -396,13 +393,13 @@ class CryptoAsset:
         """Montant investi."""
         return self.quantity * self.avg_buy_price
 
-    def get_unrealized_gain(self) -> Tuple[float, float]:
+    def get_unrealized_gain(self) -> tuple[float, float]:
         """Plus-value latente."""
         gain = self.current_value - self.invested_amount
         pct = (gain / self.invested_amount * 100) if self.invested_amount > 0 else 0.0
         return gain, pct
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "id": self.id,
@@ -439,8 +436,8 @@ class Liability:
     remaining_amount: float
     monthly_payment: float
     interest_rate: float = 0.0
-    maturity_date: Optional[date] = None
-    metadata: Dict = field(default_factory=dict)
+    maturity_date: date | None = None
+    metadata: dict = field(default_factory=dict)
 
     @property
     def progress_percentage(self) -> float:
@@ -450,7 +447,7 @@ class Liability:
         paid = self.total_amount - self.remaining_amount
         return paid / self.total_amount * 100
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "id": self.id,
@@ -487,10 +484,10 @@ class WealthManager:
     """
 
     def __init__(self):
-        self.real_estate: List[RealEstateAsset] = []
-        self.financial_assets: List[FinancialAsset] = []
-        self.crypto_assets: List[CryptoAsset] = []
-        self.liabilities: List[Liability] = []
+        self.real_estate: list[RealEstateAsset] = []
+        self.financial_assets: list[FinancialAsset] = []
+        self.crypto_assets: list[CryptoAsset] = []
+        self.liabilities: list[Liability] = []
         self.cash_balance: float = 0.0
         self._last_updated: datetime = datetime.now()
 
@@ -525,7 +522,7 @@ class WealthManager:
 
     # ==================== Calculs de patrimoine ====================
 
-    def get_total_assets(self) -> Dict[str, float]:
+    def get_total_assets(self) -> dict[str, float]:
         """
         Calcule le total des actifs par catégorie.
 
@@ -544,14 +541,14 @@ class WealthManager:
             "total": self.cash_balance + real_estate_total + financial_total + crypto_total,
         }
 
-    def get_total_liabilities(self) -> Dict[str, float]:
+    def get_total_liabilities(self) -> dict[str, float]:
         """
         Calcule le total des passifs par catégorie.
 
         Returns:
             Dict avec les totaux par type de dette
         """
-        by_type: Dict[str, float] = {}
+        by_type: dict[str, float] = {}
         total = 0.0
 
         for liability in self.liabilities:
@@ -603,7 +600,7 @@ class WealthManager:
 
         return total_assets - non_mortgage_debt
 
-    def get_asset_allocation(self) -> Dict[str, Dict[str, Any]]:
+    def get_asset_allocation(self) -> dict[str, dict[str, Any]]:
         """
         Calcule la répartition du patrimoine.
 
@@ -654,7 +651,7 @@ class WealthManager:
             },
         }
 
-    def get_liquidity_analysis(self) -> Dict[str, float]:
+    def get_liquidity_analysis(self) -> dict[str, float]:
         """
         Analyse la liquidité du patrimoine.
 
@@ -688,7 +685,7 @@ class WealthManager:
             "total_liquid": immediate + short_term + medium_term,
         }
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """
         Résumé des performances par classe d'actif.
 
@@ -748,7 +745,7 @@ class WealthManager:
 
     # ==================== Export / Import ====================
 
-    def to_dict(self, encrypt_sensitive: bool = True) -> Dict:
+    def to_dict(self, encrypt_sensitive: bool = True) -> dict:
         """Exporte tout le patrimoine en dictionnaire."""
         return {
             "real_estate": [a.to_dict(encrypt_sensitive) for a in self.real_estate],

@@ -44,7 +44,11 @@ class BudgetOverrunAnalyzer(BaseAnalyzer):
                             Priority.HIGH.value if overspend_pct > 50 else Priority.MEDIUM.value
                         ),
                         title=f"💰 Dépassement budget : {category}",
-                        description=f"Dépensé : {spent:.0f}€ / Budget : {budget_amount:.0f}€ (+{overspend_pct}%). Ajustez votre budget ou surveillez vos dépenses.",
+                        description=(
+                            f"Dépensé : {spent:.0f}€ / Budget : {budget_amount:.0f}€ "
+                            f"(+{overspend_pct}%). Ajustez votre budget ou "
+                            f"surveillez vos dépenses."
+                        ),
                         action_label="Ajuster le budget",
                         action_data={
                             "category": category,
@@ -63,7 +67,10 @@ class BudgetOverrunAnalyzer(BaseAnalyzer):
                         type=SuggestionType.BUDGET.value,
                         priority=Priority.LOW.value,
                         title=f"💡 Budget surévalué : {category}",
-                        description=f"Vous n'utilisez que {spent:.0f}€ sur {budget_amount:.0f}€. Envisagez de réduire ce budget.",
+                        description=(
+                            f"Vous n'utilisez que {spent:.0f}€ sur {budget_amount:.0f}€. "
+                            f"Envisagez de réduire ce budget."
+                        ),
                         action_label="Voir détails",
                         action_data={"category": category, "type": "view_budget"},
                         impact_score=30,
@@ -103,7 +110,10 @@ class EmptyBudgetAnalyzer(BaseAnalyzer):
                         type=SuggestionType.BUDGET.value,
                         priority=Priority.LOW.value,
                         title=f"💤 Catégorie inactive : {category}",
-                        description=f"Budget défini ({budget['amount']:.0f}€) mais aucune dépense ce mois. Surveillez ou ajustez le budget.",
+                        description=(
+                            f"Budget défini ({budget['amount']:.0f}€) mais aucune "
+                            f"dépense ce mois. Surveillez ou ajustez le budget."
+                        ),
                         action_label="Voir budget",
                         action_data={"category": category, "type": "view_budget"},
                         impact_score=25,
@@ -142,8 +152,14 @@ class SavingsOpportunityAnalyzer(BaseAnalyzer):
                         id=self._generate_id("savings", hash(label) % 10000),
                         type=SuggestionType.SAVINGS.value,
                         priority=Priority.MEDIUM.value,
-                        title=f"💸 Dépense récurrente : '{label[:30]}...' ({monthly_amount:.0f}€/mois)",
-                        description=f"Cette dépense revient tous les mois. Vérifiez si vous pouvez la réduire ou la supprimer.",
+                        title=(
+                            f"💸 Dépense récurrente : '{label[:30]}...' "
+                            f"({monthly_amount:.0f}€/mois)"
+                        ),
+                        description=(
+                            "Cette dépense revient tous les mois. Vérifiez si "
+                            "vous pouvez la réduire ou la supprimer."
+                        ),
                         action_label="Analyser",
                         action_data={
                             "label": label,
@@ -179,7 +195,11 @@ class SavingsOpportunityAnalyzer(BaseAnalyzer):
                     type=SuggestionType.SAVINGS.value,
                     priority=Priority.MEDIUM.value,
                     title=f"📺 Multiples abonnements streaming ({streaming_count})",
-                    description=f"Vous avez {streaming_count} abonnements streaming pour un total de {abs(total_streaming):.0f}€. Envisagez de les rationaliser.",
+                    description=(
+                        f"Vous avez {streaming_count} abonnements streaming pour "
+                        f"un total de {abs(total_streaming):.0f}€. Envisagez de "
+                        f"les rationaliser."
+                    ),
                     action_label="Voir détails",
                     action_data={"type": "view_subscriptions"},
                     impact_score=60,

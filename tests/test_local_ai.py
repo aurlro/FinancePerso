@@ -12,7 +12,6 @@ Usage:
     pytest tests/test_local_ai.py -v
 """
 
-import json
 import os
 import sys
 from unittest.mock import MagicMock, patch

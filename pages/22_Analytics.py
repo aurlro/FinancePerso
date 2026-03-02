@@ -4,8 +4,9 @@ Accessible uniquement aux administrateurs ou via le menu Système
 """
 
 import streamlit as st
-from modules.analytics.metrics import MetricsCollector, get_metrics_dashboard
+
 from modules.analytics.events import get_analytics_summary
+from modules.analytics.metrics import MetricsCollector, get_metrics_dashboard
 
 st.set_page_config(page_title="Analytics", page_icon="📊", layout="wide")
 

@@ -12,10 +12,10 @@ Usage:
 """
 
 from modules.privacy.gdpr_manager import (
-    GDPRManager,
+    ConsentRecord,
     DataRetentionPolicy,
     DeletionRecord,
-    ConsentRecord,
+    GDPRManager,
     quick_export,
     quick_purge,
 )

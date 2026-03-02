@@ -4,7 +4,8 @@ Test Unit: Data Cleaning (Phase 2)
 """
 
 import pytest
-from modules.wealth import clean_transaction_label, clean_merchant_name
+
+from modules.wealth import clean_transaction_label
 
 
 class TestDataCleaning:

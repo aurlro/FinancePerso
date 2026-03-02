@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Pytest configuration and shared fixtures for FinancePerso tests.
 """
@@ -64,7 +63,7 @@ def temp_db():
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         for migration_file in migration_files:
-            with open(migration_file, "r") as f:
+            with open(migration_file) as f:
                 sql = f.read()
                 cursor.executescript(sql)
         conn.commit()

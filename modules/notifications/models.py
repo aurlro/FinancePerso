@@ -6,7 +6,7 @@ Définit les dataclasses et enums utilisés par tout le système.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class NotificationLevel(str, Enum):
@@ -67,8 +67,8 @@ class NotificationAction:
 
     label: str  # Texte du bouton
     action: str  # Type d'action
-    target: Optional[str] = None  # Cible (URL, page, etc.)
-    data: Optional[dict] = None  # Données additionnelles
+    target: str | None = None  # Cible (URL, page, etc.)
+    data: dict | None = None  # Données additionnelles
 
     def to_dict(self) -> dict:
         """Convertit en dictionnaire pour stockage JSON."""
@@ -97,19 +97,19 @@ class Notification:
     id: str
     level: NotificationLevel
     type: NotificationType
-    title: Optional[str]
+    title: str | None
     message: str
-    icon: Optional[str] = None
+    icon: str | None = None
 
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
-    read_at: Optional[datetime] = None
-    dismissed_at: Optional[datetime] = None
-    expires_at: Optional[datetime] = None
+    read_at: datetime | None = None
+    dismissed_at: datetime | None = None
+    expires_at: datetime | None = None
 
     # Catégorisation
-    category: Optional[str] = None
-    source: Optional[str] = None
+    category: str | None = None
+    source: str | None = None
 
     # Actions
     actions: list[NotificationAction] = field(default_factory=list)
@@ -118,7 +118,7 @@ class Notification:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # Déduplication
-    dedup_key: Optional[str] = None
+    dedup_key: str | None = None
 
     # Statut
     is_read: bool = False
@@ -217,7 +217,7 @@ class NotificationPreferences:
     desktop_enabled: bool = True
     email_enabled: bool = False
     sms_enabled: bool = False
-    email_address: Optional[str] = None
+    email_address: str | None = None
 
     # Seuils
     budget_warning_threshold: int = 80

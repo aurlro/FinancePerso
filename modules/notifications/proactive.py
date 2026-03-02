@@ -3,10 +3,10 @@ Proactive notifications for FinancePerso.
 Detects patterns and alerts users before problems occur.
 """
 
-from datetime import date, datetime, timedelta
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Callable
 
 import pandas as pd
 import streamlit as st

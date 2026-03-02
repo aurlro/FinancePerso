@@ -21,15 +21,11 @@ Usage:
 
 import hashlib
 import json
-import re
-from dataclasses import dataclass, field, asdict
+from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Any
-from collections import defaultdict
-import logging
-
-import pandas as pd
+from typing import Any
 
 from modules.logger import logger
 
@@ -86,12 +82,12 @@ class RiskScore:
     transaction_id: str
     score: float
     level: RiskLevel
-    flags: List[RiskFlag]
-    details: Dict[str, Any]
+    flags: list[RiskFlag]
+    details: dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
     requires_review: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "transaction_id": self.transaction_id,
@@ -125,10 +121,10 @@ class SecurityAlert:
     alert_type: str
     severity: RiskLevel
     description: str
-    affected_transactions: List[str]
+    affected_transactions: list[str]
     created_at: datetime = field(default_factory=datetime.now)
     status: str = "new"
-    assigned_to: Optional[str] = None
+    assigned_to: str | None = None
     resolution_notes: str = ""
 
     def resolve(self, notes: str, by: str):
@@ -161,12 +157,12 @@ class AuditLogEntry:
     action: str
     resource_type: str
     resource_id: str
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    ip_address: str | None = None
+    user_agent: str | None = None
     success: bool = True
-    details: Dict = field(default_factory=dict)
+    details: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convertit en dictionnaire."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -220,7 +216,7 @@ class SecurityMonitor:
         "YE",
     }
 
-    def __init__(self, thresholds: Optional[Dict] = None):
+    def __init__(self, thresholds: dict | None = None):
         """
         Initialise le moniteur de sécurité.
 
@@ -228,19 +224,19 @@ class SecurityMonitor:
             thresholds: Seuils personnalisés (optionnel)
         """
         self.thresholds = thresholds or self.DEFAULT_THRESHOLDS.copy()
-        self.alerts: List[SecurityAlert] = []
-        self.audit_logs: List[AuditLogEntry] = []
-        self.flagged_transactions: Set[str] = set()
+        self.alerts: list[SecurityAlert] = []
+        self.audit_logs: list[AuditLogEntry] = []
+        self.flagged_transactions: set[str] = set()
 
         # Historique pour analyse de patterns
-        self._transaction_history: Dict[str, List[Dict]] = defaultdict(list)
+        self._transaction_history: dict[str, list[dict]] = defaultdict(list)
 
         logger.info("SecurityMonitor initialisé")
 
     def analyze_transaction(
         self,
-        transaction: Dict[str, Any],
-        user_profile: Optional[Dict] = None,
+        transaction: dict[str, Any],
+        user_profile: dict | None = None,
     ) -> RiskScore:
         """
         Analyse une transaction et calcule son score de risque.
@@ -291,7 +287,7 @@ class SecurityMonitor:
         if velocity_score > 0:
             flags.append(RiskFlag.VELOCITY_SPIKE)
             score += velocity_score
-            details["velocity"] = f"Pic de vélocité détecté"
+            details["velocity"] = "Pic de vélocité détecté"
 
         # 6. Patterns de label suspects
         label_flags = self._analyze_label(label)
@@ -327,9 +323,9 @@ class SecurityMonitor:
 
     def analyze_batch(
         self,
-        transactions: List[Dict[str, Any]],
-        user_profile: Optional[Dict] = None,
-    ) -> List[RiskScore]:
+        transactions: list[dict[str, Any]],
+        user_profile: dict | None = None,
+    ) -> list[RiskScore]:
         """
         Analyse un lot de transactions.
 
@@ -392,7 +388,7 @@ class SecurityMonitor:
         alert_type: str,
         severity: RiskLevel,
         description: str,
-        affected_transactions: List[str],
+        affected_transactions: list[str],
     ) -> SecurityAlert:
         """
         Crée une alerte de sécurité.
@@ -421,8 +417,8 @@ class SecurityMonitor:
 
     def get_pending_alerts(
         self,
-        min_severity: Optional[RiskLevel] = None,
-    ) -> List[SecurityAlert]:
+        min_severity: RiskLevel | None = None,
+    ) -> list[SecurityAlert]:
         """
         Récupère les alertes en attente.
 
@@ -453,10 +449,10 @@ class SecurityMonitor:
         action: str,
         resource_type: str,
         resource_id: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         success: bool = True,
-        details: Optional[Dict] = None,
+        details: dict | None = None,
     ):
         """
         Enregistre une entrée d'audit.
@@ -490,12 +486,12 @@ class SecurityMonitor:
 
     def get_audit_trail(
         self,
-        user_id: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-    ) -> List[AuditLogEntry]:
+        user_id: str | None = None,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> list[AuditLogEntry]:
         """
         Récupère le trail d'audit filtré.
 
@@ -531,7 +527,6 @@ class SecurityMonitor:
         Args:
             filepath: Chemin du fichier
         """
-        import json
 
         data = [entry.to_dict() for entry in self.audit_logs]
 
@@ -540,7 +535,7 @@ class SecurityMonitor:
 
         logger.info(f"Audit log exporté: {filepath}")
 
-    def get_risk_summary(self, days: int = 30) -> Dict[str, Any]:
+    def get_risk_summary(self, days: int = 30) -> dict[str, Any]:
         """
         Génère un résumé des risques.
 
@@ -604,7 +599,7 @@ class SecurityMonitor:
 
         return tx_date.weekday() >= 5  # 5 = Samedi, 6 = Dimanche
 
-    def _check_velocity(self, user_id: str, transaction: Dict) -> float:
+    def _check_velocity(self, user_id: str, transaction: dict) -> float:
         """Vérifie la vélocité des transactions."""
         history = self._transaction_history.get(user_id, [])
 
@@ -628,7 +623,7 @@ class SecurityMonitor:
 
         return 0.0
 
-    def _analyze_label(self, label: str) -> List[RiskFlag]:
+    def _analyze_label(self, label: str) -> list[RiskFlag]:
         """Analyse le libellé pour détecter des patterns suspects."""
         flags = []
         label_upper = label.upper()
@@ -654,7 +649,7 @@ class SecurityMonitor:
 
         return flags
 
-    def _detect_rapid_succession(self, scores: List[RiskScore], transactions: List[Dict]):
+    def _detect_rapid_succession(self, scores: list[RiskScore], transactions: list[dict]):
         """Détecte les transactions en succession rapide."""
         if len(scores) < 2:
             return
@@ -701,7 +696,7 @@ class SecurityMonitor:
 # ==================== Fonctions utilitaires ====================
 
 
-def quick_risk_check(transaction: Dict[str, Any]) -> RiskScore:
+def quick_risk_check(transaction: dict[str, Any]) -> RiskScore:
     """
     Vérification rapide de risque pour une transaction.
 
@@ -715,7 +710,7 @@ def quick_risk_check(transaction: Dict[str, Any]) -> RiskScore:
     return monitor.analyze_transaction(transaction)
 
 
-def check_suspicious_pattern(transactions: List[Dict]) -> List[Dict]:
+def check_suspicious_pattern(transactions: list[dict]) -> list[dict]:
     """
     Vérifie un lot de transactions pour patterns suspects.
 
@@ -741,7 +736,7 @@ def check_suspicious_pattern(transactions: List[Dict]) -> List[Dict]:
     return results
 
 
-def generate_security_report(days: int = 30) -> Dict[str, Any]:
+def generate_security_report(days: int = 30) -> dict[str, Any]:
     """
     Génère un rapport de sécurité.
 

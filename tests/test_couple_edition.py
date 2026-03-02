@@ -3,27 +3,21 @@
 Teste les fonctionnalités de confidentialité et de gestion couple.
 """
 
+
 import pytest
-import pandas as pd
-from datetime import datetime, timedelta
 
 from modules.couple.card_mappings import (
-    save_card_mapping,
-    get_card_mapping,
     get_all_card_mappings,
-    get_unknown_cards,
+    get_card_mapping,
+    save_card_mapping,
 )
 from modules.couple.couple_settings import (
     get_couple_settings,
-    save_couple_settings,
-    set_current_user,
-    get_current_user_role,
-    is_couple_configured,
     get_setup_progress,
+    is_couple_configured,
+    save_couple_settings,
 )
-from modules.couple.transfer_detector import detect_internal_transfers
 from modules.couple.privacy_filters import (
-    get_transaction_visibility_role,
     COUPLE_PRIVACY_RULES,
 )
 from modules.db.members import add_member, delete_member, get_members

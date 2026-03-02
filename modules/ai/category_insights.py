@@ -270,7 +270,11 @@ class CategoryInsightsEngine:
                     insight_type="suggestion",
                     severity="medium",
                     title="💡 Opportunité d'économie",
-                    description=f"Vous faites {tx_count_current} transactions ce mois contre {avg_tx_per_month:.0f} en moyenne. En regroupant vos achats, vous pourriez économiser ~{potential_savings:.0f}€/mois",
+                    description=(
+                        f"Vous faites {tx_count_current} transactions ce mois "
+                        f"contre {avg_tx_per_month:.0f} en moyenne. En regroupant "
+                        f"vos achats, vous pourriez économiser ~{potential_savings:.0f}€/mois"
+                    ),
                     action="Voir les fréquences",
                     savings_potential=potential_savings,
                 )

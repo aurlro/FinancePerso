@@ -2,10 +2,9 @@
 Challenge system for short-term goals.
 """
 
-from datetime import datetime, timedelta, date
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Callable
 
 import streamlit as st
 

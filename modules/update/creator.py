@@ -1,9 +1,7 @@
 """Update creation utilities."""
 
 from datetime import datetime
-from typing import Optional
 
-from modules.logger import logger
 from modules.update.git import GitAnalyzer, GitChange
 from modules.update.models import ChangeType, VersionEntry
 
@@ -23,7 +21,7 @@ class UpdateCreator:
         self,
         version: str,
         title: str,
-        since_ref: Optional[str] = None,
+        since_ref: str | None = None,
     ) -> VersionEntry:
         """Create a version entry from git changes.
 
@@ -126,7 +124,7 @@ class UpdateCreator:
         file_lower = file_path.lower()
         return any(pattern in file_lower for pattern in skip_patterns)
 
-    def suggest_version_bump(self, since_ref: Optional[str] = None) -> str:
+    def suggest_version_bump(self, since_ref: str | None = None) -> str:
         """Suggest version bump type based on changes.
 
         Args:

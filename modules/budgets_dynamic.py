@@ -182,7 +182,10 @@ class DynamicBudgetEngine:
                     reason = f"Vous dépensez en moyenne {actual_avg:.0f}€ (budget: {current:.0f}€)"
                 else:
                     expected_savings = 0
-                    reason = f"Vous dépassez régulièrement votre budget ({actual_avg:.0f}€ vs {current:.0f}€)"
+                    reason = (
+                        f"Vous dépassez régulièrement votre budget "
+                        f"({actual_avg:.0f}€ vs {current:.0f}€)"
+                    )
 
                 suggestions.append(
                     BudgetAdjustment(

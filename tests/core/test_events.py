@@ -1,6 +1,5 @@
 """Tests for the EventBus module."""
 
-import pytest
 from modules.core.events import EventBus, on_event
 
 

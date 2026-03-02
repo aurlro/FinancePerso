@@ -16,16 +16,16 @@ Usage:
     fig.show()
 """
 
+
 import numpy as np
 import plotly.graph_objects as go
-from typing import Optional, List, Dict
 
 from modules.wealth.math_engine import SimulationResult
 
 
 def plot_wealth_projection(
     result: SimulationResult,
-    life_goals: Optional[List[Dict]] = None,
+    life_goals: list[dict] | None = None,
     title: str = "Projection Patrimoniale (Simulation Monte Carlo)",
     height: int = 600,
     show_confidence_bands: bool = True,
@@ -256,8 +256,8 @@ def plot_wealth_projection(
 
 
 def plot_scenario_comparison(
-    results: List[SimulationResult],
-    scenario_names: List[str],
+    results: list[SimulationResult],
+    scenario_names: list[str],
     title: str = "Comparaison des Scénarios",
     height: int = 500,
 ) -> go.Figure:
@@ -315,7 +315,7 @@ def plot_scenario_comparison(
 
 def plot_probability_distribution(
     result: SimulationResult,
-    target: Optional[float] = None,
+    target: float | None = None,
     title: str = "Distribution des Capitaux Finals",
 ) -> go.Figure:
     """Affiche la distribution des valeurs finales (histogramme)."""

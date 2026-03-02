@@ -5,8 +5,8 @@ Calcule les KPIs importants : taux d'import, rétention, etc.
 
 import sqlite3
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 from pathlib import Path
+from typing import Any
 
 from modules.db.connection import get_db_connection
 
@@ -15,7 +15,7 @@ class MetricsCollector:
     """Collecte et calcule les métriques métier."""
 
     @classmethod
-    def get_import_conversion_rate(cls, days: int = 30) -> Dict[str, Any]:
+    def get_import_conversion_rate(cls, days: int = 30) -> dict[str, Any]:
         """
         Calcule le taux de conversion des imports (nouveaux utilisateurs).
 
@@ -66,7 +66,7 @@ class MetricsCollector:
             }
 
     @classmethod
-    def get_retention_rate(cls, days: int = 7) -> Dict[str, Any]:
+    def get_retention_rate(cls, days: int = 7) -> dict[str, Any]:
         """
         Calcule le taux de rétention (utilisateurs revenant après X jours).
 
@@ -130,7 +130,7 @@ class MetricsCollector:
             return {"cohort_size": 0, "retained_users": 0, "retention_rate": 0, "period_days": days}
 
     @classmethod
-    def get_feature_adoption(cls, days: int = 30) -> Dict[str, Any]:
+    def get_feature_adoption(cls, days: int = 30) -> dict[str, Any]:
         """
         Calcule l'adoption des fonctionnalités clés.
 
@@ -165,7 +165,7 @@ class MetricsCollector:
             return {}
 
     @classmethod
-    def get_dashboard_summary(cls) -> Dict[str, Any]:
+    def get_dashboard_summary(cls) -> dict[str, Any]:
         """Récupère un résumé complet des métriques pour le dashboard."""
         return {
             "import_j1": cls.get_import_conversion_rate(days=1),

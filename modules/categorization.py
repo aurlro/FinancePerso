@@ -29,7 +29,8 @@ def _get_cached_transfer_targets():
 # Rules have been migrated to database (see modules/data_manager.py)
 
 PROMPT_TEMPLATE = """
-Tu es un expert en catégorisation financière. Analyse la transaction suivante et détermine la catégorie la plus appropriée.
+Tu es un expert en catégorisation financière. Analyse la transaction suivante
+et détermine la catégorie la plus appropriée.
 Catégories possibles : {categories}
 
 Transaction :

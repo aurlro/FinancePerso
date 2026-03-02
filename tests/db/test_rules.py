@@ -2,14 +2,14 @@
 Tests for rules.py module.
 """
 
-import pytest
 import pandas as pd
+
 from modules.db.rules import (
     add_learning_rule,
     delete_learning_rule,
+    get_compiled_learning_rules,
     get_learning_rules,
     get_rules_for_category,
-    get_compiled_learning_rules,
 )
 
 

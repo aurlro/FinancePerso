@@ -3,8 +3,7 @@ Test Intégration: Sécurité et AML
 ==================================
 """
 
-import pytest
-from modules.wealth.security_monitor import SecurityMonitor, RiskLevel
+from modules.wealth.security_monitor import RiskLevel, SecurityMonitor
 
 
 class TestSecurity:

@@ -3,14 +3,13 @@ Cashflow prediction and forecasting.
 Projects future account balance based on patterns.
 """
 
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 import pandas as pd
-import numpy as np
 
+from modules.cashflow.recurring import RecurringType, detect_recurring_transactions
 from modules.db.transactions import get_all_transactions
-from modules.cashflow.recurring import detect_recurring_transactions, RecurringType
 from modules.logger import logger
 
 

@@ -21,17 +21,16 @@ Usage:
     export = gdpr.export_user_data(user_id)
 """
 
+import hashlib
 import json
-import os
+import secrets
 import shutil
 import sqlite3
 import zipfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Any
-import hashlib
-import secrets
+from typing import Any
 
 from modules.logger import logger
 
@@ -75,7 +74,7 @@ class DeletionRecord:
     user_id: str
     deleted_at: datetime
     deletion_type: str
-    tables_affected: List[str]
+    tables_affected: list[str]
     records_deleted: int
     proof_hash: str
     requested_by: str
@@ -101,9 +100,9 @@ class ConsentRecord:
     consent_type: str
     granted: bool
     granted_at: datetime
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    withdrawn_at: Optional[datetime] = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    withdrawn_at: datetime | None = None
 
     @property
     def is_active(self) -> bool:
@@ -148,8 +147,8 @@ class GDPRManager:
         self.retention_policy = DataRetentionPolicy()
 
         # Journal des suppressions
-        self.deletion_log: List[DeletionRecord] = []
-        self.consent_records: List[ConsentRecord] = []
+        self.deletion_log: list[DeletionRecord] = []
+        self.consent_records: list[ConsentRecord] = []
 
         # Tables contenant des données utilisateur
         self.user_data_tables = [
@@ -242,7 +241,7 @@ class GDPRManager:
 
         return record
 
-    def export_user_data(self, user_id: str, format: str = "json") -> Dict[str, Any]:
+    def export_user_data(self, user_id: str, format: str = "json") -> dict[str, Any]:
         """
         Exporte toutes les données d'un utilisateur (droit à la portabilité).
 
@@ -349,8 +348,8 @@ class GDPRManager:
         user_id: str,
         consent_type: str,
         granted: bool,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> ConsentRecord:
         """
         Enregistre un consentement utilisateur.
@@ -421,7 +420,7 @@ class GDPRManager:
 
         return False
 
-    def apply_retention_policy(self, dry_run: bool = False) -> Dict[str, int]:
+    def apply_retention_policy(self, dry_run: bool = False) -> dict[str, int]:
         """
         Applique la politique de conservation des données.
 
@@ -470,7 +469,7 @@ class GDPRManager:
 
         return stats
 
-    def get_privacy_summary(self, user_id: str) -> Dict[str, Any]:
+    def get_privacy_summary(self, user_id: str) -> dict[str, Any]:
         """
         Génère un résumé des données pour un utilisateur.
 
@@ -502,7 +501,7 @@ class GDPRManager:
             "retention_policy": asdict(self.retention_policy),
         }
 
-    def verify_deletion(self, proof_hash: str) -> Optional[DeletionRecord]:
+    def verify_deletion(self, proof_hash: str) -> DeletionRecord | None:
         """
         Vérifie une suppression par son hash de preuve.
 
@@ -532,7 +531,7 @@ class GDPRManager:
             logger.warning(f"Erreur vérification existence utilisateur {user_id}: {e}")
             return False
 
-    def _count_user_records(self, user_id: str) -> Dict[str, int]:
+    def _count_user_records(self, user_id: str) -> dict[str, int]:
         """Compte les enregistrements par table."""
         counts = {}
 
@@ -554,7 +553,7 @@ class GDPRManager:
 
         return counts
 
-    def _generate_deletion_proof(self, user_id: str, counts: Dict[str, int]) -> str:
+    def _generate_deletion_proof(self, user_id: str, counts: dict[str, int]) -> str:
         """Génère une preuve de suppression."""
         proof_data = {
             "user_id": user_id,
@@ -564,7 +563,7 @@ class GDPRManager:
         }
         return json.dumps(proof_data, sort_keys=True)
 
-    def _delete_from_database(self, user_id: str) -> List[str]:
+    def _delete_from_database(self, user_id: str) -> list[str]:
         """Supprime les données de la base."""
         tables_deleted = []
 

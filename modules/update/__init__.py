@@ -12,7 +12,7 @@ Example:
 """
 
 from modules.update.manager import UpdateManager, quick_update
-from modules.update.models import VersionEntry, ChangeType
+from modules.update.models import ChangeType, VersionEntry
 
 # Singleton instance for backward compatibility
 _update_manager = None

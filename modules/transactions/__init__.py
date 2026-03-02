@@ -12,18 +12,17 @@ Usage:
 """
 
 from modules.transactions.constants import (
+    HEURISTIC_PATTERNS,
     PFC_TAXONOMY,
     PFCV2_CATEGORIES,  # Alias pour compatibilité
     CategorizationMethod,
     CategoryType,
-    HEURISTIC_PATTERNS,
+    format_category,
     get_category_type,
     is_expense_category,
     is_income_category,
-    format_category,
     parse_category,
 )
-
 from modules.transactions.services import (
     CategorizationService,
     CategorizationServiceResult,

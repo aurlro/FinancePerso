@@ -29,21 +29,15 @@ Usage:
 
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 import numpy as np
-import pandas as pd
 
+from modules.wealth.math_engine import MonteCarloSimulator
 from modules.wealth.wealth_manager import (
-    WealthManager,
     AssetType,
-    RealEstateAsset,
-    FinancialAsset,
-    CryptoAsset,
-    Liability,
-    AssetLiquidity,
+    WealthManager,
 )
-from modules.wealth.math_engine import MonteCarloSimulator, ScenarioType
 
 # Paramètres de rendement par défaut pour chaque classe d'actif
 DEFAULT_ASSET_RETURNS = {
@@ -75,7 +69,7 @@ class AssetProjection:
     current_value: float
     projected_values: np.ndarray
     time_points: np.ndarray
-    statistics: Dict[str, np.ndarray]
+    statistics: dict[str, np.ndarray]
 
 
 @dataclass
@@ -94,10 +88,10 @@ class WealthProjectionResult:
     """
 
     total_net_worth_paths: np.ndarray
-    asset_projections: Dict[AssetType, AssetProjection]
+    asset_projections: dict[AssetType, AssetProjection]
     debt_paths: np.ndarray
     time_points: np.ndarray
-    statistics: Dict[str, Any]
+    statistics: dict[str, Any]
     initial_net_worth: float
     monthly_contribution: float
     years: int
@@ -138,7 +132,7 @@ class WealthProjectionResult:
         successes = np.sum(values_at_year >= target_amount)
         return successes / len(values_at_year)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convertit le résultat en dictionnaire."""
         return {
             "initial_net_worth": self.initial_net_worth,
@@ -156,7 +150,7 @@ def project_asset_class(
     years: int,
     monthly_contribution: float = 0.0,
     n_simulations: int = 1000,
-    custom_returns: Optional[Dict] = None,
+    custom_returns: dict | None = None,
 ) -> AssetProjection:
     """
     Projette l'évolution d'une classe d'actif.
@@ -253,9 +247,9 @@ def project_wealth_evolution(
     wealth_manager: WealthManager,
     years: int = 10,
     monthly_contribution: float = 500.0,
-    contribution_allocation: Optional[Dict[AssetType, float]] = None,
+    contribution_allocation: dict[AssetType, float] | None = None,
     n_simulations: int = 1000,
-    custom_returns: Optional[Dict[AssetType, Dict]] = None,
+    custom_returns: dict[AssetType, dict] | None = None,
 ) -> WealthProjectionResult:
     """
     Projette l'évolution complète du patrimoine net.
@@ -293,7 +287,7 @@ def project_wealth_evolution(
     initial_net_worth = wealth_manager.get_total_net_worth()
 
     # 1. Projeter chaque classe d'actif
-    asset_projections: Dict[AssetType, AssetProjection] = {}
+    asset_projections: dict[AssetType, AssetProjection] = {}
 
     # Cash
     if wealth_manager.cash_balance > 0:
@@ -408,9 +402,9 @@ def compare_allocation_strategies(
     wealth_manager: WealthManager,
     years: int = 10,
     monthly_contribution: float = 500.0,
-    strategies: Optional[List[Dict[str, Any]]] = None,
+    strategies: list[dict[str, Any]] | None = None,
     n_simulations: int = 500,
-) -> Dict[str, WealthProjectionResult]:
+) -> dict[str, WealthProjectionResult]:
     """
     Compare différentes stratégies d'allocation.
 
@@ -490,8 +484,8 @@ def compare_allocation_strategies(
 
 def generate_projection_summary(
     projection: WealthProjectionResult,
-    life_goals: Optional[List[Dict]] = None,
-) -> Dict[str, Any]:
+    life_goals: list[dict] | None = None,
+) -> dict[str, Any]:
     """
     Génère un résumé lisible de la projection.
 

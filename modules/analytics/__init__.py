@@ -3,7 +3,7 @@ Module Analytics pour FinancePerso v5.5
 Suivi des métriques utilisateurs en interne (SQLite)
 """
 
-from .events import AnalyticsTracker, track_event, get_analytics_summary, init_analytics, EventType
+from .events import AnalyticsTracker, EventType, get_analytics_summary, init_analytics, track_event
 from .metrics import MetricsCollector
 
 # Lazy import pour éviter l'import circulaire avec modules/analytics.py
@@ -15,8 +15,8 @@ def _get_financial_analytics():
     """Import différé des fonctions d'analytics financière."""
     global _imported_financial_analytics
     if _imported_financial_analytics is None:
-        import sys
         import importlib.util
+        import sys
         from pathlib import Path
 
         # Charger modules/analytics.py manuellement pour éviter le conflit de noms

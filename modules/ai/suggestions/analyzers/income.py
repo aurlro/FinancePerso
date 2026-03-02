@@ -42,7 +42,10 @@ class IncomeVariationAnalyzer(BaseAnalyzer):
                         type=SuggestionType.PATTERN.value,
                         priority=Priority.HIGH.value,
                         title=f"📉 Baisse des revenus ({variation_pct:.0f}%)",
-                        description=f"Revenus du mois : {last_month:.0f}€ vs moyenne : {historical_avg:.0f}€. Vérifiez vos sources de revenus.",
+                        description=(
+                            f"Revenus du mois : {last_month:.0f}€ vs moyenne : "
+                            f"{historical_avg:.0f}€. Vérifiez vos sources de revenus."
+                        ),
                         action_label="Analyser",
                         action_data={"type": "view_income_analysis"},
                         impact_score=min(int(variation_pct), 100),
@@ -56,7 +59,10 @@ class IncomeVariationAnalyzer(BaseAnalyzer):
                         type=SuggestionType.PATTERN.value,
                         priority=Priority.LOW.value,
                         title=f"📈 Hausse des revenus (+{variation_pct:.0f}%)",
-                        description=f"Excellent ! Revenus du mois : {last_month:.0f}€ vs moyenne : {historical_avg:.0f}€.",
+                        description=(
+                            f"Excellent ! Revenus du mois : {last_month:.0f}€ vs "
+                            f"moyenne : {historical_avg:.0f}€."
+                        ),
                         action_label="Voir détails",
                         action_data={"type": "view_income_analysis"},
                         impact_score=min(int(variation_pct / 2), 100),

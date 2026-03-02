@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from modules.db.connection import get_db_connection
 
 
@@ -40,7 +38,7 @@ def get_all_card_mappings(active_only: bool = True) -> list[dict]:
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-def get_card_mapping(card_suffix: str) -> Optional[dict]:
+def get_card_mapping(card_suffix: str) -> dict | None:
     """Récupère le mapping pour une carte spécifique.
 
     Args:
@@ -72,8 +70,8 @@ def get_card_mapping(card_suffix: str) -> Optional[dict]:
 def save_card_mapping(
     card_suffix: str,
     account_type: str,
-    member_id: Optional[int] = None,
-    label: Optional[str] = None,
+    member_id: int | None = None,
+    label: str | None = None,
 ) -> bool:
     """Crée ou met à jour un mapping carte → membre.
 

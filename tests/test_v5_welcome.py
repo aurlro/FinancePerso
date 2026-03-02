@@ -6,6 +6,7 @@ Usage:
 """
 
 import streamlit as st
+
 from modules.ui.v5_5 import apply_light_theme
 from modules.ui.v5_5.components import WelcomeCard
 

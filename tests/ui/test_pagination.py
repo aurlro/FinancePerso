@@ -3,12 +3,8 @@ Tests for pagination.py module.
 """
 
 import pandas as pd
-import pytest
 
 from modules.ui.components.pagination import (
-    paginated_dataframe,
-    paginated_list,
-    reset_pagination,
     calculate_total_pages,
 )
 

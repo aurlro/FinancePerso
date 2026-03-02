@@ -4,13 +4,11 @@ Analysent les données et créent des notifications pertinentes.
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from typing import Optional
+from datetime import datetime
 
-from modules.db.budgets import get_budgets, get_budget_spending
+from modules.db.budgets import get_budget_spending, get_budgets
 from modules.db.connection import get_db_connection
-from modules.db.members import get_members
-from modules.db.transactions import get_pending_transactions, get_all_transactions
+from modules.db.transactions import get_pending_transactions
 from modules.logger import logger
 
 from .models import NotificationAction, NotificationType

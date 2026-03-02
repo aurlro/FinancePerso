@@ -5,9 +5,8 @@ Permet de restaurer les transactions supprimées pendant 30 jours.
 Particulièrement utile pour les débutants qui ont peur de faire des erreurs.
 """
 
-import json
 import datetime
-from typing import Optional
+import json
 
 import pandas as pd
 

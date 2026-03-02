@@ -8,16 +8,15 @@ import re
 
 import pandas as pd
 
-from modules.logger import logger
-
 # Import bank templates
 from modules.ingestion.bank_templates import (
-    BankTemplate,
     BANK_TEMPLATES,
-    detect_bank_format,
+    BankTemplate,
     apply_template,
+    detect_bank_format,
     load_bank_csv,
 )
+from modules.logger import logger
 
 
 def generate_tx_hash(df: pd.DataFrame) -> pd.DataFrame:

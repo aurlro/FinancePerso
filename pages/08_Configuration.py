@@ -7,7 +7,6 @@ from modules.ui.config.api_settings import render_api_settings
 from modules.ui.config.audit_tools import render_audit_tools
 from modules.ui.config.backup_restore import render_backup_restore
 from modules.ui.config.category_management import render_category_management
-from modules.ui.config.recycle_bin import render_recycle_bin_manager
 from modules.ui.config.config_dashboard import render_config_dashboard
 from modules.ui.config.config_mode import (
     is_advanced_mode,
@@ -18,6 +17,7 @@ from modules.ui.config.data_operations import render_export_section
 from modules.ui.config.log_viewer import render_log_viewer
 from modules.ui.config.member_management import render_member_management
 from modules.ui.config.notifications import render_notification_settings
+from modules.ui.config.recycle_bin import render_recycle_bin_manager
 from modules.ui.couple.setup_wizard import render_couple_setup
 from modules.ui.feedback import display_flash_messages, toast_info
 

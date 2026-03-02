@@ -3,8 +3,7 @@ Test Unit: Design System (Phase 6)
 ===================================
 """
 
-import pytest
-from modules.ui import DesignSystem, ColorScheme
+from modules.ui import DesignSystem
 
 
 class TestDesignSystem:

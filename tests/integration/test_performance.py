@@ -4,8 +4,8 @@ Test Intégration: Performance critique
 """
 
 import time
-import pytest
-from modules.wealth import quick_simulation, MonteCarloSimulator
+
+from modules.wealth import quick_simulation
 from modules.wealth.math_engine import ScenarioType
 
 

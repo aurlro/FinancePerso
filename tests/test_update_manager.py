@@ -8,7 +8,6 @@ import subprocess
 import pytest
 
 from modules.update import UpdateManager, VersionEntry, quick_update
-from modules.update.manager import UpdateManager as OldUpdateManager  # For compatibility
 
 
 class TestVersionBump:

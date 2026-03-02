@@ -5,7 +5,7 @@ Point d'entrée unique pour toutes les opérations de notification.
 
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 from modules.logger import logger
 
@@ -63,7 +63,7 @@ class NotificationService:
             return
 
         self._repo = NotificationRepository()
-        self._prefs: Optional[NotificationPreferences] = None
+        self._prefs: NotificationPreferences | None = None
         self._initialized = True
 
     # ==================== Création ====================
@@ -72,18 +72,18 @@ class NotificationService:
         self,
         type: NotificationType,
         message: str,
-        title: Optional[str] = None,
-        level: Optional[NotificationLevel] = None,
-        icon: Optional[str] = None,
-        category: Optional[str] = None,
-        source: Optional[str] = None,
-        actions: Optional[list[NotificationAction]] = None,
-        metadata: Optional[dict[str, Any]] = None,
-        dedup_key: Optional[str] = None,
+        title: str | None = None,
+        level: NotificationLevel | None = None,
+        icon: str | None = None,
+        category: str | None = None,
+        source: str | None = None,
+        actions: list[NotificationAction] | None = None,
+        metadata: dict[str, Any] | None = None,
+        dedup_key: str | None = None,
         dedup_hours: int = 24,
-        expires_in_hours: Optional[int] = None,
+        expires_in_hours: int | None = None,
         pin: bool = False,
-    ) -> Optional[Notification]:
+    ) -> Notification | None:
         """Crée et envoie une notification.
 
         Args:
@@ -155,7 +155,7 @@ class NotificationService:
         spent: float,
         budget: float,
         percentage: float,
-    ) -> Optional[Notification]:
+    ) -> Notification | None:
         """Crée une notification de budget."""
         prefs = self.get_preferences()
 
@@ -190,7 +190,7 @@ class NotificationService:
         self,
         count: int,
         oldest_days: int,
-    ) -> Optional[Notification]:
+    ) -> Notification | None:
         """Crée un rappel de validation."""
         if count == 0:
             return None
@@ -213,7 +213,7 @@ class NotificationService:
         label: str,
         amount: float,
         count: int,
-    ) -> Optional[Notification]:
+    ) -> Notification | None:
         """Crée une notification de doublon détecté."""
         return self.notify(
             type=NotificationType.DUPLICATE_DETECTED,
@@ -237,7 +237,7 @@ class NotificationService:
             ],
         )
 
-    def notify_import_reminder(self, days_since_import: int) -> Optional[Notification]:
+    def notify_import_reminder(self, days_since_import: int) -> Notification | None:
         """Crée un rappel d'import."""
         if days_since_import < 7:
             return None
@@ -258,7 +258,7 @@ class NotificationService:
         self,
         badge_name: str,
         badge_icon: str,
-    ) -> Optional[Notification]:
+    ) -> Notification | None:
         """Crée une notification de badge débloqué."""
         return self.notify(
             type=NotificationType.BADGE_EARNED,
@@ -277,7 +277,7 @@ class NotificationService:
     def get_unread(
         self,
         limit: int = 50,
-        category: Optional[str] = None,
+        category: str | None = None,
     ) -> list[Notification]:
         """Récupère les notifications non lues."""
         return self._repo.get_unread(limit=limit, category=category)
@@ -294,7 +294,7 @@ class NotificationService:
         """Compte les notifications non lues."""
         return self._repo.count_unread()
 
-    def get_by_id(self, notification_id: str) -> Optional[Notification]:
+    def get_by_id(self, notification_id: str) -> Notification | None:
         """Récupère une notification par ID."""
         return self._repo.get_by_id(notification_id)
 

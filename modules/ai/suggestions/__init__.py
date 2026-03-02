@@ -12,7 +12,7 @@ Example:
 
 from modules.ai.suggestions.base import BaseAnalyzer, Suggestion
 from modules.ai.suggestions.engine import SuggestionEngine
-from modules.ai.suggestions.models import SuggestionType, Priority
+from modules.ai.suggestions.models import Priority, SuggestionType
 
 __all__ = [
     "BaseAnalyzer",

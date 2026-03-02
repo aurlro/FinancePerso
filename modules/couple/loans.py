@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
-
-import pandas as pd
 
 from modules.db.connection import get_db_connection
 
@@ -47,7 +44,7 @@ def get_all_loans(active_only: bool = True) -> list[dict]:
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
-def get_loan(loan_id: int) -> Optional[dict]:
+def get_loan(loan_id: int) -> dict | None:
     """Récupère un emprunt par son ID.
 
     Args:
@@ -85,13 +82,13 @@ def create_loan(
     monthly_payment: float,
     principal_amount: float = 0,
     lender: str = "",
-    interest_rate: Optional[float] = None,
-    total_duration_months: Optional[int] = None,
-    start_date: Optional[str] = None,
-    member_id: Optional[int] = None,
+    interest_rate: float | None = None,
+    total_duration_months: int | None = None,
+    start_date: str | None = None,
+    member_id: int | None = None,
     account_type: str = "JOINT",
     notes: str = "",
-) -> Optional[int]:
+) -> int | None:
     """Crée un nouvel emprunt.
 
     Args:
@@ -242,10 +239,10 @@ def delete_loan(loan_id: int, soft: bool = True) -> bool:
 def link_transaction_to_loan(
     loan_id: int,
     transaction_id: int,
-    period: Optional[str] = None,
-    capital_amount: Optional[float] = None,
-    interest_amount: Optional[float] = None,
-    insurance_amount: Optional[float] = None,
+    period: str | None = None,
+    capital_amount: float | None = None,
+    interest_amount: float | None = None,
+    insurance_amount: float | None = None,
 ) -> bool:
     """Lie une transaction à un emprunt.
 
