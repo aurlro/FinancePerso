@@ -24,7 +24,7 @@ from modules.ingestion import load_transaction_file
 from modules.transaction_types import filter_expense_transactions, filter_income_transactions
 from modules.ui.feedback import (
     FeedbackType,
-    set_flash_message,
+    flash_message,
     show_info,
     show_warning,
     toast_error,
@@ -108,7 +108,7 @@ def render_quick_validation_popover():
                             [row["id"]], selected_cat, tags=tags, beneficiary=beneficiary
                         )
                         validated_count += 1
-                        set_flash_message(
+                        flash_message(
                             f"✅ Transaction validée : {row['label'][:30]}...", FeedbackType.SUCCESS
                         )
                         st.rerun()
@@ -162,17 +162,17 @@ def render_quick_config_popover():
                         cleaned_name = new_name.strip()
                         if add_member(cleaned_name, new_type):
                             type_label = "Foyer" if new_type == "HOUSEHOLD" else "Tiers"
-                            set_flash_message(
+                            flash_message(
                                 f"✅ Membre '{cleaned_name}' ({type_label}) créé",
                                 FeedbackType.SUCCESS,
                             )
                             st.rerun()
                         else:
-                            set_flash_message(
+                            flash_message(
                                 f"⚠️ Le membre '{cleaned_name}' existe déjà", FeedbackType.WARNING
                             )
                     else:
-                        set_flash_message("⚠️ Veuillez entrer un nom", FeedbackType.WARNING)
+                        flash_message("⚠️ Veuillez entrer un nom", FeedbackType.WARNING)
 
         # Tab 2: Add Category
         with tab_category:
@@ -193,17 +193,17 @@ def render_quick_config_popover():
                         cleaned_cat = new_cat.strip()
                         if add_category(cleaned_cat, emoji, int(is_fixed)):
                             type_label = "fixe" if is_fixed else "variable"
-                            set_flash_message(
+                            flash_message(
                                 f"✅ Catégorie '{cleaned_cat}' ({type_label}) créée",
                                 FeedbackType.SUCCESS,
                             )
                             st.rerun()
                         else:
-                            set_flash_message(
+                            flash_message(
                                 f"⚠️ La catégorie '{cleaned_cat}' existe déjà", FeedbackType.WARNING
                             )
                     else:
-                        set_flash_message(
+                        flash_message(
                             "⚠️ Veuillez entrer un nom de catégorie", FeedbackType.WARNING
                         )
 
@@ -225,22 +225,22 @@ def render_quick_config_popover():
                         clean_pattern = pattern.strip()
                         try:
                             if add_learning_rule(clean_pattern, target_cat):
-                                set_flash_message(
+                                flash_message(
                                     f"✅ Règle '{clean_pattern}' → '{target_cat}' créée",
                                     FeedbackType.SUCCESS,
                                 )
                                 st.rerun()
                             else:
-                                set_flash_message(
+                                flash_message(
                                     f"⚠️ La règle '{clean_pattern}' existe déjà",
                                     FeedbackType.WARNING,
                                 )
                         except Exception as e:
-                            set_flash_message(
+                            flash_message(
                                 f"❌ Erreur création règle : {str(e)[:50]}", FeedbackType.ERROR
                             )
                     else:
-                        set_flash_message("⚠️ Veuillez entrer un mot-clé", FeedbackType.WARNING)
+                        flash_message("⚠️ Veuillez entrer un mot-clé", FeedbackType.WARNING)
 
         # Shortcuts to other config pages
         st.divider()
@@ -351,9 +351,9 @@ def render_quick_import_popover():
                         msg = f"✅ {count} transaction(s) importée(s)"
                         if skipped > 0:
                             msg += f" ({skipped} doublons ignorés)"
-                        set_flash_message(msg, FeedbackType.SUCCESS)
+                        flash_message(msg, FeedbackType.SUCCESS)
                     else:
-                        set_flash_message(
+                        flash_message(
                             "ℹ️ Aucune nouvelle transaction à importer", FeedbackType.INFO
                         )
 
