@@ -20,15 +20,15 @@ Usage:
 import json
 import os
 import re
-from typing import Any, Optional
+from typing import Any
 
 from modules.ai_manager import AIProvider
 from modules.logger import logger
 
 # Optional imports with graceful fallback
 try:
-    from unsloth import FastLanguageModel
     import torch
+    from unsloth import FastLanguageModel
 
     UNSLOTH_AVAILABLE = True
 except ImportError:
@@ -76,7 +76,7 @@ class LocalSLMProvider(AIProvider):
         model_name: str = "unsloth/Llama-3.2-3B-Instruct",
         max_seq_length: int = 2048,
         load_in_4bit: bool = True,
-        device: Optional[str] = None,
+        device: str | None = None,
         fallback_to_cloud: bool = True,
     ):
         """
@@ -175,7 +175,7 @@ class LocalSLMProvider(AIProvider):
 
         return self._fallback_provider
 
-    def _build_prompt(self, user_prompt: str, system_prompt: Optional[str] = None) -> str:
+    def _build_prompt(self, user_prompt: str, system_prompt: str | None = None) -> str:
         """
         Construit le prompt formaté pour Llama 3.2 Instruct.
 
@@ -225,7 +225,7 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
         self,
         prompt: str,
         model_name: str | None = None,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_new_tokens: int = 512,
         temperature: float = 0.1,
     ) -> dict[str, Any]:

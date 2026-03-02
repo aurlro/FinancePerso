@@ -59,7 +59,10 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                         "pattern": pattern,
                         "categories": list(categories),
                         "ids": group["id"].tolist(),
-                        "message": f"Le pattern '{pattern}' est défini pour plusieurs catégories différentes : {', '.join(categories)}",
+                        "message": (
+                            f"Le pattern '{pattern}' est défini pour plusieurs "
+                            f"catégories différentes : {', '.join(categories)}"
+                        ),
                     }
                 )
             else:
@@ -68,22 +71,28 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                         "pattern": pattern,
                         "category": categories[0],
                         "ids": group["id"].tolist(),
-                        "message": f"Le pattern '{pattern}' est défini plusieurs fois pour la même catégorie.",
+                        "message": (
+                            f"Le pattern '{pattern}' est défini plusieurs fois "
+                            f"pour la même catégorie."
+                        ),
                     }
                 )
 
     # 2. Overlaps (One pattern is a substring of another, but nice to check if categories differ)
-    # This is O(N^2), so we should be careful if N is huge. For rules list (usually < 1000), it's fine.
+    # This is O(N^2), so we should be careful if N is huge.
+    # For rules list (usually < 1000), it's fine.
     # Sorted by length to optimization
     sorted_rules = rules_df.sort_values(by="pattern_lower", key=lambda x: x.str.len())
     rules_list = sorted_rules.to_dict("records")
 
     for i, shorter in enumerate(rules_list):
         for longer in rules_list[i + 1 :]:
-            # Optimization: if longer doesn't start with shorter's first char, native str search might be fast enough
+            # Optimization: if longer doesn't start with shorter's first char,
+            # native str search might be fast enough
             if shorter["pattern_lower"] in longer["pattern_lower"]:
                 # Conflict if categories are different and priority doesn't handle it
-                # If shorter has higher or equal priority, it might shadow the longer one depending on implementation
+                # If shorter has higher or equal priority, it might shadow the
+                # longer one depending on implementation
                 if shorter["category"] != longer["category"]:
                     issues["overlaps"].append(
                         {
@@ -91,7 +100,11 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                             "longer_pattern": longer["pattern"],
                             "shorter_category": shorter["category"],
                             "longer_category": longer["category"],
-                            "message": f"Conflit potentiel : '{shorter['pattern']}' ({shorter['category']}) est inclus dans '{longer['pattern']}' ({longer['category']}).",
+                            "message": (
+                                f"Conflit potentiel : '{shorter['pattern']}' "
+                                f"({shorter['category']}) est inclus dans "
+                                f"'{longer['pattern']}' ({longer['category']})."
+                            ),
                         }
                     )
 
@@ -105,7 +118,10 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                     "pattern": pat,
                     "category": rule["category"],
                     "id": rule["id"],
-                    "message": f"Le pattern '{pat}' est très court et risque de capturer trop de transactions.",
+                    "message": (
+                        f"Le pattern '{pat}' est très court et risque de "
+                        f"capturer trop de transactions."
+                    ),
                 }
             )
 
@@ -119,7 +135,10 @@ def analyze_rules_integrity(rules_df: pd.DataFrame) -> dict:
                         "category": rule["category"],
                         "id": rule["id"],
                         "created_at": rule["created_at"],
-                        "message": f"La règle '{pat}' a été créée il y a plus de 6 mois ({rule['created_at']}). Est-elle toujours d'actualité ?",
+                        "message": (
+                            f"La règle '{pat}' a été créée il y a plus de 6 mois "
+                            f"({rule['created_at']}). Est-elle toujours d'actualité ?"
+                        ),
                     }
                 )
         except (ValueError, TypeError, KeyError):
