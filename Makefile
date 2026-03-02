@@ -1,7 +1,7 @@
 # FinancePerso - Makefile
 # Standard commands for development
 
-.PHONY: help setup test test-cov lint format clean run check ci doc-check doc-update doc-generate
+.PHONY: help setup test test-cov lint format clean run check ci doc-check doc-update doc-generate health-check
 
 # Default target
 help:
@@ -84,4 +84,18 @@ doc-generate:
 		exit 1; \
 	fi
 	@echo "📚 Generating documentation for $(MODULE)..."
-	@python3 .agents/doc_agent.py --generate $(MODULE)"
+	@python3 .agents/doc_agent.py --generate $(MODULE)
+
+# Quick health check (before commit)
+health-check:
+	@echo "🔬 Running health check..."
+	@python3 scripts/ci_health_check.py
+
+# Full validation (same as CI)
+validate:
+	@echo "🔬 Running full validation..."
+	@python3 -m ruff check modules/ pages/ tests/ --output-format=text || echo "⚠️  Lint issues found"
+	@python3 -m black --check modules/ pages/ tests/ || echo "⚠️  Format issues found"
+	@python3 .agents/doc_agent.py --check
+	@python3 -m pytest tests/test_essential.py -q
+	@echo "✅ Validation complete"

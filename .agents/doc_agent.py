@@ -23,7 +23,8 @@ class DocumentationAgent:
     """Agent responsable de maintenir la documentation à jour."""
     
     def __init__(self):
-        self.project_root = Path("/Users/aurelien/Documents/Projets/FinancePerso")
+        # Support both local development and CI environments
+        self.project_root = Path(__file__).parent.parent.resolve()
         self.docs_dir = self.project_root / "docs"
         self.changes_log = []
     

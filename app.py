@@ -209,14 +209,12 @@ if not is_app_initialized():
     st.title("👋 Bienvenue sur MyFinance Companion")
     st.markdown("### Votre assistant personnel pour une gestion financière sereine.")
 
-    st.info(
-        """
+    st.info("""
     **Pourquoi cette application ?**
     - 🔒 **Données locales** : Vos comptes ne quittent jamais votre ordinateur.
     - 🧠 **Intelligence Artificielle** : Catégorisation automatique et conseils personnalisés.
     - 📊 **Tableaux de bord** : Visualisez où part votre argent.
-    """
-    )
+    """)
 
     st.divider()
 
