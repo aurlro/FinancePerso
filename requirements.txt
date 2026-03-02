@@ -3,7 +3,7 @@
 # ============================================
 
 # Framework Web
-streamlit==1.47.0
+streamlit==1.54.0
 
 # Data Science
 pandas==2.3.1
