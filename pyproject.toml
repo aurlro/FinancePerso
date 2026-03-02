@@ -30,7 +30,13 @@ select = [
     "N",  # pep8-naming
     "UP", # pyupgrade
 ]
-ignore = []
+ignore = [
+    "N818",  # Exception name suffix - allow CircuitBreakerOpen style names
+    "N806",  # Variable names in function - allow TRANSFER_KEYWORDS style
+    "E402",  # Module level import not at top - needed for some patterns
+    "E741",  # Ambiguous variable name - allow 'l' in list comprehensions
+    "UP046", # Generic class type parameters - backward compatibility
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
