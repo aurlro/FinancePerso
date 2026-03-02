@@ -620,7 +620,7 @@ def _render_projections_tab(wealth_manager: WealthManager, monthly_income: float
         st.write(f"**Patrimoine net actuel:** €{current_net_worth:,.2f}")
 
         # Calculer le versement mensuel disponible
-        monthly_debt = calculate_monthly_debt_service(wealth_manager)
+        calculate_monthly_debt_service(wealth_manager)
         available_for_saving = monthly_income * 0.3  # 30% des revenus
 
         monthly_contribution = st.number_input(

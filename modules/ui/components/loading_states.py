@@ -112,7 +112,7 @@ def render_skeleton_table(rows: int = 5, cols: int = 4, key: str = None):
 @contextmanager
 def loading_spinner(text: str = "Chargement en cours..."):
     """Context manager pour afficher un spinner de chargement."""
-    with st.spinner(text) as spinner:
+    with st.spinner(text):
 
         def update_msg(new_text: str):
             # Streamlit ne permet pas de mettre à jour dynamiquement le texte du spinner

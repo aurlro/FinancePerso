@@ -209,7 +209,7 @@ class GDPRManager:
         tables_deleted = self._delete_from_database(user_id)
 
         # 5. Supprimer les fichiers utilisateur
-        files_deleted = self._delete_user_files(user_id)
+        self._delete_user_files(user_id)
 
         # 6. Vider les caches
         self._clear_user_caches(user_id)
@@ -442,16 +442,16 @@ class GDPRManager:
         now = datetime.now()
 
         # 1. Nettoyer les vieilles transactions
-        cutoff_transactions = now - timedelta(days=self.retention_policy.transaction_history_days)
+        now - timedelta(days=self.retention_policy.transaction_history_days)
         # Note: En pratique, on ne supprime pas les transactions pour raisons fiscales
         # mais on pourrait archiver/anonymiser
 
         # 2. Nettoyer les vieux logs d'audit
-        cutoff_audit = now - timedelta(days=self.retention_policy.audit_logs_days)
+        now - timedelta(days=self.retention_policy.audit_logs_days)
         # Implémentation selon les besoins
 
         # 3. Anonymiser les comptes inactifs
-        cutoff_inactive = now - timedelta(days=self.retention_policy.inactive_account_days)
+        now - timedelta(days=self.retention_policy.inactive_account_days)
         # Implémentation selon les besoins
 
         # 4. Nettoyer les vieux backups

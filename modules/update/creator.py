@@ -133,7 +133,7 @@ class UpdateCreator:
         Returns:
             Suggested bump type: "major", "minor", or "patch"
         """
-        changes = self.git.get_changes_since(since_ref)
+        self.git.get_changes_since(since_ref)
         commits = self.git.get_commit_messages(since_ref)
 
         # Check for breaking changes

@@ -24,7 +24,7 @@ Usage:
 """
 
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import streamlit as st
@@ -33,7 +33,7 @@ from modules.ui.atoms import Badge, Button, Icon
 from modules.ui.tokens import GRADIENTS, BorderRadius, Colors, Shadow, Spacing, Typography
 
 
-class CardVariant(str, Enum):
+class CardVariant(StrEnum):
     """Variantes de cartes."""
 
     DEFAULT = "default"

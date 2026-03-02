@@ -5,10 +5,10 @@ PAS DE TAILLES HARDCODÉES dans les composants.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class FontFamily(str, Enum):
+class FontFamily(StrEnum):
     """Familles de polices."""
 
     SANS = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
@@ -16,7 +16,7 @@ class FontFamily(str, Enum):
     SERIF = "Georgia, 'Times New Roman', serif"
 
 
-class FontSize(str, Enum):
+class FontSize(StrEnum):
     """Tailles de police en rem.
 
     Base: 16px (1rem)
@@ -34,7 +34,7 @@ class FontSize(str, Enum):
     XL_5 = "3rem"  # 48px (titres uniquement)
 
 
-class FontWeight(str, Enum):
+class FontWeight(StrEnum):
     """Graisses de police."""
 
     LIGHT = "300"
@@ -45,7 +45,7 @@ class FontWeight(str, Enum):
     EXTRABOLD = "800"
 
 
-class LineHeight(str, Enum):
+class LineHeight(StrEnum):
     """Hauteurs de ligne."""
 
     TIGHT = "1.25"

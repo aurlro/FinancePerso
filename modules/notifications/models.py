@@ -5,11 +5,11 @@ Définit les dataclasses et enums utilisés par tout le système.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class NotificationLevel(str, Enum):
+class NotificationLevel(StrEnum):
     """Niveaux de priorité des notifications."""
 
     CRITICAL = "critical"  # 🚨 - Action immédiate requise
@@ -19,7 +19,7 @@ class NotificationLevel(str, Enum):
     ACHIEVEMENT = "achievement"  # 🏆 - Gamification
 
 
-class NotificationType(str, Enum):
+class NotificationType(StrEnum):
     """Types de notifications fonctionnels."""
 
     # Budget

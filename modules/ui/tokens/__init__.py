@@ -37,6 +37,9 @@ __all__ = [
     "Colors",
     "ColorPalette",
     "SemanticColors",
+    "GRADIENTS",
+    "get_chart_colors",
+    "get_severity_color",
     # Typography
     "Typography",
     "FontFamily",

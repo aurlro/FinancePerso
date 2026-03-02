@@ -5,10 +5,10 @@ PAS DE VALEURS HARDCODÉES dans les composants.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class BorderRadius(str, Enum):
+class BorderRadius(StrEnum):
     """Rayons de bordure.
 
     Échelle: 0, 4, 8, 12, 16, 9999px

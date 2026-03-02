@@ -8,14 +8,14 @@ Usage:
     Badge.danger("Erreur", count=3)
 """
 
-from enum import Enum
+from enum import StrEnum
 
 import streamlit as st
 
 from modules.ui.tokens import BorderRadius, Colors, Spacing, Typography
 
 
-class BadgeVariant(str, Enum):
+class BadgeVariant(StrEnum):
     """Variantes de badges."""
 
     DEFAULT = "default"

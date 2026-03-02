@@ -5,10 +5,10 @@ PAS DE VALEURS HARDCODÉES dans les composants.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class Spacing(str, Enum):
+class Spacing(StrEnum):
     """Espacements en rem.
 
     Échelle: 4, 8, 12, 16, 24, 32, 48, 64px

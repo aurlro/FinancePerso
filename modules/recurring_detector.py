@@ -130,7 +130,7 @@ def detect_recurring_payments_v2(df: pd.DataFrame) -> pd.DataFrame:
             recurring_items.append(item)
 
     # Strategy 2: For incomes, also try base_label grouping (more aggressive)
-    income_data = data[data["income_check"] == True]
+    income_data = data[data["income_check"]]
     if not income_data.empty:
         income_grouped = income_data.groupby("base_label")
 

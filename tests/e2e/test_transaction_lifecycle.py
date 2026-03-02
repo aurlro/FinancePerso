@@ -29,7 +29,7 @@ class TestTransactionLifecycle:
 
     def test_subscription_detection(self):
         """Test: Détection abonnement sur 3 transactions"""
-        detector = SubscriptionDetector()
+        SubscriptionDetector()
 
         # TODO: Créer 3 transactions Netflix
         # TODO: Vérifier détection mensuelle

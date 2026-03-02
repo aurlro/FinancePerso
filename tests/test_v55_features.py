@@ -27,7 +27,7 @@ class TestThemeSystem:
 
         theme = THEMES["light_green"]
         assert theme.name == "light_green"
-        assert theme.is_dark == False
+        assert not theme.is_dark
         assert theme.primary == "#10B981"
         assert theme.bg_card == "#FFFFFF"
 

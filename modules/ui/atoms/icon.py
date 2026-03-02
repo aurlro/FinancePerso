@@ -8,10 +8,10 @@ Usage:
     Icon.for_category("alimentation")  # -> "🍽️"
 """
 
-from enum import Enum
+from enum import StrEnum
 
 
-class IconSize(str, Enum):
+class IconSize(StrEnum):
     """Tailles d'icônes."""
 
     SM = "16px"

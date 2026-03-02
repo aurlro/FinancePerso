@@ -5,10 +5,10 @@ PAS DE COULEURS HARDCODÉES dans les composants.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class Colors(str, Enum):
+class Colors(StrEnum):
     """Palette de couleurs principale - Light Mode (actuel).
 
     Usage:

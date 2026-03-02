@@ -244,7 +244,6 @@ class TestImportSummaryStats:
         imported = 0
         categorized = 0
         duplicates_skipped = 10
-        errors = []
 
         assert imported == 0
         assert categorized == 0

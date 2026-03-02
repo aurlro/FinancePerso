@@ -500,7 +500,7 @@ def render_daily_widget(force_show: bool = False):
 
 def render_quick_stats_row():
     """Render a row of quick stats below the daily widget."""
-    today = datetime.now()
+    datetime.now()
     stats = get_global_stats()
 
     if not stats:

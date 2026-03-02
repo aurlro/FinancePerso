@@ -385,7 +385,7 @@ class UpdateManager:
 
         for commit in commits:
             commit_lower = commit.lower()
-            is_breaking = any(kw in commit_lower for kw in breaking_keywords)
+            any(kw in commit_lower for kw in breaking_keywords)
 
             if any(kw in commit_lower for kw in fix_keywords):
                 fixed.append(commit)
@@ -399,9 +399,9 @@ class UpdateManager:
         # Analyze file patterns for additional insights
         has_new_module = any("modules/" in f and f.endswith(".py") for f in all_files)
         has_new_page = any("pages/" in f and f.endswith(".py") for f in all_files)
-        has_test = any("test" in f.lower() for f in all_files)
-        has_doc = any(f.endswith(".md") for f in all_files)
-        has_config = any(f.endswith((".toml", ".cfg", ".ini", ".yaml", ".yml")) for f in all_files)
+        any("test" in f.lower() for f in all_files)
+        any(f.endswith(".md") for f in all_files)
+        any(f.endswith((".toml", ".cfg", ".ini", ".yaml", ".yml")) for f in all_files)
 
         # Generate suggested title based on dominant change type
         # Include indicator if both committed and uncommitted changes exist
@@ -508,7 +508,7 @@ class UpdateManager:
             return "major"
 
         total_additions = len(added)
-        total_changes = len(changed)
+        len(changed)
 
         # Significant new features = minor
         if total_additions >= 2 or has_new_module or has_new_page:

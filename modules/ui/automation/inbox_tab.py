@@ -399,7 +399,6 @@ def _render_suggestion_card(suggestion: Suggestion):
     priority_icon = priority_icons.get(suggestion.priority, "⚪")
 
     # Générer une clé unique pour cette suggestion
-    card_key = f"sugg_card_{suggestion.id}"
 
     with st.container(border=True):
         cols = st.columns([0.3, 3, 1.5, 0.5])

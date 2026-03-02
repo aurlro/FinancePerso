@@ -11,7 +11,7 @@ class TestCompliance:
 
     def test_gdpr_export(self):
         """Test: Export des données utilisateur"""
-        gdpr = GDPRManager()
+        GDPRManager()
 
         # TODO: Créer données de test
         # export = gdpr.export_user_data('test-user')
@@ -30,11 +30,11 @@ class TestCompliance:
             granted=True,
         )
 
-        assert consent.is_active == True
+        assert consent.is_active
         assert consent.consent_type == "marketing"
 
         # Retirer consentement
         gdpr.withdraw_consent("test-user", "marketing")
         is_active = gdpr.check_consent("test-user", "marketing")
 
-        assert is_active == False
+        assert not is_active

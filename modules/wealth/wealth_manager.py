@@ -577,8 +577,8 @@ class WealthManager:
         Returns:
             Patrimoine net (peut être négatif)
         """
-        assets = self.get_total_assets()
-        liabilities = self.get_total_liabilities()
+        self.get_total_assets()
+        self.get_total_liabilities()
 
         # Pour l'immobilier, on prend l'équité nette (valeur - crédit)
         real_estate_equity = self.get_net_real_estate_value()

@@ -141,7 +141,7 @@ def get_pending_transfers() -> list[dict]:
         Liste des virements détectés mais non validés
     """
     # D'abord, détecter les nouveaux virements
-    detected = detect_internal_transfers()
+    detect_internal_transfers()  # Populates detected_transfers table
 
     # Puis récupérer tous les non-validés
     with get_db_connection() as conn:

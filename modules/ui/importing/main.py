@@ -366,7 +366,7 @@ def render_import_tab():
                         df_import = st.session_state["df_to_import"]
                         options = st.session_state["import_options"]
                         auto_cat = options.get("auto_categorize", True)
-                        skip_validation = options.get("skip_validation", False)
+                        options.get("skip_validation", False)
 
                         # Réinitialiser les flags
                         st.session_state["import_confirmed"] = False

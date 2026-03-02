@@ -522,7 +522,9 @@ def render_badges_collection():
                 background-color: {_palette.bg_secondary};
                 border-radius: 8px;
             ">
-                + {remaining} autre{'s' if remaining > 1 else ''} badge{'s' if remaining > 1 else ''} secret{'s' if remaining > 1 else ''} à découvrir...
+                + {remaining} autre{'s' if remaining > 1 else ''} "
+                f"badge{'s' if remaining > 1 else ''} "
+                f"secret{'s' if remaining > 1 else ''} à découvrir...
             </div>
             """,
                 unsafe_allow_html=True,

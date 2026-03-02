@@ -230,7 +230,7 @@ def _render_cards_setup():
 
 def _render_card_editor(mapping: dict):
     """Affiche l'éditeur pour une carte existante."""
-    settings = get_couple_settings()
+    get_couple_settings()
 
     st.divider()
     cols = st.columns([2, 2, 2, 1])

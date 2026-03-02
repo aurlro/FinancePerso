@@ -41,7 +41,10 @@ except ImportError:
     # Fallback si fonctions non disponibles
     toast_success = toast_error = toast_warning = toast_info = lambda *a, **k: None
     show_success = show_error = show_warning = show_info = lambda *a, **k: None
-    confirm_dialog = lambda *a, **k: False
+
+    def confirm_dialog(*a, **k):
+        return False
+
 
 # Version modernisée du feedback (avec fallback)
 try:

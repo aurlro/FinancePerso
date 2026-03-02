@@ -575,7 +575,7 @@ class AnalyzeRecurringAction(SuggestionAction):
     def render_inline_view(self, view_data: dict) -> bool:
         """Render inline view for recurring expense analysis."""
         label = view_data.get("label", "")
-        monthly_amount = view_data.get("monthly_amount", 0)
+        view_data.get("monthly_amount", 0)
         total_spent = view_data.get("total_spent", 0)
         monthly_cost = view_data.get("monthly_cost", 0)
         annual_cost = view_data.get("annual_cost", 0)

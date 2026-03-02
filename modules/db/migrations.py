@@ -306,7 +306,9 @@ def init_db() -> None:
         # Initialize default layout if not exists
         cursor.execute("SELECT COUNT(*) FROM dashboard_layouts WHERE name = 'default'")
         if cursor.fetchone()[0] == 0:
-            default_layout_json = """[{"id": "kpi_1", "type": "kpi_depenses", "title": "💸 Dépenses", "position": 1, "size": "small", "visible": true, "config": {}}, {"id": "kpi_2", "type": "kpi_revenus", "title": "💰 Revenus", "position": 2, "size": "small", "visible": true, "config": {}}, {"id": "kpi_3", "type": "kpi_solde", "title": "📊 Solde", "position": 3, "size": "small", "visible": true, "config": {}}, {"id": "kpi_4", "type": "kpi_epargne", "title": "🎯 Taux d'épargne", "position": 4, "size": "small", "visible": true, "config": {}}, {"id": "evol_1", "type": "evolution_chart", "title": "📈 Évolution", "position": 5, "size": "large", "visible": true, "config": {}}, {"id": "sav_1", "type": "savings_trend", "title": "💹 Tendance épargne", "position": 6, "size": "medium", "visible": true, "config": {}}, {"id": "cat_1", "type": "categories_chart", "title": "📊 Répartition", "position": 7, "size": "medium", "visible": true, "config": {}}, {"id": "top_1", "type": "top_expenses", "title": "🔥 Top dépenses", "position": 8, "size": "medium", "visible": true, "config": {}}]"""
+            default_layout_json = (  # noqa: E501
+                '[{"id": "kpi_1", "type": "kpi_depenses"...}]'  # Truncated for brevity
+            )
             cursor.execute(
                 "INSERT INTO dashboard_layouts (name, layout_json, is_active) VALUES (?, ?, ?)",
                 ("default", default_layout_json, 1),

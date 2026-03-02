@@ -26,7 +26,7 @@ class TestSecurity:
 
         assert score.level in (RiskLevel.HIGH, RiskLevel.CRITICAL)
         assert len(score.flags) > 0
-        assert score.requires_review == True
+        assert score.requires_review
 
     def test_normal_transaction(self):
         """Test: Transaction normale n'est pas flaggée"""

@@ -9,14 +9,14 @@ Usage:
 """
 
 from collections.abc import Callable
-from enum import Enum
+from enum import StrEnum
 
 import streamlit as st
 
 from modules.ui.tokens import Colors
 
 
-class ButtonVariant(str, Enum):
+class ButtonVariant(StrEnum):
     """Variantes de boutons."""
 
     PRIMARY = "primary"
