@@ -1,20 +1,46 @@
-# Intelligence Artificielle
+# Module `modules/ai`
 
-Providers IA, gestion des modèles, assistants
+> Intelligence Artificielle pour FinancePerso.
 
-## Fichiers principaux
+## Vue d'ensemble
 
-- `ai_manager.py` - Gestionnaire IA unifié (Gemini, OpenAI, DeepSeek, Ollama, ML local)
-- `conversational_assistant.py` - Assistant conversationnel
+Ce module contient les fonctionnalités IA : détection d'anomalies, prédictions, suggestions de tags et classification.
 
-## Exemple
+## Architecture
+
+```
+modules/ai/
+├── __init__.py              # Exports
+├── anomaly_detector.py      # Détection d'anomalies
+├── predictor.py             # Prédictions
+├── tag_suggester.py         # Suggestions de tags
+├── classifier.py            # Classification transactions
+└── feedback_handler.py      # Gestion feedback IA
+```
+
+## Utilisation
+
+### Détection d'anomalies
 
 ```python
-from modules.ai_manager import AI_MANAGER
+from modules.ai.anomaly_detector import detect_anomalies
 
-# Utilisation du gestionnaire IA pour catégoriser une transaction
-result = AI_MANAGER.categorize_transaction(
-    transaction_description="Achat supermarché Carrefour",
-    provider="gemini"
-)
+anomalies = detect_anomalies(transactions_df)
 ```
+
+### Suggestions de tags
+
+```python
+from modules.ai.tag_suggester import suggest_tags
+
+tags = suggest_tags(transaction_label, category)
+```
+
+## Intégration
+
+Ce module est utilisé par `modules/ai_manager.py` qui fournit l'interface unifiée.
+
+## Dépendances
+
+- `ai_manager.py` - Interface unifiée IA
+- `local_ml.py` - ML local (scikit-learn)

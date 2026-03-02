@@ -179,7 +179,7 @@ class AdvancedCache:
             "kwargs": kwargs,
         }
         key_str = json.dumps(key_data, sort_keys=True, default=str)
-        return hashlib.md5(key_str.encode()).hexdigest()
+        return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 
     def _compress_value(self, value: Any) -> tuple[bytes, bool]:
         """
@@ -212,9 +212,9 @@ class AdvancedCache:
         """
         if compressed:
             decompressed = zlib.decompress(value)
-            return pickle.loads(decompressed)
+            return pickle.loads(decompressed)  # nosec B301 - Internal cache only
 
-        return pickle.loads(value)
+        return pickle.loads(value)  # nosec B301 - Internal cache only
 
     def _evict_if_needed(self):
         """Évite les entrées si nécessaire (LRU)."""

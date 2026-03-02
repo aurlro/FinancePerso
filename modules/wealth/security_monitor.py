@@ -689,7 +689,7 @@ class SecurityMonitor:
     def _generate_alert_id(self) -> str:
         """Génère un ID d'alerte unique."""
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        random_suffix = hashlib.md5(str(datetime.now()).encode()).hexdigest()[:6]
+        random_suffix = hashlib.md5(str(datetime.now()).encode(), usedforsecurity=False).hexdigest()[:6]
         return f"SEC-{timestamp}-{random_suffix.upper()}"
 
 

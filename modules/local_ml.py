@@ -278,7 +278,7 @@ class LocalTransactionClassifier:
 
         try:
             with open(MODEL_PATH, "rb") as f:
-                model_data = pickle.load(f)
+                model_data = pickle.load(f)  # nosec B301 - Local model file only
 
             self.model = model_data.get("model")
             self.categories = model_data.get("categories", [])

@@ -111,7 +111,7 @@ class MetricsCollector:
                 since_return = end_cohort
                 placeholders = ",".join("?" * len(cohort))
                 cursor = conn.execute(
-                    f"""SELECT COUNT(DISTINCT user_id) FROM sessions
+                    f"""SELECT COUNT(DISTINCT user_id) FROM sessions  # nosec B608
                         WHERE started_at > ?
                         AND user_id IN ({placeholders})""",
                     (since_return, *cohort),

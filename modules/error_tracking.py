@@ -4,6 +4,7 @@ Integrates with Sentry for production error tracking.
 Provides local fallback for development.
 """
 
+import logging
 import os
 import traceback
 from collections.abc import Callable
@@ -288,7 +289,5 @@ __all__ = [
 ]
 
 
-# Import logging at module level for Sentry integration
-import logging
-
+# Configure logging for Sentry integration
 logging.basicConfig(level=logging.INFO)

@@ -36,7 +36,7 @@ class FeatureFlag:
             # Deterministic check based on user_id hash
             import hashlib
 
-            user_hash = int(hashlib.md5(user_id.encode()).hexdigest(), 16)
+            user_hash = int(hashlib.md5(user_id.encode(), usedforsecurity=False).hexdigest(), 16)
             user_percentile = user_hash % 100
             return user_percentile < self.rollout_percentage
 

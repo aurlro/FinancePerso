@@ -430,24 +430,6 @@ ASSET_PROFILES = {
 }
 
 
-def get_asset_profile(asset_type: str) -> dict:
-    """Retourne le profil de risque/rendement pour un type d'actif."""
-    return ASSET_PROFILES.get(asset_type, ASSET_PROFILES["action"])
-
-
-{
-    "obligation": {"mu": 0.04, "sigma": 0.05, "label": "Obligations (stable)"},
-    "action": {"mu": 0.08, "sigma": 0.18, "label": "Actions (moyen)"},
-    "crypto": {"mu": 0.20, "sigma": 0.80, "label": "Crypto (risqué)"},
-    "immobilier": {"mu": 0.05, "sigma": 0.10, "label": "Immobilier (stable)"},
-}
-
-
-def get_asset_profile(asset_type: str) -> dict:
-    """Retourne le profil de risque/rendement pour un type d'actif."""
-    return ASSET_PROFILES.get(asset_type, ASSET_PROFILES["action"])
-
-
 def get_default_monthly_contribution(
     current_balance: float = 1500.0,
     subscriptions: list | None = None,

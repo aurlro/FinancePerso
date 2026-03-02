@@ -215,8 +215,8 @@ def detect_cards_from_transactions() -> list[dict]:
         if new_cards:
             placeholders = ",".join("?" * len(new_cards))
             cursor.execute(
-                f"""
-                SELECT 
+                f"""  # nosec B608
+                SELECT
                     card_suffix,
                     COUNT(*) as transaction_count,
                     MIN(date) as first_seen

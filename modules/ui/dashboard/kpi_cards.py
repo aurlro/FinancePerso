@@ -265,8 +265,8 @@ def _render_kpi_card_html(
 
     # Construction du texte descriptif pour l'accessibilité
     aria_description = f"{title}: {value}"
-    if trend_value and trend_value != "-":
-        aria_description += f", {trend_value}"
+    if trend and trend != "-":
+        aria_description += f", {trend}"
 
     html = f"""
     <div class="kpi-card" 

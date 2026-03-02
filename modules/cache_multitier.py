@@ -343,7 +343,7 @@ def cached(ttl_memory: int = 300, ttl_disk: int = 3600, key_func: Callable | Non
                 key_parts = [func.__name__]
                 key_parts.extend([str(arg) for arg in args])
                 key_parts.extend([f"{k}={v}" for k, v in sorted(kwargs.items())])
-                cache_key = hashlib.md5("|".join(key_parts).encode()).hexdigest()
+                cache_key = hashlib.md5("|".join(key_parts).encode(), usedforsecurity=False).hexdigest()
 
             # Try to get from cache
             result = cache.get(cache_key)

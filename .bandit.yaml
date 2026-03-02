@@ -1,0 +1,11 @@
+# Bandit configuration
+# Exclusions for false positives
+
+skips:
+  - B608  # SQL injection - false positives with parameterized queries (? placeholders)
+
+exclude_dirs:
+  - tests
+  - docs
+  - .venv
+  - __pycache__

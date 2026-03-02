@@ -1,12 +1,13 @@
-import streamlit as st
-
 """
 Database connection management.
 Provides context manager for SQLite connections.
 """
+
 import os
 import sqlite3
 from contextlib import contextmanager
+
+import streamlit as st
 
 from modules.logger import logger
 
