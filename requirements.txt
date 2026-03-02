@@ -31,4 +31,4 @@ python-dotenv==1.1.1
 sentry-sdk==2.20.0
 
 # Tests (inclus pour permettre les vérifications de santé)
-pytest==8.4.2
+pytest==9.0.2
