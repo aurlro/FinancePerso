@@ -135,7 +135,7 @@ class ErrorTracker:
                 import sentry_sdk
 
                 sentry_sdk.set_user({"id": user_id, "email": email, "username": username})
-            except Exception:
+            except Exception:  # nosec B110 - Intentionally suppress Sentry errors
                 pass
 
     def clear_user(self):
@@ -145,7 +145,7 @@ class ErrorTracker:
                 import sentry_sdk
 
                 sentry_sdk.set_user(None)
-            except Exception:
+            except Exception:  # nosec B110 - Intentionally suppress Sentry errors
                 pass
 
     def get_local_errors(self, limit: int = 50) -> list:
