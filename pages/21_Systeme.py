@@ -94,7 +94,10 @@ elif active_tab == "🐞 Debug":
 
     if st.button("🔍 Chercher des doublons inter-comptes"):
         with get_db_connection() as conn:
-            query = "SELECT date, label, amount, COUNT(*) as c FROM transactions GROUP BY date, label, amount HAVING c > 1"
+            query = (
+                "SELECT date, label, amount, COUNT(*) as c FROM transactions "
+                "GROUP BY date, label, amount HAVING c > 1"
+            )
             dupes = pd.read_sql(query, conn)
             if dupes.empty:
                 st.success("Aucun doublon trouvé")

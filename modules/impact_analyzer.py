@@ -325,7 +325,8 @@ def _render_member_rename_impact(data: dict):
 
         if data["card_mappings"]:
             st.info(
-                f"💳 **{len(data['card_mappings'])}** carte(s) associée(s) seront mises à jour: {', '.join(data['card_mappings'])}"
+                f"💳 **{len(data['card_mappings'])}** carte(s) associée(s) seront mises à jour: "
+                f"{', '.join(data['card_mappings'])}"
             )
 
 

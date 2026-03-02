@@ -768,6 +768,12 @@ class WealthManager:
         net_worth = self.get_total_net_worth()
         allocation = self.get_asset_allocation()
 
+        non_mortgage_debt = liabilities.get("total", 0) - sum(
+            l.remaining_amount
+            for l in self.liabilities
+            if l.liability_type == LiabilityType.MORTGAGE
+        )
+
         lines = [
             "=" * 50,
             "RÉSUMÉ DU PATRIMOINE",
@@ -780,7 +786,7 @@ class WealthManager:
             "-" * 35,
             f"TOTAL ACTIFS: {assets['total']:>15,.2f} €",
             "",
-            f"💳 Dettes (hors immo): {liabilities.get('total', 0) - sum(l.remaining_amount for l in self.liabilities if l.liability_type == LiabilityType.MORTGAGE):>15,.2f} €",
+            f"💳 Dettes (hors immo): {non_mortgage_debt:>15,.2f} €",
             "",
             "=" * 35,
             f"PATRIMOINE NET: {net_worth:>15,.2f} €",

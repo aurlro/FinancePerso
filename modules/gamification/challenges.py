@@ -289,7 +289,8 @@ def _create_challenge_card(challenge: Challenge) -> str:
                 margin-bottom: {Spacing.XS};
             ">
                 <span>Progression</span>
-                <span style="font-weight: {Typography.WEIGHT_SEMIBOLD};">{challenge.current}/{challenge.target} {challenge.unit}</span>
+                <span style="font-weight: {Typography.WEIGHT_SEMIBOLD};">"
+                f"{challenge.current}/{challenge.target} {challenge.unit}</span>
             </div>
             <div style="
                 width: 100%;

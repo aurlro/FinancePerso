@@ -80,6 +80,8 @@ def render_compact_reminder():
     priority_bg = {"high": "#ffcccc", "medium": "#ffffcc", "low": "#ccffcc"}
 
     bg_color = priority_bg.get(top.priority.value, "#f0f0f0")
+    border_colors = {"high": "#ff0000", "medium": "#ffaa00", "low": "#00aa00"}
+    border_color = border_colors.get(top.priority.value, "#00aa00")
 
     st.markdown(
         f"""
@@ -88,7 +90,7 @@ def render_compact_reminder():
         padding: 10px 15px;
         border-radius: 8px;
         margin-bottom: 15px;
-        border-left: 4px solid {'#ff0000' if top.priority.value == 'high' else '#ffaa00' if top.priority.value == 'medium' else '#00aa00'};
+        border-left: 4px solid {border_color};
     ">
         <strong>{top.icon} {top.title}</strong><br>
         <small>{top.message}</small>

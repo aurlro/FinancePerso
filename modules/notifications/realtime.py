@@ -240,7 +240,10 @@ class RealTimeNotificationManager:
             type=AlertType.ANOMALY,
             severity="critical" if z_score > 3 else "warning",
             title="🚨 Dépense inhabituelle",
-            message=f"'{tx.get('label', 'Inconnu')}' à {amount:.0f}€ est {deviation:.0f}% plus élevé que votre moyenne ({mean_amount:.0f}€)",
+            message=(
+                f"'{tx.get('label', 'Inconnu')}' à {amount:.0f}€ est {deviation:.0f}% "
+                f"plus élevé que votre moyenne ({mean_amount:.0f}€)"
+            ),
             category=tx.get("category_validated"),
             amount=amount,
             actions=[
@@ -281,7 +284,10 @@ class RealTimeNotificationManager:
             type=AlertType.DUPLICATE,
             severity="warning",
             title="⚠️ Doublon potentiel",
-            message=f"Une transaction similaire à '{tx.get('label')}' existe déjà (importée le {duplicate.get('date', '?')})",
+            message=(
+                f"Une transaction similaire à '{tx.get('label')}' existe déjà "
+                f"(importée le {duplicate.get('date', '?')})"
+            ),
             category=tx.get("category_validated"),
             amount=abs(tx.get("amount", 0)),
             actions=[

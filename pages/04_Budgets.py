@@ -71,7 +71,10 @@ if active_tab == "📊 Vue d'ensemble":
         WelcomeEmptyState.render(
             title="🎯 Aucun budget défini",
             subtitle="Prenez le contrôle de vos dépenses",
-            message="Les budgets vous aident à suivre vos dépenses par catégorie et à recevoir des alertes quand vous approchez de vos limites.",
+            message=(
+                "Les budgets vous aident à suivre vos dépenses par catégorie et "
+                "à recevoir des alertes quand vous approchez de vos limites."
+            ),
             primary_action_text="➕ Créer mon premier budget",
             primary_action_link=None,
             secondary_action_text="📥 Importer des transactions",
@@ -309,7 +312,8 @@ elif active_tab == "🔔 Alertes & Conseils":
                     {
                         "icon": "📅",
                         "title": "Début de mois",
-                        "text": "Nous sommes en début de mois. C'est le moment idéal pour planifier vos grosses dépenses.",
+                        "text": "Nous sommes en début de mois. C'est le moment idéal "
+                        "pour planifier vos grosses dépenses.",
                     }
                 )
             elif month_progress > 0.8:
@@ -328,7 +332,10 @@ elif active_tab == "🔔 Alertes & Conseils":
                     {
                         "icon": "🏦",
                         "title": "Fonds d'urgence",
-                        "text": "Conseil : Prévoyez un budget 'Épargne' pour constituer un fonds d'urgence (3-6 mois de dépenses).",
+                        "text": (
+                            "Conseil : Prévoyez un budget 'Épargne' pour constituer un fonds "
+                            "d'urgence (3-6 mois de dépenses)."
+                        ),
                     }
                 )
 

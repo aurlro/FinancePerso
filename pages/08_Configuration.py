@@ -106,7 +106,10 @@ with tabs[3]:
         if st.checkbox(
             "🚫 Mode Hors-ligne Forcé",
             value=is_offline,
-            help="Interdit tout appel aux APIs externes (IA Cloud). L'application utilisera uniquement les règles et le modèle local.",
+            help=(
+                "Interdit tout appel aux APIs externes (IA Cloud). "
+                "L'application utilisera uniquement les règles et le modèle local."
+            ),
         ):
             if not is_offline:
                 fm.enable("FORCE_OFFLINE_MODE", "User forced offline mode")

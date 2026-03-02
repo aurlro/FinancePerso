@@ -159,7 +159,8 @@ class OnboardingManager:
         """)
 
         st.info(
-            "💡 **Conseil** : Commencez par importer vos relevés des 3 derniers mois pour avoir une vision complète de vos finances."
+            "💡 **Conseil** : Commencez par importer vos relevés des 3 derniers mois "
+            "pour avoir une vision complète de vos finances."
         )
 
         # Zone de drop stylisée

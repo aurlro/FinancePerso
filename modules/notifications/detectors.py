@@ -196,7 +196,10 @@ class AnomalyDetector(NotificationDetector):
                             self.service.notify(
                                 type=NotificationType.UNUSUAL_PATTERN,
                                 title="📈 Hausse des dépenses",
-                                message=f"Vos dépenses ont augmenté de {variation:.0f}% ce mois par rapport à la moyenne.",
+                                message=(
+                                    f"Vos dépenses ont augmenté de {variation:.0f}% "
+                                    f"ce mois par rapport à la moyenne."
+                                ),
                                 level="warning",
                                 category="spending",
                                 dedup_key=f"spike_{current_month}",
@@ -238,7 +241,8 @@ class RecurringMissingDetector(NotificationDetector):
                         amount,
                         COUNT(*) as count,
                         MAX(date) as last_date,
-                        AVG(julianday(date) - julianday(lag(date) OVER (PARTITION BY label ORDER BY date))) as avg_interval
+                        AVG(julianday(date) - julianday(lag(date) 
+                             OVER (PARTITION BY label ORDER BY date))) as avg_interval
                     FROM (
                         SELECT label, amount, date,
                                LAG(date) OVER (PARTITION BY label ORDER BY date) as lag_date
@@ -262,7 +266,10 @@ class RecurringMissingDetector(NotificationDetector):
                             self.service.notify(
                                 type=NotificationType.RECURRING_MISSING,
                                 title="🔔 Paiement attendu",
-                                message=f"'{label}' ({amount:.2f}€) n'a pas été détecté depuis {days_since} jours (intervalle habituel: {expected_interval} jours).",
+                                message=(
+                                    f"'{label}' ({amount:.2f}€) n'a pas été détecté depuis {days_since} jours "
+                                    f"(intervalle habituel: {expected_interval} jours)."
+                                ),
                                 category="recurring",
                                 dedup_key=f"recurring_{label}_{datetime.now().strftime('%Y%m')}",
                             )

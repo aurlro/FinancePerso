@@ -274,8 +274,10 @@ class TestFinancialCalculations:
         Taux: (2550 - 73.50) / 2550 * 100 = 97.12%
         """
         rate = calculate_savings_rate(financial_df)
-        # Revenus: 2550 (Salaire + Remboursement, include_refunds=False -> 2500 seul? Non, Remboursement est dans INCOME_CATEGORIES)
-        # Attendez, calculate_true_income utilise include_refunds=False mais Remboursement est déjà dans INCOME_CATEGORIES
+        # Revenus: 2550 (Salaire + Remboursement, include_refunds=False -> 2500 seul?
+        # Non, Remboursement est dans INCOME_CATEGORIES)
+        # Attendez, calculate_true_income utilise include_refunds=False mais
+        # Remboursement est déjà dans INCOME_CATEGORIES
         # Donc revenus = 2550
         # Dépenses = 73.50 (123.50 - 50 remboursement)
         # Taux = (2550 - 73.50) / 2550 * 100

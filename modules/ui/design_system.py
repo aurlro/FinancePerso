@@ -748,11 +748,15 @@ class DesignSystem:
         delta_html = ""
         if delta:
             arrow = "↑" if delta_positive else "↓"
-            delta_html = f'<div style="color: {delta_color}; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem;">{arrow} {delta}</div>'
+            delta_html = (
+                f'<div style="color: {delta_color}; font-size: 0.875rem; '
+                f'font-weight: 600; margin-top: 0.5rem;">{arrow} {delta}</div>'
+            )
 
         return f"""
         <div style="
-            background: linear-gradient(135deg, {self.colors.BG_SECONDARY.value} 0%, {self.colors.BG_TERTIARY.value} 100%);
+            background: linear-gradient(135deg, {self.colors.BG_SECONDARY.value} 0%, "
+            f"{self.colors.BG_TERTIARY.value} 100%);"
             border: 1px solid {self.colors.BORDER.value};
             border-radius: 12px;
             padding: 1.5rem;

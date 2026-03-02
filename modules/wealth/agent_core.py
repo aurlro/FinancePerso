@@ -606,9 +606,13 @@ Objet : Résiliation de l'abonnement{' n° ' + contract_number if contract_numbe
 
 Madame, Monsieur,
 
-Par la présente, je vous informe de ma décision de résilier l'abonnement souscrit auprès de vos services{' (contrat n° ' + contract_number + ')' if contract_number else ''}, avec effet au {effective_date.strftime('%d/%m/%Y')}.
+Par la présente, je vous informe de ma décision de résilier l'abonnement "
+    f"souscrit auprès de vos services"
+    f"{' (contrat n° ' + contract_number + ')' if contract_number else ''}, "
+    f"avec effet au {effective_date.strftime('%d/%m/%Y')}.
 
-Conformément aux conditions générales de vente et au code de la consommation, je respecte le préavis de résiliation requis.
+Conformément aux conditions générales de vente et au code de la consommation, "
+"je respecte le préavis de résiliation requis.
 
 Je vous prie de bien vouloir :
 1. Confirmer la réception de cette demande de résiliation
@@ -617,7 +621,8 @@ Je vous prie de bien vouloir :
 
 Je vous remercie de traiter cette demande dans les meilleurs délais.
 
-Dans l'attente de votre confirmation, je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+Dans l'attente de votre confirmation, je vous prie d'agréer, "
+"Madame, Monsieur, l'expression de mes salutations distinguées."
 
 
 {subscriber_name}

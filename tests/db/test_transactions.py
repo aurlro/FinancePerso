@@ -40,7 +40,8 @@ class TestGetTransactions:
         save_transactions(df_sample)  # status default?
         # sample_transactions fixture likely has status.
         # If not, save_transactions doesn't set status unless in DF?
-        # Wait, save_transactions uses SQL defaults if not provided in DF. Default status is implementation dependent (usually PENDING?)
+        # Wait, save_transactions uses SQL defaults if not provided in DF. "
+        # Default status is implementation dependent (usually PENDING?)
         # Let's assume sample_transactions has 'status'.
 
         df = get_pending_transactions()

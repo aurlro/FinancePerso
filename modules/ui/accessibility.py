@@ -186,7 +186,11 @@ def render_accessibility_badge() -> str:
     if report["passes_all_aa"]:
         return '<span title="Conforme WCAG AA" style="color: #10B981;">♿ AA</span>'
     else:
-        return f'<span title="{len(report["failures"])} problèmes de contraste" style="color: #EF4444;">⚠️ {len(report["failures"])}</span>'
+        failures = len(report["failures"])
+        return (
+            f'<span title="{failures} problèmes de contraste" '
+            f'style="color: #EF4444;">⚠️ {failures}</span>'
+        )
 
 
 # Constantes WCAG

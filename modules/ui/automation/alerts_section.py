@@ -162,7 +162,10 @@ def detect_price_increases(
                     SubscriptionAlert(
                         type="increase",
                         merchant=label,
-                        message=f"Augmentation de {increase_pct:.1f}% détectée ({historical_avg:.2f}€ → {recent_avg:.2f}€)",
+                        message=(
+                            f"Augmentation de {increase_pct:.1f}% détectée "
+                            f"({historical_avg:.2f}€ → {recent_avg:.2f}€)"
+                        ),
                         severity="warning" if increase_pct < 25 else "danger",
                         data={
                             "old_average": historical_avg,

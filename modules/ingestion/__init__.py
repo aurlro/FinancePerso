@@ -215,7 +215,8 @@ def parse_generic_csv(file, config: dict[str, str | int | dict]) -> pd.DataFrame
         if not invalid_dates.empty:
             dropped_count = len(invalid_dates)
             logger.warning(
-                f"[Ingestion] Dropped {dropped_count} rows with invalid dates. Sample: {invalid_dates.head(3).to_dict()}"
+                f"[Ingestion] Dropped {dropped_count} rows with invalid dates. "
+                f"Sample: {invalid_dates.head(3).to_dict()}"
             )
 
         df_clean = df_clean.dropna(subset=["date"])  # Drop invalid dates
@@ -293,7 +294,8 @@ def parse_generic_csv(file, config: dict[str, str | int | dict]) -> pd.DataFrame
         elif "amount" in error_msg or "montant" in error_msg:
             return (
                 None,
-                f"Format de montant invalide: {str(e)[:100]}. Vérifiez le séparateur décimal ({config.get('decimal', ',')}).",
+                f"Format de montant invalide: {str(e)[:100]}. "
+                f"Vérifiez le séparateur décimal ({config.get('decimal', ',')}).",
             )
         else:
             return None, f"Erreur de conversion: {str(e)[:100]}"

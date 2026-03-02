@@ -526,7 +526,8 @@ def bulk_update_transaction_status(
             cursor.executemany(
                 """
                 INSERT INTO transaction_history 
-                (action_group_id, tx_ids, prev_status, prev_category, prev_member, prev_tags, prev_beneficiary, prev_notes)
+                (action_group_id, tx_ids, prev_status, prev_category, prev_member, 
+                 prev_tags, prev_beneficiary, prev_notes)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 history_records,

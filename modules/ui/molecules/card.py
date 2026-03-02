@@ -275,27 +275,32 @@ class Card:
 
             # Titre
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_SM}; color: {Colors.SLATE_500}; margin-bottom: 4px;">{title}</div>',
+                f'<div style="font-size: {Typography.SIZE_SM}; color: {Colors.SLATE_500}; '
+                f'margin-bottom: 4px;">{title}</div>',
                 unsafe_allow_html=True,
             )
 
             # Valeur principale
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_2XL}; font-weight: {Typography.WEIGHT_BOLD}; color: {Colors.SLATE_900};">{value}</div>',
+                f'<div style="font-size: {Typography.SIZE_2XL}; '
+                f'font-weight: {Typography.WEIGHT_BOLD}; color: {Colors.SLATE_900};">'
+                f"{value}</div>",
                 unsafe_allow_html=True,
             )
 
             # Tendance
             if trend:
                 st.markdown(
-                    f'<div style="font-size: {Typography.SIZE_SM}; color: {trend_color}; margin-top: 4px;">{trend_icon} {trend}</div>',
+                    f'<div style="font-size: {Typography.SIZE_SM}; color: {trend_color}; '
+                    f'margin-top: 4px;">{trend_icon} {trend}</div>',
                     unsafe_allow_html=True,
                 )
 
             # Sous-titre
             if subtitle:
                 st.markdown(
-                    f'<div style="font-size: {Typography.SIZE_XS}; color: {Colors.SLATE_400}; margin-top: 4px;">{subtitle}</div>',
+                    f'<div style="font-size: {Typography.SIZE_XS}; color: {Colors.SLATE_400}; '
+                    f'margin-top: 4px;">{subtitle}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -349,15 +354,21 @@ class Card:
             if icon:
                 header_parts.append(f'<span style="font-size: 1.5rem;">{icon}</span>')
             header_parts.append(
-                f'<span style="font-size: {Typography.SIZE_LG}; font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_900};">{title}</span>'
+                f'<span style="font-size: {Typography.SIZE_LG}; '
+                f'font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_900};">'
+                f"{title}</span>"
             )
 
-            header_html = f'<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">{" ".join(header_parts)}</div>'
+            header_html = (
+                f'<div style="display: flex; align-items: center; gap: 8px; '
+                f'margin-bottom: 8px;">{" ".join(header_parts)}</div>'
+            )
             st.markdown(header_html, unsafe_allow_html=True)
 
             # Description
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_BASE}; color: {Colors.SLATE_600}; margin-bottom: {Spacing.MD};">{description}</div>',
+                f'<div style="font-size: {Typography.SIZE_BASE}; color: {Colors.SLATE_600}; '
+                f'margin-bottom: {Spacing.MD};">{description}</div>',
                 unsafe_allow_html=True,
             )
 
@@ -430,7 +441,8 @@ class Card:
             <div style="display: flex; align-items: flex-start; gap: 12px;">
                 <span style="font-size: 1.25rem; color: {border_color};">{icon_to_use}</span>
                 <div style="flex: 1;">
-                    <div style="font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {text_color}; margin-bottom: 4px;">{title}</div>
+                    <div style="font-weight: {Typography.WEIGHT_SEMIBOLD}; "
+                    "color: {text_color}; margin-bottom: 4px;">{title}</div>
                     <div style="color: {Colors.SLATE_700}; font-size: {Typography.SIZE_SM};">{message}</div>
                 </div>
             </div>
@@ -501,13 +513,18 @@ class Card:
 
             # Titre
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_XL}; font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_700}; margin-bottom: {Spacing.XS};">{title}</div>',
+                (
+                    f'<div style="font-size: {Typography.SIZE_XL}; '
+                    f"font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_700}; "
+                    f'margin-bottom: {Spacing.XS};">{title}</div>'
+                ),
                 unsafe_allow_html=True,
             )
 
             # Message
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_BASE}; color: {Colors.SLATE_500}; margin-bottom: {Spacing.MD};">{message}</div>',
+                f'<div style="font-size: {Typography.SIZE_BASE}; color: {Colors.SLATE_500}; '
+                f'margin-bottom: {Spacing.MD};">{message}</div>',
                 unsafe_allow_html=True,
             )
 

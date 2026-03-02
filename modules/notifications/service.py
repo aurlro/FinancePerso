@@ -245,7 +245,10 @@ class NotificationService:
         return self.notify(
             type=NotificationType.IMPORT_REMINDER,
             title="📥 Il est temps d'importer",
-            message=f"Votre dernier import date de {days_since_import} jours. Importez vos nouvelles transactions pour un suivi à jour.",
+            message=(
+                f"Votre dernier import date de {days_since_import} jours. "
+                f"Importez vos nouvelles transactions pour un suivi à jour."
+            ),
             level=NotificationLevel.INFO if days_since_import < 14 else NotificationLevel.WARNING,
             category="import",
             dedup_key=f"import_reminder_{datetime.now().strftime('%Y%m%d')}",

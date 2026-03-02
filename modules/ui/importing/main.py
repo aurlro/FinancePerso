@@ -77,7 +77,8 @@ def render_import_tab():
         with st.container(border=True):
             c1, c2 = st.columns([0.92, 0.08])
             c1.markdown(
-                f"ℹ️ **Dernier import :** {last_imp['count']} transactions sur **{last_imp['account_label']}** (le {date_str})"
+                f"ℹ️ **Dernier import :** {last_imp['count']} transactions sur "
+                f"**{last_imp['account_label']}** (le {date_str})"
             )
             if c2.button("✖️", key="hide_imp_btn", help="Masquer"):
                 st.session_state.hide_import_summary = True
@@ -137,7 +138,8 @@ def render_import_tab():
     if selected_bank_key and selected_bank_key != "custom":
         template = BANK_TEMPLATES[selected_bank_key]
         st.success(
-            f"✅ Banque sélectionnée : **{template.name}** | Délimiteur: '{template.delimiter}' | Encodage: {template.encoding}"
+            f"✅ Banque sélectionnée : **{template.name}** | "
+            f"Délimiteur: '{template.delimiter}' | Encodage: {template.encoding}"
         )
         import_mode = "bank_template"
     elif selected_bank_key == "custom":

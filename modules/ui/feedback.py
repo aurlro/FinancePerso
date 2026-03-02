@@ -287,7 +287,8 @@ def render_scroll_to_top(anchor_id: str = "top"):
                 let scrollTop = 0;
                 
                 if (container === window) {{
-                    scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                    scrollTop = window.pageYOffset || document.documentElement.scrollTop "
+                    "|| document.body.scrollTop || 0;
                 }} else {{
                     scrollTop = container.scrollTop;
                 }}

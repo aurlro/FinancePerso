@@ -22,7 +22,8 @@ def render_validation_row(
     """
     # Start container
     # We use a custom container class for hover effects (via CSS)
-    # Since we can't inject classes easily to st.container, we wrap content or use st.markdown with unsafe_html for the box?
+    # Since we can't inject classes easily to st.container, we wrap content or "
+    # use st.markdown with unsafe_html for the box?
     # Actually, standard Streamlit columns are cleanest. We just style the blocks.
 
     with st.container():

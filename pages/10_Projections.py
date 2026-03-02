@@ -69,7 +69,8 @@ def render_projections_page():
 
         if default_contribution > 0:
             st.info(
-                f"💡 Basé sur votre analyse 'Reste à Vivre' (Phase 3), vous pouvez épargner environ **{default_contribution}€/mois**."
+                f"💡 Basé sur votre analyse 'Reste à Vivre' (Phase 3), vous pouvez "  # noqa: E501
+                f"épargner environ **{default_contribution}€/mois**."
             )
 
     with col2:

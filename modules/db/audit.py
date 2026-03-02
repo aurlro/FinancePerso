@@ -116,7 +116,8 @@ def auto_fix_common_inconsistencies() -> int:
         if match_updates:
             # We use redundant updates but it's okay for consistency
             cursor.executemany(
-                "UPDATE transactions SET tags = ?, category_validated = 'Virement Interne', status = 'validated' WHERE id = ?",
+                "UPDATE transactions SET tags = ?, category_validated = 'Virement Interne', "
+                "status = 'validated' WHERE id = ?",
                 match_updates,
             )
             total_fixed += len(match_updates) // 2
@@ -192,7 +193,8 @@ def auto_fix_common_inconsistencies() -> int:
 
         # 6. WITHDRAWAL & LABEL FIXES
         cursor.execute(
-            "UPDATE transactions SET category_validated = 'Loisirs' WHERE category_validated = 'Inconnu' AND UPPER(label) LIKE '%RETRAIT DAB%'"
+            "UPDATE transactions SET category_validated = 'Loisirs' "
+            "WHERE category_validated = 'Inconnu' AND UPPER(label) LIKE '%RETRAIT DAB%'"
         )
         total_fixed += cursor.rowcount
 

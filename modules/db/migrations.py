@@ -161,7 +161,8 @@ def init_db() -> None:
             )
             # Also update existing categories if suggested_tags is empty
             cursor.execute(
-                "UPDATE categories SET suggested_tags = ? WHERE name = ? AND (suggested_tags IS NULL OR suggested_tags = '')",
+                "UPDATE categories SET suggested_tags = ? WHERE name = ? "
+                "AND (suggested_tags IS NULL OR suggested_tags = '')",
                 (s_tags, name),
             )
 

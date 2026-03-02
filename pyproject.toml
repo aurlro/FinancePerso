@@ -13,7 +13,7 @@ exclude = '''
 '''
 
 [tool.ruff]
-line-length = 250  # TODO: Reduce to 100 gradually (see docs/CODE_QUALITY_ROADMAP.md)
+line-length = 120  # Phase 2.3: Compromise between ideal (100) and practical
 target-version = "py312"
 exclude = [
     ".git",
@@ -36,6 +36,7 @@ ignore = [
     "N806",  # Variable names in function - allow TRANSFER_KEYWORDS style
     "E402",  # Module level import not at top - needed for some patterns
     "E741",  # Ambiguous variable name - allow 'l' in list comprehensions
+    "UP043", # Generic class type parameters - backward compatibility
     "UP046", # Generic class type parameters - backward compatibility
     "F811",  # Redefinition of unused - common in __init__.py files
     "F821",  # Undefined name - TODO: fix these

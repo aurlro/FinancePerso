@@ -22,7 +22,8 @@ class TestGlobalStats:
         assert (
             stats["initialized"] is False or stats["initialized"] is True
         )  # Depends on if empty table counts as initialized (logic says check if tx table exists AND has row)
-        # Actually logic is: SELECT 1 FROM transactions LIMIT 1. If empty, initialized is False? No, get_global_stats checks transactions table exists but logic says:
+        # Actually logic is: SELECT 1 FROM transactions LIMIT 1. If empty, initialized is False?
+        # No, get_global_stats checks transactions table exists but logic says:
         # returns "initialized": True if no exception.
         # But separate is_app_initialized() exists.
 

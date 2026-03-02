@@ -95,7 +95,10 @@ class Metric:
                 )
 
             # Label avec help
-            label_html = f'<div style="font-size: {Typography.SIZE_SM}; color: {Colors.SLATE_500}; margin-bottom: 2px;">{label}'
+            label_html = (
+                f'<div style="font-size: {Typography.SIZE_SM}; color: {Colors.SLATE_500}; '
+                f'margin-bottom: 2px;">{label}'
+            )
             if help_text:
                 label_html += f' <span title="{help_text}">ℹ️</span>'
             label_html += "</div>"
@@ -103,21 +106,25 @@ class Metric:
 
             # Valeur
             st.markdown(
-                f'<div style="font-size: {Typography.SIZE_2XL}; font-weight: {Typography.WEIGHT_BOLD}; color: {Colors.SLATE_900};">{value}</div>',
+                f'<div style="font-size: {Typography.SIZE_2XL}; '
+                f'font-weight: {Typography.WEIGHT_BOLD}; color: {Colors.SLATE_900};">'
+                f"{value}</div>",
                 unsafe_allow_html=True,
             )
 
             # Tendance
             if trend:
                 st.markdown(
-                    f'<div style="font-size: {Typography.SIZE_SM}; color: {trend.color}; margin-top: 2px;">{trend.icon} {trend.value}</div>',
+                    f'<div style="font-size: {Typography.SIZE_SM}; color: {trend.color}; '
+                    f'margin-top: 2px;">{trend.icon} {trend.value}</div>',
                     unsafe_allow_html=True,
                 )
 
             # Sous-titre
             if subtitle:
                 st.markdown(
-                    f'<div style="font-size: {Typography.SIZE_XS}; color: {Colors.SLATE_400}; margin-top: 4px;">{subtitle}</div>',
+                    f'<div style="font-size: {Typography.SIZE_XS}; color: {Colors.SLATE_400}; '
+                    f'margin-top: 4px;">{subtitle}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -199,14 +206,17 @@ class Metric:
 
         # Value
         st.markdown(
-            f'<span style="font-size: {Typography.SIZE_SM}; font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_900};">{value}</span>',
+            f'<span style="font-size: {Typography.SIZE_SM}; '
+            f'font-weight: {Typography.WEIGHT_SEMIBOLD}; color: {Colors.SLATE_900};">'
+            f"{value}</span>",
             unsafe_allow_html=True,
         )
 
         # Trend
         if trend_obj:
             st.markdown(
-                f'<span style="font-size: {Typography.SIZE_XS}; color: {trend_obj.color};">{trend_obj.icon} {trend_obj.value}</span>',
+                f'<span style="font-size: {Typography.SIZE_XS}; color: {trend_obj.color};">'
+                f"{trend_obj.icon} {trend_obj.value}</span>",
                 unsafe_allow_html=True,
             )
 

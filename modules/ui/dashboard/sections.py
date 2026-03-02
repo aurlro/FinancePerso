@@ -247,7 +247,8 @@ def render_budget_tab(
                             st.caption(f"{pred['current_spent']:.0f}€ / {pred['budget']:.0f}€")
         else:
             st.info(
-                "📊 Pas assez de données ce mois-ci pour les prédictions. Importez des transactions pour activer les alertes."
+                "📊 Pas assez de données ce mois-ci pour les prédictions. "
+                "Importez des transactions pour activer les alertes."
             )
 
     st.markdown("---")

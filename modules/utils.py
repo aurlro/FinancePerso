@@ -76,7 +76,8 @@ def clean_label(label):
     label = re.sub(r"\d{2}/\d{2}(/\d{2,4})?", "", label)
 
     # Remove technical bank prefixes but KEEP "Virement", "Cotisation" if they are part of the name
-    # We remove "CARTE", "CB", "PRLV" (Prélèvement can be noisy but let's see), "SEPA", "VIR" (often redundant with Virement)
+    # We remove "CARTE", "CB", "PRLV" (Prélèvement can be noisy but let's see), "
+    # "SEPA", "VIR" (often redundant with Virement)
     label = re.sub(r"(?i)\b(CARTE|CB|PRLV|SEPA|VIR)\b\*?\d*", "", label)
 
     # Remove numbers with * that are often card references

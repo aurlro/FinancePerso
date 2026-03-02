@@ -792,7 +792,7 @@ def is_ai_available() -> bool:
                 return True
             except Exception:
                 return False
-        elif isinstance(provider, (OpenAICompatibleProvider, KimiProvider)):
+        elif isinstance(provider, OpenAICompatibleProvider | KimiProvider):
             return bool(provider.api_key)
         elif isinstance(provider, LocalSLMProvider):
             return provider._model_loaded or (

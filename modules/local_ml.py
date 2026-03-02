@@ -161,12 +161,14 @@ class LocalTransactionClassifier:
             self._save_model()
 
             logger.info(
-                f"Local ML model trained: {len(valid_categories)} categories, {len(df)} samples, {accuracy:.2%} accuracy"
+                f"Local ML model trained: {len(valid_categories)} categories, "
+                f"{len(df)} samples, {accuracy:.2%} accuracy"
             )
 
             return (
                 True,
-                f"Modèle entraîné sur {len(df)} transactions, {len(valid_categories)} catégories. Précision: {accuracy:.1%}",
+                f"Modèle entraîné sur {len(df)} transactions, {len(valid_categories)} catégories. "
+                f"Précision: {accuracy:.1f}%",
             )
 
         except Exception as e:

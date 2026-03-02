@@ -68,7 +68,10 @@ def detect_overspending_pattern() -> ProactiveAlert | None:
             return ProactiveAlert(
                 id=f"overspend_{current_month}",
                 title="📈 Dépenses en hausse",
-                message=f"Vos dépenses ce mois sont {increase_pct:.0f}% plus élevées que la moyenne ({current_spend:.0f}€ vs {avg_spend:.0f}€)",
+                message=(
+                    f"Vos dépenses ce mois sont {increase_pct:.0f}% plus élevées "
+                    f"que la moyenne ({current_spend:.0f}€ vs {avg_spend:.0f}€)"
+                ),
                 priority=AlertPriority.WARNING,
                 icon="📈",
                 action_label="Voir les détails",
@@ -391,7 +394,10 @@ def detect_large_expense_anomaly() -> ProactiveAlert | None:
             return ProactiveAlert(
                 id=f"large_expense_{largest.name}_{date.today()}",
                 title="💸 Dépense inhabituelle",
-                message=f"Dépense de {largest['amount_abs']:.0f}€ ({largest['label'][:30]}) détectée - supérieure à votre moyenne",
+                message=(
+                    f"Dépense de {largest['amount_abs']:.0f}€ ({largest['label'][:30]}) "
+                    f"détectée - supérieure à votre moyenne"
+                ),
                 priority=AlertPriority.WARNING,
                 icon="💸",
             )

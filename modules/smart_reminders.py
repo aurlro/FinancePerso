@@ -194,7 +194,10 @@ class SmartReminderEngine:
                     SmartReminder(
                         type=ReminderType.BUDGET_ALERT,
                         title=f"🚨 Budget {worst['category']} dépassé",
-                        message=f"Dépensé: {worst['actual']:.0f}€ / Budget: {worst['budget']:.0f}€ (+{worst['overspend_pct']:.0f}%)",
+                        message=(
+                            f"Dépensé: {worst['actual']:.0f}€ / Budget: {worst['budget']:.0f}€ "
+                            f"(+{worst['overspend_pct']:.0f}%)"
+                        ),
                         priority=Priority.HIGH,
                         action_type="navigate",
                         action_target="pages/02_Dashboard.py",
@@ -223,7 +226,10 @@ class SmartReminderEngine:
                     SmartReminder(
                         type=ReminderType.GOAL_REMINDER,
                         title=f"🎯 {goal.name} - Échéance proche",
-                        message=f"Plus que {goal.days_remaining} jours. Reste: {goal.remaining_amount:.0f}€ à atteindre.",
+                        message=(
+                            f"Plus que {goal.days_remaining} jours. "
+                            f"Reste: {goal.remaining_amount:.0f}€ à atteindre."
+                        ),
                         priority=Priority.MEDIUM,
                         action_type="navigate",
                         action_target="pages/02_Dashboard.py",

@@ -258,7 +258,8 @@ def render_add_rule_form():
                     toast_error(f"Pattern invalide: {error_msg}", icon="❌")
                     show_error(f"Pattern invalide: {error_msg}")
                     show_info(
-                        "💡 Le pattern peut être un simple mot-clé (ex: UBER) ou une expression régulière (ex: ^UBER.*TRIP)"
+                        "💡 Le pattern peut être un simple mot-clé (ex: UBER) ou "
+                        "une expression régulière (ex: ^UBER.*TRIP)"
                     )
                     return
 

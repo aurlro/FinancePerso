@@ -276,5 +276,6 @@ def render_monthly_stacked_chart(df: pd.DataFrame, cat_emoji_map: dict):
 
     # Ajouter une légende explicative
     st.caption(
-        "💡 **Lecture**: Les barres empilées représentent les dépenses par catégorie. La ligne verte 💰 montre les revenus. La ligne pointillée blanche 📈 montre le solde (revenus - dépenses)."
+        "💡 **Lecture**: Les barres empilées représentent les dépenses par catégorie. "
+        "La ligne verte 💰 montre les revenus. La ligne pointillée blanche 📈 montre le solde."
     )

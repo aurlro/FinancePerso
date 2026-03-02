@@ -482,7 +482,10 @@ if __name__ == "__main__":
         welcome_empty_state(
             title="👋 Bonjour !",
             subtitle="Bienvenue dans votre espace financier",
-            message="Commencez par importer vos relevés bancaires pour visualiser vos finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
+            message=(
+                "Commencez par importer vos relevés bancaires pour visualiser vos finances, "
+                "suivre vos budgets et atteindre vos objectifs d'épargne."
+            ),
             primary_action=("Importer mes relevés", "#"),
             secondary_action=("Voir le guide", "#"),
             icon="💰",

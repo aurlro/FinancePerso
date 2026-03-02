@@ -1,110 +1,138 @@
 # Code Quality Roadmap
 
-> Plan to gradually improve code quality and reduce technical debt.
+> Plan d'amélioration progressive de la qualité du code et réduction de la dette technique.
 
-## Current State (2026-03-02)
+---
+
+## État Actuel (2026-03-02)
 
 ✅ **CI/CD Pipeline**: PASSING
 - Black 26.1.0 formatting
-- Ruff linting (line-length: 150)
+- Ruff linting (line-length: 120)
 - Essential tests passing
 - Security scans (Bandit/Safety) - reports generated
+- Aucune erreur de syntaxe
 
-⚠️ **Technical Debt**:
-- Ruff line-length: 150 (target: 100)
-- Several style rules disabled (N818, N806, E402, E741, etc.)
-- Bandit security warnings (not blocking)
-- Test coverage incomplete
+⚠️ **Dette Technique Restante**:
+- Ruff line-length: 120 (target: 100)
+- Plusieurs règles de style désactivées (N818, N806, E402, E741, UP043)
+- Warnings Bandit (non bloquants)
+- Couverture de tests incomplète (~40%)
 
-## Phase 1: Stabilization (COMPLETED) ✅
+---
 
-- [x] Fix Black formatting
-- [x] Sync CI versions with requirements-dev.txt
-- [x] Fix critical import errors
-- [x] Configure Ruff with reasonable defaults
-- [x] Make CI tolerant to non-blocking issues
-- [x] Fix doc_agent.py for CI compatibility
+## Phase 1: Stabilisation ✅ TERMINÉE
 
-## Phase 2: Code Quality (NEXT)
+- [x] Correction du formatage Black
+- [x] Synchronisation versions CI avec requirements-dev.txt
+- [x] Correction des erreurs d'import critiques
+- [x] Configuration Ruff avec valeurs par défaut raisonnables
+- [x] CI tolérante aux problèmes non bloquants
+- [x] Correction doc_agent.py pour compatibilité CI
+- [x] **Correction erreurs de syntaxe f-string** dans `modules/ui/molecules/`
+- [x] **Correction point-virgule** dans `modules/db/transactions.py:532`
 
-### 2.1 Reduce Line Length
-**Goal**: Reduce Ruff line-length from 150 → 100
+**Date de fin**: 2026-03-02
 
+---
+
+## Phase 2: Qualité Code 🔄 EN COURS
+
+### 2.1 Réduire la Longueur des Lignes ✅
+**Objectif**: Passer de 120 → 100 caractères
+
+**Corrections appliquées**:
+- ✅ `modules/ui/components/smart_reminders_widget.py:91` - Extraction ternaire en dict
+- ✅ Toutes les lignes > 120 caractères corrigées
+
+**Reste à faire**:
 ```bash
-# Step 1: 150 → 130
-# Files to fix: ~15
-python -m ruff check modules/ --select E501 --line-length 130
-
-# Step 2: 130 → 110  
-# Files to fix: ~25
+# Étape 1: 120 → 110 (~25 fichiers)
 python -m ruff check modules/ --select E501 --line-length 110
 
-# Step 3: 110 → 100
-# Files to fix: ~40
+# Étape 2: 110 → 100 (~40 fichiers)
 python -m ruff check modules/ --select E501 --line-length 100
 ```
 
-### 2.2 Re-enable Style Rules
-Priority order:
-1. `E741` - Ambiguous variable names (easy fix)
-2. `E402` - Import ordering (medium)
-3. `N806` - Variable naming (requires refactoring)
-4. `N818` - Exception naming (requires refactoring)
+### 2.2 Réactiver les Règles de Style 🔄
+Ordre de priorité:
+1. ✅ `UP038` - Utiliser `X | Y` dans `isinstance` (`modules/ai_manager.py:795`)
+2. `E741` - Noms de variables ambigus (correction facile)
+3. `E402` - Ordre des imports (moyen)
+4. `N806` - Convention de nommage variables (nécessite refactoring)
+5. `N818` - Convention de nommage exceptions (nécessite refactoring)
 
-### 2.3 Security Hardening
-- Fix B608 (SQL injection risks)
-- Fix B324 (MD5 hash usage)
-- Review B301 (pickle usage)
+### 2.3 Renforcement Sécurité
+- Corriger B608 (risques SQL injection)
+- Corriger B324 (utilisation MD5)
+- Réviser B301 (utilisation pickle)
 
-## Phase 3: Testing
+---
 
-- [ ] Add integration tests
-- [ ] Improve test coverage to 80%+
-- [ ] Add E2E tests with Playwright
-- [ ] Mock external services (AI APIs)
+## Phase 3: Tests 📋 PLANNIFIÉE
 
-## Phase 4: Documentation
+- [ ] Ajouter tests d'intégration
+- [ ] Améliorer couverture à 80%+
+- [ ] Ajouter tests E2E avec Playwright
+- [ ] Mock des services externes (APIs IA)
 
-- [ ] Add README.md to each module
-- [ ] Document public APIs
-- [ ] Add architecture decision records (ADRs)
+---
 
-## Tools & Commands
+## Phase 4: Documentation 📋 PLANNIFIÉE
 
-### Daily Development
+- [ ] Ajouter README.md à chaque module
+- [ ] Documenter les APIs publiques
+- [ ] Ajouter des ADRs (Architecture Decision Records)
+
+---
+
+## Outils & Commandes
+
+### Développement Quotidien
 ```bash
-make check        # Quick check before commit
-make test         # Run essential tests
-make format       # Auto-format code
+make check        # Vérification rapide avant commit
+make test         # Tests essentiels
+make format       # Auto-formatage du code
 ```
 
-### Before PR
+### Avant PR
 ```bash
-make ci           # Full CI simulation
+make ci           # Simulation CI complète
 python scripts/ci_health_check.py
 ```
 
-### Gradual Cleanup
+### Nettoyage Progressif
 ```bash
-# Fix E501 in one module
+# Corriger E501 dans un module
 python -m ruff check modules/db/ --select E501 --fix
 
-# Check specific rule
+# Vérifier une règle spécifique
 python -m ruff check modules/ --select E741
+
+# Vérifier longueur de lignes
+python -m ruff check modules/ --select E501 --line-length 100
 ```
 
-## Metrics Tracking
+---
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Line length | 150 | 100 |
+## Suivi des Métriques
+
+| Métrique | Actuel | Cible |
+|----------|--------|-------|
+| Longueur ligne | 120 | 100 |
 | Ruff ignores | 7 | 0 |
-| Test coverage | ~40% | 80% |
-| Bandit warnings | ~30 | 0 |
-| Missing docstrings | ~200 | 0 |
+| Couverture tests | ~40% | 80% |
+| Warnings Bandit | ~30 | 0 |
+| Docstrings manquantes | ~200 | 0 |
 
-## Resources
+---
 
-- [Ruff Rules](https://docs.astral.sh/ruff/rules/)
-- [Black Style Guide](https://black.readthedocs.io/en/stable/the_black_code_style.html)
-- [Bandit Tests](https://bandit.readthedocs.io/en/latest/plugins/index.html)
+## Ressources
+
+- [Règles Ruff](https://docs.astral.sh/ruff/rules/)
+- [Guide de Style Black](https://black.readthedocs.io/en/stable/the_black_code_style.html)
+- [Tests Bandit](https://bandit.readthedocs.io/en/latest/plugins/index.html)
+
+---
+
+*Dernière mise à jour: 2026-03-02 - Phase 1 terminée, Phase 2 en cours*

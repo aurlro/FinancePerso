@@ -39,7 +39,10 @@ def render_skeleton_text(lines: int = 3, key: str = None):
     html_lines = ""
     for i in range(lines):
         width = 100 if i < lines - 1 else 60
-        html_lines += f'<div style="height: 12px; width: {width}%; background: #e0e0e0; margin: 8px 0; border-radius: 4px;"></div>'
+        html_lines += (
+            f'<div style="height: 12px; width: {width}%; background: #e0e0e0; '
+            f'margin: 8px 0; border-radius: 4px;"></div>'
+        )
     placeholder.markdown(
         f"""
         <div style="padding: 10px;">
@@ -68,7 +71,8 @@ def render_skeleton_kpi_cards(count: int = 4, key: str = None):
                 justify-content: center;
                 padding: 0 16px;
             ">
-                <div style="height: 12px; width: 40%; background: #d0d0d0; border-radius: 4px; margin-bottom: 8px;"></div>
+                <div style="height: 12px; width: 40%; background: #d0d0d0; "
+                "border-radius: 4px; margin-bottom: 8px;"></div>
                 <div style="height: 20px; width: 60%; background: #e0e0e0; border-radius: 4px;"></div>
             </div>
         """
@@ -88,13 +92,19 @@ def render_skeleton_table(rows: int = 5, cols: int = 4, key: str = None):
     placeholder = st.empty()
     header_html = ""
     for _ in range(cols):
-        header_html += '<th style="padding: 12px; background: #f5f5f5; border-bottom: 2px solid #ddd;"><div style="height: 14px; width: 80%; background: #d0d0d0; border-radius: 4px;"></div></th>'
+        header_html += (
+            '<th style="padding: 12px; background: #f5f5f5; border-bottom: 2px solid #ddd;">'
+            '<div style="height: 14px; width: 80%; background: #d0d0d0; border-radius: 4px;"></div></th>'
+        )
 
     rows_html = ""
     for _ in range(rows):
         row_cells = ""
         for _ in range(cols):
-            row_cells += '<td style="padding: 12px; border-bottom: 1px solid #eee;"><div style="height: 12px; width: 70%; background: #e8e8e8; border-radius: 4px;"></div></td>'
+            row_cells += (
+                '<td style="padding: 12px; border-bottom: 1px solid #eee;">'
+                '<div style="height: 12px; width: 70%; background: #e8e8e8; border-radius: 4px;"></div></td>'
+            )
         rows_html += f"<tr>{row_cells}</tr>"
 
     placeholder.markdown(

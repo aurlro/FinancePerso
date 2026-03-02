@@ -479,7 +479,10 @@ elif active_tab == "🔍 Qualité des Données":
                     )
                 with col_badge:
                     st.markdown(
-                        f"<div style='text-align:right'><span style='background:#ff6b6b;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(old_pending_df)}</span></div>",
+                        f"<div style='text-align:right'>"
+                        f"<span style='background:#ff6b6b;color:white;padding:4px 12px;"
+                        f"border-radius:12px;font-size:1.2rem;font-weight:bold'>"
+                        f"{len(old_pending_df)}</span></div>",
                         unsafe_allow_html=True,
                     )
 
@@ -524,7 +527,8 @@ elif active_tab == "🔍 Qualité des Données":
                                 unsafe_allow_html=True,
                             )
                             st.caption(
-                                f"📅 {tx['date']} | 📂 {tx.get('category_validated', 'Non catégorisé')} | 👤 {tx.get('member', 'Inconnu')}"
+                                f"📅 {tx['date']} | 📂 {tx.get('category_validated', 'Non catégorisé')} "
+                                f"| 👤 {tx.get('member', 'Inconnu')}"
                             )
                         with col_actions_tx:
                             tx_col1, tx_col2 = st.columns(2)
@@ -567,7 +571,10 @@ elif active_tab == "🔍 Qualité des Données":
                 with col_badge:
                     total_dups = duplicates_df["duplicate_count"].sum() - len(duplicates_df)
                     st.markdown(
-                        f"<div style='text-align:right'><span style='background:#ffa502;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{total_dups}</span></div>",
+                        f"<div style='text-align:right'>"
+                        f"<span style='background:#ffa502;color:white;padding:4px 12px;"
+                        f"border-radius:12px;font-size:1.2rem;font-weight:bold'>"
+                        f"{total_dups}</span></div>",
                         unsafe_allow_html=True,
                     )
 
@@ -623,7 +630,8 @@ elif active_tab == "🔍 Qualité des Données":
                                 unsafe_allow_html=True,
                             )
                             st.caption(
-                                f"📅 {dup['date']} | 🔄 {dup['duplicate_count']} copies | 👤 {dup.get('accounts', 'N/A')}"
+                                f"📅 {dup['date']} | 🔄 {dup['duplicate_count']} copies "
+                                f"| 👤 {dup.get('accounts', 'N/A')}"
                             )
                         with col_actions_dup:
                             if st.button(
@@ -662,19 +670,24 @@ elif active_tab == "🔍 Qualité des Données":
                         )
                     with col_badge:
                         st.markdown(
-                            f"<div style='text-align:right'><span style='background:#74b9ff;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(overlaps)}</span></div>",
+                            f"<div style='text-align:right'>"
+                            f"<span style='background:#74b9ff;color:white;padding:4px 12px;"
+                            f"border-radius:12px;font-size:1.2rem;font-weight:bold'>"
+                            f"{len(overlaps)}</span></div>",
                             unsafe_allow_html=True,
                         )
 
                     st.info(
-                        "Un pattern est contenu dans un autre avec une catégorie différente. Cela peut créer des comportements inattendus selon l'ordre d'application des règles."
+                        "Un pattern est contenu dans un autre avec une catégorie différente. "
+                        "Cela peut créer des comportements inattendus selon l'ordre d'application des règles."
                     )
 
                     # Liste des chevauchements
                     with st.expander("📋 Voir les détails et suggestions", expanded=False):
                         for i, ov in enumerate(overlaps[:10]):
                             st.markdown(
-                                f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) → **inclus dans** → **`{ov['longer_pattern']}`** ({ov['longer_category']})"
+                                f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) → "
+                                f"**inclus dans** → **`{ov['longer_pattern']}`** ({ov['longer_category']})"
                             )
 
                             # Suggestions

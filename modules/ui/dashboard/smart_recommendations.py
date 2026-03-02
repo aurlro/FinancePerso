@@ -47,7 +47,8 @@ def render_smart_recommendations_section(df_full: pd.DataFrame, df_current: pd.D
         with cols[0]:
             if high_priority > 0:
                 st.error(
-                    f"🚨 **{high_priority}** problème{'s' if high_priority > 1 else ''} nécessite{'nt' if high_priority == 1 else ''} votre attention"
+                    f"🚨 **{high_priority}** problème{'s' if high_priority > 1 else ''} "
+                    f"nécessite{'nt' if high_priority == 1 else ''} votre attention"
                 )
         with cols[1]:
             if total_savings > 0:

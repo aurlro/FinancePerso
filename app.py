@@ -49,7 +49,7 @@ if project_root not in sys.path:
 
 # Imports Design System
 try:
-    from modules.ui import apply_vibe_theme
+    from modules.ui import apply_vibe_theme  # noqa: F401
 
     DESIGN_SYSTEM_AVAILABLE = True
 except ImportError:
@@ -118,7 +118,9 @@ try:
 except PermissionError:
     st.error("### 🛑 Sécurité macOS : Accès refusé")
     st.error(
-        "L'application ne peut pas accéder aux données. Vérifiez les permissions dans **Réglages Système macOS > Confidentialité et sécurité > Fichiers et dossiers**."
+        "L'application ne peut pas accéder aux données. Vérifiez les permissions "
+        "dans **Réglages Système macOS > Confidentialité et sécurité > "
+        "Fichiers et dossiers**."
     )
     logger.error("PermissionError: Accès refusé au dossier Data")
     st.stop()
@@ -246,7 +248,8 @@ else:
         WelcomeEmptyState.render(
             title="👋 Bonjour !",
             subtitle="Bienvenue dans votre espace financier",
-            message="Commencez par importer vos relevés bancaires pour visualiser vos finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
+            message="Commencez par importer vos relevés bancaires pour visualiser vos "
+            "finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
             primary_action_text="📥 Importer mes relevés",
             primary_action_link="pages/01_Import.py",
             secondary_action_text="📖 Voir le guide",

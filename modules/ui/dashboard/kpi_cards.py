@@ -284,9 +284,11 @@ def _render_kpi_card_html(
             transition: all 0.2s ease;
             outline: none;
             cursor: default;
-    " onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'; this.style.borderColor='var(--primary, #10B981)';" 
+    " onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'; "
+       "this.style.borderColor='var(--primary, #10B981)';"  
        onmouseout="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1)'; this.style.borderColor='#E5E7EB';"
-       onfocus="this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.3)'; this.style.borderColor='var(--primary, #10B981)';"
+       onfocus="this.style.boxShadow='0 0 0 3px rgba(16, 185, 129, 0.3)'; "
+       "this.style.borderColor='var(--primary, #10B981)';"
        onblur="this.style.boxShadow='0 1px 3px 0 rgba(0, 0, 0, 0.1)'; this.style.borderColor='#E5E7EB';">
         <div style="
             display: flex;

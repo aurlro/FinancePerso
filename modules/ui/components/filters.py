@@ -62,7 +62,8 @@ def render_transaction_filters(
     if show_tips:
         st.divider()
         st.caption(
-            "💡 Astuce : Le regroupement intelligent fusionne les opérations identiques pour une validation plus rapide."
+            "💡 Astuce : Le regroupement intelligent fusionne les opérations "
+            "identiques pour une validation plus rapide."
         )
 
     return filtered_df
