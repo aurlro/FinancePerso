@@ -23,7 +23,9 @@ def get_all_loans(active_only: bool = True) -> list[dict]:
                 l.*,
                 m.name as member_name,
                 CASE 
-                    WHEN l.total_amount > 0 THEN ROUND((l.paid_capital / l.principal_amount) * 100, 2)
+                    WHEN l.total_amount > 0 THEN ROUND(
+                        (l.paid_capital / l.principal_amount) * 100, 2
+                    )
                     ELSE 0 
                 END as repayment_progress_pct,
                 CASE 

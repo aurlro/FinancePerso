@@ -94,7 +94,10 @@ def save_couple_settings(
                 params.append(transfer_detection_days)
 
             if updates:
-                query = f"UPDATE couple_settings SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = 1"
+                query = (
+                    f"UPDATE couple_settings SET {', '.join(updates)}, "
+                    f"updated_at = CURRENT_TIMESTAMP WHERE id = 1"
+                )
                 cursor.execute(query, params)
                 conn.commit()
             return True
