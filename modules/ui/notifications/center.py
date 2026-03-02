@@ -180,7 +180,7 @@ def render_notification_center_full():
         with col_f1:
             filter_level = st.multiselect(
                 "Type",
-                options=[l.value for l in NotificationLevel],
+                options=[level.value for level in NotificationLevel],
                 default=[],
                 format_func=lambda x: f"{DEFAULT_ICONS[NotificationLevel(x)]} {x.title()}",
             )
@@ -200,7 +200,7 @@ def render_notification_center_full():
 
     # Appliquer les filtres
     if filter_level:
-        level_enums = [NotificationLevel(l) for l in filter_level]
+        level_enums = [NotificationLevel(level) for level in filter_level]
         notifications = [n for n in notifications if n.level in level_enums]
 
     if filter_read == "Non lus":

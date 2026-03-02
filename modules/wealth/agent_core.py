@@ -483,7 +483,7 @@ class TriggerDetector:
         triggers = []
 
         # Calculer le taux d'endettement
-        total_monthly_payments = sum(l.monthly_payment for l in wealth_manager.liabilities)
+        total_monthly_payments = sum(liab.monthly_payment for liab in wealth_manager.liabilities)
 
         # Ajouter les mensualités immobilières
         for asset in wealth_manager.real_estate:

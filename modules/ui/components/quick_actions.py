@@ -429,33 +429,6 @@ def render_quick_stats_popover():
             st.switch_page("pages/07_Recherche.py")
 
 
-def render_quick_actions_grid():
-    """
-    Render the main quick actions grid with popovers.
-    This replaces the simple buttons with interactive popovers.
-    """
-    # Afficher les messages flash en attente (pour les actions dans les popovers)
-    from modules.ui.feedback import display_flash_toasts
-
-    display_flash_toasts()
-
-    st.subheader("📌 Actions Rapides")
-
-    col_a, col_b, col_c, col_d = st.columns(4)
-
-    with col_a:
-        render_quick_validation_popover()
-
-    with col_b:
-        render_quick_config_popover()
-
-    with col_c:
-        render_quick_import_popover()
-
-    with col_d:
-        render_quick_stats_popover()
-
-
 def render_projections_popover():
     """
     Render a popover for cashflow projections and financial forecasting.

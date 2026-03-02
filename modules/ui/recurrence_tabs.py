@@ -194,8 +194,8 @@ def render_validation_tab(recurring_df: pd.DataFrame, cat_emoji_map: dict):
     for _, row in pending_df.iterrows():
         render_recurrence_card(
             row,
-            on_confirm=lambda l, c: _handle_feedback(l, c, True, "Confirmé depuis Inbox"),
-            on_reject=lambda l, c: _handle_feedback(l, c, False, "Rejeté depuis Inbox"),
+            on_confirm=lambda lbl, cat: _handle_feedback(lbl, cat, True, "Confirmé depuis Inbox"),
+            on_reject=lambda lbl, cat: _handle_feedback(lbl, cat, False, "Rejeté depuis Inbox"),
             cat_emoji_map=cat_emoji_map,
         )
 
@@ -230,7 +230,7 @@ def render_subscriptions_tab(recurring_df: pd.DataFrame, cat_emoji_map: dict):
 
     # Manual Add Section at bottom
     st.divider()
-    render_manual_add_section(on_add=lambda l, c: st.rerun())
+    render_manual_add_section(on_add=lambda lbl, cat: st.rerun())
 
 
 def render_trash_tab():

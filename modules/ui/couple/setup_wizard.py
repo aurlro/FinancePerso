@@ -352,7 +352,7 @@ def _render_joint_accounts_setup():
             st.text(label)
         with cols[1]:
             if st.button("🗑️", key=f"del_joint_{i}"):
-                new_labels = [l for j, l in enumerate(joint_labels) if j != i]
+                new_labels = [label for j, label in enumerate(joint_labels) if j != i]
                 if save_couple_settings(joint_account_labels=new_labels):
                     st.rerun()
 
@@ -365,7 +365,7 @@ def _render_joint_accounts_setup():
 
     if st.button("➕ Ajouter", key="add_joint_label"):
         if new_label:
-            if new_label.upper() not in [l.upper() for l in joint_labels]:
+            if new_label.upper() not in [jl.upper() for jl in joint_labels]:
                 new_labels = joint_labels + [new_label.upper()]
                 if save_couple_settings(joint_account_labels=new_labels):
                     st.success(f"✅ '{new_label}' ajouté")

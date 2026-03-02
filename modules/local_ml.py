@@ -223,7 +223,7 @@ class LocalTransactionClassifier:
             return [(None, 0.0)] * len(labels)
 
         try:
-            processed = [self._preprocess_label(l) for l in labels]
+            processed = [self._preprocess_label(label) for label in labels]
             predictions = self.model.predict(processed)
             probas = self.model.predict_proba(processed)
 

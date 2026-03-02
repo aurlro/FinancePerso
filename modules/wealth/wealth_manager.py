@@ -593,9 +593,9 @@ class WealthManager:
 
         # On ne double-compte pas les crédits immobiliers déjà déduits
         non_mortgage_debt = sum(
-            l.remaining_amount
-            for l in self.liabilities
-            if l.liability_type != LiabilityType.MORTGAGE
+            liab.remaining_amount
+            for liab in self.liabilities
+            if liab.liability_type != LiabilityType.MORTGAGE
         )
 
         return total_assets - non_mortgage_debt
@@ -618,9 +618,9 @@ class WealthManager:
 
         # Dettes non immobilières
         other_debt = sum(
-            l.remaining_amount
-            for l in self.liabilities
-            if l.liability_type != LiabilityType.MORTGAGE
+            liab.remaining_amount
+            for liab in self.liabilities
+            if liab.liability_type != LiabilityType.MORTGAGE
         )
 
         return {
@@ -751,7 +751,7 @@ class WealthManager:
             "real_estate": [a.to_dict(encrypt_sensitive) for a in self.real_estate],
             "financial_assets": [a.to_dict() for a in self.financial_assets],
             "crypto_assets": [c.to_dict() for c in self.crypto_assets],
-            "liabilities": [l.to_dict() for l in self.liabilities],
+            "liabilities": [liab.to_dict() for liab in self.liabilities],
             "cash_balance": self.cash_balance,
             "total_net_worth": self.get_total_net_worth(),
             "last_updated": self._last_updated.isoformat(),
@@ -769,9 +769,9 @@ class WealthManager:
         allocation = self.get_asset_allocation()
 
         non_mortgage_debt = liabilities.get("total", 0) - sum(
-            l.remaining_amount
-            for l in self.liabilities
-            if l.liability_type == LiabilityType.MORTGAGE
+            liab.remaining_amount
+            for liab in self.liabilities
+            if liab.liability_type == LiabilityType.MORTGAGE
         )
 
         lines = [

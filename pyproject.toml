@@ -37,7 +37,6 @@ ignore = [
     "E402",  # Module level import not at top - needed for some patterns
     "E741",  # Ambiguous variable name - allow 'l' in list comprehensions
     "UP043", # Generic class type parameters - backward compatibility
-    "UP046", # Generic class type parameters - backward compatibility
     "F811",  # Redefinition of unused - common in __init__.py files
     "F821",  # Undefined name - TODO: fix these
 ]
