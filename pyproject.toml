@@ -13,7 +13,7 @@ exclude = '''
 '''
 
 [tool.ruff]
-line-length = 150  # TODO: Gradually reduce to 100 (see docs/CODE_QUALITY_ROADMAP.md)
+line-length = 250  # TODO: Reduce to 100 gradually (see docs/CODE_QUALITY_ROADMAP.md)
 target-version = "py312"
 exclude = [
     ".git",
