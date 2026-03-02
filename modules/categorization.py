@@ -165,11 +165,11 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
 
     # 2. Heuristic: Internal Transfers Detection
 
-    TRANSFER_KEYWORDS = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
-    INTERNAL_TARGETS = _get_cached_transfer_targets()
+    transfer_keywords = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
+    internal_targets = _get_cached_transfer_targets()
 
-    if any(k in label_upper for k in TRANSFER_KEYWORDS) and any(
-        t in label_upper for t in INTERNAL_TARGETS
+    if any(k in label_upper for k in transfer_keywords) and any(
+        t in label_upper for t in internal_targets
     ):
         return "Virement Interne", "rule", 1.0
 
@@ -196,7 +196,7 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
     cat, conf = predict_category_ai(label, amount, date)
 
     # 5. Global Constraints: Amount sign must match category type
-    EXPENSE_CATEGORIES = [
+    expense_categories = [
         "Alimentation",
         "Transport",
         "Loisirs",
@@ -213,7 +213,7 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
         return "Inconnu", "rule_constraint", 0.0
 
     # Positive amounts cannot be expense categories
-    if cat in EXPENSE_CATEGORIES and amount > 0:
+    if cat in expense_categories and amount > 0:
         return "Revenus", "rule_constraint", 0.0
 
     return cat, "ai", conf
@@ -270,9 +270,12 @@ def generate_financial_report(stats_json):
         {json.dumps(stats_json, indent=2, ensure_ascii=False)}
         
         Tes missions :
-        1. **Résumé du mois** : Un paragraphe narratif sur les dépenses du mois, l'évolution par rapport au mois précédent (MoM), et les grands postes de dépenses.
-        2. **Bilan Annuel (YTD)** : Un point sur la situation depuis le début de l'année (Total épargné ou perdu, tendances).
-        3. **Conseils & Épargne** : 3 conseils concrets et personnalisés pour améliorer l'épargne ou réduire les frais, basés sur les catégories les plus coûteuses identifiées.
+        1. **Résumé du mois** : Un paragraphe narratif sur les dépenses du mois,
+           l'évolution par rapport au mois précédent (MoM), et les grands postes.
+        2. **Bilan Annuel (YTD)** : Un point sur la situation depuis le début de
+           l'année (Total épargné ou perdu, tendances).
+        3. **Conseils & Épargne** : 3 conseils concrets et personnalisés pour
+           améliorer l'épargne ou réduire les frais, basés sur les catégories.
         
         Ton ton doit être : Professionnel mais encourageant, "Serene Finance".
         Formate la réponse en Markdown propre (titres #, listes à puces).

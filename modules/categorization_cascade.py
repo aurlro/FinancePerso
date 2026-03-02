@@ -25,7 +25,7 @@ import pandas as pd
 
 CategoryRepository = None
 TransactionRepository = None
-from modules.logger import logger
+from modules.logger import logger  # noqa: E402
 
 
 @dataclass

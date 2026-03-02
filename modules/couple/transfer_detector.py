@@ -69,8 +69,10 @@ def detect_internal_transfers(
                 -- Cartes différentes
                 AND t1.card_suffix != t2.card_suffix
             )
-            LEFT JOIN card_member_mappings cm1 ON t1.card_suffix = cm1.card_suffix AND cm1.is_active = 1
-            LEFT JOIN card_member_mappings cm2 ON t2.card_suffix = cm2.card_suffix AND cm2.is_active = 1
+            LEFT JOIN card_member_mappings cm1 ON t1.card_suffix = cm1.card_suffix
+                AND cm1.is_active = 1
+            LEFT JOIN card_member_mappings cm2 ON t2.card_suffix = cm2.card_suffix
+                AND cm2.is_active = 1
             WHERE t1.date BETWEEN :start AND :end
               AND ABS(t1.amount) >= :min_amount
               AND t1.status = 'validated'

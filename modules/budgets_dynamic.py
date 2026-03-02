@@ -548,7 +548,7 @@ def _render_challenge_card(challenge: dict):
 
 
 # Import pour les fonctions de rendu
-import streamlit as st
+import streamlit as st  # noqa: E402
 
 __all__ = [
     "DynamicBudgetEngine",

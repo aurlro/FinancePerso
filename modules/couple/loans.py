@@ -63,7 +63,9 @@ def get_loan(loan_id: int) -> dict | None:
                 l.*,
                 m.name as member_name,
                 CASE 
-                    WHEN l.total_amount > 0 THEN ROUND((l.paid_capital / l.principal_amount) * 100, 2)
+                    WHEN l.total_amount > 0 THEN ROUND(
+                        (l.paid_capital / l.principal_amount) * 100, 2
+                    )
                     ELSE 0 
                 END as repayment_progress_pct
             FROM loans l
@@ -423,7 +425,7 @@ def detect_loan_payments(loan_id: int, lookback_months: int = 12) -> list[dict]:
         return []
 
     monthly_payment = loan["monthly_payment"]
-    lender = loan.get("lender", "")
+    lender = loan.get("lender", "")  # noqa: F841 - Reserved for future filtering
 
     # Tolérance de 1€ pour les arrondis
     tolerance = 1.0
@@ -464,11 +466,11 @@ def get_loans_summary() -> dict:
     """
     loans = get_all_loans(active_only=True)
 
-    total_principal = sum(l.get("principal_amount", 0) or 0 for l in loans)
-    total_remaining = sum(l.get("remaining_capital", 0) or 0 for l in loans)
-    total_paid = sum(l.get("paid_capital", 0) or 0 for l in loans)
-    total_monthly = sum(l.get("monthly_payment", 0) or 0 for l in loans)
-    total_interest_paid = sum(l.get("paid_interest", 0) or 0 for l in loans)
+    total_principal = sum(loan.get("principal_amount", 0) or 0 for loan in loans)
+    total_remaining = sum(loan.get("remaining_capital", 0) or 0 for loan in loans)
+    total_paid = sum(loan.get("paid_capital", 0) or 0 for loan in loans)
+    total_monthly = sum(loan.get("monthly_payment", 0) or 0 for loan in loans)
+    total_interest_paid = sum(loan.get("paid_interest", 0) or 0 for loan in loans)
 
     # Progression moyenne
     avg_progress = 0
@@ -484,8 +486,8 @@ def get_loans_summary() -> dict:
         "total_interest_paid": total_interest_paid,
         "average_progress": round(avg_progress, 2),
         "by_account_type": {
-            "JOINT": sum(1 for l in loans if l.get("account_type") == "JOINT"),
-            "PERSONAL_A": sum(1 for l in loans if l.get("account_type") == "PERSONAL_A"),
-            "PERSONAL_B": sum(1 for l in loans if l.get("account_type") == "PERSONAL_B"),
+            "JOINT": sum(1 for loan in loans if loan.get("account_type") == "JOINT"),
+            "PERSONAL_A": sum(1 for loan in loans if loan.get("account_type") == "PERSONAL_A"),
+            "PERSONAL_B": sum(1 for loan in loans if loan.get("account_type") == "PERSONAL_B"),
         },
     }
