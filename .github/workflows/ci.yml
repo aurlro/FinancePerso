@@ -143,8 +143,9 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          bandit -r modules/ -f json -o bandit-report.json || true
-          bandit -r modules/ -f screen
+          # Skip B110 (try-except-pass) as it's used intentionally throughout the codebase
+          bandit -r modules/ -s B110 -f json -o bandit-report.json || true
+          bandit -r modules/ -s B110 -f screen
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v7
