@@ -222,8 +222,7 @@ class WelcomeCard:
 
         @st.dialog("📖 Guide de démarrage")
         def guide_dialog():
-            st.markdown(
-                """
+            st.markdown("""
             ### Comment utiliser FinancePerso
             
             **1. 📥 Importez vos relevés**
@@ -245,8 +244,7 @@ class WelcomeCard:
             
             Consultez votre dashboard, suivez vos budgets et 
             atteignez vos objectifs d'épargne.
-            """
-            )
+            """)
 
             if st.button("✅ J'ai compris", use_container_width=True):
                 st.session_state.show_welcome_guide = False

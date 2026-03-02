@@ -11,7 +11,7 @@ aux transactions déjà catégorisées en base.
 
 Usage:
     from modules.categorization_cascade import TransactionCategorizer
-    
+
     categorizer = TransactionCategorizer()
     result = categorizer.categorize("CARREFOUR PARIS 15", amount=-45.67)
 """
@@ -31,7 +31,7 @@ from modules.logger import logger
 @dataclass
 class CategorizationResult:
     """Résultat d'une catégorisation."""
-    
+
     category: str
     clean_merchant: str
     confidence_score: float
@@ -45,13 +45,13 @@ class CategorizationResult:
 class TransactionCategorizer:
     """
     Catégorisateur de transactions avec cascade de confiance.
-    
+
     Ordre de traitement:
     1. Règles heuristiques (patterns connus)
     2. Similarité avec historique (SequenceMatcher > 0.85)
     3. IA locale (Llama 3.2 3B)
     4. IA cloud (Gemini/DeepSeek fallback)
-    
+
     Attributes:
         similarity_threshold: Seuil pour réutiliser catégorie existante
         min_confidence: Confiance minimale pour accepter résultat IA
@@ -139,58 +139,53 @@ class TransactionCategorizer:
     # Patterns heuristiques (règles dur)
     HEURISTIC_PATTERNS = {
         # Food & Drink
-        r"(?i)(carrefour|auchan|leclerc|lidl|aldi|casino|monoprix|franprix|intermarche)": 
-            ("Food & Drink", "Groceries"),
-        r"(?i)(macdo|mcdonald|burger king|kfc|subway|quick|five guys)": 
-            ("Food & Drink", "Fast Food"),
-        r"(?i)(starbuck|costa|pret|paul|eric kayser|boulangerie|patisserie)": 
-            ("Food & Drink", "Coffee Shops"),
-        r"(?i)(uber eat|deliveroo|just eat|foodchery|stuart)": 
-            ("Food & Drink", "Food Delivery"),
-        
+        r"(?i)(carrefour|auchan|leclerc|lidl|aldi|casino|monoprix|franprix|intermarche)": (
+            "Food & Drink",
+            "Groceries",
+        ),
+        r"(?i)(macdo|mcdonald|burger king|kfc|subway|quick|five guys)": (
+            "Food & Drink",
+            "Fast Food",
+        ),
+        r"(?i)(starbuck|costa|pret|paul|eric kayser|boulangerie|patisserie)": (
+            "Food & Drink",
+            "Coffee Shops",
+        ),
+        r"(?i)(uber eat|deliveroo|just eat|foodchery|stuart)": ("Food & Drink", "Food Delivery"),
         # Transportation
-        r"(?i)(total|shell|bp|esso|avia|e.leclerc essence|carrefour essence)": 
-            ("Transportation", "Fuel"),
-        r"(?i)(uber|bolt|taxi|g7|allocab|marcel|heetch|kapten)": 
-            ("Transportation", "Taxi & Rideshare"),
-        r"(?i)(ratp|sncf|transilien|metro|bus|tram|navigo)": 
-            ("Transportation", "Public Transit"),
-        r"(?i)(parking|indigo|saemes)": 
-            ("Transportation", "Parking"),
-        
+        r"(?i)(total|shell|bp|esso|avia|e.leclerc essence|carrefour essence)": (
+            "Transportation",
+            "Fuel",
+        ),
+        r"(?i)(uber|bolt|taxi|g7|allocab|marcel|heetch|kapten)": (
+            "Transportation",
+            "Taxi & Rideshare",
+        ),
+        r"(?i)(ratp|sncf|transilien|metro|bus|tram|navigo)": ("Transportation", "Public Transit"),
+        r"(?i)(parking|indigo|saemes)": ("Transportation", "Parking"),
         # Financial
-        r"(?i)(agios|frais|commission|interet|cheque|virement|prelevement)": 
-            ("Financial", "Bank Fees"),
-        r"(?i)(assurance|axa|maif|macif|gmf|groupama)": 
-            ("Financial", "Insurance"),
-        
+        r"(?i)(agios|frais|commission|interet|cheque|virement|prelevement)": (
+            "Financial",
+            "Bank Fees",
+        ),
+        r"(?i)(assurance|axa|maif|macif|gmf|groupama)": ("Financial", "Insurance"),
         # Housing
-        r"(?i)(edf|engie|direct energie|total energie|veolia|suez)": 
-            ("Housing", "Utilities"),
-        r"(?i)(orange|sfr|bouygues|free mobile|sosh|red)": 
-            ("Housing", "Phone"),
-        r"(?i)(orange|sfr|free|bouygues telecom.*box|sosh.*box)": 
-            ("Housing", "Internet"),
-        
+        r"(?i)(edf|engie|direct energie|total energie|veolia|suez)": ("Housing", "Utilities"),
+        r"(?i)(orange|sfr|bouygues|free mobile|sosh|red)": ("Housing", "Phone"),
+        r"(?i)(orange|sfr|free|bouygues telecom.*box|sosh.*box)": ("Housing", "Internet"),
         # Entertainment
-        r"(?i)(netflix|spotify|amazon prime|disney|apple tv|youtube| Canal)": 
-            ("Entertainment", "Streaming"),
-        r"(?i)(cinema|ugc|gaumont|pathe|mk2)": 
-            ("Entertainment", "Movies & Shows"),
-        
+        r"(?i)(netflix|spotify|amazon prime|disney|apple tv|youtube| Canal)": (
+            "Entertainment",
+            "Streaming",
+        ),
+        r"(?i)(cinema|ugc|gaumont|pathe|mk2)": ("Entertainment", "Movies & Shows"),
         # Health
-        r"(?i)(pharmacie|pharmacy|parapharmacie)": 
-            ("Health", "Pharmacy"),
-        r"(?i)(doctolib|medecin|dentiste|ophtalmo|kine|osteopathe)": 
-            ("Health", "Medical"),
-        r"(?i)(basic fit|keep cool|neoness|fitness park|gym)": 
-            ("Health", "Gym & Fitness"),
-        
+        r"(?i)(pharmacie|pharmacy|parapharmacie)": ("Health", "Pharmacy"),
+        r"(?i)(doctolib|medecin|dentiste|ophtalmo|kine|osteopathe)": ("Health", "Medical"),
+        r"(?i)(basic fit|keep cool|neoness|fitness park|gym)": ("Health", "Gym & Fitness"),
         # Income patterns (positive amounts)
-        r"(?i)(salaire|virement.*employeur|paye|remuneration)": 
-            ("Income", "Salary"),
-        r"(?i)(remboursement|rembourse|retrocession)": 
-            ("Income", "Refunds"),
+        r"(?i)(salaire|virement.*employeur|paye|remuneration)": ("Income", "Salary"),
+        r"(?i)(remboursement|rembourse|retrocession)": ("Income", "Refunds"),
     }
 
     def __init__(
@@ -202,7 +197,7 @@ class TransactionCategorizer:
     ):
         """
         Initialize le catégoriseur.
-        
+
         Args:
             similarity_threshold: Seuil SequenceMatcher (0-1)
             min_confidence: Confiance minimale résultat IA
@@ -213,13 +208,13 @@ class TransactionCategorizer:
         self.min_confidence = min_confidence
         self.use_local_ai = use_local_ai
         self.use_cloud_fallback = use_cloud_fallback
-        
+
         self.tx_repo = None
         self.cat_repo = None
-        
+
         # Cache historique
         self._history_cache: Optional[pd.DataFrame] = None
-        
+
         # Provider IA (lazy load)
         self._local_provider = None
         self._cloud_provider = None
@@ -229,6 +224,7 @@ class TransactionCategorizer:
         if self._local_provider is None and self.use_local_ai:
             try:
                 from modules.ai.local_slm_provider import get_local_slm_provider
+
                 self._local_provider = get_local_slm_provider(fallback_to_cloud=False)
             except Exception as e:
                 logger.warning(f"Could not load local AI: {e}")
@@ -240,6 +236,7 @@ class TransactionCategorizer:
         if self._cloud_provider is None and self.use_cloud_fallback:
             try:
                 from modules.ai_manager import get_ai_provider
+
                 self._cloud_provider = get_ai_provider()
             except Exception as e:
                 logger.warning(f"Could not load cloud AI: {e}")
@@ -250,6 +247,7 @@ class TransactionCategorizer:
         """Charge l'historique des transactions catégorisées."""
         if self._history_cache is None:
             from modules.db.transactions import get_all_transactions
+
             df = get_all_transactions(limit=5000)
             if not df.empty and "status" in df.columns:
                 self._history_cache = df[df["status"] == "validated"]
@@ -260,20 +258,20 @@ class TransactionCategorizer:
     def _clean_label(self, label: str) -> str:
         """Nettoie le libellé pour comparaison."""
         # Remove extra spaces, normalize case
-        cleaned = re.sub(r'\s+', ' ', label.strip().upper())
+        cleaned = re.sub(r"\s+", " ", label.strip().upper())
         # Remove common prefixes
-        cleaned = re.sub(r'^(CB|VIR|PRLV|RETRAIT|CHEQUE)\s*', '', cleaned)
+        cleaned = re.sub(r"^(CB|VIR|PRLV|RETRAIT|CHEQUE)\s*", "", cleaned)
         return cleaned
 
     def _check_heuristics(self, label: str, amount: float) -> Optional[CategorizationResult]:
         """
         Étape 1: Vérifie les règles heuristiques.
-        
+
         Returns:
             Résultat si pattern match, None sinon
         """
         cleaned = self._clean_label(label)
-        
+
         for pattern, (category, subcategory) in self.HEURISTIC_PATTERNS.items():
             if re.search(pattern, cleaned):
                 # Determine if income based on amount
@@ -282,7 +280,7 @@ class TransactionCategorizer:
                 if category != "Income" and amount > 0:
                     # Could be refund, keep checking
                     pass
-                
+
                 return CategorizationResult(
                     category=f"{category} > {subcategory}",
                     clean_merchant=self._extract_merchant(label),
@@ -290,40 +288,40 @@ class TransactionCategorizer:
                     source="heuristic",
                     is_recurring_candidate=self._is_recurring_pattern(label),
                 )
-        
+
         return None
 
     def _check_similarity(self, label: str) -> Optional[CategorizationResult]:
         """
         Étape 2: Compare avec l'historique via SequenceMatcher.
-        
+
         Returns:
             Résultat si similarité > threshold, None sinon
         """
         history = self._load_history()
         if history.empty:
             return None
-        
+
         cleaned_input = self._clean_label(label)
         best_match = None
         best_score = 0.0
         best_tx_id = None
-        
+
         for _, row in history.iterrows():
-            hist_label = str(row.get('label', ''))
+            hist_label = str(row.get("label", ""))
             cleaned_hist = self._clean_label(hist_label)
-            
+
             # Calculate similarity
             similarity = SequenceMatcher(None, cleaned_input, cleaned_hist).ratio()
-            
+
             if similarity > best_score:
                 best_score = similarity
                 best_match = row
-                best_tx_id = row.get('id')
-        
+                best_tx_id = row.get("id")
+
         if best_score >= self.similarity_threshold and best_match is not None:
-            category = best_match.get('category_validated') or best_match.get('category', 'Unknown')
-            
+            category = best_match.get("category_validated") or best_match.get("category", "Unknown")
+
             return CategorizationResult(
                 category=category,
                 clean_merchant=self._extract_merchant(label),
@@ -333,7 +331,7 @@ class TransactionCategorizer:
                 similarity_score=round(best_score, 3),
                 is_recurring_candidate=self._is_recurring_pattern(label),
             )
-        
+
         return None
 
     def _call_ai(self, label: str, amount: float, date: str) -> CategorizationResult:
@@ -342,7 +340,7 @@ class TransactionCategorizer:
         """
         # Build structured prompt
         prompt = self._build_ai_prompt(label, amount, date)
-        
+
         # Try local first
         if self.use_local_ai:
             local = self._get_local_provider()
@@ -352,7 +350,7 @@ class TransactionCategorizer:
                     return self._parse_ai_result(result, "local_ai")
                 except Exception as e:
                     logger.warning(f"Local AI failed: {e}")
-        
+
         # Fallback to cloud
         if self.use_cloud_fallback:
             cloud = self._get_cloud_provider()
@@ -362,7 +360,7 @@ class TransactionCategorizer:
                     return self._parse_ai_result(result, "cloud_ai")
                 except Exception as e:
                     logger.error(f"Cloud AI failed: {e}")
-        
+
         # Ultimate fallback: unknown
         return CategorizationResult(
             category="Unknown",
@@ -375,11 +373,10 @@ class TransactionCategorizer:
         """
         Construit le prompt pour l'IA au format PFCv2.
         """
-        categories_list = "\n".join([
-            f"  - {main}: {', '.join(subs)}"
-            for main, subs in self.PFCV2_CATEGORIES.items()
-        ])
-        
+        categories_list = "\n".join(
+            [f"  - {main}: {', '.join(subs)}" for main, subs in self.PFCV2_CATEGORIES.items()]
+        )
+
         prompt = f"""Analyse cette transaction bancaire et extrait les informations structurées.
 
 DONNÉES BRUTES:
@@ -418,7 +415,7 @@ RÉPONDS UNIQUEMENT AVEC CE JSON (pas de texte avant/après):
                 confidence_score=0.0,
                 source="error",
             )
-        
+
         return CategorizationResult(
             category=result.get("category", "Unknown"),
             clean_merchant=result.get("clean_merchant", "Unknown"),
@@ -431,24 +428,24 @@ RÉPONDS UNIQUEMENT AVEC CE JSON (pas de texte avant/après):
     def _extract_merchant(self, label: str) -> str:
         """Extrait le nom du marchand d'un libellé."""
         # Remove transaction codes
-        cleaned = re.sub(r'\b(CB|VIR|PRLV|RETRAIT|CHEQUE)\s*\d*\s*', '', label)
+        cleaned = re.sub(r"\b(CB|VIR|PRLV|RETRAIT|CHEQUE)\s*\d*\s*", "", label)
         # Remove dates
-        cleaned = re.sub(r'\d{2}/\d{2}/\d{2,4}', '', cleaned)
+        cleaned = re.sub(r"\d{2}/\d{2}/\d{2,4}", "", cleaned)
         # Remove amounts
-        cleaned = re.sub(r'\d+[.,]\d{2}\s*(EUR|€)?', '', cleaned)
+        cleaned = re.sub(r"\d+[.,]\d{2}\s*(EUR|€)?", "", cleaned)
         # Clean up
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return cleaned[:50] if cleaned else "Unknown"
 
     def _is_recurring_pattern(self, label: str) -> bool:
         """Détecte si le libellé correspond à un pattern récurrent."""
         recurring_keywords = [
-            r'(?i)(abonnement|subscription)',
-            r'(?i)(mensuel|monthly|annuel|yearly)',
-            r'(?i)(prélèvement|prelevement).*automatique',
-            r'(?i)(netflix|spotify|prime|disney|canal)',
-            r'(?i)(edf|engie|orange|sfr|free)',
-            r'(?i)(assurance|mutuelle|cotisation)',
+            r"(?i)(abonnement|subscription)",
+            r"(?i)(mensuel|monthly|annuel|yearly)",
+            r"(?i)(prélèvement|prelevement).*automatique",
+            r"(?i)(netflix|spotify|prime|disney|canal)",
+            r"(?i)(edf|engie|orange|sfr|free)",
+            r"(?i)(assurance|mutuelle|cotisation)",
         ]
         return any(re.search(pattern, label) for pattern in recurring_keywords)
 
@@ -461,43 +458,47 @@ RÉPONDS UNIQUEMENT AVEC CE JSON (pas de texte avant/après):
     ) -> CategorizationResult:
         """
         Catégorise une transaction via la cascade de confiance.
-        
+
         Ordre de traitement:
         1. Heuristique (patterns connus)
         2. Similarité avec historique (SequenceMatcher > 0.85)
         3. IA locale (Llama 3.2)
         4. IA cloud (fallback)
-        
+
         Args:
             label: Libellé brut de la transaction
             amount: Montant (négatif pour dépense, positif pour revenu)
             date: Date de la transaction
             force_ai: Forcer l'utilisation de l'IA (skip heuristique/similarité)
-            
+
         Returns:
             CategorizationResult avec catégorie, confiance, source
         """
         logger.info(f"Categorizing: '{label[:50]}...' ({amount:.2f} EUR)")
-        
+
         # Step 1: Heuristics (unless forced AI)
         if not force_ai:
             result = self._check_heuristics(label, amount)
             if result:
                 logger.info(f"✅ Heuristic match: {result.category} ({result.confidence_score})")
                 return result
-        
+
         # Step 2: Similarity (unless forced AI)
         if not force_ai:
             result = self._check_similarity(label)
             if result:
-                logger.info(f"✅ Similarity match: {result.category} (score: {result.similarity_score})")
+                logger.info(
+                    f"✅ Similarity match: {result.category} (score: {result.similarity_score})"
+                )
                 return result
-        
+
         # Step 3 & 4: AI (local then cloud)
         logger.info("🤖 Using AI categorization")
         result = self._call_ai(label, amount, date)
-        logger.info(f"✅ AI result: {result.category} ({result.source}, conf: {result.confidence_score})")
-        
+        logger.info(
+            f"✅ AI result: {result.category} ({result.source}, conf: {result.confidence_score})"
+        )
+
         return result
 
     def invalidate_cache(self):
@@ -514,13 +515,13 @@ def categorize_transaction(
 ) -> dict[str, Any]:
     """
     Catégorise une transaction (fonction simple).
-    
+
     Returns:
         Dict avec category, clean_merchant, confidence, source
     """
     categorizer = TransactionCategorizer()
     result = categorizer.categorize(label, amount, date)
-    
+
     return {
         "category": result.category,
         "clean_merchant": result.clean_merchant,

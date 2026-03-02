@@ -53,8 +53,7 @@ def render_import_tab():
 
     # Quick guide
     with st.expander("📖 Guide rapide d'import", expanded=False):
-        st.markdown(
-            """
+        st.markdown("""
         ### Comment importer vos relevés bancaires
         
         1. **Connectez-vous** à votre banque en ligne
@@ -64,8 +63,7 @@ def render_import_tab():
         5. **Vérifiez** le preview avant de confirmer
         
         **Formats supportés :** Boursorama, Revolut, N26, Fortuneo, et banques standards CSV
-        """
-        )
+        """)
         st.info("🎥 Tutoriel vidéo à venir - En attendant, suivez les étapes ci-dessus")
 
     # --- RECENT IMPORTS SUMMARY ---
@@ -92,20 +90,20 @@ def render_import_tab():
     from modules.ingestion.bank_templates import BANK_TEMPLATES
 
     st.markdown("**🏦 Sélectionnez votre banque**")
-    
+
     # Afficher les banques supportées dans une grille
     bank_cols = st.columns(3)
     selected_bank_key = None
-    
+
     bank_icons = {
         "boursorama": "🏦",
-        "ing_direct": "🟠", 
+        "ing_direct": "🟠",
         "credit_mutuel": "🔵",
         "societe_generale": "🔴",
         "caisse_epargne": "🟢",
         "banque_populaire": "🟣",
     }
-    
+
     for i, (bank_key, template) in enumerate(BANK_TEMPLATES.items()):
         with bank_cols[i % 3]:
             icon = bank_icons.get(bank_key, "🏦")
@@ -113,19 +111,21 @@ def render_import_tab():
                 f"{icon} {template.name}",
                 key=f"bank_btn_{bank_key}",
                 use_container_width=True,
-                type="primary" if st.session_state.get("selected_bank") == bank_key else "secondary"
+                type=(
+                    "primary" if st.session_state.get("selected_bank") == bank_key else "secondary"
+                ),
             ):
                 selected_bank_key = bank_key
                 st.session_state["selected_bank"] = bank_key
                 st.rerun()
-    
+
     # Option configuration manuelle
     with st.expander("⚙️ Configuration manuelle (autre banque)", expanded=False):
         col1, col2, col3 = st.columns(3)
         sep = col1.selectbox("Séparateur", [";", ",", "\t"], index=0)
         decimal = col2.selectbox("Décimale", [",", "."], index=0)
         skiprows = col3.number_input("Lignes à ignorer (en-tête)", min_value=0, value=0)
-        
+
         if st.button("Utiliser configuration manuelle", key="manual_config_btn"):
             st.session_state["selected_bank"] = "custom"
             st.rerun()
@@ -133,10 +133,12 @@ def render_import_tab():
     # Afficher la banque sélectionnée
     selected_bank_key = st.session_state.get("selected_bank")
     config = None
-    
+
     if selected_bank_key and selected_bank_key != "custom":
         template = BANK_TEMPLATES[selected_bank_key]
-        st.success(f"✅ Banque sélectionnée : **{template.name}** | Délimiteur: '{template.delimiter}' | Encodage: {template.encoding}")
+        st.success(
+            f"✅ Banque sélectionnée : **{template.name}** | Délimiteur: '{template.delimiter}' | Encodage: {template.encoding}"
+        )
         import_mode = "bank_template"
     elif selected_bank_key == "custom":
         st.info("📝 Mode configuration manuelle activé")
@@ -177,7 +179,9 @@ def render_import_tab():
                     col_label = st.selectbox("Colonne Libellé", cols, key="import_custom_col_label")
                 with c4:
                     col_member = st.selectbox(
-                        "Colonne Carte (optionnel)", ["-- Ignorer --"] + cols, key="import_custom_col_member"
+                        "Colonne Carte (optionnel)",
+                        ["-- Ignorer --"] + cols,
+                        key="import_custom_col_member",
                     )
 
                 config["mapping"] = {
@@ -294,7 +298,7 @@ def render_import_tab():
                     # --- DUPLICATE DETECTION ---
                     existing_hashes = get_all_hashes()
                     force_import = False
-                    
+
                     # Initialiser duplicates_mask par défaut
                     duplicates_mask = pd.Series(False, index=df.index)
                     num_duplicates = 0
@@ -317,11 +321,19 @@ def render_import_tab():
 
                     # --- STEP 3: PROFESSIONAL PREVIEW ---
                     st.session_state.import_step = 3
-                    
+
                     # Préparer les données pour le composant de preview
-                    detected_bank = "BoursoBank" if selected_bank_key == "boursorama" else "Banque personnalisée"
-                    duplicates_df = df[duplicates_mask].copy() if existing_hashes and num_duplicates > 0 else None
-                    
+                    detected_bank = (
+                        "BoursoBank"
+                        if selected_bank_key == "boursorama"
+                        else "Banque personnalisée"
+                    )
+                    duplicates_df = (
+                        df[duplicates_mask].copy()
+                        if existing_hashes and num_duplicates > 0
+                        else None
+                    )
+
                     # Callbacks pour les actions
                     def on_import_confirmed(df_to_import, options):
                         """Callback quand l'utilisateur confirme l'import."""
@@ -329,11 +341,11 @@ def render_import_tab():
                         st.session_state["df_to_import"] = df_to_import
                         st.session_state["import_options"] = options
                         st.session_state["account_name"] = account_name
-                    
+
                     def on_import_cancelled():
                         """Callback quand l'utilisateur annule."""
                         st.session_state["import_cancelled"] = True
-                    
+
                     # Afficher le preview professionnel
                     render_import_preview(
                         df=df,
@@ -341,73 +353,77 @@ def render_import_tab():
                         duplicates=duplicates_df,
                         on_confirm=on_import_confirmed,
                         on_cancel=on_import_cancelled,
-                        key="import_preview_main"
+                        key="import_preview_main",
                     )
-                    
+
                     # Gérer les actions du preview
                     if st.session_state.get("import_cancelled"):
                         st.session_state["import_cancelled"] = False
                         st.session_state.import_step = 0
                         st.rerun()
-                    
+
                     if st.session_state.get("import_confirmed"):
                         df_import = st.session_state["df_to_import"]
                         options = st.session_state["import_options"]
                         auto_cat = options.get("auto_categorize", True)
                         skip_validation = options.get("skip_validation", False)
-                        
+
                         # Réinitialiser les flags
                         st.session_state["import_confirmed"] = False
-                        
+
                         # Passer à l'étape 4 (Import)
                         st.session_state.import_step = 4
-                        
+
                         # --- STEP 4: IMPORT AVEC PROGRESSION ---
                         st.divider()
                         st.subheader("4️⃣ Import des données")
-                        
+
                         # Étapes d'import pour la barre de progression
                         import_steps = [
                             "Préparation des données",
                             "Catégorisation automatique",
                             "Enregistrement en base",
-                            "Finalisation"
+                            "Finalisation",
                         ]
-                        
+
                         errors = []
                         categorized_count = 0
-                        
+
                         with st.container():
                             # Étape 1: Préparation
                             show_import_progress(1, len(import_steps), import_steps[0])
-                            
+
                             # Étape 2: Catégorisation (si activée)
                             if auto_cat:
                                 show_import_progress(2, len(import_steps), import_steps[1])
-                                
+
                                 # Préparer les données pour le batch
                                 tx_data = [
                                     (row["label"], row["amount"], row["date"])
                                     for _, row in df_import.iterrows()
                                 ]
-                                
+
                                 # Catégorisation en batch (beaucoup plus rapide)
                                 progress_bar = st.progress(0)
                                 update_interval = max(1, len(tx_data) // 20)  # Tous les 5%
-                                
+
                                 try:
                                     all_results = categorize_transaction_batch(tx_data)
-                                    categorized_count = len([r for r in all_results if r[0] != "Inconnu"])
-                                    
+                                    categorized_count = len(
+                                        [r for r in all_results if r[0] != "Inconnu"]
+                                    )
+
                                     # Simuler une progression pour l'UX
                                     for i in range(0, len(tx_data), update_interval):
-                                        progress_bar.progress(min((i + update_interval) / len(tx_data), 1.0))
-                                    
+                                        progress_bar.progress(
+                                            min((i + update_interval) / len(tx_data), 1.0)
+                                        )
+
                                 except Exception as e:
                                     logger.error(f"Batch categorization failed: {e}")
                                     # Fallback: marquer tout comme Inconnu
                                     all_results = [("Inconnu", "error", 0.0)] * len(tx_data)
-                                
+
                                 df_import["category_validated"] = [
                                     r[0] if r[0] else "Inconnu" for r in all_results
                                 ]
@@ -421,23 +437,23 @@ def render_import_tab():
                                 df_import["category_validated"] = "Inconnu"
                                 df_import["ai_confidence"] = 0.0
                                 df_import["status"] = "pending"
-                            
+
                             # Étape 3: Enregistrement
                             show_import_progress(3, len(import_steps), import_steps[2])
                             df_import["account_label"] = account_name
                             count, skipped = save_transactions(df_import)
-                            
+
                             # Étape 4: Finalisation
                             show_import_progress(4, len(import_steps), import_steps[3])
-                            
+
                             # Afficher le résumé professionnel
                             show_import_summary(
                                 imported=count,
                                 categorized=categorized_count,
                                 duplicates_skipped=skipped,
-                                errors=errors
+                                errors=errors,
                             )
-                            
+
                             # Redirection vers validation si succès
                             if count > 0:
                                 st.session_state["just_imported"] = True
@@ -454,4 +470,6 @@ def render_import_tab():
                 st.error(f"❌ Colonne manquante dans le fichier : {e}")
             except Exception as e:
                 logger.exception(f"Unexpected error during import: {e}")
-                st.error("❌ Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support.")
+                st.error(
+                    "❌ Une erreur inattendue s'est produite. Veuillez réessayer ou contacter le support."
+                )

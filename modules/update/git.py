@@ -83,10 +83,10 @@ class GitAnalyzer:
                     ref = "HEAD"  # Last resort
 
         return self._get_changes_from_git(ref)
-    
+
     def _get_first_commit(self) -> Optional[str]:
         """Get the first commit hash in the repository.
-        
+
         Returns:
             First commit hash or None
         """
@@ -98,7 +98,7 @@ class GitAnalyzer:
                 cwd=self.repo_path,
             )
             if result.returncode == 0:
-                return result.stdout.strip().split('\n')[0]
+                return result.stdout.strip().split("\n")[0]
         except Exception:
             pass
         return None
@@ -213,7 +213,7 @@ class GitAnalyzer:
 
     def get_uncommitted_changes(self) -> dict[str, str]:
         """Get uncommitted changes in the working directory.
-        
+
         Returns:
             Dictionary mapping file paths to their status
         """
@@ -225,19 +225,19 @@ class GitAnalyzer:
                 text=True,
                 cwd=self.repo_path,
             )
-            
+
             if result.returncode != 0:
                 return {}
-            
+
             changes = {}
             for line in result.stdout.strip().split("\n"):
                 if not line:
                     continue
-                
+
                 # Parse porcelain format: XY filename or XY "filename with spaces"
                 status_code = line[:2]
                 file_path = line[3:].strip()
-                
+
                 # Determine human-readable status
                 if status_code == "??":
                     status = "untracked"
@@ -255,11 +255,11 @@ class GitAnalyzer:
                     status = "staged + unstaged changes"
                 else:
                     status = "modified"
-                
+
                 changes[file_path] = status
-            
+
             return changes
-            
+
         except Exception as e:
             logger.error(f"Error getting uncommitted changes: {e}")
             return {}

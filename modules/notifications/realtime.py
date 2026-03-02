@@ -303,9 +303,7 @@ class RealTimeNotificationManager:
             actions=[{"label": "Catégoriser", "action": "categorize"}],
         )
 
-    def get_pending_alerts(
-        self, severity_filter: list[str] | None = None
-    ) -> list[RealTimeAlert]:
+    def get_pending_alerts(self, severity_filter: list[str] | None = None) -> list[RealTimeAlert]:
         """
         Récupère les alertes en attente.
 

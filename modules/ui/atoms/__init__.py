@@ -8,7 +8,7 @@ Les atomes sont les éléments UI les plus fondamentaux :
 
 Usage:
     from modules.ui.atoms import Button, Badge
-    
+
     Button.primary("Valider", on_click=handler)
     Badge.success("Actif")
 """

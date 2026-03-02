@@ -26,32 +26,32 @@ def _ensure_datetime(df: pd.DataFrame) -> pd.DataFrame:
 def calculate_reste_a_vivre(df: pd.DataFrame) -> float:
     """
     Calcule le reste à vivre: argent disponible (revenus - dépenses).
-    
+
     C'est l'argent réellement disponible après toutes les dépenses.
     Équivalent au solde (Revenus - Dépenses totales).
-    
+
     Args:
         df: DataFrame avec transactions
-        
+
     Returns:
         Montant du reste à vivre en euros
     """
     if df.empty:
         return 0.0
-    
+
     revenus = calculate_true_income(df, include_refunds=False)
     depenses = calculate_true_expenses(df, include_refunds=True)
-    
+
     return revenus - depenses
 
 
 def calculate_savings_amount(df: pd.DataFrame) -> float:
     """
     Calcule le montant épargné (revenus - dépenses).
-    
+
     Args:
         df: DataFrame avec transactions
-        
+
     Returns:
         Montant épargné en euros (peut être négatif si déficit)
     """
@@ -103,8 +103,10 @@ def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
         exp_trend, exp_color, _ = get_trend(cur_exp, prev_exp, inverse=True)
         rev_trend, rev_color, _ = get_trend(cur_rev, prev_rev, inverse=False)
         solde_trend, solde_color, _ = get_trend(cur_solde, prev_solde, inverse=False)
-        reste_trend, reste_color, reste_diff = get_trend(cur_reste_a_vivre, prev_reste_a_vivre, inverse=False)
-        
+        reste_trend, reste_color, reste_diff = get_trend(
+            cur_reste_a_vivre, prev_reste_a_vivre, inverse=False
+        )
+
         # Pour l'épargne: détecter si premier versement (passage de <=0 à >0)
         if prev_savings_amount <= 0 and cur_savings_amount > 0:
             savings_trend = "🎉 Premier versement !"
@@ -113,7 +115,9 @@ def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
             savings_trend = "-"
             savings_color = "neutral"
         else:
-            savings_diff = ((cur_savings_amount - prev_savings_amount) / abs(prev_savings_amount)) * 100
+            savings_diff = (
+                (cur_savings_amount - prev_savings_amount) / abs(prev_savings_amount)
+            ) * 100
             savings_color = "positive" if savings_diff > 0 else "negative"
             savings_trend = f"{savings_diff:+.1f}%"
     else:
@@ -135,7 +139,11 @@ def calculate_trends(df_current: pd.DataFrame, df_prev: pd.DataFrame) -> dict:
         "savings_rate": {
             "value": cur_saving_rate,
             "trend": "Taux",
-            "color": "positive" if cur_saving_rate > 10 else "neutral" if cur_saving_rate > 0 else "negative",
+            "color": (
+                "positive"
+                if cur_saving_rate > 10
+                else "neutral" if cur_saving_rate > 0 else "negative"
+            ),
         },
         "savings_amount": {
             "value": cur_savings_amount,
@@ -188,11 +196,17 @@ def compute_previous_period(
     return df_prev
 
 
-def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None, 
-                          trend_color: str = "positive", subtitle: str = "Ce mois-ci"):
+def _render_kpi_card_html(
+    title: str,
+    value: str,
+    icon: str,
+    trend: str = None,
+    trend_color: str = "positive",
+    subtitle: str = "Ce mois-ci",
+):
     """
     Rend une carte KPI avec HTML/CSS personnalisé (style FinCouple).
-    
+
     Args:
         title: Titre de la métrique
         value: Valeur à afficher
@@ -207,10 +221,10 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
     color_map = {
         "positive": "#10B981",  # Vert
         "negative": "#EF4444",  # Rouge
-        "neutral": "#6B7280",   # Gris
+        "neutral": "#6B7280",  # Gris
     }
     trend_color_hex = color_map.get(trend_color, "#6B7280")
-    
+
     # Flèche pour la tendance
     arrow = ""
     if trend and trend != "-":
@@ -222,7 +236,7 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
             arrow = "↓ "
         else:
             arrow = "→ "
-    
+
     trend_html = ""
     if trend and trend != "-":
         # Description accessible de la tendance
@@ -231,8 +245,8 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
             trend_description = f"En hausse de {trend}"
         elif trend_color == "negative":
             trend_description = f"En baisse de {trend}"
-        
-        trend_html = f'''
+
+        trend_html = f"""
         <div style="
             font-size: 0.875rem;
             font-weight: 600;
@@ -247,14 +261,14 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
             <span aria-hidden="true">{arrow}</span>
             <span>{trend}</span>
         </div>
-        '''
-    
+        """
+
     # Construction du texte descriptif pour l'accessibilité
     aria_description = f"{title}: {value}"
     if trend_value and trend_value != "-":
         aria_description += f", {trend_value}"
-    
-    html = f'''
+
+    html = f"""
     <div class="kpi-card" 
          role="region" 
          aria-label="Indicateur: {title}"
@@ -310,20 +324,22 @@ def _render_kpi_card_html(title: str, value: str, icon: str, trend: str = None,
             {subtitle}
         </div>
     </div>
-    '''
+    """
     st.markdown(html, unsafe_allow_html=True)
 
 
 # Styles CSS injectés une seule fois
 _KPI_STYLES_INJECTED = False
 
+
 def _inject_kpi_responsive_styles() -> None:
     """Injecte les styles CSS responsives pour les KPI (une seule fois)."""
     global _KPI_STYLES_INJECTED
     if _KPI_STYLES_INJECTED:
         return
-    
-    st.markdown("""
+
+    st.markdown(
+        """
     <style>
     /* Grid responsive pour les KPI */
     .kpi-grid {
@@ -364,15 +380,17 @@ def _inject_kpi_responsive_styles() -> None:
         }
     }
     </style>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     _KPI_STYLES_INJECTED = True
 
 
 def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
     """
     Render 4 KPI cards with trend indicators in a responsive grid layout.
-    
+
     Layout Desktop (2x2 grid):
     ┌───────────────────┐  ┌───────────────────┐
     │ 💚 Reste à vivre  │  │ 💳 Dépenses       │
@@ -388,7 +406,7 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
     │ ↑ 5.0% vs janv.   │  │ 🎉 1er versement! │
     │ Ce mois-ci        │  │ Ce mois-ci        │
     └───────────────────┘  └───────────────────┘
-    
+
     Layout Mobile (1 colonne):
     ┌───────────────────┐
     │ 💚 Reste à vivre  │
@@ -415,22 +433,42 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
 
     # Injecter les styles responsives
     _inject_kpi_responsive_styles()
-    
+
     # Utiliser un conteneur grid avec CSS responsive
     st.markdown('<div class="kpi-grid">', unsafe_allow_html=True)
-    
+
     # Les 4 cartes KPI
     kpi_data = [
-        ("Reste à vivre", trends['reste_a_vivre']['value'], "💚", 
-         trends["reste_a_vivre"]["trend"], trends["reste_a_vivre"]["color"]),
-        ("Dépenses", trends['expenses']['value'], "💳",
-         trends["expenses"]["trend"], trends["expenses"]["color"]),
-        ("Revenus", trends['revenue']['value'], "💶",
-         trends["revenue"]["trend"], trends["revenue"]["color"]),
-        ("Épargne", trends['savings_amount']['value'], "🎯",
-         trends["savings_amount"]["trend"], trends["savings_amount"]["color"]),
+        (
+            "Reste à vivre",
+            trends["reste_a_vivre"]["value"],
+            "💚",
+            trends["reste_a_vivre"]["trend"],
+            trends["reste_a_vivre"]["color"],
+        ),
+        (
+            "Dépenses",
+            trends["expenses"]["value"],
+            "💳",
+            trends["expenses"]["trend"],
+            trends["expenses"]["color"],
+        ),
+        (
+            "Revenus",
+            trends["revenue"]["value"],
+            "💶",
+            trends["revenue"]["trend"],
+            trends["revenue"]["color"],
+        ),
+        (
+            "Épargne",
+            trends["savings_amount"]["value"],
+            "🎯",
+            trends["savings_amount"]["trend"],
+            trends["savings_amount"]["color"],
+        ),
     ]
-    
+
     for title, value, icon, trend, trend_color in kpi_data:
         formatted_value = f"{value:,.2f} €".replace(",", " ")
         _render_kpi_card_html(
@@ -439,10 +477,10 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
             icon=icon,
             trend=trend,
             trend_color=trend_color,
-            subtitle="Ce mois-ci"
+            subtitle="Ce mois-ci",
         )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 # Alias pour compatibilité avec l'ancien code qui pourrait importer card_kpi
@@ -450,7 +488,7 @@ def render_kpi_cards(df_current: pd.DataFrame, df_prev: pd.DataFrame = None):
 def card_kpi(title, value, trend=None, trend_color="positive"):
     """
     Rend une carte KPI (wrapper vers le design system).
-    
+
     Cette fonction est conservée pour compatibilité.
     Utilise _render_kpi_card_html en interne.
     """
@@ -463,12 +501,12 @@ def card_kpi(title, value, trend=None, trend_color="positive"):
         "Reste à vivre": "💚",
     }
     icon = icon_map.get(title, "📊")
-    
+
     _render_kpi_card_html(
         title=title,
         value=value,
         icon=icon,
         trend=trend,
         trend_color=trend_color,
-        subtitle="Ce mois-ci"
+        subtitle="Ce mois-ci",
     )

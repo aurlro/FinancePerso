@@ -137,8 +137,7 @@ def merge_categories_atomic(
     # Handle edge case: same category
     if source_category.lower() == target_category.lower():
         logger.info(
-            f"Source and target categories are the same ('{source_category}'), "
-            "nothing to merge"
+            f"Source and target categories are the same ('{source_category}'), " "nothing to merge"
         )
         return {"transactions": 0, "rules": 0, "budgets": 0}
 

@@ -2,7 +2,6 @@
 Explorer Results - Affichage des résultats de l'explorateur.
 """
 
-
 import pandas as pd
 import streamlit as st
 

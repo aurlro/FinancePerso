@@ -20,19 +20,19 @@ def render_notification_badge(
     key: str = "notif_badge",
 ) -> None:
     """Rend le badge de notification pour la sidebar.
-    
+
     Args:
         service: Instance du service (créée si non fournie)
         key: Clé unique pour Streamlit
     """
     if service is None:
         service = NotificationService()
-    
+
     count = service.count_unread()
-    
+
     if count == 0:
         return
-    
+
     # Container avec style
     container_style = f"""
         display: flex;
@@ -43,38 +43,38 @@ def render_notification_badge(
         border-radius: 8px;
         margin-bottom: {Spacing.MD};
     """
-    
+
     st.markdown(f'<div style="{container_style}">', unsafe_allow_html=True)
-    
+
     col1, col2 = st.columns([1, 3])
-    
+
     with col1:
         # Icône cloche avec compteur
         bell_icon = "🔔" if count > 0 else "🔕"
         st.markdown(f"<div style='font-size: 1.5rem;'>{bell_icon}</div>", unsafe_allow_html=True)
-    
+
     with col2:
         # Texte et badge
         st.markdown(
             f"<div style='font-weight: {Typography.WEIGHT_SEMIBOLD};'>Notifications</div>",
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        
+
         if count > 0:
             level = "danger" if count > 5 else "warning" if count > 2 else "info"
             getattr(Badge, level)(f"{count} non lue(s)")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
     # Liste rapide des 3 dernières notifications
     if count > 0:
         unread = service.get_unread(limit=3)
         for notif in unread:
             _render_mini_notification(notif, service)
-        
+
         if count > 3:
             st.caption(f"...et {count - 3} autres")
-        
+
         # Bouton vers centre complet
         if Button.secondary("Voir tout", key=f"{key}_see_all", use_container_width=True):
             st.switch_page("pages/21_Systeme.py")
@@ -94,7 +94,7 @@ def _render_mini_notification(
         NotificationLevel.ACHIEVEMENT: Colors.ACCENT,
     }
     color = color_map.get(notification.level, Colors.SLATE_500)
-    
+
     # Style compact
     container_style = f"""
         padding: {Spacing.XS} {Spacing.SM};
@@ -103,36 +103,33 @@ def _render_mini_notification(
         margin-bottom: {Spacing.XS};
         font-size: {Typography.SIZE_SM};
     """
-    
+
     st.markdown(f'<div style="{container_style}">', unsafe_allow_html=True)
-    
+
     # Icône + titre/message
     icon = notification.icon or "📌"
     text = notification.title or notification.message[:50]
-    st.markdown(
-        f"<div>{icon} {text}</div>",
-        unsafe_allow_html=True
-    )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f"<div>{icon} {text}</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_notification_center(
     service: Optional[NotificationService] = None,
 ) -> None:
     """Rend le centre de notifications complet.
-    
+
     Page complète avec historique, filtres et actions.
     """
     if service is None:
         service = NotificationService()
-    
+
     st.title("🔔 Centre de notifications")
-    
+
     # Stats
     unread_count = service.count_unread()
     all_notifications = service.get_all(limit=100, include_dismissed=False)
-    
+
     # Header avec stats
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -147,24 +144,22 @@ def render_notification_center(
             if unread_count > 0:
                 service.mark_all_read()
                 st.rerun()
-    
+
     st.divider()
-    
+
     # Filtres
     col1, col2 = st.columns(2)
     with col1:
         filter_type = st.selectbox(
             "Filtrer par type",
             ["Tous", "Non lus", "Budget", "Validation", "Système", "Gamification"],
-            key="notif_filter_type"
+            key="notif_filter_type",
         )
     with col2:
         sort_order = st.selectbox(
-            "Trier par",
-            ["Plus récent", "Plus ancien", "Priorité"],
-            key="notif_sort"
+            "Trier par", ["Plus récent", "Plus ancien", "Priorité"], key="notif_sort"
         )
-    
+
     # Filtrer les notifications
     filtered = all_notifications
     if filter_type == "Non lus":
@@ -177,7 +172,7 @@ def render_notification_center(
         filtered = [n for n in filtered if n.category == "system"]
     elif filter_type == "Gamification":
         filtered = [n for n in filtered if n.category == "gamification"]
-    
+
     # Trier
     if sort_order == "Plus récent":
         filtered = sorted(filtered, key=lambda x: x.created_at, reverse=True)
@@ -192,13 +187,13 @@ def render_notification_center(
             NotificationLevel.ACHIEVEMENT: 4,
         }
         filtered = sorted(filtered, key=lambda x: priority_map.get(x.level, 5))
-    
+
     # Afficher les notifications
     if not filtered:
         Card.empty(
             title="Aucune notification",
             message="Vous n'avez pas de notifications dans cette catégorie.",
-            icon="📭"
+            icon="📭",
         )
     else:
         for notif in filtered:
@@ -219,7 +214,7 @@ def _render_full_notification(
         NotificationLevel.ACHIEVEMENT: (Colors.ACCENT, Colors.ACCENT_BG),
     }
     border_color, bg_color = color_map.get(notification.level, (Colors.SLATE_400, Colors.SLATE_50))
-    
+
     # Style
     opacity = "1" if not notification.is_read else "0.7"
     container_style = f"""
@@ -230,52 +225,56 @@ def _render_full_notification(
         margin-bottom: {Spacing.SM};
         opacity: {opacity};
     """
-    
+
     with st.container():
         st.markdown(f'<div style="{container_style}">', unsafe_allow_html=True)
-        
+
         # Header: Icône + Titre + Date
         header_cols = st.columns([1, 4, 2])
-        
+
         with header_cols[0]:
             icon = notification.icon or "📌"
             st.markdown(f"<div style='font-size: 1.5rem;'>{icon}</div>", unsafe_allow_html=True)
-        
+
         with header_cols[1]:
             title = notification.title or notification.type.value.replace("_", " ").title()
-            weight = Typography.WEIGHT_BOLD if not notification.is_read else Typography.WEIGHT_NORMAL
+            weight = (
+                Typography.WEIGHT_BOLD if not notification.is_read else Typography.WEIGHT_NORMAL
+            )
             st.markdown(
                 f"<div style='font-weight: {weight}; font-size: {Typography.SIZE_LG};'>{title}</div>",
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-        
+
         with header_cols[2]:
             date_str = notification.created_at.strftime("%d/%m %H:%M")
             st.caption(date_str)
-        
+
         # Message
         st.markdown(
             f"<div style='margin: {Spacing.SM} 0; color: {Colors.SLATE_700};'>{notification.message}</div>",
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
-        
+
         # Actions
         if notification.actions:
-            action_cols = st.columns(len(notification.actions) + (1 if not notification.is_read else 0))
-            
+            action_cols = st.columns(
+                len(notification.actions) + (1 if not notification.is_read else 0)
+            )
+
             for i, action in enumerate(notification.actions):
                 with action_cols[i]:
                     if Button.secondary(action.label, key=f"action_{notification.id}_{i}"):
                         _handle_action(notification, action, service)
-            
+
             # Bouton "Marquer comme lu" si non lu
             if not notification.is_read:
                 with action_cols[-1]:
                     if Button.ghost("✓ Lu", key=f"read_{notification.id}"):
                         service.mark_read(notification.id)
                         st.rerun()
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _handle_action(
@@ -287,16 +286,16 @@ def _handle_action(
     if action.action == "navigate" and action.target:
         # Navigation vers une page
         st.switch_page(f"pages/{action.target}.py")
-    
+
     elif action.action == "dismiss":
         # Ignorer la notification
         service.dismiss(notification.id)
         st.rerun()
-    
+
     elif action.action == "action" and action.data:
         # Action personnalisée
         action_type = action.data.get("action")
-        
+
         if action_type == "merge_duplicates":
             # Fusionner les doublons
             date = action.data.get("date")
@@ -314,47 +313,45 @@ def render_notification_settings(
     """Rend les paramètres de notification."""
     if service is None:
         service = NotificationService()
-    
+
     st.header("⚙️ Paramètres de notification")
-    
+
     prefs = service.get_preferences()
-    
+
     # Niveaux de notification
     st.subheader("Niveaux activés")
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
         prefs.critical_enabled = st.toggle("🚨 Critiques", prefs.critical_enabled)
         prefs.warning_enabled = st.toggle("⚠️ Avertissements", prefs.warning_enabled)
-    
+
     with col2:
         prefs.info_enabled = st.toggle("ℹ️ Informations", prefs.info_enabled)
         prefs.success_enabled = st.toggle("✅ Succès", prefs.success_enabled)
-    
+
     with col3:
         prefs.achievement_enabled = st.toggle("🏆 Réussites", prefs.achievement_enabled)
-    
+
     # Seuils de budget
     st.subheader("Seuils d'alerte budget")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         prefs.budget_warning_threshold = st.slider(
-            "Alerte (%)",
-            50, 100, prefs.budget_warning_threshold
+            "Alerte (%)", 50, 100, prefs.budget_warning_threshold
         )
-    
+
     with col2:
         prefs.budget_critical_threshold = st.slider(
-            "Critique (%)",
-            80, 150, prefs.budget_critical_threshold
+            "Critique (%)", 80, 150, prefs.budget_critical_threshold
         )
-    
+
     # Résumés
     st.subheader("Récapitulatifs")
     prefs.daily_digest_enabled = st.toggle("Récap quotidien", prefs.daily_digest_enabled)
     prefs.weekly_summary_enabled = st.toggle("Résumé hebdomadaire", prefs.weekly_summary_enabled)
-    
+
     # Sauvegarder
     if Button.primary("💾 Sauvegarder les préférences", use_container_width=True):
         service.save_preferences(prefs)

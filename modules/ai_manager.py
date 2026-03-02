@@ -9,7 +9,7 @@ Migration from v1:
     OLD: import google.generativeai as genai
          model = genai.GenerativeModel('gemini-pro')
          response = model.generate_content(prompt)
-    
+
     NEW: from google import genai
          client = genai.Client(api_key=key)
          response = client.models.generate_content(model='gemini-2.0-flash', contents=prompt)
@@ -46,41 +46,43 @@ load_dotenv()
 # --- Circuit Breaker ---
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"       # Normal operation
-    OPEN = "open"          # Failing, reject calls
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Failing, reject calls
     HALF_OPEN = "half_open"  # Testing if recovered
 
 
 class CircuitBreakerOpen(Exception):
     """Exception raised when circuit breaker is open."""
+
     pass
 
 
 class CircuitBreaker:
     """
     Circuit breaker for AI provider calls.
-    
+
     Prevents cascading failures by blocking calls after consecutive failures.
     """
-    
+
     def __init__(
         self,
         name: str,
         failure_threshold: int = 3,
         recovery_timeout: float = 60.0,
-        half_open_max_calls: int = 1
+        half_open_max_calls: int = 1,
     ):
         self.name = name
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.half_open_max_calls = half_open_max_calls
-        
+
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
         self._last_failure_time = 0.0
         self._half_open_calls = 0
-    
+
     @property
     def state(self) -> CircuitState:
         """Get current circuit state."""
@@ -90,39 +92,37 @@ class CircuitBreaker:
                 self._state = CircuitState.HALF_OPEN
                 self._half_open_calls = 0
                 logger.info(f"Circuit breaker '{self.name}' entering HALF_OPEN state")
-        
+
         return self._state
-    
+
     def call(self, func, *args, **kwargs):
         """
         Execute function with circuit breaker protection.
-        
+
         Args:
             func: Function to call
             *args, **kwargs: Arguments for function
-            
+
         Returns:
             Function result
-            
+
         Raises:
             CircuitBreakerOpen: If circuit is OPEN
             Exception: If function fails in HALF_OPEN
         """
         current_state = self.state
-        
+
         if current_state == CircuitState.OPEN:
             raise CircuitBreakerOpen(
                 f"Circuit breaker '{self.name}' is OPEN. "
                 f"Too many failures, try again in {self.recovery_timeout}s"
             )
-        
+
         if current_state == CircuitState.HALF_OPEN:
             if self._half_open_calls >= self.half_open_max_calls:
-                raise CircuitBreakerOpen(
-                    f"Circuit breaker '{self.name}' HALF_OPEN limit reached"
-                )
+                raise CircuitBreakerOpen(f"Circuit breaker '{self.name}' HALF_OPEN limit reached")
             self._half_open_calls += 1
-        
+
         try:
             result = func(*args, **kwargs)
             self._on_success()
@@ -130,7 +130,7 @@ class CircuitBreaker:
         except Exception as e:
             self._on_failure()
             raise
-    
+
     def _on_success(self):
         """Handle successful call."""
         if self._state == CircuitState.HALF_OPEN:
@@ -143,20 +143,19 @@ class CircuitBreaker:
         else:
             # Reset failure count on success in CLOSED state
             self._failure_count = 0
-    
+
     def _on_failure(self):
         """Handle failed call."""
         self._failure_count += 1
         self._last_failure_time = time.time()
-        
+
         if self._failure_count >= self.failure_threshold:
             if self._state != CircuitState.OPEN:
                 logger.error(
-                    f"Circuit breaker '{self.name}' OPENED after "
-                    f"{self._failure_count} failures"
+                    f"Circuit breaker '{self.name}' OPENED after " f"{self._failure_count} failures"
                 )
             self._state = CircuitState.OPEN
-    
+
     def get_status(self) -> dict:
         """Get circuit breaker status for monitoring."""
         return {
@@ -164,8 +163,11 @@ class CircuitBreaker:
             "state": self.state.value,
             "failure_count": self._failure_count,
             "last_failure_time": self._last_failure_time,
-            "seconds_since_last_failure": time.time() - self._last_failure_time if self._last_failure_time > 0 else None
+            "seconds_since_last_failure": (
+                time.time() - self._last_failure_time if self._last_failure_time > 0 else None
+            ),
         }
+
 
 # Import new Google GenAI API
 try:
@@ -174,9 +176,7 @@ try:
 
     GENAI_AVAILABLE = True
 except ImportError:
-    logger.error(
-        "google-genai package not found. Install with: pip install google-genai>=0.3.0"
-    )
+    logger.error("google-genai package not found. Install with: pip install google-genai>=0.3.0")
     genai = None
     types = None
     GENAI_AVAILABLE = False
@@ -185,6 +185,7 @@ except ImportError:
 # Import LocalSLMProvider (optional)
 try:
     from modules.ai.local_slm_provider import LocalSLMProvider
+
     LOCAL_SLM_AVAILABLE = True
 except ImportError:
     LocalSLMProvider = None
@@ -234,7 +235,7 @@ class AIProvider(ABC):
 class GeminiProvider(AIProvider):
     """
     Google Gemini provider using modern google.genai API.
-    
+
     Documentation: https://ai.google.dev/gemini-api/docs
     """
 
@@ -245,13 +246,9 @@ class GeminiProvider(AIProvider):
         self.client = None
         if api_key and GENAI_AVAILABLE:
             self.client = genai.Client(api_key=api_key)
-        
+
         # Initialize circuit breaker
-        self._circuit = CircuitBreaker(
-            name="gemini",
-            failure_threshold=3,
-            recovery_timeout=60.0
-        )
+        self._circuit = CircuitBreaker(name="gemini", failure_threshold=3, recovery_timeout=60.0)
 
     def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Internal method that does the actual API call."""
@@ -267,9 +264,7 @@ class GeminiProvider(AIProvider):
         response = self.client.models.generate_content(
             model=model,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            ),
+            config=types.GenerateContentConfig(response_mime_type="application/json"),
         )
         text = response.text
 
@@ -278,16 +273,14 @@ class GeminiProvider(AIProvider):
         return json.loads(text)
 
     @rate_limited
-    def generate_json(
-        self, prompt: str, model_name: str | None = None
-    ) -> dict[str, Any]:
+    def generate_json(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """
         Generate JSON response from prompt.
-        
+
         Args:
             prompt: The prompt to send to the model
             model_name: Model to use (default: gemini-2.0-flash)
-            
+
         Returns:
             Parsed JSON response as dictionary
         """
@@ -308,7 +301,7 @@ class GeminiProvider(AIProvider):
             return {
                 "error": "Circuit breaker open - AI temporarily unavailable",
                 "status": "circuit_open",
-                "circuit_state": self._circuit.state.value
+                "circuit_state": self._circuit.state.value,
             }
         except json.JSONDecodeError as e:
             logger.error(f"Gemini JSON parsing error: {e}")
@@ -335,11 +328,11 @@ class GeminiProvider(AIProvider):
     def generate_text(self, prompt: str, model_name: str | None = None) -> str:
         """
         Generate text response from prompt.
-        
+
         Args:
             prompt: The prompt to send to the model
             model_name: Model to use (default: gemini-2.0-flash)
-            
+
         Returns:
             Generated text response
         """
@@ -353,9 +346,7 @@ class GeminiProvider(AIProvider):
         model = model_name or self.DEFAULT_MODEL
 
         try:
-            response = self.client.models.generate_content(
-                model=model, contents=prompt
-            )
+            response = self.client.models.generate_content(model=model, contents=prompt)
             return response.text
 
         except Exception as e:
@@ -385,7 +376,7 @@ class OllamaProvider(AIProvider):
     """
     Ollama local AI provider.
     Requires Ollama server running locally or remotely.
-    
+
     Documentation: https://ollama.com/
     """
 
@@ -393,13 +384,9 @@ class OllamaProvider(AIProvider):
 
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url.rstrip("/")
-        
+
         # Initialize circuit breaker
-        self._circuit = CircuitBreaker(
-            name="ollama",
-            failure_threshold=3,
-            recovery_timeout=60.0
-        )
+        self._circuit = CircuitBreaker(name="ollama", failure_threshold=3, recovery_timeout=60.0)
 
     def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Internal method that does the actual API call."""
@@ -428,7 +415,7 @@ class OllamaProvider(AIProvider):
             return {
                 "error": "Circuit breaker open - Ollama temporarily unavailable",
                 "status": "circuit_open",
-                "circuit_state": self._circuit.state.value
+                "circuit_state": self._circuit.state.value,
             }
         except requests.ConnectionError:
             logger.error(f"Ollama connection error - is Ollama running at {self.base_url}?")
@@ -490,13 +477,15 @@ class OpenAICompatibleProvider(AIProvider):
     def __init__(self, api_key: str, base_url: str = "https://api.openai.com/v1"):
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
-        
+
         # Initialize circuit breaker
-        provider_name = "openai" if "openai" in base_url else "deepseek" if "deepseek" in base_url else "openai_compatible"
+        provider_name = (
+            "openai"
+            if "openai" in base_url
+            else "deepseek" if "deepseek" in base_url else "openai_compatible"
+        )
         self._circuit = CircuitBreaker(
-            name=provider_name,
-            failure_threshold=3,
-            recovery_timeout=60.0
+            name=provider_name, failure_threshold=3, recovery_timeout=60.0
         )
 
     def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
@@ -524,9 +513,7 @@ class OpenAICompatibleProvider(AIProvider):
         content = resp.json()["choices"][0]["message"]["content"]
         return json.loads(content)
 
-    def generate_json(
-        self, prompt: str, model_name: str | None = None
-    ) -> dict[str, Any]:
+    def generate_json(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Generate JSON response using OpenAI-compatible API."""
         if not self.api_key:
             return {"error": "API key not configured", "status": "unconfigured"}
@@ -538,7 +525,7 @@ class OpenAICompatibleProvider(AIProvider):
             return {
                 "error": "Circuit breaker open - AI temporarily unavailable",
                 "status": "circuit_open",
-                "circuit_state": self._circuit.state.value
+                "circuit_state": self._circuit.state.value,
             }
         except requests.HTTPError as e:
             status_code = e.response.status_code if hasattr(e, "response") else "unknown"
@@ -618,13 +605,9 @@ class KimiProvider(AIProvider):
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.base_url = "https://api.moonshot.cn/v1"
-        
+
         # Initialize circuit breaker
-        self._circuit = CircuitBreaker(
-            name="kimi",
-            failure_threshold=3,
-            recovery_timeout=60.0
-        )
+        self._circuit = CircuitBreaker(name="kimi", failure_threshold=3, recovery_timeout=60.0)
 
     def _generate_json_internal(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Internal method that does the actual API call."""
@@ -652,9 +635,7 @@ class KimiProvider(AIProvider):
         content = content.replace("```json", "").replace("```", "").strip()
         return json.loads(content)
 
-    def generate_json(
-        self, prompt: str, model_name: str | None = None
-    ) -> dict[str, Any]:
+    def generate_json(self, prompt: str, model_name: str | None = None) -> dict[str, Any]:
         """Generate JSON response using KIMI."""
         if not self.api_key:
             return {"error": "API key not configured", "status": "unconfigured"}
@@ -666,7 +647,7 @@ class KimiProvider(AIProvider):
             return {
                 "error": "Circuit breaker open - KIMI temporarily unavailable",
                 "status": "circuit_open",
-                "circuit_state": self._circuit.state.value
+                "circuit_state": self._circuit.state.value,
             }
         except requests.HTTPError as e:
             status_code = e.response.status_code if hasattr(e, "response") else "unknown"
@@ -730,12 +711,12 @@ class KimiProvider(AIProvider):
 def get_ai_provider() -> AIProvider:
     """
     Factory function to get the configured AI provider.
-    
+
     Reads AI_PROVIDER environment variable to determine which provider to use.
-    
+
     Returns:
         AIProvider: Configured AI provider instance
-        
+
     Raises:
         ConfigurationError: If required API key is not set
     """
@@ -768,6 +749,7 @@ def get_ai_provider() -> AIProvider:
     elif provider_type in ("local", "slm"):
         # Local Small Language Model (Llama 3.2, etc.)
         from modules.ai.local_slm_provider import get_local_slm_provider
+
         model = os.getenv("LOCAL_SLM_MODEL", "llama-3.2-3b")
         fallback = os.getenv("LOCAL_SLM_FALLBACK", "true").lower() == "true"
         return get_local_slm_provider(model_name=model, fallback_to_cloud=fallback)
@@ -810,7 +792,9 @@ def is_ai_available() -> bool:
         elif isinstance(provider, (OpenAICompatibleProvider, KimiProvider)):
             return bool(provider.api_key)
         elif isinstance(provider, LocalSLMProvider):
-            return provider._model_loaded or (provider.fallback_to_cloud and bool(provider._get_fallback_provider()))
+            return provider._model_loaded or (
+                provider.fallback_to_cloud and bool(provider._get_fallback_provider())
+            )
 
         return False
     except Exception as e:
@@ -827,12 +811,18 @@ def get_ai_error_message() -> str:
             if not os.getenv("GEMINI_API_KEY"):
                 return "🔑 Clé API Gemini non configurée. Ajoutez GEMINI_API_KEY dans votre fichier .env"
             if not GENAI_AVAILABLE:
-                return "📦 Bibliothèque google-genai non installée. Exécutez: pip install google-genai"
+                return (
+                    "📦 Bibliothèque google-genai non installée. Exécutez: pip install google-genai"
+                )
         elif provider_type == "ollama":
             url = os.getenv("OLLAMA_URL", "http://localhost:11434")
-            return f"🔌 Ollama non disponible à l'adresse {url}. Vérifiez que le serveur est démarré."
+            return (
+                f"🔌 Ollama non disponible à l'adresse {url}. Vérifiez que le serveur est démarré."
+            )
         elif provider_type == "openai":
-            return "🔑 Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans votre fichier .env"
+            return (
+                "🔑 Clé API OpenAI non configurée. Ajoutez OPENAI_API_KEY dans votre fichier .env"
+            )
         elif provider_type == "deepseek":
             return "🔑 Clé API DeepSeek non configurée. Ajoutez DEEPSEEK_API_KEY dans votre fichier .env"
         elif provider_type == "kimi":
@@ -857,31 +847,31 @@ def register_circuit_breaker(provider_name: str, circuit: CircuitBreaker) -> Non
 def get_circuit_status() -> dict[str, Any]:
     """
     Get status of all registered circuit breakers.
-    
+
     Returns:
         Dict with circuit breaker states for monitoring
     """
     # Also get circuits from active provider instances
     circuits = {}
-    
+
     # Try to get current provider and its circuit
     try:
         provider = get_ai_provider()
-        if isinstance(provider, GeminiProvider) and hasattr(provider, '_circuit'):
+        if isinstance(provider, GeminiProvider) and hasattr(provider, "_circuit"):
             circuits["gemini"] = provider._circuit.get_status()
-        elif isinstance(provider, OllamaProvider) and hasattr(provider, '_circuit'):
+        elif isinstance(provider, OllamaProvider) and hasattr(provider, "_circuit"):
             circuits["ollama"] = provider._circuit.get_status()
-        elif isinstance(provider, OpenAICompatibleProvider) and hasattr(provider, '_circuit'):
+        elif isinstance(provider, OpenAICompatibleProvider) and hasattr(provider, "_circuit"):
             circuits[provider._circuit.name] = provider._circuit.get_status()
-        elif isinstance(provider, KimiProvider) and hasattr(provider, '_circuit'):
+        elif isinstance(provider, KimiProvider) and hasattr(provider, "_circuit"):
             circuits["kimi"] = provider._circuit.get_status()
     except Exception as e:
         logger.debug(f"Could not get provider circuit status: {e}")
-    
+
     # Add registered circuits
     for name, circuit in _circuit_breakers.items():
         circuits[name] = circuit.get_status()
-    
+
     return {
         "circuits": circuits,
         "total_circuits": len(circuits),

@@ -46,12 +46,10 @@ class TestGetCategories:
         """Test getting category suggested tags."""
         # Add category with suggested tags
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO categories (name, emoji, suggested_tags)
             VALUES ('Test Category', '🧪', 'tag1,tag2,tag3')
-        """
-        )
+        """)
         db_connection.commit()
 
         tags_map = get_categories_suggested_tags()
@@ -172,18 +170,14 @@ class TestMergeCategories:
         add_category("Target")
 
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'Test TX', -50.00, 'Source')
-        """
-        )
-        cursor.execute(
-            """
+        """)
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-16', 'Test TX 2', -30.00, 'Source')
-        """
-        )
+        """)
         db_connection.commit()
 
         result = merge_categories("Source", "Target")
@@ -215,12 +209,10 @@ class TestMergeCategories:
         set_budget("Source", 500.0)
 
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'Test TX', -50.00, 'Source')
-        """
-        )
+        """)
         db_connection.commit()
 
         result = merge_categories("Source", "Target")
@@ -247,12 +239,10 @@ class TestGhostCategories:
         add_category("Official")
 
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'Ghost TX', -50.00, 'Ghost Category')
-        """
-        )
+        """)
         db_connection.commit()
 
         all_cats = get_all_categories_including_ghosts()

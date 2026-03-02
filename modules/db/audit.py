@@ -51,13 +51,11 @@ def auto_fix_common_inconsistencies() -> int:
             total_fixed += cursor.rowcount
 
         # Smart Re-attribution
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT id, label, card_suffix, account_label, member 
             FROM transactions 
             WHERE member = 'Inconnu' OR member LIKE 'Carte %' OR member IS NULL
-        """
-        )
+        """)
         rows = cursor.fetchall()
         member_updates = []
         for tx_id, label, suffix, account, current_m in rows:
@@ -69,15 +67,13 @@ def auto_fix_common_inconsistencies() -> int:
             total_fixed += len(member_updates)
 
         # 2. COLLECTIVE INTELLIGENCE: Propagate tags
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT label, tags, COUNT(*) as count
             FROM transactions 
             WHERE tags IS NOT NULL AND tags != ''
             GROUP BY label, tags
             ORDER BY label, count DESC
-        """
-        )
+        """)
         tag_clouds = cursor.fetchall()
         label_to_best_tags = {}
         processed_labels = set()
@@ -98,8 +94,7 @@ def auto_fix_common_inconsistencies() -> int:
 
         # 3. RAPPROCHEMENT INTER-COMPTES (Version 5.1 New)
         # Find transactions with same amount, opposite sign, different accounts, within ±2 days
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT t1.id, t2.id, t1.tags
             FROM transactions t1
             JOIN transactions t2 ON abs(t1.amount) = abs(t2.amount)
@@ -107,8 +102,7 @@ def auto_fix_common_inconsistencies() -> int:
               AND t1.account_label != t2.account_label
               AND abs(julianday(t1.date) - julianday(t2.date)) <= 2
               AND t1.id < t2.id
-        """
-        )
+        """)
         match_rows = cursor.fetchall()
         match_updates = []
         for id1, id2, current_tags in match_rows:
@@ -223,15 +217,13 @@ def auto_fix_common_inconsistencies() -> int:
             for b in broken:
                 logger.error(f"   - In {b['file']}: target '{b['target']}' is missing")
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT tx_hash, GROUP_CONCAT(id) as ids
             FROM transactions
             WHERE tx_hash IS NOT NULL AND tx_hash != ''
             GROUP BY tx_hash
             HAVING COUNT(*) > 1
-        """
-        )
+        """)
         # Collect all duplicate IDs to delete (keep the first one)
         ids_to_delete = []
         for row in cursor.fetchall():
@@ -434,17 +426,17 @@ def verify_link_integrity() -> list[dict]:
 def get_old_pending_transactions(days: int = 30) -> pd.DataFrame:
     """
     Get pending transactions older than specified days.
-    
+
     Args:
         days: Number of days to consider as "old" (default: 30)
-        
+
     Returns:
         DataFrame with old pending transactions
     """
     from datetime import datetime, timedelta
-    
+
     cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
-    
+
     with get_db_connection() as conn:
         query = """
             SELECT * FROM transactions 
@@ -458,16 +450,16 @@ def get_old_pending_transactions(days: int = 30) -> pd.DataFrame:
 def validate_transactions_by_ids(tx_ids: list[int]) -> int:
     """
     Validate multiple transactions by their IDs.
-    
+
     Args:
         tx_ids: List of transaction IDs to validate
-        
+
     Returns:
         Number of transactions validated
     """
     if not tx_ids:
         return 0
-        
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         placeholders = ",".join(["?"] * len(tx_ids))
@@ -480,7 +472,7 @@ def validate_transactions_by_ids(tx_ids: list[int]) -> int:
                         ELSE category_validated 
                     END
                 WHERE id IN ({placeholders})""",
-            list(tx_ids)
+            list(tx_ids),
         )
         conn.commit()
         return cursor.rowcount
@@ -489,27 +481,26 @@ def validate_transactions_by_ids(tx_ids: list[int]) -> int:
 def ignore_transactions(tx_ids: list[int]) -> int:
     """
     Mark transactions as ignored by setting a special tag.
-    
+
     Args:
         tx_ids: List of transaction IDs to ignore
-        
+
     Returns:
         Number of transactions updated
     """
     if not tx_ids:
         return 0
-        
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         placeholders = ",".join(["?"] * len(tx_ids))
-        
+
         # Get current tags
         cursor.execute(
-            f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})",
-            list(tx_ids)
+            f"SELECT id, tags FROM transactions WHERE id IN ({placeholders})", list(tx_ids)
         )
         rows = cursor.fetchall()
-        
+
         updates = []
         for tx_id, current_tags in rows:
             new_tags = "ignored"
@@ -519,12 +510,9 @@ def ignore_transactions(tx_ids: list[int]) -> int:
                 else:
                     continue
             updates.append((new_tags, tx_id))
-        
+
         if updates:
-            cursor.executemany(
-                "UPDATE transactions SET tags = ? WHERE id = ?",
-                updates
-            )
+            cursor.executemany("UPDATE transactions SET tags = ? WHERE id = ?", updates)
         conn.commit()
         return len(updates)
 
@@ -532,7 +520,7 @@ def ignore_transactions(tx_ids: list[int]) -> int:
 def get_duplicate_transactions() -> pd.DataFrame:
     """
     Get detailed information about duplicate transactions.
-    
+
     Returns:
         DataFrame with duplicate groups and their transaction IDs
     """
@@ -554,18 +542,18 @@ def get_duplicate_transactions() -> pd.DataFrame:
 def merge_duplicate_transactions(date: str, label: str, amount: float) -> dict:
     """
     Merge duplicate transactions by keeping the most complete one and deleting others.
-    
+
     Args:
         date: Transaction date
         label: Transaction label
         amount: Transaction amount
-        
+
     Returns:
         Dict with result info: {"kept_id": int, "deleted_ids": list, "success": bool}
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Get all duplicates
         cursor.execute(
             """SELECT id, category_validated, status, tags, beneficiary, notes, member
@@ -577,57 +565,60 @@ def merge_duplicate_transactions(date: str, label: str, amount: float) -> dict:
                    LENGTH(COALESCE(tags, '')),
                    LENGTH(COALESCE(notes, '')),
                    id DESC""",
-            (date, label, amount)
+            (date, label, amount),
         )
         rows = cursor.fetchall()
-        
+
         if len(rows) <= 1:
-            return {"kept_id": None, "deleted_ids": [], "success": False, "message": "Pas de doublons"}
-        
+            return {
+                "kept_id": None,
+                "deleted_ids": [],
+                "success": False,
+                "message": "Pas de doublons",
+            }
+
         # Keep the first (most complete) one
         kept_id = rows[0][0]
         deleted_ids = [r[0] for r in rows[1:]]
-        
+
         # Delete duplicates
         placeholders = ",".join(["?"] * len(deleted_ids))
-        cursor.execute(
-            f"DELETE FROM transactions WHERE id IN ({placeholders})",
-            deleted_ids
-        )
+        cursor.execute(f"DELETE FROM transactions WHERE id IN ({placeholders})", deleted_ids)
         conn.commit()
-        
+
         # Clear caches
         from modules.db.connection import clear_db_cache
+
         clear_db_cache()
-        
+
         return {
             "kept_id": kept_id,
             "deleted_ids": deleted_ids,
             "success": True,
-            "message": f"{len(deleted_ids)} doublon(s) supprimé(s), ID conservé: {kept_id}"
+            "message": f"{len(deleted_ids)} doublon(s) supprimé(s), ID conservé: {kept_id}",
         }
 
 
 def get_rule_overlaps_with_details() -> list[dict]:
     """
     Get detailed information about rule overlaps with affected transactions.
-    
+
     Returns:
         List of dicts with overlap details and sample affected transactions
     """
     from modules.ai.rules_auditor import analyze_rules_integrity
     from modules.db.rules import get_learning_rules
-    
+
     rules_df = get_learning_rules()
     if rules_df.empty:
         return []
-    
+
     audit = analyze_rules_integrity(rules_df)
     overlaps = audit.get("overlaps", [])
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         for overlap in overlaps:
             # Get sample transactions that would match the shorter pattern
             shorter_pattern = overlap["shorter_pattern"]
@@ -636,18 +627,16 @@ def get_rule_overlaps_with_details() -> list[dict]:
                    FROM transactions 
                    WHERE label LIKE ? 
                    LIMIT 3""",
-                (f"%{shorter_pattern}%",)
+                (f"%{shorter_pattern}%",),
             )
             overlap["sample_transactions"] = [
-                dict(zip(["id", "label", "category", "date"], row))
-                for row in cursor.fetchall()
+                dict(zip(["id", "label", "category", "date"], row)) for row in cursor.fetchall()
             ]
-            
+
             # Count affected transactions
             cursor.execute(
-                "SELECT COUNT(*) FROM transactions WHERE label LIKE ?",
-                (f"%{shorter_pattern}%",)
+                "SELECT COUNT(*) FROM transactions WHERE label LIKE ?", (f"%{shorter_pattern}%",)
             )
             overlap["affected_count"] = cursor.fetchone()[0]
-    
+
     return overlaps

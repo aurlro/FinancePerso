@@ -2,7 +2,7 @@
 
 Usage:
     from modules.ui.atoms import Badge
-    
+
     Badge.success("Validé")
     Badge.warning("En attente")
     Badge.danger("Erreur", count=3)
@@ -17,6 +17,7 @@ from modules.ui.tokens import BorderRadius, Colors, Spacing, Typography
 
 class BadgeVariant(str, Enum):
     """Variantes de badges."""
+
     DEFAULT = "default"
     SUCCESS = "success"
     WARNING = "warning"
@@ -28,10 +29,10 @@ class BadgeVariant(str, Enum):
 
 class Badge:
     """Badges standardisés selon le Design System.
-    
+
     Tous les badges de l'application doivent utiliser cette classe.
     """
-    
+
     # Mapping des variantes vers les couleurs
     _COLORS = {
         BadgeVariant.DEFAULT: (Colors.SLATE_700, Colors.SLATE_100, Colors.SLATE_300),
@@ -42,7 +43,7 @@ class Badge:
         BadgeVariant.NEUTRAL: (Colors.SLATE_500, Colors.SLATE_100, Colors.SLATE_200),
         BadgeVariant.PRIMARY: (Colors.PRIMARY, Colors.SLATE_100, Colors.PRIMARY_LIGHT),
     }
-    
+
     @classmethod
     def _render(
         cls,
@@ -53,7 +54,7 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Rendu interne du badge.
-        
+
         Args:
             text: Texte du badge
             variant: Style du badge
@@ -62,12 +63,12 @@ class Badge:
             key: Clé unique Streamlit
         """
         text_color, bg_color, border_color = cls._COLORS[variant]
-        
+
         # Construction du contenu
         content = text
         if icon:
             content = f"{icon} {content}"
-        
+
         # HTML du badge
         badge_html = f"""
         <span style="
@@ -84,7 +85,7 @@ class Badge:
             line-height: 1;
             white-space: nowrap;
         ">{content}"""
-        
+
         # Ajouter le compteur si présent
         if count is not None and count > 0:
             badge_html += f"""
@@ -101,11 +102,11 @@ class Badge:
                 font-size: 11px;
                 font-weight: {Typography.WEIGHT_BOLD};
             ">{count if count < 100 else '99+'}</span>"""
-        
+
         badge_html += "</span>"
-        
+
         st.markdown(badge_html, unsafe_allow_html=True)
-    
+
     @classmethod
     def default(
         cls,
@@ -115,12 +116,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge par défaut (neutre).
-        
+
         Usage:
             Badge.default("Nouveau")
         """
         cls._render(text, BadgeVariant.DEFAULT, count, icon, key)
-    
+
     @classmethod
     def success(
         cls,
@@ -130,12 +131,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge succès.
-        
+
         Usage:
             Badge.success("Validé")
         """
         cls._render(text, BadgeVariant.SUCCESS, count, icon, key)
-    
+
     @classmethod
     def warning(
         cls,
@@ -145,12 +146,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge avertissement.
-        
+
         Usage:
             Badge.warning("Attention")
         """
         cls._render(text, BadgeVariant.WARNING, count, icon, key)
-    
+
     @classmethod
     def danger(
         cls,
@@ -160,12 +161,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge danger.
-        
+
         Usage:
             Badge.danger("Erreur", count=3)
         """
         cls._render(text, BadgeVariant.DANGER, count, icon, key)
-    
+
     @classmethod
     def info(
         cls,
@@ -175,12 +176,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge info.
-        
+
         Usage:
             Badge.info("Info")
         """
         cls._render(text, BadgeVariant.INFO, count, icon, key)
-    
+
     @classmethod
     def neutral(
         cls,
@@ -190,12 +191,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge neutre (subtil).
-        
+
         Usage:
             Badge.neutral("Archive")
         """
         cls._render(text, BadgeVariant.NEUTRAL, count, icon, key)
-    
+
     @classmethod
     def primary(
         cls,
@@ -205,12 +206,12 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge primaire (marque).
-        
+
         Usage:
             Badge.primary("PRO")
         """
         cls._render(text, BadgeVariant.PRIMARY, count, icon, key)
-    
+
     @classmethod
     def status(
         cls,
@@ -218,10 +219,10 @@ class Badge:
         key: str | None = None,
     ) -> None:
         """Badge de statut automatique.
-        
+
         Args:
             status: Statut à afficher ("active", "pending", "error", etc.)
-        
+
         Usage:
             Badge.status("active")  # -> Badge vert "Active"
             Badge.status("pending") # -> Badge orange "En attente"
@@ -243,10 +244,7 @@ class Badge:
             "rejeté": (BadgeVariant.DANGER, "Rejeté"),
             "rejected": (BadgeVariant.DANGER, "Rejeté"),
         }
-        
-        variant, display_text = status_map.get(
-            status.lower(), 
-            (BadgeVariant.DEFAULT, status)
-        )
-        
+
+        variant, display_text = status_map.get(status.lower(), (BadgeVariant.DEFAULT, status))
+
         cls._render(display_text, variant, key=key)

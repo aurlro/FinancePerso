@@ -7,42 +7,42 @@ from modules.ui.theme import ColorPalette, ThemeMode, theme_manager
 
 def render_theme_toggle():
     """Affiche le toggle de thème dans la sidebar."""
-    
+
     # Rafraîchir le thème pour avoir les valeurs à jour
     theme = theme_manager.refresh()
-    
+
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 🎨 Thème")
-    
+
     # Toggle Light/Dark
     current_mode = theme.mode
     mode_col1, mode_col2 = st.sidebar.columns([1, 3])
-    
+
     with mode_col1:
         icon = "🌙" if current_mode == ThemeMode.LIGHT else "🌞"
         if st.button(icon, key="theme_toggle_btn", help="Basculer mode clair/sombre"):
             theme_manager.toggle_mode()
             st.rerun()
-    
+
     with mode_col2:
         st.write("Mode sombre" if current_mode == ThemeMode.DARK else "Mode clair")
-    
+
     # Sélecteur de couleur
     current_palette = theme.palette
     palette_options = {
         ColorPalette.GREEN.value: "🟢 Vert (défaut)",
         ColorPalette.BLUE.value: "🔵 Bleu",
-        ColorPalette.PURPLE.value: "🟣 Violet"
+        ColorPalette.PURPLE.value: "🟣 Violet",
     }
-    
+
     selected = st.sidebar.selectbox(
         "Couleur d'accent",
         options=list(palette_options.keys()),
         format_func=lambda x: palette_options[x],
         index=list(palette_options.keys()).index(current_palette.value),
-        key="palette_select"
+        key="palette_select",
     )
-    
+
     if selected != current_palette.value:
         theme_manager.set_palette(ColorPalette(selected))
         st.rerun()
@@ -50,35 +50,35 @@ def render_theme_toggle():
 
 def render_theme_selector_compact():
     """Version compacte du sélecteur de thème (pour header)."""
-    
+
     theme = theme_manager.refresh()
-    
+
     col1, col2 = st.columns([1, 1])
-    
+
     with col1:
         # Toggle mode
         icon = "🌙" if theme.mode == ThemeMode.LIGHT else "🌞"
         if st.button(icon, key="theme_toggle_compact", help="Mode clair/sombre"):
             theme_manager.toggle_mode()
             st.rerun()
-    
+
     with col2:
         # Dropdown palette
         palette_emojis = {
             ColorPalette.GREEN.value: "🟢",
             ColorPalette.BLUE.value: "🔵",
-            ColorPalette.PURPLE.value: "🟣"
+            ColorPalette.PURPLE.value: "🟣",
         }
-        
+
         selected = st.selectbox(
             "",
             options=list(palette_emojis.keys()),
             format_func=lambda x: palette_emojis[x],
             index=list(palette_emojis.keys()).index(theme.palette.value),
             key="palette_compact",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
         )
-        
+
         if selected != theme.palette.value:
             theme_manager.set_palette(ColorPalette(selected))
             st.rerun()
@@ -89,7 +89,7 @@ def apply_theme_css():
     theme = theme_manager.current
     css = theme.get_css_variables()
     st.markdown(css, unsafe_allow_html=True)
-    
+
     # CSS additionnel pour Streamlit
     additional_css = f"""
     <style>

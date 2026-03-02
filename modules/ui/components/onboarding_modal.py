@@ -58,8 +58,7 @@ def render_onboarding_modal():
 
         # --- STEP 1: Welcome ---
         if step == 1:
-            st.markdown(
-                """
+            st.markdown("""
             ## Votre assistant financier personnel
             
             FinancePerso vous aide à :
@@ -69,8 +68,7 @@ def render_onboarding_modal():
             - 🔔 **Surveiller** vos budgets
             
             ### Commençons par la configuration initiale !
-            """
-            )
+            """)
 
             st.info("⏱️ Cela prend environ 2 minutes")
 
@@ -88,13 +86,11 @@ def render_onboarding_modal():
 
         # --- STEP 2: Members ---
         elif step == 2:
-            st.markdown(
-                """
+            st.markdown("""
             ## 👥 Qui utilise les comptes ?
             
             Ajoutez les membres de votre foyer pour pouvoir attribuer les dépenses.
-            """
-            )
+            """)
 
             members = get_members()
             if not members.empty:
@@ -147,15 +143,13 @@ def render_onboarding_modal():
 
         # --- STEP 3: Categories ---
         elif step == 3:
-            st.markdown(
-                """
+            st.markdown("""
             ## 🏷️ Vos catégories de dépenses
             
             Quelles sont vos principales catégories de dépenses ?
             
             💡 **Conseil** : Commencez simple (5-10 catégories), vous pourrez en ajouter plus tard.
-            """
-            )
+            """)
 
             # Show current categories
             categories = get_categories()
@@ -233,13 +227,11 @@ def render_onboarding_modal():
 
         # --- STEP 4: Optional Settings ---
         elif step == 4:
-            st.markdown(
-                """
+            st.markdown("""
             ## ⚡ Paramètres optionnels
             
             Ces réglages peuvent être faits maintenant ou plus tard.
-            """
-            )
+            """)
 
             # API Key section
             st.subheader("🤖 Intelligence Artificielle (optionnel)")
@@ -255,13 +247,11 @@ def render_onboarding_modal():
                 st.success("✅ Clé API détectée ! L'IA est active.")
             else:
                 st.info("🌐 Mode hors ligne : seules les règles manuelles seront utilisées.")
-                st.markdown(
-                    """
+                st.markdown("""
                 Pour activer l'IA plus tard :
                 1. Obtenez une clé API gratuite sur [Google AI Studio](https://aistudio.google.com/app/apikey)
                 2. Configurez-la dans **⚙️ Configuration → 🔑 API & Services**
-                """
-                )
+                """)
 
             st.divider()
 
@@ -281,14 +271,12 @@ def render_onboarding_modal():
 
             # Final step
             st.success("🎉 Configuration initiale terminée !")
-            st.markdown(
-                """
+            st.markdown("""
             ### Prochaines étapes :
             1. **Importez** votre premier relevé bancaire (page 📥 Import)
             2. **Validez** quelques transactions (page ✅ Validation)
             3. **Consultez** votre tableau de bord (page 📊 Synthèse)
-            """
-            )
+            """)
 
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:

@@ -3,7 +3,6 @@ Sections du tableau de bord organisées en fragments pour performance.
 Chaque section peut se recharger indépendamment.
 """
 
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st

@@ -197,9 +197,7 @@ def render_chat_interface(
         on_send(prompt)
 
 
-def render_empty_state(
-    icon: str, title: str, description: str, actions: list[tuple] | None = None
-):
+def render_empty_state(icon: str, title: str, description: str, actions: list[tuple] | None = None):
     """
     Render an engaging empty state.
 

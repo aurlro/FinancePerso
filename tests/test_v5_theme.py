@@ -29,23 +29,47 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown("**Primary (Emerald)**")
-    st.markdown(f"<div style='background:{LightColors.PRIMARY};padding:20px;border-radius:8px;color:white;text-align:center;'>#10B981</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:{LightColors.PRIMARY_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#D1FAE5</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.PRIMARY};padding:20px;border-radius:8px;color:white;text-align:center;'>#10B981</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div style='background:{LightColors.PRIMARY_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#D1FAE5</div>",
+        unsafe_allow_html=True,
+    )
 
 with col2:
     st.markdown("**Success**")
-    st.markdown(f"<div style='background:{LightColors.SUCCESS};padding:20px;border-radius:8px;color:white;text-align:center;'>#10B981</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:{LightColors.SUCCESS_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#DCFCE7</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.SUCCESS};padding:20px;border-radius:8px;color:white;text-align:center;'>#10B981</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div style='background:{LightColors.SUCCESS_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#DCFCE7</div>",
+        unsafe_allow_html=True,
+    )
 
 with col3:
     st.markdown("**Danger**")
-    st.markdown(f"<div style='background:{LightColors.DANGER};padding:20px;border-radius:8px;color:white;text-align:center;'>#EF4444</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:{LightColors.DANGER_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#FEE2E2</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.DANGER};padding:20px;border-radius:8px;color:white;text-align:center;'>#EF4444</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div style='background:{LightColors.DANGER_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#FEE2E2</div>",
+        unsafe_allow_html=True,
+    )
 
 with col4:
     st.markdown("**Warning**")
-    st.markdown(f"<div style='background:{LightColors.WARNING};padding:20px;border-radius:8px;color:white;text-align:center;'>#F59E0B</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='background:{LightColors.WARNING_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#FEF3C7</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.WARNING};padding:20px;border-radius:8px;color:white;text-align:center;'>#F59E0B</div>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f"<div style='background:{LightColors.WARNING_BG};padding:10px;border-radius:8px;text-align:center;margin-top:5px;'>#FEF3C7</div>",
+        unsafe_allow_html=True,
+    )
 
 # Backgrounds
 st.subheader("🖼️ Couleurs de fond")
@@ -53,30 +77,48 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("**BG Page**")
-    st.markdown(f"<div style='background:{LightColors.BG_PAGE};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#F9FAFB</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.BG_PAGE};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#F9FAFB</div>",
+        unsafe_allow_html=True,
+    )
 
 with col2:
     st.markdown("**BG Card**")
-    st.markdown(f"<div style='background:{LightColors.BG_CARD};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#FFFFFF</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.BG_CARD};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#FFFFFF</div>",
+        unsafe_allow_html=True,
+    )
 
 with col3:
     st.markdown("**BG Secondary**")
-    st.markdown(f"<div style='background:{LightColors.BG_SECONDARY};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#F3F4F6</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='background:{LightColors.BG_SECONDARY};padding:30px;border-radius:8px;border:1px solid #E5E7EB;text-align:center;'>#F3F4F6</div>",
+        unsafe_allow_html=True,
+    )
 
 # Texte
 st.subheader("📝 Couleurs de texte")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown(f"<p style='color:{LightColors.TEXT_PRIMARY};font-size:1.2rem;font-weight:600;'>Text Primary</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:{LightColors.TEXT_PRIMARY};font-size:1.2rem;font-weight:600;'>Text Primary</p>",
+        unsafe_allow_html=True,
+    )
     st.code(LightColors.TEXT_PRIMARY)
 
 with col2:
-    st.markdown(f"<p style='color:{LightColors.TEXT_SECONDARY};font-size:1.2rem;font-weight:600;'>Text Secondary</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:{LightColors.TEXT_SECONDARY};font-size:1.2rem;font-weight:600;'>Text Secondary</p>",
+        unsafe_allow_html=True,
+    )
     st.code(LightColors.TEXT_SECONDARY)
 
 with col3:
-    st.markdown(f"<p style='color:{LightColors.TEXT_MUTED};font-size:1.2rem;font-weight:600;'>Text Muted</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:{LightColors.TEXT_MUTED};font-size:1.2rem;font-weight:600;'>Text Muted</p>",
+        unsafe_allow_html=True,
+    )
     st.code(LightColors.TEXT_MUTED)
 
 # Composants

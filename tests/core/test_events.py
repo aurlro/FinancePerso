@@ -115,6 +115,7 @@ class TestEventBus:
 
     def test_get_subscribers_specific(self):
         """Test getting handlers for a specific event."""
+
         def handler1(**kwargs):
             pass
 

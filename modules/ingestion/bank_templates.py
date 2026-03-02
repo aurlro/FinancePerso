@@ -125,9 +125,7 @@ def detect_bank_format(file_path: str) -> str | None:
             for delimiter in delimiters:
                 try:
                     # Read first few rows with specific delimiter
-                    df = pd.read_csv(
-                        file_path, nrows=3, encoding=encoding, delimiter=delimiter
-                    )
+                    df = pd.read_csv(file_path, nrows=3, encoding=encoding, delimiter=delimiter)
                     columns = set(df.columns.str.lower())
 
                     # Check each template

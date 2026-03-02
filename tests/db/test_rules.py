@@ -1,6 +1,7 @@
 """
 Tests for rules.py module.
 """
+
 import pytest
 import pandas as pd
 from modules.db.rules import (
@@ -68,7 +69,7 @@ class TestDeleteRule:
                 rule_id = int(rule_row.iloc[0]["id"])
                 result = delete_learning_rule(rule_id)
                 assert result is True
-                
+
                 # Verify it's gone
                 df_after = get_learning_rules()
                 assert "TO_DELETE" not in df_after["pattern"].values

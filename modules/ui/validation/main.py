@@ -56,14 +56,12 @@ def render_validation_tab():
 
     # Info box
     with st.expander("ℹ️ Aide à la validation", expanded=False):
-        st.info(
-            """
+        st.info("""
         **📝 Rappel :**
         - **📂 Catégorie** : Sélectionnez la catégorie appropriée
         - **👤 Qui a payé** : Indiquez le membre
         - **🏷️ Tags** : Seront ajoutés si vous utilisez les outils avancés
-        """
-        )
+        """)
 
     # --- PROGRESS BAR ---
     render_progress_tracker(len(df), session_key="validation_progress")
@@ -110,12 +108,12 @@ def render_validation_tab():
         local_df = get_smart_groups(filtered_df, excluded_ids=set())
         group_stats = calculate_group_stats(local_df)
         all_groups = sort_groups(group_stats, sort_key=sort_key, max_groups=None)
-        
+
         # Pagination avec le composant réutilisable
         display_groups = paginated_list(
-            all_groups, 
+            all_groups,
             page_size=20,  # 20 groupes par page
-            key=f"validation_pagination{key_suffix}"
+            key=f"validation_pagination{key_suffix}",
         )
 
         if len(all_groups) > 20:

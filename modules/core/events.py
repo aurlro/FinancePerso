@@ -33,10 +33,10 @@ class EventBus:
         _instance: Singleton instance.
     """
 
-    _instance: Optional['EventBus'] = None
+    _instance: Optional["EventBus"] = None
     _listeners: Dict[str, List[Callable]] = {}
 
-    def __new__(cls) -> 'EventBus':
+    def __new__(cls) -> "EventBus":
         """Ensure singleton pattern."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -100,7 +100,7 @@ class EventBus:
     @classmethod
     def clear(cls, event: Optional[str] = None) -> None:
         """Clear all listeners or listeners for a specific event.
-        
+
         Args:
             event: Optional event name to clear subscribers for.
                    If None, clears all subscribers.

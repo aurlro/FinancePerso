@@ -93,9 +93,7 @@ class FrequentPatternAnalyzer(BaseAnalyzer):
 
         # Check if these already have rules
         existing_patterns = (
-            set(context.rules["pattern"].str.lower().tolist())
-            if not context.rules.empty
-            else set()
+            set(context.rules["pattern"].str.lower().tolist()) if not context.rules.empty else set()
         )
 
         for _, row in frequent.iterrows():

@@ -2,7 +2,7 @@
 
 Usage:
     from modules.ui.atoms import Icon
-    
+
     Icon.success()   # -> "✓"
     Icon.warning()   # -> "⚠"
     Icon.for_category("alimentation")  # -> "🍽️"
@@ -13,6 +13,7 @@ from enum import Enum
 
 class IconSize(str, Enum):
     """Tailles d'icônes."""
+
     SM = "16px"
     MD = "20px"
     LG = "24px"
@@ -22,10 +23,10 @@ class IconSize(str, Enum):
 
 class Icon:
     """Icônes standardisées pour toute l'application.
-    
+
     Centralise tous les emojis pour assurer la cohérence visuelle.
     """
-    
+
     # ==================== STATUT ====================
     SUCCESS = "✓"
     ERROR = "✕"
@@ -34,7 +35,7 @@ class Icon:
     HELP = "❓"
     LOADING = "🔄"
     PENDING = "⏳"
-    
+
     # ==================== ACTIONS ====================
     ADD = "➕"
     REMOVE = "➖"
@@ -53,7 +54,7 @@ class Icon:
     UPLOAD = "⬆️"
     SHARE = "🔗"
     PRINT = "🖨️"
-    
+
     # ==================== NAVIGATION ====================
     BACK = "←"
     NEXT = "→"
@@ -64,7 +65,7 @@ class Icon:
     CLOSE = "✕"
     EXPAND = "▼"
     COLLAPSE = "▲"
-    
+
     # ==================== FINANCE ====================
     MONEY = "💰"
     WALLET = "👛"
@@ -77,7 +78,7 @@ class Icon:
     COIN = "🪙"
     DOLLAR = "💵"
     EURO = "💶"
-    
+
     # ==================== CATÉGORIES ====================
     FOOD = "🍽️"
     TRANSPORT = "🚗"
@@ -91,7 +92,7 @@ class Icon:
     TRAVEL = "✈️"
     GIFT = "🎁"
     DONATION = "❤️"
-    
+
     # ==================== TEMPS ====================
     CALENDAR = "📅"
     CLOCK = "🕐"
@@ -99,7 +100,7 @@ class Icon:
     SCHEDULE = "📆"
     RECURRING = "🔄"
     STREAK = "🔥"
-    
+
     # ==================== UTILISATEUR ====================
     USER = "👤"
     USERS = "👥"
@@ -109,7 +110,7 @@ class Icon:
     LOGIN = "🔑"
     LOCK = "🔒"
     UNLOCK = "🔓"
-    
+
     # ==================== NOTIFICATIONS ====================
     BELL = "🔔"
     EMAIL = "📧"
@@ -119,14 +120,14 @@ class Icon:
     STAR = "⭐"
     TROPHY = "🏆"
     MEDAL = "🥇"
-    
+
     # ==================== FICHIERS ====================
     FILE = "📄"
     FOLDER = "📁"
     CSV = "📊"
     PDF = "📄"
     IMAGE = "🖼️"
-    
+
     # ==================== ÉTATS ====================
     CHECK = "✓"
     CROSS = "✕"
@@ -136,42 +137,42 @@ class Icon:
     FLAG = "🚩"
     PIN = "📌"
     BOOKMARK = "🔖"
-    
+
     @classmethod
     def success(cls, size: IconSize | None = None) -> str:
         """Icône succès."""
         return cls.SUCCESS
-    
+
     @classmethod
     def error(cls, size: IconSize | None = None) -> str:
         """Icône erreur."""
         return cls.ERROR
-    
+
     @classmethod
     def warning(cls, size: IconSize | None = None) -> str:
         """Icône avertissement."""
         return cls.WARNING
-    
+
     @classmethod
     def info(cls, size: IconSize | None = None) -> str:
         """Icône info."""
         return cls.INFO
-    
+
     @classmethod
     def loading(cls, size: IconSize | None = None) -> str:
         """Icône chargement."""
         return cls.LOADING
-    
+
     @classmethod
     def for_category(cls, category: str) -> str:
         """Retourne l'icône appropriée pour une catégorie.
-        
+
         Args:
             category: Nom de la catégorie
-        
+
         Returns:
             Emoji correspondant
-        
+
         Usage:
             icon = Icon.for_category("alimentation")  # -> "🍽️"
         """
@@ -214,7 +215,6 @@ class Icon:
             "cadeaux": cls.GIFT,
             "don": cls.DONATION,
             "donation": cls.DONATION,
-            
             # Anglais
             "food": cls.FOOD,
             "groceries": cls.FOOD,
@@ -233,19 +233,19 @@ class Icon:
             "travel": cls.TRAVEL,
             "gifts": cls.GIFT,
         }
-        
+
         return category_icons.get(category.lower(), "📦")
-    
+
     @classmethod
     def for_severity(cls, severity: str) -> str:
         """Retourne l'icône appropriée pour un niveau de sévérité.
-        
+
         Args:
             severity: Niveau de sévérité (low, medium, high, critical)
-        
+
         Returns:
             Emoji correspondant
-        
+
         Usage:
             icon = Icon.for_severity("high")  # -> "🔴"
         """

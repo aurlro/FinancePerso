@@ -24,24 +24,20 @@ def render_local_ml_section():
     Allows training, monitoring, and using the local ML model.
     """
     st.header("🤖 Modèle ML Local (scikit-learn)")
-    st.markdown(
-        """
+    st.markdown("""
     Entraînez un modèle de catégorisation **100% offline** sur vos propres données.
     Alternative à l'IA cloud pour plus de confidentialité.
-    """
-    )
+    """)
 
     # Check if scikit-learn is available
     if not is_local_ml_available():
         st.error("❌ scikit-learn n'est pas installé")
-        st.info(
-            """
+        st.info("""
         **Installation:**
         ```bash
         pip install scikit-learn
         ```
-        """
-        )
+        """)
         return
 
     # Get model stats
@@ -73,13 +69,11 @@ def render_local_ml_section():
     st.subheader("🎓 Entraînement")
 
     if stats["is_trained"]:
-        st.info(
-            f"""
+        st.info(f"""
         **Modèle actuel:**
         - Catégories: {', '.join(stats['categories'][:5])}{'...' if len(stats['categories']) > 5 else ''}
         - Fichier: `{MODEL_PATH}`
-        """
-        )
+        """)
 
     col_train, col_retrain = st.columns(2)
 
@@ -194,14 +188,12 @@ def render_local_ml_section():
     st.caption("*La précision dépend de la quantité et qualité de vos données d'entraînement")
 
     # Usage recommendations
-    st.info(
-        """
+    st.info("""
     💡 **Recommandations:**
     - Utilisez le **ML Local** si vous privilégiez la confidentialité
     - Utilisez l'**IA Cloud** si vous voulez la meilleure précision
     - Le modèle local s'améliore avec le temps (plus de données = meilleures prédictions)
-    """
-    )
+    """)
 
 
 def render_ml_mode_selector():

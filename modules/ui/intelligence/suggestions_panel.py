@@ -4,7 +4,6 @@ Smart Suggestions Panel for Intelligence page.
 Renders actionable suggestions based on data analysis.
 """
 
-
 import pandas as pd
 import streamlit as st
 

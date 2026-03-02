@@ -196,9 +196,7 @@ class NotificationManager:
             **kwargs,
         )
 
-    def loading(
-        self, message: str, title: str | None = "Chargement...", **kwargs
-    ) -> Notification:
+    def loading(self, message: str, title: str | None = "Chargement...", **kwargs) -> Notification:
         """Notification de chargement (à fermer manuellement)."""
         return self.notify(
             message=message,

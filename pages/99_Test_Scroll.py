@@ -33,7 +33,9 @@ for section in range(20):
     with st.expander(f"Section {section + 1}", expanded=True):
         st.write(f"Contenu de la section {section + 1}")
         for i in range(10):
-            st.write(f"  - Ligne {i}: " + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3)
+            st.write(
+                f"  - Ligne {i}: " + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 3
+            )
 
 st.divider()
 st.success("Si vous voyez ce message, vous êtes en bas de la page!")

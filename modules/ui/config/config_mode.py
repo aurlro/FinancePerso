@@ -13,19 +13,19 @@ def is_advanced_mode() -> bool:
 def render_mode_toggle():
     """Affiche le toggle pour switcher entre mode simple et avancé."""
     col1, col2 = st.columns([3, 1])
-    
+
     with col1:
         st.caption("Mode d'affichage")
-    
+
     with col2:
         current_mode = is_advanced_mode()
         new_mode = st.toggle(
             "Avancé",
             value=current_mode,
             key="config_advanced_mode_toggle",
-            help="Activez pour voir toutes les options avancées"
+            help="Activez pour voir toutes les options avancées",
         )
-        
+
         if new_mode != current_mode:
             st.session_state["config_advanced_mode"] = new_mode
             st.rerun()
@@ -56,9 +56,9 @@ def render_simple_mode_help():
 def render_config_mode_section():
     """Section complète de gestion du mode de configuration."""
     st.subheader("🔧 Mode d'affichage")
-    
+
     render_mode_toggle()
-    
+
     if not is_advanced_mode():
         render_simple_mode_help()
     else:

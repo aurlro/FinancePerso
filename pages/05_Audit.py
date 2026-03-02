@@ -38,11 +38,9 @@ load_css()
 init_db()
 
 st.title("🕵️ Audit & Optimisation")
-st.markdown(
-    """
+st.markdown("""
 Diagnostic complet de vos données financières avec recommandations d'optimisation.
-"""
-)
+""")
 
 # --- NAVIGATION ---
 if "audit_active_tab" not in st.session_state:
@@ -173,7 +171,9 @@ if active_tab == "📊 Dashboard Santé":
                 budget_score = max(0, 100 - overruns * 20)
                 scores["budgets"] = {
                     "score": budget_score,
-                    "status": "✅" if budget_score >= 80 else ("⚠️" if budget_score >= 50 else "🚨"),
+                    "status": (
+                        "✅" if budget_score >= 80 else ("⚠️" if budget_score >= 50 else "🚨")
+                    ),
                     "message": f"{active_budgets} budgets actifs",
                     "overruns": overruns,
                 }
@@ -409,8 +409,7 @@ elif active_tab == "📋 Audit des Règles":
     st.markdown("Analyse détaillée de la qualité et cohérence de vos règles.")
 
     if rules_df.empty:
-        st.info(
-            """
+        st.info("""
         📭 **Aucune règle définie.**
         
         Les règles permettent de catégoriser automatiquement vos transactions.
@@ -419,8 +418,7 @@ elif active_tab == "📋 Audit des Règles":
         1. Allez dans la page **🧠 Intelligence**
         2. Ouvrez l'onglet **💡 Suggestions**
         3. Créez des règles depuis les suggestions proposées
-        """
-        )
+        """)
     else:
         from modules.ui.rules.rule_audit import render_audit_section
 
@@ -471,20 +469,30 @@ elif active_tab == "🔍 Qualité des Données":
         # SECTION: TRANSACTIONS ANCIENNES NON VALIDÉES
         # ============================================================
         old_pending_df = get_old_pending_transactions(days=30)
-        
+
         if not old_pending_df.empty:
             with st.container(border=True):
                 col_header, col_badge = st.columns([4, 1])
                 with col_header:
                     st.markdown("#### ⚠️ Transactions anciennes non validées")
-                    st.caption(f"{len(old_pending_df)} transaction(s) datent de plus d'un mois et ne sont pas validées.")
+                    st.caption(
+                        f"{len(old_pending_df)} transaction(s) datent de plus d'un mois et ne sont pas validées."
+                    )
                 with col_badge:
-                    st.markdown(f"<div style='text-align:right'><span style='background:#ff6b6b;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(old_pending_df)}</span></div>", unsafe_allow_html=True)
-                
+                    st.markdown(
+                        f"<div style='text-align:right'><span style='background:#ff6b6b;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(old_pending_df)}</span></div>",
+                        unsafe_allow_html=True,
+                    )
+
                 # Actions globales
                 col_actions = st.columns(3)
                 with col_actions[0]:
-                    if st.button("✅ Tout valider", type="primary", use_container_width=True, key="old_valider_tout"):
+                    if st.button(
+                        "✅ Tout valider",
+                        type="primary",
+                        use_container_width=True,
+                        key="old_valider_tout",
+                    ):
                         count = validate_transactions_by_ids(old_pending_df["id"].tolist())
                         clear_db_cache()
                         get_all_transactions.clear()
@@ -492,36 +500,55 @@ elif active_tab == "🔍 Qualité des Données":
                         st.success(f"✅ {count} transaction(s) validée(s) !")
                         st.rerun()
                 with col_actions[1]:
-                    if st.button("🚫 Tout ignorer", use_container_width=True, key="old_ignorer_tout"):
+                    if st.button(
+                        "🚫 Tout ignorer", use_container_width=True, key="old_ignorer_tout"
+                    ):
                         count = ignore_transactions(old_pending_df["id"].tolist())
                         clear_db_cache()
                         st.success(f"🚫 {count} transaction(s) marquée(s) comme ignorée(s)")
                         st.rerun()
                 with col_actions[2]:
-                    st.page_link("pages/01_Import.py", label="→ Aller à la validation", use_container_width=True)
-                
+                    st.page_link(
+                        "pages/01_Import.py",
+                        label="→ Aller à la validation",
+                        use_container_width=True,
+                    )
+
                 # Liste détaillée
                 with st.expander("📋 Voir les transactions", expanded=False):
                     for _, tx in old_pending_df.head(10).iterrows():
                         col_tx, col_actions_tx = st.columns([4, 1])
                         with col_tx:
                             amount_color = "green" if tx["amount"] > 0 else "red"
-                            st.markdown(f"**{tx['label']}** - <span style='color:{amount_color}'>{tx['amount']:.2f} €</span>", unsafe_allow_html=True)
-                            st.caption(f"📅 {tx['date']} | 📂 {tx.get('category_validated', 'Non catégorisé')} | 👤 {tx.get('member', 'Inconnu')}")
+                            st.markdown(
+                                f"**{tx['label']}** - <span style='color:{amount_color}'>{tx['amount']:.2f} €</span>",
+                                unsafe_allow_html=True,
+                            )
+                            st.caption(
+                                f"📅 {tx['date']} | 📂 {tx.get('category_validated', 'Non catégorisé')} | 👤 {tx.get('member', 'Inconnu')}"
+                            )
                         with col_actions_tx:
                             tx_col1, tx_col2 = st.columns(2)
                             with tx_col1:
-                                if st.button("✅", key=f"old_validate_{tx['id']}", help="Valider cette transaction"):
+                                if st.button(
+                                    "✅",
+                                    key=f"old_validate_{tx['id']}",
+                                    help="Valider cette transaction",
+                                ):
                                     validate_transactions_by_ids([tx["id"]])
                                     clear_db_cache()
                                     get_all_transactions.clear()
                                     st.rerun()
                             with tx_col2:
-                                if st.button("🚫", key=f"old_ignore_{tx['id']}", help="Ignorer cette transaction"):
+                                if st.button(
+                                    "🚫",
+                                    key=f"old_ignore_{tx['id']}",
+                                    help="Ignorer cette transaction",
+                                ):
                                     ignore_transactions([tx["id"]])
                                     clear_db_cache()
                                     st.rerun()
-                    
+
                     if len(old_pending_df) > 10:
                         st.caption(f"... et {len(old_pending_df) - 10} autres transactions")
 
@@ -529,24 +556,36 @@ elif active_tab == "🔍 Qualité des Données":
         # SECTION: DOUBLONS DE TRANSACTIONS
         # ============================================================
         duplicates_df = get_duplicate_transactions()
-        
+
         if not duplicates_df.empty:
             with st.container(border=True):
                 col_header, col_badge = st.columns([4, 1])
                 with col_header:
                     st.markdown("#### ♻️ Doublons détectés")
-                    st.caption(f"{len(duplicates_df)} groupe(s) de transactions identiques (même date, libellé, montant).")
+                    st.caption(
+                        f"{len(duplicates_df)} groupe(s) de transactions identiques (même date, libellé, montant)."
+                    )
                 with col_badge:
                     total_dups = duplicates_df["duplicate_count"].sum() - len(duplicates_df)
-                    st.markdown(f"<div style='text-align:right'><span style='background:#ffa502;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{total_dups}</span></div>", unsafe_allow_html=True)
-                
+                    st.markdown(
+                        f"<div style='text-align:right'><span style='background:#ffa502;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{total_dups}</span></div>",
+                        unsafe_allow_html=True,
+                    )
+
                 # Actions globales
                 col_actions = st.columns(2)
                 with col_actions[0]:
-                    if st.button("🔀 Tout fusionner", type="primary", use_container_width=True, key="dups_fusionner_tout"):
+                    if st.button(
+                        "🔀 Tout fusionner",
+                        type="primary",
+                        use_container_width=True,
+                        key="dups_fusionner_tout",
+                    ):
                         merged_count = 0
                         for _, dup in duplicates_df.iterrows():
-                            result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                            result = merge_duplicate_transactions(
+                                dup["date"], dup["label"], dup["amount"]
+                            )
                             if result["success"]:
                                 merged_count += len(result["deleted_ids"])
                         clear_db_cache()
@@ -554,37 +593,56 @@ elif active_tab == "🔍 Qualité des Données":
                         st.success(f"✅ {merged_count} doublon(s) fusionné(s) !")
                         st.rerun()
                 with col_actions[1]:
-                    if st.button("🎲 Fusionner auto (conservateur)", use_container_width=True, key="dups_fusionner_auto"):
+                    if st.button(
+                        "🎲 Fusionner auto (conservateur)",
+                        use_container_width=True,
+                        key="dups_fusionner_auto",
+                    ):
                         # Fusionner seulement les groupes avec plus de 2 doublons (évident)
                         merged_count = 0
-                        for _, dup in duplicates_df[duplicates_df["duplicate_count"] > 2].iterrows():
-                            result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                        for _, dup in duplicates_df[
+                            duplicates_df["duplicate_count"] > 2
+                        ].iterrows():
+                            result = merge_duplicate_transactions(
+                                dup["date"], dup["label"], dup["amount"]
+                            )
                             if result["success"]:
                                 merged_count += len(result["deleted_ids"])
                         clear_db_cache()
                         get_all_transactions.clear()
                         st.success(f"✅ {merged_count} doublon(s) évident(s) fusionné(s) !")
                         st.rerun()
-                
+
                 # Liste détaillée des doublons
                 with st.expander("📋 Voir les doublons détaillés", expanded=False):
                     for _, dup in duplicates_df.head(10).iterrows():
                         col_dup, col_actions_dup = st.columns([4, 1])
                         with col_dup:
                             amount_color = "green" if dup["amount"] > 0 else "red"
-                            st.markdown(f"**{dup['label']}** - <span style='color:{amount_color}'>{dup['amount']:.2f} €</span>", unsafe_allow_html=True)
-                            st.caption(f"📅 {dup['date']} | 🔄 {dup['duplicate_count']} copies | 👤 {dup.get('accounts', 'N/A')}")
+                            st.markdown(
+                                f"**{dup['label']}** - <span style='color:{amount_color}'>{dup['amount']:.2f} €</span>",
+                                unsafe_allow_html=True,
+                            )
+                            st.caption(
+                                f"📅 {dup['date']} | 🔄 {dup['duplicate_count']} copies | 👤 {dup.get('accounts', 'N/A')}"
+                            )
                         with col_actions_dup:
-                            if st.button("🔀 Fusionner", key=f"dup_merge_{dup['date']}_{dup['label'][:20]}"):
-                                result = merge_duplicate_transactions(dup["date"], dup["label"], dup["amount"])
+                            if st.button(
+                                "🔀 Fusionner", key=f"dup_merge_{dup['date']}_{dup['label'][:20]}"
+                            ):
+                                result = merge_duplicate_transactions(
+                                    dup["date"], dup["label"], dup["amount"]
+                                )
                                 if result["success"]:
                                     clear_db_cache()
                                     get_all_transactions.clear()
-                                    st.success(f"✅ {len(result['deleted_ids'])} doublon(s) supprimé(s)")
+                                    st.success(
+                                        f"✅ {len(result['deleted_ids'])} doublon(s) supprimé(s)"
+                                    )
                                     st.rerun()
                                 else:
                                     st.info(result.get("message", "Pas de doublons"))
-                    
+
                     if len(duplicates_df) > 10:
                         st.caption(f"... et {len(duplicates_df) - 10} autres groupes de doublons")
 
@@ -594,38 +652,51 @@ elif active_tab == "🔍 Qualité des Données":
         if not rules_df.empty:
             audit_results = analyze_rules_integrity(rules_df)
             overlaps = audit_results.get("overlaps", [])
-            
+
             if overlaps:
                 with st.container(border=True):
                     col_header, col_badge = st.columns([4, 1])
                     with col_header:
                         st.markdown("#### ℹ️ Chevauchements de règles")
-                        st.caption(f"{len(overlaps)} pattern(s) imbriqué(s) détecté(s) entre règles de catégorisation.")
+                        st.caption(
+                            f"{len(overlaps)} pattern(s) imbriqué(s) détecté(s) entre règles de catégorisation."
+                        )
                     with col_badge:
-                        st.markdown(f"<div style='text-align:right'><span style='background:#74b9ff;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(overlaps)}</span></div>", unsafe_allow_html=True)
-                    
-                    st.info("Un pattern est contenu dans un autre avec une catégorie différente. Cela peut créer des comportements inattendus selon l'ordre d'application des règles.")
-                    
+                        st.markdown(
+                            f"<div style='text-align:right'><span style='background:#74b9ff;color:white;padding:4px 12px;border-radius:12px;font-size:1.2rem;font-weight:bold'>{len(overlaps)}</span></div>",
+                            unsafe_allow_html=True,
+                        )
+
+                    st.info(
+                        "Un pattern est contenu dans un autre avec une catégorie différente. Cela peut créer des comportements inattendus selon l'ordre d'application des règles."
+                    )
+
                     # Liste des chevauchements
                     with st.expander("📋 Voir les détails et suggestions", expanded=False):
                         for i, ov in enumerate(overlaps[:10]):
-                            st.markdown(f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) → **inclus dans** → **`{ov['longer_pattern']}`** ({ov['longer_category']})")
-                            
+                            st.markdown(
+                                f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) → **inclus dans** → **`{ov['longer_pattern']}`** ({ov['longer_category']})"
+                            )
+
                             # Suggestions
                             col_suggestions = st.columns(2)
                             with col_suggestions[0]:
                                 st.markdown("**💡 Suggestions:**")
-                                st.markdown(f"- Si '{ov['shorter_pattern']}' est plus spécifique, augmentez sa priorité")
-                                st.markdown(f"- Si '{ov['longer_pattern']}' est un cas général, gardez l'ordre actuel")
+                                st.markdown(
+                                    f"- Si '{ov['shorter_pattern']}' est plus spécifique, augmentez sa priorité"
+                                )
+                                st.markdown(
+                                    f"- Si '{ov['longer_pattern']}' est un cas général, gardez l'ordre actuel"
+                                )
                             with col_suggestions[1]:
                                 st.markdown("**🔧 Actions:**")
                                 st.page_link(
-                                    "pages/03_Intelligence.py", 
+                                    "pages/03_Intelligence.py",
                                     label=f"→ Modifier les règles",
-                                    help="Aller dans l'onglet Intelligence pour modifier les règles"
+                                    help="Aller dans l'onglet Intelligence pour modifier les règles",
                                 )
                             st.divider()
-                        
+
                         if len(overlaps) > 10:
                             st.caption(f"... et {len(overlaps) - 10} autres chevauchements")
 
@@ -637,7 +708,7 @@ elif active_tab == "🔍 Qualité des Données":
         else:
             st.divider()
             st.subheader("📊 Récapitulatif des problèmes")
-            
+
             recap_cols = st.columns(3)
             with recap_cols[0]:
                 if not old_pending_df.empty:

@@ -151,10 +151,7 @@ def get_rules_for_category(category: str) -> pd.DataFrame:
 
 
 def update_learning_rule(
-    rule_id: int,
-    pattern: str = None,
-    category: str = None,
-    priority: int = None
+    rule_id: int, pattern: str = None, category: str = None, priority: int = None
 ) -> bool:
     """
     Update an existing learning rule.
@@ -171,7 +168,7 @@ def update_learning_rule(
     # Build update query dynamically based on provided fields
     updates = []
     params = []
-    
+
     if pattern is not None:
         # Validate the pattern before updating
         is_valid, error_msg = validate_regex_pattern(pattern)
@@ -180,28 +177,28 @@ def update_learning_rule(
             return False
         updates.append("pattern = ?")
         params.append(pattern)
-    
+
     if category is not None:
         updates.append("category = ?")
         params.append(category)
-    
+
     if priority is not None:
         updates.append("priority = ?")
         params.append(priority)
-    
+
     if not updates:
         logger.warning("No fields to update for rule {rule_id}")
         return False
-    
+
     params.append(rule_id)
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         try:
             query = f"UPDATE learning_rules SET {', '.join(updates)} WHERE id = ?"
             cursor.execute(query, params)
             conn.commit()
-            
+
             if cursor.rowcount > 0:
                 clear_db_cache()
                 logger.info(f"Learning rule {rule_id} updated")

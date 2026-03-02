@@ -4,7 +4,6 @@ Smart Reminders Widget - Affichage des rappels intelligents.
 Intégré dans le dashboard pour guider l'utilisateur vers les actions importantes.
 """
 
-
 import streamlit as st
 
 from modules.smart_reminders import SmartReminder, get_smart_reminders

@@ -19,14 +19,14 @@ class CategoryRepository(BaseRepository[dict]):
     def get_by_id(self, id: int) -> dict | None:
         """Get category by ID."""
         df = get_categories_df()
-        cat = df[df['id'] == id]
-        return cat.to_dict('records')[0] if not cat.empty else None
+        cat = df[df["id"] == id]
+        return cat.to_dict("records")[0] if not cat.empty else None
 
     def get_by_name(self, name: str) -> dict | None:
         """Get category by name."""
         df = get_categories_df()
-        cat = df[df['name'] == name]
-        return cat.to_dict('records')[0] if not cat.empty else None
+        cat = df[df["name"] == name]
+        return cat.to_dict("records")[0] if not cat.empty else None
 
     def get_all(self, filters: dict[str, Any] | None = None) -> list[dict]:
         """Get all categories."""
@@ -38,13 +38,13 @@ class CategoryRepository(BaseRepository[dict]):
                 if key in df.columns:
                     df = df[df[key] == value]
 
-        return df.to_dict('records') if not df.empty else []
+        return df.to_dict("records") if not df.empty else []
 
     def create(self, data: dict[str, Any]) -> dict:
         """Create new category."""
-        name = data.get('name')
-        emoji = data.get('emoji', '🏷️')
-        is_fixed = data.get('is_fixed', 0)
+        name = data.get("name")
+        emoji = data.get("emoji", "🏷️")
+        is_fixed = data.get("is_fixed", 0)
 
         if not name:
             raise ValueError("Category name is required")
@@ -61,17 +61,18 @@ class CategoryRepository(BaseRepository[dict]):
             return None
 
         # Update emoji if provided
-        if 'emoji' in data:
-            update_category_emoji(id, data['emoji'])
+        if "emoji" in data:
+            update_category_emoji(id, data["emoji"])
 
         # Update is_fixed if provided
-        if 'is_fixed' in data:
-            update_category_fixed(id, int(data['is_fixed']))
+        if "is_fixed" in data:
+            update_category_fixed(id, int(data["is_fixed"]))
 
         # Update suggested_tags if provided
-        if 'suggested_tags' in data:
+        if "suggested_tags" in data:
             from modules.db.categories import update_category_suggested_tags
-            update_category_suggested_tags(id, data['suggested_tags'])
+
+            update_category_suggested_tags(id, data["suggested_tags"])
 
         return self.get_by_id(id)
 
@@ -91,9 +92,11 @@ class CategoryRepository(BaseRepository[dict]):
     def get_names(self) -> list[str]:
         """Get list of all category names."""
         from modules.db.categories import get_categories
+
         return get_categories()
 
     def get_with_emojis(self) -> dict[str, str]:
         """Get dictionary of categories with their emojis."""
         from modules.db.categories import get_categories_with_emojis
+
         return get_categories_with_emojis()

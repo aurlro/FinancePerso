@@ -3,7 +3,6 @@ Module d'onboarding pour guider les nouveaux utilisateurs.
 Fournit une expérience de premier lancement fluide.
 """
 
-
 import streamlit as st
 
 from modules.db.categories import get_categories
@@ -108,31 +107,27 @@ class OnboardingManager:
         col1, col2 = st.columns(2)
 
         with col1:
-            st.markdown(
-                """
+            st.markdown("""
             ### 🏠 Configuration du foyer
             
             Commencez par configurer les membres de votre foyer :
             - Ajoutez votre conjoint/partenaire
             - Ajoutez les membres de votre famille
             - Définissez les associations de cartes
-            """
-            )
+            """)
 
             if st.button("➕ Ajouter des membres", key="onboarding_add_members"):
                 st.switch_page("pages/08_Configuration.py")
 
         with col2:
-            st.markdown(
-                """
+            st.markdown("""
             ### 📂 Catégories de dépenses
             
             Personnalisez vos catégories selon vos besoins :
             - Catégories fixes (loyer, assurances)
             - Catégories variables (courses, loisirs)
             - Sous-catégories personnalisées
-            """
-            )
+            """)
 
             if st.button("⚙️ Configurer les catégories", key="onboarding_config_cats"):
                 st.switch_page("pages/08_Configuration.py")
@@ -153,8 +148,7 @@ class OnboardingManager:
         """Étape 2: Premier import."""
         st.subheader("📥 Importez vos premières transactions")
 
-        st.markdown(
-            """
+        st.markdown("""
         ### 🎯 Pourquoi importer vos relevés ?
         
         L'import de vos relevés bancaires permet de :
@@ -162,8 +156,7 @@ class OnboardingManager:
         - 💰 Suivre votre budget en temps réel
         - 🔍 Détecter les anomalies et paiements récurrents
         - 📈 Obtenir des prédictions personnalisées
-        """
-        )
+        """)
 
         st.info(
             "💡 **Conseil** : Commencez par importer vos relevés des 3 derniers mois pour avoir une vision complète de vos finances."

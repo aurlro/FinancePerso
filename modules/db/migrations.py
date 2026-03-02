@@ -21,8 +21,7 @@ def init_db() -> None:
         cursor = conn.cursor()
 
         # Create transactions table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS transactions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT,
@@ -36,8 +35,7 @@ def init_db() -> None:
                 comment TEXT,
                 import_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Migrations for transactions table
         cursor.execute("PRAGMA table_info(transactions)")
@@ -71,8 +69,7 @@ def init_db() -> None:
         cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_hash ON transactions(tx_hash)")
 
         # Transaction History Table (for undo functionality)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS transaction_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 action_group_id TEXT,
@@ -85,8 +82,7 @@ def init_db() -> None:
                 prev_notes TEXT,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Migration for transaction_history table
         cursor.execute("PRAGMA table_info(transaction_history)")
@@ -116,8 +112,7 @@ def init_db() -> None:
         )
 
         # Categories table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS categories (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE,
@@ -125,8 +120,7 @@ def init_db() -> None:
                 is_fixed INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Migration: Add columns to categories
         cursor.execute("PRAGMA table_info(categories)")
@@ -172,44 +166,37 @@ def init_db() -> None:
             )
 
         # Member Mappings table (Cards)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS member_mappings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 card_suffix TEXT UNIQUE,
                 member_name TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Account Member Mappings table (Defaults per account)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS account_member_mappings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 account_label TEXT UNIQUE,
                 member_name TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Beneficiary Aliases table (Magic Fix 5.1)
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS beneficiary_aliases (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 alias TEXT UNIQUE,
                 normalized_name TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Learning Rules table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS learning_rules (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 pattern TEXT UNIQUE,
@@ -217,8 +204,7 @@ def init_db() -> None:
                 priority INTEGER DEFAULT 1,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         cursor.execute("PRAGMA table_info(learning_rules)")
         columns_rules = [info[1] for info in cursor.fetchall()]
@@ -226,26 +212,22 @@ def init_db() -> None:
             cursor.execute("ALTER TABLE learning_rules ADD COLUMN priority INTEGER DEFAULT 1")
 
         # Budgets table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS budgets (
                 category TEXT PRIMARY KEY,
                 amount REAL,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Members table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS members (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Migration: Add member_type column
         cursor.execute("PRAGMA table_info(members)")
@@ -283,16 +265,14 @@ def init_db() -> None:
         )
 
         # Settings table for user configuration
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT,
                 description TEXT,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Initialize default settings with internal transfer targets
         # Store as comma-separated list for simplicity
@@ -309,8 +289,7 @@ def init_db() -> None:
         )
 
         # Dashboard Layouts table for customizable dashboard
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS dashboard_layouts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL,
@@ -319,8 +298,7 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """
-        )
+        """)
 
         # Create index on name for faster lookups
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_layout_name ON dashboard_layouts(name)")
@@ -336,8 +314,7 @@ def init_db() -> None:
             logger.info("Created default dashboard layout")
 
         # Recycle Bin table for soft delete functionality
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS recycle_bin (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 original_id INTEGER NOT NULL,
@@ -349,9 +326,8 @@ def init_db() -> None:
                 restored_at TIMESTAMP,
                 restored BOOLEAN DEFAULT 0
             )
-        """
-        )
-        
+        """)
+
         # Indexes for recycle bin
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_recycle_bin_original ON recycle_bin(original_id, restored)"
@@ -359,10 +335,9 @@ def init_db() -> None:
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_recycle_bin_expires ON recycle_bin(expires_at, restored)"
         )
-        
+
         # Recurrence Feedback table for subscription management
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS recurrence_feedback (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 label_pattern TEXT NOT NULL,
@@ -372,9 +347,8 @@ def init_db() -> None:
                 notes TEXT,
                 UNIQUE(label_pattern, category)
             )
-        """
-        )
-        
+        """)
+
         cursor.execute(
             "CREATE INDEX IF NOT EXISTS idx_recurrence_feedback_lookup ON recurrence_feedback(label_pattern, category)"
         )

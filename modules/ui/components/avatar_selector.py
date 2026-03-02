@@ -28,7 +28,6 @@ def render_avatar_selector(
         The selected value
     """
 
-
     # CSS injection for clicking (Streamlit buttons don't support custom HTML seamlessly inside them,
     # so we use st.button with custom styling for the "Avatars")
 

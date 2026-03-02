@@ -21,9 +21,7 @@ class FeatureFlag:
     rollout_percentage: int = 0  # 0-100 for gradual rollout
     user_groups: list | None = None  # List of allowed user groups
 
-    def is_enabled_for(
-        self, user_id: str | None = None, user_group: str | None = None
-    ) -> bool:
+    def is_enabled_for(self, user_id: str | None = None, user_group: str | None = None) -> bool:
         """Check if feature is enabled for specific user."""
         if not self.enabled:
             return False
@@ -61,8 +59,7 @@ class FeatureFlagManager:
         """Ensure feature_flags table exists."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS feature_flags (
                     name TEXT PRIMARY KEY,
                     enabled INTEGER DEFAULT 0,
@@ -71,8 +68,7 @@ class FeatureFlagManager:
                     user_groups TEXT,  -- JSON array
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
             conn.commit()
 
     def load_flags(self, force_refresh: bool = False):
@@ -181,9 +177,7 @@ def get_feature_manager() -> FeatureFlagManager:
     return _feature_manager
 
 
-def is_enabled(
-    flag_name: str, user_id: str | None = None, user_group: str | None = None
-) -> bool:
+def is_enabled(flag_name: str, user_id: str | None = None, user_group: str | None = None) -> bool:
     """Quick check if feature is enabled."""
     return get_feature_manager().is_enabled(flag_name, user_id, user_group)
 

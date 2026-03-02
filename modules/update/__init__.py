@@ -5,7 +5,7 @@ and git analysis for tracking changes.
 
 Example:
     from modules.update.manager import UpdateManager
-    
+
     manager = UpdateManager()
     version = manager.get_current_version()
     new_version = manager.bump_version(version, "minor")

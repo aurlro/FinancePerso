@@ -19,14 +19,12 @@ st.title("🎁 Nouveautés & Mises à jour")
 
 # --- UPDATE SECTION (Admin) ---
 with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False):
-    st.markdown(
-        """
+    st.markdown("""
     Cette section permet de créer une nouvelle version et de mettre à jour :
     - **CHANGELOG.md** - Historique des versions
     - **AGENTS.md** - Guide pour les assistants IA
     - **modules/constants.py** - Numéro de version
-    """
-    )
+    """)
 
     manager = get_update_manager()
     current_version = manager.get_current_version()
@@ -88,25 +86,25 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                 cols_summary[1].metric("✨ Ajouts", len(changes.get("added", [])))
                 cols_summary[2].metric("🐛 Corrections", len(changes.get("fixed", [])))
                 cols_summary[3].metric("⚡ Perf", len(changes.get("performance", [])))
-        
+
         # Show AI-generated suggestions
         st.divider()
         st.subheader("🤖 Suggestions générées automatiquement")
-        
+
         suggested_bump = changes.get("suggested_bump", "patch")
         bump_labels = {
             "patch": "🔧 Correction (patch)",
             "minor": "✨ Fonctionnalité (minor)",
-            "major": "🚀 Majeure (major)"
+            "major": "🚀 Majeure (major)",
         }
         bump_label = bump_labels.get(suggested_bump, "🔧 Correction")
         bump_emoji = {"patch": "🔧", "minor": "✨", "major": "🚀"}.get(suggested_bump, "🔧")
-        
+
         sugg_cols = st.columns([1, 2])
         with sugg_cols[0]:
             st.markdown("**Type de version suggéré :**")
             st.markdown(bump_emoji + " **" + bump_label + "**")
-        
+
         with sugg_cols[1]:
             suggested_title = changes.get("suggested_title", "")
             if suggested_title:
@@ -134,7 +132,9 @@ with st.expander("🔧 Mettre à jour la documentation (Admin)", expanded=False)
                         st.caption(status_emoji + " `" + f + "`_(" + status + ")_")
 
                     if len(uncommitted_files) > 20:
-                        st.caption("... et " + str(len(uncommitted_files) - 20) + " autres fichiers")
+                        st.caption(
+                            "... et " + str(len(uncommitted_files) - 20) + " autres fichiers"
+                        )
 
                 if changes.get("has_committed_changes"):
                     st.divider()
@@ -321,7 +321,7 @@ else:
         with st.container(border=True):
             col_ver, col_content = st.columns([1, 4])
             with col_ver:
-                st.markdown("### `v" + v['version'] + "`")
+                st.markdown("### `v" + v["version"] + "`")
                 if v["date"]:
                     # Try to format date nicely if possible
                     try:
@@ -357,8 +357,7 @@ with roadmap_tabs[0]:
     st.subheader("🔮 Magic Fix Lab : Évolutions 5.x")
     st.info("Stratégies d'optimisation prévues pour le nettoyage et l'enrichissement des données.")
 
-    st.markdown(
-        """
+    st.markdown("""
     ### 1. Rapprochement Inter-Comptes (Matching)
     - **Description** : Détecte automatiquement les paires Débit/Crédit (virements internes) entre vos comptes.
     - **Priorité** : 🔴 **MUST HAVE**
@@ -408,13 +407,11 @@ with roadmap_tabs[0]:
     - **Description** : Détecte si la transaction provient d'Apple Pay ou d'une carte virtuelle.
     - **Priorité** : ⚪ **WON'T HAVE** (pour l'instant)
     - **Status** : ⏸️ Reporté
-    """
-    )
+    """)
 
 with roadmap_tabs[1]:
     st.subheader("💡 Idées proposées")
-    st.markdown(
-        """
+    st.markdown("""
     ### Comparatif anonymisé
     - **Description** : "Vous dépensez 20% de plus que la moyenne des utilisateurs"
     - **Use case** : Donner une perspective comparative sur les habitudes de dépense
@@ -432,13 +429,11 @@ with roadmap_tabs[1]:
     - **Use case** : Interaction mains-libres avec l'assistant financier
     - **Complexité** : Moyenne (intégration STT/TTS)
     - **Statut** : 💭 Idée
-    """
-    )
+    """)
 
 with roadmap_tabs[1]:
     st.subheader("🔬 En recherche & développement")
-    st.markdown(
-        """
+    st.markdown("""
     ### Intégration bancaire temps réel
     - **Description** : Alertes en temps réel via webhook bancaire
     - **Use case** : Notification instantanée lors d'un paiement
@@ -450,22 +445,18 @@ with roadmap_tabs[1]:
     - **Use case** : Alerte si une transaction inhabituelle est détectée
     - **Complexité** : Élevée
     - **Statut** : 🔬 R&D
-    """
-    )
+    """)
 
 with roadmap_tabs[2]:
     st.subheader("🎯 Priorisées pour développement")
     st.info("Les fonctionnalités ici sont celles qui seront développées en priorité.")
-    st.markdown(
-        """
+    st.markdown("""
     *Aucune fonctionnalité priorisée actuellement. Les évolutions se font au fil des besoins.*
-    """
-    )
+    """)
 
 with roadmap_tabs[3]:
     st.subheader("⏸️ En attente / Reportées")
-    st.markdown(
-        """
+    st.markdown("""
     Ces fonctionnalités ont été proposées mais sont actuellement reportées :
     
     | Fonctionnalité | Raison du report |
@@ -474,8 +465,7 @@ with roadmap_tabs[3]:
     | Prédictions ML LSTM | Besoin de plus de données historiques |
     | Assistant vocal | Priorité moindre vs features core |
     | Webhook bancaire | Dépendance externe (banques) |
-    """
-    )
+    """)
 
 st.divider()
 

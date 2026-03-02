@@ -16,7 +16,7 @@ def detect_amount_anomalies(df: pd.DataFrame, threshold_sigma: float = 2.0) -> l
     Detect transactions with anomalous amounts based on historical patterns.
 
     Args:
-        df: DataFrame with transactions (must have 'label', 'amount', 'id', 
+        df: DataFrame with transactions (must have 'label', 'amount', 'id',
             'date', 'category_validated')
         threshold_sigma: Number of standard deviations to consider anomalous (default: 2.0)
 

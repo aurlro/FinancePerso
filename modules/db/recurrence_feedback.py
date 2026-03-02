@@ -11,8 +11,7 @@ def init_recurrence_feedback_table():
     """Create table for storing user feedback on recurrences."""
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS recurrence_feedback (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 label_pattern TEXT NOT NULL,
@@ -25,16 +24,13 @@ def init_recurrence_feedback_table():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(label_pattern, category)
             )
-        """
-        )
+        """)
 
         # Create index for fast lookup
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_recurrence_feedback_lookup 
             ON recurrence_feedback(label_pattern, category)
-        """
-        )
+        """)
         conn.commit()
 
 
@@ -167,12 +163,10 @@ def get_all_feedback(status: str = None) -> list[dict]:
                     (status,),
                 )
             else:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT * FROM recurrence_feedback 
                     ORDER BY updated_at DESC
-                """
-                )
+                """)
 
             rows = cursor.fetchall()
             return [
@@ -253,15 +247,13 @@ def get_feedback_stats() -> dict:
         with get_db_connection() as conn:
             cursor = conn.cursor()
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT 
                     COUNT(*) as total,
                     SUM(CASE WHEN user_feedback = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
                     SUM(CASE WHEN user_feedback = 'rejected' THEN 1 ELSE 0 END) as rejected
                 FROM recurrence_feedback
-            """
-            )
+            """)
 
             row = cursor.fetchone()
             return {"total": row[0] or 0, "confirmed": row[1] or 0, "rejected": row[2] or 0}

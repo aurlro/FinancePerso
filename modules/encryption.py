@@ -60,7 +60,7 @@ class FieldEncryption:
             if os.getenv("ENVIRONMENT") == "production":
                 raise ValueError(
                     "ENCRYPTION_SALT environment variable is required in production. "
-                    "Run: export ENCRYPTION_SALT=$(python -c \"import secrets; print(secrets.token_hex(16))\")"
+                    'Run: export ENCRYPTION_SALT=$(python -c "import secrets; print(secrets.token_hex(16))")'
                 )
             # En développement, utiliser le salt par défaut avec warning
             salt_str = "financeperso_salt_v1"
@@ -96,6 +96,7 @@ class FieldEncryption:
             >>> print(f"Add to .env: ENCRYPTION_SALT={salt}")
         """
         import secrets
+
         return secrets.token_hex(16)
 
     def is_enabled(self) -> bool:

@@ -15,38 +15,51 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 DB_PATH = os.path.join(PROJECT_ROOT, "Data", "finance.db")
 
 # Allowed columns for SQL filtering (whitelist)
-ALLOWED_COLUMNS = {'id', 'date', 'label', 'amount', 'status', 'category',
-                   'member_id', 'tx_hash', 'created_at', 'updated_at',
-                   'account_label', 'card_suffix', 'member', 'beneficiary'}
-ALLOWED_OPERATORS = {'=', '<>', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'}
+ALLOWED_COLUMNS = {
+    "id",
+    "date",
+    "label",
+    "amount",
+    "status",
+    "category",
+    "member_id",
+    "tx_hash",
+    "created_at",
+    "updated_at",
+    "account_label",
+    "card_suffix",
+    "member",
+    "beneficiary",
+}
+ALLOWED_OPERATORS = {"=", "<>", "!=", ">", "<", ">=", "<=", "LIKE", "NOT LIKE", "IN", "NOT IN"}
 
 
 def validate_sql_identifier(identifier: str, allowed: set[str] | None = None) -> str:
     """
     Valide qu'un identifiant SQL est sûr et optionnellement dans une liste autorisée.
-    
+
     Args:
         identifier: L'identifiant à valider
         allowed: Set optionnel d'identifiants autorisés. Si None, vérifie uniquement
                 que l'identifiant est un nom SQL valide (alphanumérique + underscore)
-    
+
     Returns:
         L'identifiant validé
-    
+
     Raises:
         ValueError: Si l'identifiant est invalide ou non autorisé
     """
     if not identifier:
         raise ValueError("L'identifiant SQL ne peut pas être vide")
-    
+
     # Vérifier le format (doit commencer par lettre/underscore, puis alphanumérique)
-    if not identifier.replace('_', '').isalnum() or (identifier[0].isdigit()):
+    if not identifier.replace("_", "").isalnum() or (identifier[0].isdigit()):
         raise ValueError(f"Format d'identifiant SQL invalide: {identifier}")
-    
+
     # Vérifier contre la whitelist si fournie
     if allowed is not None and identifier not in allowed:
         raise ValueError(f"Identifiant SQL non autorisé: {identifier}")
-    
+
     return identifier
 
 

@@ -1,6 +1,7 @@
 """
 Tests for anomaly_detector.py module.
 """
+
 import pytest
 import pandas as pd
 from modules.ai.anomaly_detector import detect_amount_anomalies
@@ -53,10 +54,10 @@ class TestDetectAmountAnomalies:
             "category": ["Alim", "Alim", "Alim"],
         }
         df = pd.DataFrame(data)
-        
+
         # Lower threshold should detect more anomalies
         result_low = detect_amount_anomalies(df, threshold_sigma=1.0)
         result_high = detect_amount_anomalies(df, threshold_sigma=3.0)
-        
+
         assert isinstance(result_low, list)
         assert isinstance(result_high, list)

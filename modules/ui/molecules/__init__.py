@@ -8,7 +8,7 @@ Les molécules combinent plusieurs atomes pour créer des composants réutilisab
 
 Usage:
     from modules.ui.molecules import Card, EmptyState
-    
+
     Card.render(title="Titre", content="Contenu")
     EmptyState.render("Aucune donnée", icon="📭")
 """

@@ -6,7 +6,7 @@ couleur d'accent dynamique selon le thème.
 
 Usage:
     from modules.ui.components.welcome_empty_state import WelcomeEmptyState
-    
+
     empty_state = WelcomeEmptyState()
     empty_state.render(
         title="👋 Bonjour !",
@@ -28,7 +28,7 @@ from modules.ui.theme import get_theme
 class WelcomeEmptyState:
     """
     Composant Empty State engageant pour les pages sans données.
-    
+
     Design :
     - Carte centrale avec bordure fine et ombre légère
     - Icône illustrative en grand format
@@ -36,18 +36,18 @@ class WelcomeEmptyState:
     - Sous-titre explicatif
     - Boutons d'action primaire et secondaire
     """
-    
+
     # Les couleurs sont désormais dynamiques via theme_manager
-    
+
     def __init__(self):
         """Initialise le composant avec les styles CSS."""
         self.theme = get_theme()
         self._inject_styles()
-    
+
     def _inject_styles(self) -> None:
         """Injecte les styles CSS inline dans la page avec les couleurs du thème."""
         theme = self.theme
-        
+
         # Calculer les couleurs du gradient pour l'icône
         if not theme.is_dark:
             icon_gradient_start = theme.primary_light
@@ -55,7 +55,7 @@ class WelcomeEmptyState:
         else:
             icon_gradient_start = theme.primary + "30"
             icon_gradient_end = theme.primary + "10"
-        
+
         styles = f"""
         <style>
         /* Conteneur principal centré */
@@ -317,7 +317,7 @@ class WelcomeEmptyState:
         </style>
         """
         st.markdown(styles, unsafe_allow_html=True)
-    
+
     def render(
         self,
         title: str = "👋 Bonjour !",
@@ -332,7 +332,7 @@ class WelcomeEmptyState:
     ) -> None:
         """
         Affiche l'empty state.
-        
+
         Args:
             title: Titre principal (avec emoji recommandé)
             subtitle: Sous-titre court
@@ -345,7 +345,7 @@ class WelcomeEmptyState:
             on_secondary_click: Callback pour le bouton secondaire
         """
         card_class = "empty-state-compact" if compact else "empty-state-card"
-        
+
         # HTML de la carte
         html = f"""
         <div class="empty-state-container">
@@ -360,24 +360,24 @@ class WelcomeEmptyState:
         </div>
         """
         st.markdown(html, unsafe_allow_html=True)
-        
+
         # Boutons (en dehors du HTML pour gérer les callbacks)
         if primary_action or secondary_action or on_primary_click or on_secondary_click:
             # Utiliser des colonnes pour centrer les boutons
             col1, col2, col3 = st.columns([1, 2, 1])
-            
+
             with col2:
                 if compact:
                     # Version compacte : boutons côte à côte
                     btn_col1, btn_col2 = st.columns(2)
-                    
+
                     with btn_col1:
                         if on_primary_click:
                             if st.button(
                                 f"▶️ {primary_action[0] if primary_action else 'Commencer'}",
                                 type="primary",
                                 use_container_width=True,
-                                key="empty_primary_compact"
+                                key="empty_primary_compact",
                             ):
                                 on_primary_click()
                         elif primary_action:
@@ -385,22 +385,22 @@ class WelcomeEmptyState:
                                 f"▶️ {primary_action[0]}",
                                 primary_action[1],
                                 type="primary",
-                                use_container_width=True
+                                use_container_width=True,
                             )
-                    
+
                     with btn_col2:
                         if on_secondary_click:
                             if st.button(
                                 f"📖 {secondary_action[0] if secondary_action else 'Guide'}",
                                 use_container_width=True,
-                                key="empty_secondary_compact"
+                                key="empty_secondary_compact",
                             ):
                                 on_secondary_click()
                         elif secondary_action:
                             st.link_button(
                                 f"📖 {secondary_action[0]}",
                                 secondary_action[1],
-                                use_container_width=True
+                                use_container_width=True,
                             )
                 else:
                     # Version complète : boutons empilés
@@ -409,7 +409,7 @@ class WelcomeEmptyState:
                             f"▶️ {primary_action[0] if primary_action else 'Commencer'}",
                             type="primary",
                             use_container_width=True,
-                            key="empty_primary_full"
+                            key="empty_primary_full",
                         ):
                             on_primary_click()
                     elif primary_action:
@@ -417,21 +417,21 @@ class WelcomeEmptyState:
                             f"▶️ {primary_action[0]}",
                             primary_action[1],
                             type="primary",
-                            use_container_width=True
+                            use_container_width=True,
                         )
-                    
+
                     if on_secondary_click:
                         if st.button(
                             f"📖 {secondary_action[0] if secondary_action else 'Guide'}",
                             use_container_width=True,
-                            key="empty_secondary_full"
+                            key="empty_secondary_full",
                         ):
                             on_secondary_click()
                     elif secondary_action:
                         st.link_button(
                             f"📖 {secondary_action[0]}",
                             secondary_action[1],
-                            use_container_width=True
+                            use_container_width=True,
                         )
 
 
@@ -449,7 +449,7 @@ def welcome_empty_state(
 ) -> None:
     """
     Fonction helper pour afficher un empty state rapidement.
-    
+
     Usage:
         welcome_empty_state(
             title="👋 Bonjour !",
@@ -473,18 +473,11 @@ def welcome_empty_state(
 
 # Démo du composant
 if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Demo - Welcome Empty State",
-        page_icon="🎨",
-        layout="centered"
-    )
-    
+    st.set_page_config(page_title="Demo - Welcome Empty State", page_icon="🎨", layout="centered")
+
     st.sidebar.title("🎨 Variantes")
-    variant = st.sidebar.radio(
-        "Choisir la variante:",
-        ["Complète", "Compacte", "Personnalisée"]
-    )
-    
+    variant = st.sidebar.radio("Choisir la variante:", ["Complète", "Compacte", "Personnalisée"])
+
     if variant == "Complète":
         welcome_empty_state(
             title="👋 Bonjour !",
@@ -492,9 +485,9 @@ if __name__ == "__main__":
             message="Commencez par importer vos relevés bancaires pour visualiser vos finances, suivre vos budgets et atteindre vos objectifs d'épargne.",
             primary_action=("Importer mes relevés", "#"),
             secondary_action=("Voir le guide", "#"),
-            icon="💰"
+            icon="💰",
         )
-    
+
     elif variant == "Compacte":
         welcome_empty_state(
             title="Aucune transaction",
@@ -502,21 +495,23 @@ if __name__ == "__main__":
             message="Importez vos relevés pour voir l'analyse.",
             primary_action=("Importer", "#"),
             icon="📊",
-            compact=True
+            compact=True,
         )
-    
+
     else:
         st.sidebar.markdown("---")
         custom_title = st.sidebar.text_input("Titre", "🚀 C'est parti !")
         custom_subtitle = st.sidebar.text_input("Sous-titre", "Votre aventure financière commence")
-        custom_message = st.sidebar.text_area("Message", "Personnalisez ce message selon vos besoins.")
+        custom_message = st.sidebar.text_area(
+            "Message", "Personnalisez ce message selon vos besoins."
+        )
         custom_icon = st.sidebar.selectbox("Icône", ["💰", "📊", "🎯", "🚀", "✨", "📈"])
-        
+
         welcome_empty_state(
             title=custom_title,
             subtitle=custom_subtitle,
             message=custom_message,
             primary_action=("Action principale", "#"),
             secondary_action=("Action secondaire", "#"),
-            icon=custom_icon
+            icon=custom_icon,
         )

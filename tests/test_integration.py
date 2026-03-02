@@ -82,12 +82,10 @@ class TestImportToCategorization:
 
         # Step 4: Verify categorization
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT category_validated FROM transactions 
             WHERE label LIKE '%CARREFOUR%'
-        """
-        )
+        """)
         categories = [row[0] for row in cursor.fetchall()]
         assert all(cat == "Alimentation" for cat in categories)
 
@@ -159,12 +157,10 @@ class TestValidationWorkflow:
 
         # Step 6: Verify auto-categorization
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT category_validated FROM transactions 
             WHERE label = 'AMAZON PRIME'
-        """
-        )
+        """)
         category = cursor.fetchone()[0]
         assert category == "Shopping"
 
@@ -241,13 +237,11 @@ class TestBudgetTracking:
 
         # Step 3: Calculate actual spending
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT SUM(ABS(amount)) FROM transactions
             WHERE category_validated = 'Alimentation'
             AND status = 'validated'
-        """
-        )
+        """)
         actual = cursor.fetchone()[0]
 
         # Step 4: Compare with budget
@@ -472,7 +466,9 @@ class TestOptimizationsWorkflow:
         # Filter to only our test rules
         test_patterns = {"CARREFOUR", "TOTAL", "AMAZON", "SNCF", "UBER"}
         our_rules = [r for r in compiled_rules if r[3] in test_patterns]
-        assert len(our_rules) == 5, f"Expected 5 rules, got {len(our_rules)}: {[r[3] for r in compiled_rules]}"
+        assert (
+            len(our_rules) == 5
+        ), f"Expected 5 rules, got {len(our_rules)}: {[r[3] for r in compiled_rules]}"
 
         # Verify all patterns are compiled
         for pattern_compiled, category, priority, pattern_str in compiled_rules:
@@ -488,7 +484,7 @@ class TestOptimizationsWorkflow:
 
         # Step 5: Verify new rule exists in database
         df_rules_after = get_learning_rules()
-        patterns_after = df_rules_after['pattern'].tolist()
+        patterns_after = df_rules_after["pattern"].tolist()
         assert "NETFLIX" in patterns_after, "NETFLIX rule should exist in database"
 
     def test_batch_operations_with_large_dataset(self, temp_db, db_connection):
@@ -850,14 +846,12 @@ class TestConfigurationWorkflow:
 
         # Step 3: Count usage per category
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT category_validated, COUNT(*) as count
             FROM transactions
             GROUP BY category_validated
             ORDER BY count DESC
-        """
-        )
+        """)
         usage = dict(cursor.fetchall())
         assert usage["Alimentation"] == 1
         assert usage["Transport"] == 1

@@ -11,7 +11,7 @@ en une expérience premium avec :
 
 Usage:
     from modules.ui.design_system import DesignSystem, apply_vibe_theme
-    
+
     design = DesignSystem()
     design.apply_theme()  # Applique le thème complet
 """
@@ -24,33 +24,34 @@ import streamlit as st
 
 class ColorScheme(Enum):
     """Palette de couleurs du Design System."""
+
     # Couleurs principales
-    PRIMARY = "#6366F1"           # Indigo 500
-    PRIMARY_LIGHT = "#818CF8"     # Indigo 400
-    PRIMARY_DARK = "#4F46E5"      # Indigo 600
-    
+    PRIMARY = "#6366F1"  # Indigo 500
+    PRIMARY_LIGHT = "#818CF8"  # Indigo 400
+    PRIMARY_DARK = "#4F46E5"  # Indigo 600
+
     # Couleurs secondaires
-    SECONDARY = "#10B981"         # Emerald 500
-    ACCENT = "#F59E0B"            # Amber 500
-    DANGER = "#EF4444"            # Red 500
-    WARNING = "#F59E0B"           # Amber 500
-    INFO = "#3B82F6"              # Blue 500
-    
+    SECONDARY = "#10B981"  # Emerald 500
+    ACCENT = "#F59E0B"  # Amber 500
+    DANGER = "#EF4444"  # Red 500
+    WARNING = "#F59E0B"  # Amber 500
+    INFO = "#3B82F6"  # Blue 500
+
     # Couleurs de fond (Dark Mode)
-    BG_PRIMARY = "#0F172A"        # Slate 900
-    BG_SECONDARY = "#1E293B"      # Slate 800
-    BG_TERTIARY = "#334155"       # Slate 700
-    BG_ELEVATED = "#1E293B"       # Slate 800 avec ombre
-    
+    BG_PRIMARY = "#0F172A"  # Slate 900
+    BG_SECONDARY = "#1E293B"  # Slate 800
+    BG_TERTIARY = "#334155"  # Slate 700
+    BG_ELEVATED = "#1E293B"  # Slate 800 avec ombre
+
     # Couleurs de texte
-    TEXT_PRIMARY = "#F8FAFC"      # Slate 50
-    TEXT_SECONDARY = "#94A3B8"    # Slate 400
-    TEXT_MUTED = "#64748B"        # Slate 500
-    
+    TEXT_PRIMARY = "#F8FAFC"  # Slate 50
+    TEXT_SECONDARY = "#94A3B8"  # Slate 400
+    TEXT_MUTED = "#64748B"  # Slate 500
+
     # Bordures
-    BORDER = "#334155"            # Slate 700
-    BORDER_LIGHT = "#475569"      # Slate 600
-    
+    BORDER = "#334155"  # Slate 700
+    BORDER_LIGHT = "#475569"  # Slate 600
+
     # Élévations
     SHADOW_SM = "0 1px 2px 0 rgba(0, 0, 0, 0.3)"
     SHADOW_MD = "0 4px 6px -1px rgba(0, 0, 0, 0.4)"
@@ -61,19 +62,20 @@ class ColorScheme(Enum):
 @dataclass
 class Typography:
     """Configuration typographique."""
+
     FONT_FAMILY = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
     FONT_MONO = "'JetBrains Mono', 'Fira Code', monospace"
-    
+
     # Tailles
-    SIZE_XS = "0.75rem"      # 12px
-    SIZE_SM = "0.875rem"     # 14px
-    SIZE_BASE = "1rem"       # 16px
-    SIZE_LG = "1.125rem"     # 18px
-    SIZE_XL = "1.25rem"      # 20px
-    SIZE_2XL = "1.5rem"      # 24px
-    SIZE_3XL = "1.875rem"    # 30px
-    SIZE_4XL = "2.25rem"     # 36px
-    
+    SIZE_XS = "0.75rem"  # 12px
+    SIZE_SM = "0.875rem"  # 14px
+    SIZE_BASE = "1rem"  # 16px
+    SIZE_LG = "1.125rem"  # 18px
+    SIZE_XL = "1.25rem"  # 20px
+    SIZE_2XL = "1.5rem"  # 24px
+    SIZE_3XL = "1.875rem"  # 30px
+    SIZE_4XL = "2.25rem"  # 36px
+
     # Poids
     WEIGHT_NORMAL = 400
     WEIGHT_MEDIUM = 500
@@ -84,21 +86,23 @@ class Typography:
 @dataclass
 class Spacing:
     """Espacements du Design System."""
-    XS = "0.25rem"   # 4px
-    SM = "0.5rem"    # 8px
-    MD = "1rem"      # 16px
-    LG = "1.5rem"    # 24px
-    XL = "2rem"      # 32px
-    XXL = "3rem"     # 48px
+
+    XS = "0.25rem"  # 4px
+    SM = "0.5rem"  # 8px
+    MD = "1rem"  # 16px
+    LG = "1.5rem"  # 24px
+    XL = "2rem"  # 32px
+    XXL = "3rem"  # 48px
 
 
 @dataclass
 class Animation:
     """Configuration des animations."""
+
     DURATION_FAST = "150ms"
     DURATION_NORMAL = "300ms"
     DURATION_SLOW = "500ms"
-    
+
     EASE_DEFAULT = "cubic-bezier(0.4, 0, 0.2, 1)"
     EASE_IN = "cubic-bezier(0.4, 0, 1, 1)"
     EASE_OUT = "cubic-bezier(0, 0, 0.2, 1)"
@@ -108,22 +112,22 @@ class Animation:
 class DesignSystem:
     """
     Système de design complet pour FinancePerso.
-    
+
     Cette classe génère et injecte du CSS/JS personnalisé dans Streamlit
     pour créer une expérience UI premium et cohérente.
     """
-    
+
     def __init__(self):
         self.colors = ColorScheme
         self.typography = Typography()
         self.spacing = Spacing()
         self.animation = Animation()
         self._css_applied = False
-    
+
     def get_css(self) -> str:
         """
         Génère le CSS complet du Design System.
-        
+
         Returns:
             Chaîne CSS à injecter dans Streamlit
         """
@@ -605,11 +609,11 @@ class DesignSystem:
         </style>
         """
         return css
-    
+
     def get_js(self) -> str:
         """
         Génère le JavaScript pour les animations.
-        
+
         Returns:
             Chaîne JS à injecter
         """
@@ -676,29 +680,29 @@ class DesignSystem:
         </script>
         """
         return js
-    
+
     def apply_theme(self):
         """Applique le thème complet (CSS + JS)."""
         if self._css_applied:
             return
-        
+
         # Injecter le CSS
         st.markdown(self.get_css(), unsafe_allow_html=True)
-        
+
         # Injecter le JS
         st.components.v1.html(self.get_js(), height=0)
-        
+
         self._css_applied = True
-    
+
     def create_card(self, title: str, content: str, icon: str = "📊") -> str:
         """
         Crée une carte HTML stylisée.
-        
+
         Args:
             title: Titre de la carte
             content: Contenu HTML
             icon: Icône emoji
-            
+
         Returns:
             HTML de la carte
         """
@@ -724,18 +728,19 @@ class DesignSystem:
             </div>
         </div>
         """
-    
-    def create_metric_card(self, label: str, value: str, delta: str | None = None, 
-                          delta_positive: bool = True) -> str:
+
+    def create_metric_card(
+        self, label: str, value: str, delta: str | None = None, delta_positive: bool = True
+    ) -> str:
         """
         Crée une carte de métrique stylisée.
-        
+
         Args:
             label: Label de la métrique
             value: Valeur à afficher
             delta: Variation (optionnel)
             delta_positive: Si la variation est positive
-            
+
         Returns:
             HTML de la carte
         """
@@ -744,7 +749,7 @@ class DesignSystem:
         if delta:
             arrow = "↑" if delta_positive else "↓"
             delta_html = f'<div style="color: {delta_color}; font-size: 0.875rem; font-weight: 600; margin-top: 0.5rem;">{arrow} {delta}</div>'
-        
+
         return f"""
         <div style="
             background: linear-gradient(135deg, {self.colors.BG_SECONDARY.value} 0%, {self.colors.BG_TERTIARY.value} 100%);
@@ -769,15 +774,15 @@ class DesignSystem:
             {delta_html}
         </div>
         """
-    
+
     def create_badge(self, text: str, color: str = "primary") -> str:
         """
         Crée un badge stylisé.
-        
+
         Args:
             text: Texte du badge
             color: Couleur (primary, secondary, success, danger, warning)
-            
+
         Returns:
             HTML du badge
         """
@@ -789,9 +794,9 @@ class DesignSystem:
             "warning": (self.colors.WARNING.value, "rgba(245, 158, 11, 0.2)"),
             "info": (self.colors.INFO.value, "rgba(59, 130, 246, 0.2)"),
         }
-        
+
         text_color, bg_color = colors.get(color, colors["primary"])
-        
+
         return f"""
         <span style="
             display: inline-block;
@@ -819,23 +824,22 @@ def apply_vibe_theme():
 def vibe_container(title: str, content_func, icon: str = "📊"):
     """
     Crée un conteneur avec le style Vibe.
-    
+
     Args:
         title: Titre du conteneur
         content_func: Fonction qui rend le contenu
         icon: Icône emoji
     """
     design = DesignSystem()
-    
+
     st.markdown(design.create_card(title, "", icon), unsafe_allow_html=True)
     content_func()
 
 
-def vibe_metric(label: str, value: str, delta: str | None = None, 
-                delta_positive: bool = True):
+def vibe_metric(label: str, value: str, delta: str | None = None, delta_positive: bool = True):
     """
     Affiche une métrique avec le style Vibe.
-    
+
     Args:
         label: Label de la métrique
         value: Valeur à afficher
@@ -843,14 +847,15 @@ def vibe_metric(label: str, value: str, delta: str | None = None,
         delta_positive: Si la variation est positive
     """
     design = DesignSystem()
-    st.markdown(design.create_metric_card(label, value, delta, delta_positive), 
-                unsafe_allow_html=True)
+    st.markdown(
+        design.create_metric_card(label, value, delta, delta_positive), unsafe_allow_html=True
+    )
 
 
 def vibe_badge(text: str, color: str = "primary"):
     """
     Affiche un badge avec le style Vibe.
-    
+
     Args:
         text: Texte du badge
         color: Couleur du badge
@@ -870,12 +875,13 @@ Colors = ColorScheme
 # FONCTIONS DE COMPATIBILITÉ
 # ============================================================================
 
+
 def load_css():
     """Charge les styles CSS personnalisés depuis assets/style.css.
-    
+
     Cette fonction est utilisée par toutes les pages pour appliquer
     les styles personnalisés de l'application.
-    
+
     Usage:
         from modules.ui import load_css
         load_css()
@@ -890,13 +896,13 @@ def load_css():
 
 def card_kpi(title, value, trend=None, trend_color="positive"):
     """Rend une carte KPI avec style personnalisé.
-    
+
     Args:
         title: Titre de la métrique
         value: Valeur à afficher
         trend: Tendance optionnelle (ex: "+12%")
         trend_color: "positive" (vert) ou "negative" (rouge)
-    
+
     Usage:
         card_kpi("Total", "1 234 €", "+5%", "positive")
     """
@@ -905,7 +911,7 @@ def card_kpi(title, value, trend=None, trend_color="positive"):
         color_class = "card-trend-positive" if trend_color == "positive" else "card-trend-negative"
         icon = "↗" if trend_color == "positive" else "↘"
         trend_html = f'<div class="{color_class}">{icon} {trend}</div>'
-    
+
     html = f"""
     <div class="custom-card">
         <div class="card-title">{title}</div>

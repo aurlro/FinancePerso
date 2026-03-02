@@ -273,8 +273,7 @@ def celebrate_goal_achieved(goal_name: str, amount: float):
     """Célébrer l'atteinte d'un objectif d'épargne spécifique."""
 
     st.balloons()
-    st.success(
-        f"""
+    st.success(f"""
     ## 🎉 Félicitations !
     
     Vous avez atteint votre objectif **{goal_name}** !
@@ -282,8 +281,7 @@ def celebrate_goal_achieved(goal_name: str, amount: float):
     Montant épargné: **{amount:.0f}€**
     
     Quel accomplissement ! 🏆
-    """
-    )
+    """)
 
     # Option de partage
     col1, col2 = st.columns(2)

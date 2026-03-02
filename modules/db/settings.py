@@ -3,7 +3,6 @@ Settings management for user configuration.
 Provides functions to get and set application settings stored in the database.
 """
 
-
 from modules.db.connection import get_db_connection
 from modules.logger import logger
 

@@ -8,19 +8,17 @@ import streamlit as st
 def render_log_viewer() -> None:
     """Render log viewer section."""
     st.subheader("📋 Logs système")
-    
+
     log_files = list(Path("logs").glob("*.log")) if Path("logs").exists() else []
-    
+
     if not log_files:
         st.info("Aucun fichier log trouvé.")
         return
-    
+
     selected_log = st.selectbox(
-        "Fichier log",
-        options=[f.name for f in log_files],
-        key="log_file_selector"
+        "Fichier log", options=[f.name for f in log_files], key="log_file_selector"
     )
-    
+
     if selected_log:
         log_path = Path("logs") / selected_log
         try:

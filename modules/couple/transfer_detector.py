@@ -16,21 +16,21 @@ def detect_internal_transfers(
     min_amount: float = 10.0,
 ) -> list[dict]:
     """Détecte les virements internes entre comptes.
-    
+
     Algorithme : même montant (opposé), dates proches, cartes différentes.
-    
+
     Args:
         start_date: Date de début (YYYY-MM-DD), par défaut début du mois
         end_date: Date de fin (YYYY-MM-DD), par défaut aujourd'hui
         threshold_days: Fenêtre de détection en jours
         min_amount: Montant minimum à considérer
-        
+
     Returns:
         Liste des virements détectés
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         # Dates par défaut
         if not start_date or not end_date:
             cursor.execute("""
@@ -41,9 +41,10 @@ def detect_internal_transfers(
             row = cursor.fetchone()
             start_date = start_date or row[0]
             end_date = end_date or row[1]
-        
+
         # Requête de détection
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT 
                 t1.id as from_id,
                 t2.id as to_id,
@@ -80,33 +81,36 @@ def detect_internal_transfers(
               AND t1.id NOT IN (SELECT from_transaction_id FROM detected_transfers)
               AND t2.id NOT IN (SELECT to_transaction_id FROM detected_transfers)
             ORDER BY t1.date DESC, ABS(t1.amount) DESC
-        """, {
-            'threshold': threshold_days,
-            'start': start_date,
-            'end': end_date,
-            'min_amount': min_amount
-        })
-        
+        """,
+            {
+                "threshold": threshold_days,
+                "start": start_date,
+                "end": end_date,
+                "min_amount": min_amount,
+            },
+        )
+
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
 def validate_transfer(from_id: int, to_id: int, is_valid: bool = True, notes: str = "") -> bool:
     """Valide ou invalide un virement détecté.
-    
+
     Args:
         from_id: ID transaction source (débit)
         to_id: ID transaction destination (crédit)
         is_valid: True si c'est bien un virement interne
         notes: Notes optionnelles
-        
+
     Returns:
         True si succès
     """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO detected_transfers 
                     (from_transaction_id, to_transaction_id, amount, is_validated, notes)
                 SELECT 
@@ -118,24 +122,27 @@ def validate_transfer(from_id: int, to_id: int, is_valid: bool = True, notes: st
                     is_validated = excluded.is_validated,
                     notes = excluded.notes,
                     validated_at = CURRENT_TIMESTAMP
-            """, (1 if is_valid else 0, notes, to_id, from_id))
+            """,
+                (1 if is_valid else 0, notes, to_id, from_id),
+            )
             conn.commit()
             return True
     except Exception as e:
         from modules.logger import logger
+
         logger.error(f"Erreur validation virement: {e}")
         return False
 
 
 def get_pending_transfers() -> list[dict]:
     """Récupère les virements en attente de validation.
-    
+
     Returns:
         Liste des virements détectés mais non validés
     """
     # D'abord, détecter les nouveaux virements
     detected = detect_internal_transfers()
-    
+
     # Puis récupérer tous les non-validés
     with get_db_connection() as conn:
         cursor = conn.cursor()
@@ -163,24 +170,25 @@ def get_validated_transfers(
     end_date: Optional[str] = None,
 ) -> list[dict]:
     """Récupère les virements validés.
-    
+
     Args:
         start_date: Date de début
         end_date: Date de fin
-        
+
     Returns:
         Liste des virements validés
     """
     with get_db_connection() as conn:
         cursor = conn.cursor()
-        
+
         params = []
         date_filter = ""
         if start_date and end_date:
             date_filter = "AND t1.date BETWEEN ? AND ?"
             params = [start_date, end_date]
-        
-        cursor.execute(f"""
+
+        cursor.execute(
+            f"""
             SELECT 
                 dt.*,
                 t1.label as from_label,
@@ -195,8 +203,10 @@ def get_validated_transfers(
             WHERE dt.is_validated = 1
             {date_filter}
             ORDER BY t1.date DESC
-        """, params)
-        
+        """,
+            params,
+        )
+
         columns = [desc[0] for desc in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
@@ -207,83 +217,83 @@ def exclude_transfers_from_stats(
     end_date: Optional[str] = None,
 ) -> pd.DataFrame:
     """Exclut les transactions de virements internes d'un DataFrame.
-    
+
     Args:
         transactions_df: DataFrame des transactions
         start_date: Date de début pour chercher les virements
         end_date: Date de fin pour chercher les virements
-        
+
     Returns:
         DataFrame sans les transactions de virements
     """
     if transactions_df.empty:
         return transactions_df
-    
+
     # Récupérer les IDs des transactions à exclure
     transfers = get_validated_transfers(start_date, end_date)
     exclude_ids = set()
     for t in transfers:
-        exclude_ids.add(t['from_transaction_id'])
-        exclude_ids.add(t['to_transaction_id'])
-    
+        exclude_ids.add(t["from_transaction_id"])
+        exclude_ids.add(t["to_transaction_id"])
+
     if not exclude_ids:
         return transactions_df
-    
+
     # Filtrer le DataFrame
-    return transactions_df[~transactions_df['id'].isin(exclude_ids)]
+    return transactions_df[~transactions_df["id"].isin(exclude_ids)]
 
 
 def get_transfer_summary(start_date: Optional[str] = None, end_date: Optional[str] = None) -> dict:
     """Calcule un résumé des virements pour la période.
-    
+
     Returns:
         Dict avec stats des virements
     """
     pending = get_pending_transfers()
     validated = get_validated_transfers(start_date, end_date)
-    
-    total_validated_amount = sum(t['amount'] for t in validated)
-    
+
+    total_validated_amount = sum(t["amount"] for t in validated)
+
     return {
-        'pending_count': len(pending),
-        'validated_count': len(validated),
-        'total_validated_amount': total_validated_amount,
-        'pending_transfers': pending,
-        'validated_transfers': validated,
+        "pending_count": len(pending),
+        "validated_count": len(validated),
+        "total_validated_amount": total_validated_amount,
+        "pending_transfers": pending,
+        "validated_transfers": validated,
     }
 
 
 def auto_detect_and_save_transfers(threshold_days: int = 3) -> int:
     """Détecte automatiquement les virements et les sauvegarde en attente.
-    
+
     Args:
         threshold_days: Fenêtre de détection
-        
+
     Returns:
         Nombre de nouveaux virements détectés
     """
     detected = detect_internal_transfers(threshold_days=threshold_days)
-    
+
     count = 0
     for transfer in detected:
         # Sauvegarder comme non-validé
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT OR IGNORE INTO detected_transfers 
                         (from_transaction_id, to_transaction_id, amount, is_validated)
                     VALUES (?, ?, ?, 0)
-                """, (
-                    transfer['from_id'],
-                    transfer['to_id'],
-                    abs(transfer['from_amount'])
-                ))
+                """,
+                    (transfer["from_id"], transfer["to_id"], abs(transfer["from_amount"])),
+                )
                 if cursor.rowcount > 0:
                     count += 1
                 conn.commit()
         except Exception as e:
             from modules.logger import logger
+
             logger.error(f"Erreur sauvegarde virement détecté: {e}")
-    
+
     return count

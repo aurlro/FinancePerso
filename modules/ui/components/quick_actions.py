@@ -464,69 +464,55 @@ def render_projections_popover():
     with st.popover("🔮 Projections", use_container_width=True):
         st.markdown("#### 🔮 Projections financières")
         st.caption("Prévisions et simulations")
-        
+
         try:
             from modules.cashflow.predictor import get_cashflow_insights
-            
+
             insights = get_cashflow_insights()
-            
+
             if "error" not in insights:
                 cols = st.columns(2)
-                
+
                 with cols[0]:
-                    st.metric(
-                        "Solde actuel", 
-                        f"{insights.get('current_balance', 0):,.0f}€"
-                    )
-                
+                    st.metric("Solde actuel", f"{insights.get('current_balance', 0):,.0f}€")
+
                 with cols[1]:
                     if "predicted_3m_balance" in insights:
-                        st.metric(
-                            "Projection 3 mois", 
-                            f"{insights['predicted_3m_balance']:,.0f}€"
-                        )
-                
+                        st.metric("Projection 3 mois", f"{insights['predicted_3m_balance']:,.0f}€")
+
                 # Warnings
-                if insights.get('warnings'):
-                    for warning in insights['warnings']:
+                if insights.get("warnings"):
+                    for warning in insights["warnings"]:
                         st.warning(warning)
-                
+
                 # Moyennes
                 st.divider()
                 st.caption("Moyennes mensuelles")
-                
+
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.metric(
-                        "Revenus", 
-                        f"{insights.get('avg_monthly_income', 0):,.0f}€"
-                    )
+                    st.metric("Revenus", f"{insights.get('avg_monthly_income', 0):,.0f}€")
                 with col2:
-                    st.metric(
-                        "Dépenses", 
-                        f"{insights.get('avg_monthly_expense', 0):,.0f}€"
-                    )
-                
+                    st.metric("Dépenses", f"{insights.get('avg_monthly_expense', 0):,.0f}€")
+
                 st.divider()
                 if st.button(
-                    "📈 Voir les projections détaillées →", 
-                    use_container_width=True, 
+                    "📈 Voir les projections détaillées →",
+                    use_container_width=True,
                     type="primary",
-                    key="goto_projections_btn"
+                    key="goto_projections_btn",
                 ):
                     st.switch_page("pages/11_Projections.py")
             else:
                 st.info("💡 Pas assez de données pour les projections (minimum 30 transactions)")
-                
+
         except Exception as e:
             st.error(f"Erreur chargement projections: {e}")
-        
+
         # Lien vers la page
         st.divider()
         if st.button(
-            "🔮 Ouvrir les projections", 
-            use_container_width=True,
-            key="open_projections_btn"
+            "🔮 Ouvrir les projections", use_container_width=True, key="open_projections_btn"
         ):
             st.switch_page("pages/11_Projections.py")
 
@@ -556,6 +542,6 @@ def render_quick_actions_grid():
 
     with col_d:
         render_quick_stats_popover()
-    
+
     with col_e:
         render_projections_popover()

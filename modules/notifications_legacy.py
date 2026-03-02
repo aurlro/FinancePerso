@@ -77,15 +77,13 @@ def save_notification_setting(key: str, value: str):
             cursor = conn.cursor()
 
             # Créer la table si elle n'existe pas
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS app_settings (
                     key TEXT PRIMARY KEY,
                     value TEXT,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             cursor.execute(
                 """
@@ -411,15 +409,13 @@ def save_notification_setting(key: str, value: str):
             cursor = conn.cursor()
 
             # Créer la table si elle n'existe pas
-            cursor.execute(
-                """
+            cursor.execute("""
                 CREATE TABLE IF NOT EXISTS app_settings (
                     key TEXT PRIMARY KEY,
                     value TEXT,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """
-            )
+            """)
 
             cursor.execute(
                 """
@@ -461,11 +457,9 @@ def test_notification_settings() -> dict[str, any]:
                 import platform
 
                 if platform.system() == "Darwin":
-                    os.system(
-                        """
+                    os.system("""
                         osascript -e 'display notification "Notifications desktop fonctionnent !" with title "MyFinance Test"'
-                    """
-                    )
+                    """)
                     results["desktop"] = True
                 else:
                     results["errors"].append("Module plyer non installé: pip install plyer")

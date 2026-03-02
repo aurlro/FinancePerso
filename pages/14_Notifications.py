@@ -30,11 +30,9 @@ service = NotificationService()
 st.title("🔔 Centre de Notifications V3")
 
 # Onglets
-tab_center, tab_settings, tab_test = st.tabs([
-    "📬 Centre de notifications",
-    "⚙️ Paramètres",
-    "🧪 Test"
-])
+tab_center, tab_settings, tab_test = st.tabs(
+    ["📬 Centre de notifications", "⚙️ Paramètres", "🧪 Test"]
+)
 
 with tab_center:
     render_notification_center(service)
@@ -44,11 +42,11 @@ with tab_settings:
 
 with tab_test:
     st.header("🧪 Test du système de notifications")
-    
+
     st.info("Utilisez ces boutons pour créer des notifications de test.")
-    
+
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
         st.subheader("Budget")
         if st.button("🚨 Budget critique", use_container_width=True):
@@ -60,7 +58,7 @@ with tab_test:
             )
             st.success("Notification créée!")
             st.rerun()
-        
+
         if st.button("⚠️ Budget warning", use_container_width=True):
             service.notify(
                 type=NotificationType.BUDGET_WARNING,
@@ -69,36 +67,36 @@ with tab_test:
             )
             st.success("Notification créée!")
             st.rerun()
-    
+
     with col2:
         st.subheader("Validation")
         if st.button("⏳ Rappel validation", use_container_width=True):
             service.notify_validation_reminder(count=12, oldest_days=18)
             st.success("Notification créée!")
             st.rerun()
-        
+
         if st.button("📥 Rappel import", use_container_width=True):
             service.notify_import_reminder(days_since_import=15)
             st.success("Notification créée!")
             st.rerun()
-    
+
     with col3:
         st.subheader("Gamification")
         if st.button("🏅 Nouveau badge", use_container_width=True):
             service.notify_achievement("Maître de l'épargne", "💰")
             st.success("Notification créée!")
             st.rerun()
-        
+
         if st.button("♻️ Doublons", use_container_width=True):
             service.notify_duplicate("2024-02-15", "Supermarché Casino", 45.50, 2)
             st.success("Notification créée!")
             st.rerun()
-    
+
     st.divider()
-    
+
     # Stats
     st.subheader("📊 Statistiques")
-    
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Non lues", service.count_unread())

@@ -3,7 +3,6 @@ Transaction Diagnostic Component
 Outil pour détecter et corriger les transactions incohérentes (montant vs catégorie).
 """
 
-
 import pandas as pd
 import streamlit as st
 

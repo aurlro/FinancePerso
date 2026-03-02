@@ -9,7 +9,7 @@ Référence: https://plaid.com/docs/transactions/pfc-migration/
 
 Usage:
     from modules.transactions.constants import PFCV2_CATEGORIES, CategoryType
-    
+
     # Accéder aux catégories
     main_categories = PFCV2_CATEGORIES.keys()
     sub_categories = PFCV2_CATEGORIES["Food & Drink"]  # ["Groceries", "Restaurants", ...]
@@ -21,6 +21,7 @@ from typing import Dict, List, Optional
 
 class CategoryType(Enum):
     """Types de catégories financières."""
+
     INCOME = "income"
     EXPENSE = "expense"
     TRANSFER = "transfer"
@@ -29,11 +30,12 @@ class CategoryType(Enum):
 
 class CategorizationMethod(Enum):
     """Méthodes de catégorisation utilisées."""
-    HEURISTIC = "HEURISTIC"      # Règles basées sur des patterns
-    SIMILARITY = "SIMILARITY"    # Matching par similarité
-    LOCAL_AI = "LOCAL_AI"        # IA locale (Llama)
-    CLOUD_AI = "CLOUD_AI"        # IA cloud (Gemini/DeepSeek)
-    MANUAL = "MANUAL"            # Catégorisation manuelle
+
+    HEURISTIC = "HEURISTIC"  # Règles basées sur des patterns
+    SIMILARITY = "SIMILARITY"  # Matching par similarité
+    LOCAL_AI = "LOCAL_AI"  # IA locale (Llama)
+    CLOUD_AI = "CLOUD_AI"  # IA cloud (Gemini/DeepSeek)
+    MANUAL = "MANUAL"  # Catégorisation manuelle
 
 
 # ============================================================================
@@ -54,7 +56,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Rental Income",
         "Other Income",
     ],
-    
     # Transferts entrants
     "TRANSFER_IN": [
         "Internal Transfer",
@@ -62,7 +63,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Investment Transfer",
         "Savings",
     ],
-    
     # Transferts sortants
     "TRANSFER_OUT": [
         "Internal Transfer",
@@ -70,7 +70,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Investment Transfer",
         "Savings",
     ],
-    
     # Paiements de prêts
     "Loan Payments": [
         "Car Payment",
@@ -79,7 +78,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Mortgage",
         "Personal Loan Payment",
     ],
-    
     # Frais bancaires (sous Financial)
     "Financial": [
         "Bank Fees",
@@ -94,7 +92,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Insurance",
         "Loans",
     ],
-    
     # Alimentation
     "Food & Drink": [
         "Groceries",
@@ -105,7 +102,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Food Delivery",
         "Alcohol & Bars",
     ],
-    
     # Transport
     "Transportation": [
         "Fuel",
@@ -116,7 +112,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Vehicle Maintenance",
         "Vehicle Insurance",
     ],
-    
     # Logement
     "Housing": [
         "Rent",
@@ -129,7 +124,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Furniture",
         "Lawn & Garden",
     ],
-    
     # Shopping
     "SHOPPING": [
         "Clothing",
@@ -140,7 +134,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Department Stores",
         "Discount Stores",
     ],
-    
     # Santé
     "Health": [
         "Medical",
@@ -151,7 +144,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Gym & Fitness",
         "Mental Health",
     ],
-    
     # Loisirs
     "Entertainment": [
         "Streaming",
@@ -162,7 +154,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Subscriptions",
         "Arts & Crafts",
     ],
-    
     # Voyage
     "Travel": [
         "Flights",
@@ -171,7 +162,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Vacation",
         "Travel Insurance",
     ],
-    
     # Services
     "Service": [
         "Cleaning",
@@ -180,7 +170,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Consulting",
         "Accounting",
     ],
-    
     # Éducation
     "Education": [
         "Tuition",
@@ -189,7 +178,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Student Loans",
         "Professional Development",
     ],
-    
     # Finances (complément)
     "Financial Services": [
         "Investments",
@@ -198,7 +186,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Financial Planning",
         "Cryptocurrency",
     ],
-    
     # Animaux
     "Pets": [
         "Pet Food",
@@ -206,7 +193,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Pet Supplies",
         "Pet Services",
     ],
-    
     # Enfants
     "Kids": [
         "Childcare",
@@ -215,7 +201,6 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Kids Activities",
         "Education",
     ],
-    
     # Taxes
     "Tax": [
         "Income Tax",
@@ -223,14 +208,12 @@ PFC_TAXONOMY: Dict[str, List[str]] = {
         "Sales Tax",
         "VAT",
     ],
-    
     # Dons
     "Donations": [
         "Charity",
         "Religious",
         "Political",
     ],
-    
     # Inconnu
     "Unknown": [
         "Uncategorized",
@@ -273,74 +256,73 @@ CATEGORY_TO_TYPE: Dict[str, CategoryType] = {
 
 HEURISTIC_PATTERNS: Dict[str, tuple] = {
     # Food & Drink
-    r"(?i)(carrefour|auchan|leclerc|lidl|aldi|casino|monoprix|franprix|intermarche|super u|match|colruyt)": 
-        ("Food & Drink", "Groceries"),
-    r"(?i)(macdo|mcdonald|burger king|kfc|subway|quick|five guys|taco bell|chipotle)": 
-        ("Food & Drink", "Fast Food"),
-    r"(?i)(starbuck|costa|pret|paul|eric kayser|boulangerie|patisserie|brasserie|cafe)": 
-        ("Food & Drink", "Coffee Shops"),
-    r"(?i)(uber eat|deliveroo|just eat|foodchery|stuart|glovo)": 
-        ("Food & Drink", "Food Delivery"),
-    
+    r"(?i)(carrefour|auchan|leclerc|lidl|aldi|casino|monoprix|franprix|intermarche|super u|match|colruyt)": (
+        "Food & Drink",
+        "Groceries",
+    ),
+    r"(?i)(macdo|mcdonald|burger king|kfc|subway|quick|five guys|taco bell|chipotle)": (
+        "Food & Drink",
+        "Fast Food",
+    ),
+    r"(?i)(starbuck|costa|pret|paul|eric kayser|boulangerie|patisserie|brasserie|cafe)": (
+        "Food & Drink",
+        "Coffee Shops",
+    ),
+    r"(?i)(uber eat|deliveroo|just eat|foodchery|stuart|glovo)": ("Food & Drink", "Food Delivery"),
     # Transportation
-    r"(?i)(total|shell|bp|esso|avia|e\.leclerc essence|carrefour essence|elan|agip)": 
-        ("Transportation", "Fuel"),
-    r"(?i)(uber|bolt|taxi|g7|allocab|marcel|heetch|kapten|free now)": 
-        ("Transportation", "Taxi & Rideshare"),
-    r"(?i)(ratp|sncf|transilien|metro|bus|tram|navigo|idf mobilit|cityscoot)": 
-        ("Transportation", "Public Transit"),
-    r"(?i)(parking|indigo|saemes|park|garage|stationnement)": 
-        ("Transportation", "Parking"),
-    
+    r"(?i)(total|shell|bp|esso|avia|e\.leclerc essence|carrefour essence|elan|agip)": (
+        "Transportation",
+        "Fuel",
+    ),
+    r"(?i)(uber|bolt|taxi|g7|allocab|marcel|heetch|kapten|free now)": (
+        "Transportation",
+        "Taxi & Rideshare",
+    ),
+    r"(?i)(ratp|sncf|transilien|metro|bus|tram|navigo|idf mobilit|cityscoot)": (
+        "Transportation",
+        "Public Transit",
+    ),
+    r"(?i)(parking|indigo|saemes|park|garage|stationnement)": ("Transportation", "Parking"),
     # Financial
-    r"(?i)(agios|frais|commission|interet|cheque|prelevement|tip|gratuity)": 
-        ("Financial", "Bank Fees"),
-    r"(?i)(assurance|axa|maif|macif|gmf|groupama|allianz|generali|mnef)": 
-        ("Financial", "Insurance"),
-    
+    r"(?i)(agios|frais|commission|interet|cheque|prelevement|tip|gratuity)": (
+        "Financial",
+        "Bank Fees",
+    ),
+    r"(?i)(assurance|axa|maif|macif|gmf|groupama|allianz|generali|mnef)": (
+        "Financial",
+        "Insurance",
+    ),
     # Housing
-    r"(?i)(edf|engie|direct energie|total energie|veolia|suez|grdf|eau)": 
-        ("Housing", "Utilities"),
-    r"(?i)(orange|sfr|bouygues|free mobile|sosh|red|coriolis|nrj mobile)": 
-        ("Housing", "Phone"),
-    r"(?i)(orange|sfr|free|bouygues telecom.*box|sosh.*box|numericable)": 
-        ("Housing", "Internet"),
-    r"(?i)(loyer|rent|proprietaire|agence|foncia|orpi|century|coldwell)": 
-        ("Housing", "Rent"),
-    
+    r"(?i)(edf|engie|direct energie|total energie|veolia|suez|grdf|eau)": ("Housing", "Utilities"),
+    r"(?i)(orange|sfr|bouygues|free mobile|sosh|red|coriolis|nrj mobile)": ("Housing", "Phone"),
+    r"(?i)(orange|sfr|free|bouygues telecom.*box|sosh.*box|numericable)": ("Housing", "Internet"),
+    r"(?i)(loyer|rent|proprietaire|agence|foncia|orpi|century|coldwell)": ("Housing", "Rent"),
     # Entertainment
-    r"(?i)(netflix|spotify|amazon prime|disney|apple tv|youtube|canal|ocs)": 
-        ("Entertainment", "Streaming"),
-    r"(?i)(cinema|ugc|gaumont|pathe|mk2|cine|imax)": 
-        ("Entertainment", "Movies & Shows"),
-    
+    r"(?i)(netflix|spotify|amazon prime|disney|apple tv|youtube|canal|ocs)": (
+        "Entertainment",
+        "Streaming",
+    ),
+    r"(?i)(cinema|ugc|gaumont|pathe|mk2|cine|imax)": ("Entertainment", "Movies & Shows"),
     # Health
-    r"(?i)(pharmacie|pharmacy|parapharmacie|sephora|nocibe|marionnaud)": 
-        ("Health", "Pharmacy"),
-    r"(?i)(doctolib|medecin|dentiste|ophtalmo|kine|osteopathe|generaliste)": 
-        ("Health", "Medical"),
-    r"(?i)(basic fit|keep cool|neoness|fitness park|gym|club med|wellness)": 
-        ("Health", "Gym & Fitness"),
-    
+    r"(?i)(pharmacie|pharmacy|parapharmacie|sephora|nocibe|marionnaud)": ("Health", "Pharmacy"),
+    r"(?i)(doctolib|medecin|dentiste|ophtalmo|kine|osteopathe|generaliste)": ("Health", "Medical"),
+    r"(?i)(basic fit|keep cool|neoness|fitness park|gym|club med|wellness)": (
+        "Health",
+        "Gym & Fitness",
+    ),
     # Income patterns (positive amounts)
-    r"(?i)(salaire|virement.*employeur|paye|remuneration|wage|payroll)": 
-        ("Income", "Salary"),
-    r"(?i)(remboursement|rembourse|retrocession|refund|reimbursement)": 
-        ("Income", "Refunds"),
-    r"(?i)(freelance|consulting|contract|mission|prestation)": 
-        ("Income", "Freelance"),
-    
+    r"(?i)(salaire|virement.*employeur|paye|remuneration|wage|payroll)": ("Income", "Salary"),
+    r"(?i)(remboursement|rembourse|retrocession|refund|reimbursement)": ("Income", "Refunds"),
+    r"(?i)(freelance|consulting|contract|mission|prestation)": ("Income", "Freelance"),
     # Shopping
-    r"(?i)(amazon|cdiscount|fnac|darty|boulanger|ldlc|top achat|materiel)": 
-        ("Shopping", "Electronics"),
-    r"(?i)(zara|h&m|uniqlo|celio|jules|hm|bershka|pull.*bear|mango)": 
-        ("Shopping", "Clothing"),
-    
+    r"(?i)(amazon|cdiscount|fnac|darty|boulanger|ldlc|top achat|materiel)": (
+        "Shopping",
+        "Electronics",
+    ),
+    r"(?i)(zara|h&m|uniqlo|celio|jules|hm|bershka|pull.*bear|mango)": ("Shopping", "Clothing"),
     # Travel
-    r"(?i)(airbnb|booking|hotel|ibis|mercure|novotel|hilton|marriott)": 
-        ("Travel", "Hotels"),
-    r"(?i)(air france|easyjet|ryanair|transavia|vueling|volotea|lufthansa)": 
-        ("Travel", "Flights"),
+    r"(?i)(airbnb|booking|hotel|ibis|mercure|novotel|hilton|marriott)": ("Travel", "Hotels"),
+    r"(?i)(air france|easyjet|ryanair|transavia|vueling|volotea|lufthansa)": ("Travel", "Flights"),
 }
 
 
@@ -362,13 +344,14 @@ CONFIDENCE_THRESHOLDS = {
 # Fonctions utilitaires
 # ============================================================================
 
+
 def get_category_type(category: str) -> CategoryType:
     """
     Détermine le type d'une catégorie (revenu/dépense/transfert).
-    
+
     Args:
         category: Nom de la catégorie principale (ex: "Food & Drink")
-        
+
     Returns:
         Type de la catégorie
     """
@@ -393,10 +376,10 @@ def get_all_categories() -> List[str]:
 def get_subcategories(main_category: str) -> List[str]:
     """
     Retourne les sous-catégories d'une catégorie principale.
-    
+
     Args:
         main_category: Catégorie principale (ex: "Food & Drink")
-        
+
     Returns:
         Liste des sous-catégories
     """
@@ -406,11 +389,11 @@ def get_subcategories(main_category: str) -> List[str]:
 def format_category(main: str, sub: str) -> str:
     """
     Formate une catégorie au format "Main > Sub".
-    
+
     Args:
         main: Catégorie principale
         sub: Sous-catégorie
-        
+
     Returns:
         Chaîne formatée
     """
@@ -420,10 +403,10 @@ def format_category(main: str, sub: str) -> str:
 def parse_category(category_str: str) -> tuple:
     """
     Parse une catégorie formatée "Main > Sub".
-    
+
     Args:
         category_str: Chaîne formatée
-        
+
     Returns:
         Tuple (main, sub)
     """

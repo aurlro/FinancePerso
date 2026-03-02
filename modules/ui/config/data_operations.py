@@ -1,6 +1,5 @@
 """Data operations UI component - Simplified."""
 
-
 import streamlit as st
 
 from modules.db.transactions import get_all_transactions

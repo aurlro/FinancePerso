@@ -42,6 +42,7 @@ RARITY_LABELS = {
 @dataclass
 class Badge:
     """A badge that can be earned."""
+
     id: str
     name: str
     description: str
@@ -59,7 +60,7 @@ BADGES = {
         description="Importer votre première transaction",
         icon="🌱",
         rarity=BadgeRarity.COMMON,
-        condition=lambda: _count_transactions() >= 1
+        condition=lambda: _count_transactions() >= 1,
     ),
     "hundred_transactions": Badge(
         id="hundred_transactions",
@@ -67,7 +68,7 @@ BADGES = {
         description="Importer 100 transactions",
         icon="💯",
         rarity=BadgeRarity.RARE,
-        condition=lambda: _count_transactions() >= 100
+        condition=lambda: _count_transactions() >= 100,
     ),
     "thousand_transactions": Badge(
         id="thousand_transactions",
@@ -75,7 +76,7 @@ BADGES = {
         description="Importer 1,000 transactions",
         icon="📊",
         rarity=BadgeRarity.EPIC,
-        condition=lambda: _count_transactions() >= 1000
+        condition=lambda: _count_transactions() >= 1000,
     ),
     "week_streak": Badge(
         id="week_streak",
@@ -83,7 +84,7 @@ BADGES = {
         description="7 jours de connexion consécutifs",
         icon="📅",
         rarity=BadgeRarity.COMMON,
-        condition=lambda: _get_streak() >= 7
+        condition=lambda: _get_streak() >= 7,
     ),
     "month_streak": Badge(
         id="month_streak",
@@ -91,7 +92,7 @@ BADGES = {
         description="30 jours de connexion consécutifs",
         icon="🏃",
         rarity=BadgeRarity.RARE,
-        condition=lambda: _get_streak() >= 30
+        condition=lambda: _get_streak() >= 30,
     ),
     "budget_master": Badge(
         id="budget_master",
@@ -99,7 +100,7 @@ BADGES = {
         description="Créer 5 budgets",
         icon="🎯",
         rarity=BadgeRarity.COMMON,
-        condition=lambda: _count_budgets() >= 5
+        condition=lambda: _count_budgets() >= 5,
     ),
     "validator": Badge(
         id="validator",
@@ -107,7 +108,7 @@ BADGES = {
         description="Valider 50 transactions",
         icon="✅",
         rarity=BadgeRarity.COMMON,
-        condition=lambda: _count_validated() >= 50
+        condition=lambda: _count_validated() >= 50,
     ),
     "category_organizer": Badge(
         id="category_organizer",
@@ -115,7 +116,7 @@ BADGES = {
         description="Créer 10 catégories personnalisées",
         icon="🏷️",
         rarity=BadgeRarity.RARE,
-        condition=lambda: _count_categories() >= 10
+        condition=lambda: _count_categories() >= 10,
     ),
     "saver": Badge(
         id="saver",
@@ -123,7 +124,7 @@ BADGES = {
         description="3 mois avec épargne positive",
         icon="💰",
         rarity=BadgeRarity.RARE,
-        condition=lambda: _check_saving_streak()
+        condition=lambda: _check_saving_streak(),
     ),
     "data_analyst": Badge(
         id="data_analyst",
@@ -131,7 +132,7 @@ BADGES = {
         description="Consulter le dashboard 20 fois",
         icon="📈",
         rarity=BadgeRarity.COMMON,
-        condition=lambda: False  # Would need session tracking
+        condition=lambda: False,  # Would need session tracking
     ),
     "midnight_owl": Badge(
         id="midnight_owl",
@@ -140,7 +141,7 @@ BADGES = {
         icon="🦉",
         rarity=BadgeRarity.EPIC,
         condition=lambda: False,  # Secret badge, checked differently
-        hidden=True
+        hidden=True,
     ),
 }
 
@@ -149,6 +150,7 @@ BADGES = {
 def _count_transactions() -> int:
     try:
         from modules.db.transactions import get_all_transactions
+
         df = get_all_transactions()
         return len(df)
     except Exception as e:
@@ -159,6 +161,7 @@ def _count_transactions() -> int:
 def _get_streak() -> int:
     try:
         from modules.gamification.streaks import StreakManager
+
         return StreakManager.get_streak().current_streak
     except Exception as e:
         logger.warning(f"Error getting streak: {e}")
@@ -168,6 +171,7 @@ def _get_streak() -> int:
 def _count_budgets() -> int:
     try:
         from modules.db.budgets import get_budgets
+
         return len(get_budgets())
     except Exception as e:
         logger.warning(f"Error counting budgets: {e}")
@@ -177,8 +181,9 @@ def _count_budgets() -> int:
 def _count_validated() -> int:
     try:
         from modules.db.transactions import get_all_transactions
+
         df = get_all_transactions()
-        return len(df[df['status'] == 'validated'])
+        return len(df[df["status"] == "validated"])
     except Exception as e:
         logger.warning(f"Error counting validated: {e}")
         return 0
@@ -187,10 +192,18 @@ def _count_validated() -> int:
 def _count_categories() -> int:
     try:
         from modules.db.categories import get_categories
+
         cats = get_categories()
         # Exclude defaults
-        defaults = {'Alimentation', 'Transport', 'Logement', 'Revenus', 
-                   'Virement Interne', 'Hors Budget', 'Inconnu'}
+        defaults = {
+            "Alimentation",
+            "Transport",
+            "Logement",
+            "Revenus",
+            "Virement Interne",
+            "Hors Budget",
+            "Inconnu",
+        }
         return len([c for c in cats if c not in defaults])
     except Exception as e:
         logger.warning(f"Error counting categories: {e}")
@@ -204,9 +217,9 @@ def _check_saving_streak() -> bool:
 
 class BadgeManager:
     """Manages earned badges."""
-    
+
     TABLE_NAME = "user_badges"
-    
+
     @classmethod
     def _ensure_table(cls):
         """Create badges table if not exists."""
@@ -222,12 +235,12 @@ class BadgeManager:
                 conn.commit()
         except Exception as e:
             logger.warning(f"Could not create badges table: {e}")
-    
+
     @classmethod
     def check_and_award_badges(cls) -> list[Badge]:
         """
         Check all badges and award new ones.
-        
+
         Returns:
             List of newly earned badges
         """
@@ -235,32 +248,35 @@ class BadgeManager:
             cls._ensure_table()
             earned_badges = cls._get_earned_badge_ids()
             new_badges = []
-            
+
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 for badge_id, badge in BADGES.items():
                     if badge_id in earned_badges:
                         continue
-                    
+
                     try:
                         if badge.condition():
-                            cursor.execute(f"""
+                            cursor.execute(
+                                f"""
                                 INSERT INTO {cls.TABLE_NAME} (badge_id)
                                 VALUES (?)
-                            """, (badge_id,))
+                            """,
+                                (badge_id,),
+                            )
                             new_badges.append(badge)
                     except Exception as e:
                         logger.debug(f"Badge check failed for {badge_id}: {e}")
-                
+
                 conn.commit()
-            
+
             return new_badges
-            
+
         except Exception as e:
             logger.error(f"Could not check badges: {e}")
             return []
-    
+
     @classmethod
     def _get_earned_badge_ids(cls) -> set:
         """Get IDs of already earned badges."""
@@ -272,7 +288,7 @@ class BadgeManager:
         except Exception as e:
             logger.warning(f"Error getting earned badge IDs: {e}")
             return set()
-    
+
     @classmethod
     def get_user_badges(cls) -> list[Badge]:
         """Get all earned badges."""
@@ -303,9 +319,9 @@ def _create_badge_card(badge: Badge, earned: bool = True) -> str:
         border_color = _palette.border
         opacity = "0.6"
         lock_icon = "🔒 "
-    
+
     rarity_label = RARITY_LABELS.get(badge.rarity, "")
-    
+
     return f"""
     <div style="
         background-color: {bg_color};
@@ -361,11 +377,12 @@ def render_badges_collection():
     """Render badge collection in Streamlit using Design System."""
     earned = get_user_badges()
     total = len([b for b in BADGES.values() if not b.hidden])
-    
+
     # Progress section with Design System styling
     progress_pct = len(earned) / total if total > 0 else 0
-    
-    st.markdown(f"""
+
+    st.markdown(
+        f"""
     <div style="
         background-color: {_palette.bg_secondary};
         border: 1px solid {_palette.border};
@@ -407,11 +424,14 @@ def render_badges_collection():
             "></div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     # Earned badges section
     if earned:
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <h3 style="
             font-size: {Typography.SIZE_XL};
             font-weight: {Typography.WEIGHT_SEMIBOLD};
@@ -419,26 +439,29 @@ def render_badges_collection():
             margin-bottom: {Spacing.MD};
             margin-top: {Spacing.LG};
         ">🏆 Badges débloqués</h3>
-        """, unsafe_allow_html=True)
-        
+        """,
+            unsafe_allow_html=True,
+        )
+
         # Display badges in a grid
         cols_per_row = 4
         for i in range(0, len(earned), cols_per_row):
             cols = st.columns(cols_per_row)
-            for j, badge in enumerate(earned[i:i+cols_per_row]):
+            for j, badge in enumerate(earned[i : i + cols_per_row]):
                 with cols[j]:
                     st.markdown(_create_badge_card(badge, earned=True), unsafe_allow_html=True)
-                    
+
                     # Info button using Design System button pattern
                     if st.button(
                         "ℹ️ Détails",
                         key=f"badge_info_{badge.id}",
                         use_container_width=True,
-                        type="secondary"
+                        type="secondary",
                     ):
                         st.info(f"**{badge.name}**\n\n{badge.description}")
     else:
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <div style="
             background-color: {_palette.bg_secondary};
             border: 1px dashed {_palette.border};
@@ -452,10 +475,13 @@ def render_badges_collection():
                 Commencez à utiliser l'app pour gagner des badges!
             </div>
         </div>
-        """, unsafe_allow_html=True)
-    
+        """,
+            unsafe_allow_html=True,
+        )
+
     # Locked badges section
-    st.markdown(f"""
+    st.markdown(
+        f"""
     <h3 style="
         font-size: {Typography.SIZE_XL};
         font-weight: {Typography.WEIGHT_SEMIBOLD};
@@ -465,27 +491,29 @@ def render_badges_collection():
         padding-top: {Spacing.LG};
         border-top: 1px solid {_palette.border};
     ">🔒 Badges à débloquer</h3>
-    """, unsafe_allow_html=True)
-    
+    """,
+        unsafe_allow_html=True,
+    )
+
     earned_ids = {b.id for b in earned}
-    locked = [b for bid, b in BADGES.items() 
-              if bid not in earned_ids and not b.hidden]
-    
+    locked = [b for bid, b in BADGES.items() if bid not in earned_ids and not b.hidden]
+
     if locked:
         # Show first 3 locked badges
         cols_per_row = 3
         display_locked = locked[:3]
-        
+
         for i in range(0, len(display_locked), cols_per_row):
             cols = st.columns(cols_per_row)
-            for j, badge in enumerate(display_locked[i:i+cols_per_row]):
+            for j, badge in enumerate(display_locked[i : i + cols_per_row]):
                 with cols[j]:
                     st.markdown(_create_badge_card(badge, earned=False), unsafe_allow_html=True)
-        
+
         # Show count of remaining badges
         if len(locked) > 3:
             remaining = len(locked) - 3
-            st.markdown(f"""
+            st.markdown(
+                f"""
             <div style="
                 text-align: center;
                 color: {_palette.text_muted};
@@ -497,9 +525,12 @@ def render_badges_collection():
             ">
                 + {remaining} autre{'s' if remaining > 1 else ''} badge{'s' if remaining > 1 else ''} secret{'s' if remaining > 1 else ''} à découvrir...
             </div>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
     else:
-        st.markdown(f"""
+        st.markdown(
+            f"""
         <div style="
             background-color: rgba(16, 185, 129, 0.1);
             border: 1px solid {Colors.SECONDARY.value};
@@ -516,4 +547,6 @@ def render_badges_collection():
                 Félicitations! Vous avez débloqué tous les badges visibles!
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )

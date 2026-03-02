@@ -43,7 +43,13 @@ jump_to = st.session_state.get("config_jump_to", None)
 # Create tabs based on mode
 if is_advanced_mode():
     # Full tabs in advanced mode
-    tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "💑 Couple", "🤖 IA & Services", "🔧 Maintenance"]
+    tab_labels = [
+        "🏠 Vue d'ensemble",
+        "👤 Profil",
+        "💑 Couple",
+        "🤖 IA & Services",
+        "🔧 Maintenance",
+    ]
 else:
     # Simplified tabs in simple mode
     tab_labels = ["🏠 Vue d'ensemble", "👤 Profil", "💑 Couple", "🤖 IA & Services"]
@@ -164,7 +170,7 @@ if is_advanced_mode():
         with col_back2:
             st.subheader("📑 Logs système", divider="blue")
             render_log_viewer()
-        
+
         # Recycle Bin
         st.divider()
         render_recycle_bin_manager()

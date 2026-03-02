@@ -325,9 +325,7 @@ def get_classifier() -> LocalTransactionClassifier:
     return _classifier
 
 
-def predict_category_local(
-    label: str, amount: float = None, date=None
-) -> tuple[str | None, float]:
+def predict_category_local(label: str, amount: float = None, date=None) -> tuple[str | None, float]:
     """
     Fonction helper pour prédire la catégorie d'une transaction.
 

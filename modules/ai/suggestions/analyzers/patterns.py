@@ -22,7 +22,9 @@ class DuplicateAnalyzer(BaseAnalyzer):
 
         # Group by date, label, amount
         grouped = (
-            context.transactions.groupby(["date", "label", "amount"]).size().reset_index(name="count")
+            context.transactions.groupby(["date", "label", "amount"])
+            .size()
+            .reset_index(name="count")
         )
         duplicates = grouped[grouped["count"] > 1]
 

@@ -196,11 +196,9 @@ def list_layouts() -> list[dict]:
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                """SELECT name, is_active, created_at, updated_at 
+            cursor.execute("""SELECT name, is_active, created_at, updated_at 
                    FROM dashboard_layouts 
-                   ORDER BY updated_at DESC"""
-            )
+                   ORDER BY updated_at DESC""")
 
             layouts = []
             for row in cursor.fetchall():

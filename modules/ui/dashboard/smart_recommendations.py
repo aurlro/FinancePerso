@@ -3,7 +3,6 @@ Smart Recommendations Component for Budget Dashboard
 Affiche les recommandations intelligentes par catégorie.
 """
 
-
 import pandas as pd
 import streamlit as st
 
@@ -190,9 +189,7 @@ def _render_suggestion_card(insight: CategoryInsight):
                 st.toast(f"Conseils pour {insight.category}...", icon="💡")
 
 
-def render_quick_actions_banner(
-    df_current: pd.DataFrame, budgets_df: pd.DataFrame
-) -> str | None:
+def render_quick_actions_banner(df_current: pd.DataFrame, budgets_df: pd.DataFrame) -> str | None:
     """
     Bannière d'actions rapides basées sur l'état actuel.
     Retourne l'action recommandée principale.

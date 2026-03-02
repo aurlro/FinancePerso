@@ -11,62 +11,65 @@ from typing import Any, Optional
 
 class NotificationLevel(str, Enum):
     """Niveaux de priorité des notifications."""
-    CRITICAL = "critical"      # 🚨 - Action immédiate requise
-    WARNING = "warning"        # ⚠️ - Attention nécessaire
-    INFO = "info"              # ℹ️ - Information
-    SUCCESS = "success"        # ✅ - Confirmation
+
+    CRITICAL = "critical"  # 🚨 - Action immédiate requise
+    WARNING = "warning"  # ⚠️ - Attention nécessaire
+    INFO = "info"  # ℹ️ - Information
+    SUCCESS = "success"  # ✅ - Confirmation
     ACHIEVEMENT = "achievement"  # 🏆 - Gamification
 
 
 class NotificationType(str, Enum):
     """Types de notifications fonctionnels."""
+
     # Budget
-    BUDGET_WARNING = "budget_warning"      # Approche du seuil
-    BUDGET_CRITICAL = "budget_critical"    # Dépassement
-    BUDGET_OVERRUN = "budget_overrun"      # Dépassement confirmé
-    
+    BUDGET_WARNING = "budget_warning"  # Approche du seuil
+    BUDGET_CRITICAL = "budget_critical"  # Dépassement
+    BUDGET_OVERRUN = "budget_overrun"  # Dépassement confirmé
+
     # Transactions
-    VALIDATION_REMINDER = "validation_reminder"    # Transactions en attente
-    IMPORT_REMINDER = "import_reminder"            # Pas importé depuis X jours
-    DUPLICATE_DETECTED = "duplicate_detected"      # Doublons trouvés
-    LARGE_EXPENSE = "large_expense"                # Dépense importante
-    UNUSUAL_PATTERN = "unusual_pattern"            # Pattern anormal
-    
+    VALIDATION_REMINDER = "validation_reminder"  # Transactions en attente
+    IMPORT_REMINDER = "import_reminder"  # Pas importé depuis X jours
+    DUPLICATE_DETECTED = "duplicate_detected"  # Doublons trouvés
+    LARGE_EXPENSE = "large_expense"  # Dépense importante
+    UNUSUAL_PATTERN = "unusual_pattern"  # Pattern anormal
+
     # Intelligence
-    ANOMALY_DETECTED = "anomaly_detected"          # Anomalie statistique
-    RECURRING_MISSING = "recurring_missing"        # Paiement récurrent absent
-    NEW_MERCHANT = "new_merchant"                  # Nouveau commerçant
-    PRICE_INCREASE = "price_increase"              # Augmentation prix
-    
+    ANOMALY_DETECTED = "anomaly_detected"  # Anomalie statistique
+    RECURRING_MISSING = "recurring_missing"  # Paiement récurrent absent
+    NEW_MERCHANT = "new_merchant"  # Nouveau commerçant
+    PRICE_INCREASE = "price_increase"  # Augmentation prix
+
     # Objectifs
-    GOAL_ACHIEVED = "goal_achieved"                # Objectif atteint
-    GOAL_PROGRESS = "goal_progress"                # Progression objectif
-    SAVINGS_MILESTONE = "savings_milestone"        # Palier épargne
-    
+    GOAL_ACHIEVED = "goal_achieved"  # Objectif atteint
+    GOAL_PROGRESS = "goal_progress"  # Progression objectif
+    SAVINGS_MILESTONE = "savings_milestone"  # Palier épargne
+
     # Gamification
-    BADGE_EARNED = "badge_earned"                  # Badge débloqué
-    STREAK_MILESTONE = "streak_milestone"          # Streak atteint
-    CHALLENGE_COMPLETED = "challenge_completed"    # Challenge terminé
-    
+    BADGE_EARNED = "badge_earned"  # Badge débloqué
+    STREAK_MILESTONE = "streak_milestone"  # Streak atteint
+    CHALLENGE_COMPLETED = "challenge_completed"  # Challenge terminé
+
     # Système
-    SYSTEM_UPDATE = "system_update"                # Nouvelle fonctionnalité
-    BACKUP_REMINDER = "backup_reminder"            # Rappel sauvegarde
-    SECURITY_ALERT = "security_alert"              # Alerte sécurité
-    
+    SYSTEM_UPDATE = "system_update"  # Nouvelle fonctionnalité
+    BACKUP_REMINDER = "backup_reminder"  # Rappel sauvegarde
+    SECURITY_ALERT = "security_alert"  # Alerte sécurité
+
     # Insights
-    WEEKLY_SUMMARY = "weekly_summary"              # Récap hebdomadaire
-    MONTHLY_INSIGHT = "monthly_insight"            # Insight mensuel
-    SPENDING_INSIGHT = "spending_insight"          # Insight dépenses
+    WEEKLY_SUMMARY = "weekly_summary"  # Récap hebdomadaire
+    MONTHLY_INSIGHT = "monthly_insight"  # Insight mensuel
+    SPENDING_INSIGHT = "spending_insight"  # Insight dépenses
 
 
 @dataclass
 class NotificationAction:
     """Action possible sur une notification."""
-    label: str                          # Texte du bouton
-    action: str                         # Type d'action
-    target: Optional[str] = None        # Cible (URL, page, etc.)
-    data: Optional[dict] = None         # Données additionnelles
-    
+
+    label: str  # Texte du bouton
+    action: str  # Type d'action
+    target: Optional[str] = None  # Cible (URL, page, etc.)
+    data: Optional[dict] = None  # Données additionnelles
+
     def to_dict(self) -> dict:
         """Convertit en dictionnaire pour stockage JSON."""
         return {
@@ -75,7 +78,7 @@ class NotificationAction:
             "target": self.target,
             "data": self.data,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "NotificationAction":
         """Crée une instance depuis un dictionnaire."""
@@ -90,57 +93,58 @@ class NotificationAction:
 @dataclass
 class Notification:
     """Représente une notification."""
+
     id: str
     level: NotificationLevel
     type: NotificationType
     title: Optional[str]
     message: str
     icon: Optional[str] = None
-    
+
     # Timestamps
     created_at: datetime = field(default_factory=datetime.now)
     read_at: Optional[datetime] = None
     dismissed_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
-    
+
     # Catégorisation
     category: Optional[str] = None
     source: Optional[str] = None
-    
+
     # Actions
     actions: list[NotificationAction] = field(default_factory=list)
-    
+
     # Métadonnées
     metadata: dict[str, Any] = field(default_factory=dict)
-    
+
     # Déduplication
     dedup_key: Optional[str] = None
-    
+
     # Statut
     is_read: bool = False
     is_dismissed: bool = False
     is_pinned: bool = False
-    
+
     def mark_read(self) -> None:
         """Marque la notification comme lue."""
         self.is_read = True
         self.read_at = datetime.now()
-    
+
     def dismiss(self) -> None:
         """Marque la notification comme ignorée."""
         self.is_dismissed = True
         self.dismissed_at = datetime.now()
-    
+
     def is_expired(self) -> bool:
         """Vérifie si la notification est expirée."""
         if self.expires_at is None:
             return False
         return datetime.now() > self.expires_at
-    
+
     def is_active(self) -> bool:
         """Vérifie si la notification est active (non lue, non expirée)."""
         return not self.is_dismissed and not self.is_expired()
-    
+
     def to_dict(self) -> dict:
         """Convertit en dictionnaire pour stockage."""
         return {
@@ -163,7 +167,7 @@ class Notification:
             "is_dismissed": self.is_dismissed,
             "is_pinned": self.is_pinned,
         }
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Notification":
         """Crée une instance depuis un dictionnaire."""
@@ -176,8 +180,12 @@ class Notification:
             icon=data.get("icon"),
             created_at=datetime.fromisoformat(data["created_at"]),
             read_at=datetime.fromisoformat(data["read_at"]) if data.get("read_at") else None,
-            dismissed_at=datetime.fromisoformat(data["dismissed_at"]) if data.get("dismissed_at") else None,
-            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
+            dismissed_at=(
+                datetime.fromisoformat(data["dismissed_at"]) if data.get("dismissed_at") else None
+            ),
+            expires_at=(
+                datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
+            ),
             category=data.get("category"),
             source=data.get("source"),
             actions=[NotificationAction.from_dict(a) for a in data.get("actions", [])],
@@ -192,42 +200,43 @@ class Notification:
 @dataclass
 class NotificationPreferences:
     """Préférences de notification de l'utilisateur."""
+
     user_id: int = 1
-    
+
     # Par niveau
     critical_enabled: bool = True
     warning_enabled: bool = True
     info_enabled: bool = True
     success_enabled: bool = True
     achievement_enabled: bool = True
-    
+
     # Par type (dict type -> bool)
     type_preferences: dict[str, bool] = field(default_factory=dict)
-    
+
     # Canaux
     desktop_enabled: bool = True
     email_enabled: bool = False
     sms_enabled: bool = False
     email_address: Optional[str] = None
-    
+
     # Seuils
     budget_warning_threshold: int = 80
     budget_critical_threshold: int = 100
-    
+
     # Fréquences
     daily_digest_enabled: bool = True
     weekly_summary_enabled: bool = True
-    
+
     def is_enabled(self, level: NotificationLevel, type_: NotificationType) -> bool:
         """Vérifie si une notification est activée."""
         # Vérifier le niveau
         level_enabled = getattr(self, f"{level.value}_enabled", True)
         if not level_enabled:
             return False
-        
+
         # Vérifier le type
         type_pref = self.type_preferences.get(type_.value)
         if type_pref is not None:
             return type_pref
-        
+
         return True

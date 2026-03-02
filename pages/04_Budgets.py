@@ -24,11 +24,9 @@ load_css()
 init_db()
 
 st.title("🎯 Budgets & Objectifs Financiers")
-st.markdown(
-    """
+st.markdown("""
 Définissez vos limites mensuelles par catégorie et suivez votre progression en temps réel.
-"""
-)
+""")
 
 # --- NAVIGATION ---
 if "budget_active_tab" not in st.session_state:
@@ -217,22 +215,18 @@ if active_tab == "📊 Vue d'ensemble":
                 at_risk = comp_df[comp_df["État"].str.contains("🟡")]
 
                 if not over_budget.empty:
-                    st.error(
-                        """
+                    st.error("""
                     **🚨 Budgets dépassés :**
-                    """
-                    )
+                    """)
                     for _, row in over_budget.iterrows():
                         st.markdown(
                             f"- **{row['Catégorie']}** : {row['Dépensé']:.0f}€ / {row['Budget']:.0f}€"
                         )
 
                 if not at_risk.empty:
-                    st.warning(
-                        """
+                    st.warning("""
                     **⚠️ Budgets à surveiller (80%+ utilisés) :**
-                    """
-                    )
+                    """)
                     for _, row in at_risk.iterrows():
                         st.markdown(f"- **{row['Catégorie']}** : {row['% Utilisé']:.0f}% utilisé")
 

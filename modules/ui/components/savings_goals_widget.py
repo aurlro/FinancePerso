@@ -4,7 +4,6 @@ Savings Goals Widget - Composant UI pour afficher les objectifs d'épargne.
 Intégré dans le dashboard pour créer de la motivation émotionnelle.
 """
 
-
 import streamlit as st
 
 from modules.savings_goals import (
@@ -195,7 +194,9 @@ def render_goal_creation_form():
 
         with col1:
             emoji = st.selectbox(
-                "Icône", options=["🏖️", "🚗", "🏠", "📱", "💻", "✈️", "🎁", "🎓", "💍", "🎯"], index=0
+                "Icône",
+                options=["🏖️", "🚗", "🏠", "📱", "💻", "✈️", "🎁", "🎓", "💍", "🎯"],
+                index=0,
             )
 
         with col2:

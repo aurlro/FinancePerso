@@ -7,14 +7,14 @@ des transactions, utilisant la cascade de confiance (heuristique → similarité
 
 Usage:
     from modules.transactions.services import CategorizationService
-    
+
     service = CategorizationService()
     result = service.categorize(
         label="MONOPRIX PARIS 14",
         amount=-45.67,
         date="2024-01-15"
     )
-    
+
     print(result.category)  # "FOOD_AND_DRINK > Groceries"
     print(result.confidence)  # 0.95
     print(result.method)  # "HEURISTIC"
@@ -46,7 +46,7 @@ TransactionRepository = None
 class CategorizationServiceResult:
     """
     Résultat enrichi d'une catégorisation.
-    
+
     Attributes:
         category: Catégorie complète (ex: "FOOD_AND_DRINK > Groceries")
         main_category: Catégorie principale (ex: "FOOD_AND_DRINK")
@@ -60,6 +60,7 @@ class CategorizationServiceResult:
         similar_transaction_id: ID de la transaction similaire (si applicable)
         similarity_score: Score de similarité (si applicable)
     """
+
     category: str
     main_category: str
     subcategory: str
@@ -71,23 +72,25 @@ class CategorizationServiceResult:
     metadata: Dict[str, Any]
     similar_transaction_id: Optional[int] = None
     similarity_score: Optional[float] = None
-    
+
     def to_json(self) -> str:
         """Convertit le résultat en JSON pour stockage."""
-        return json.dumps({
-            "category": self.category,
-            "main_category": self.main_category,
-            "subcategory": self.subcategory,
-            "clean_merchant": self.clean_merchant,
-            "confidence": self.confidence,
-            "method": self.method.value,
-            "is_income": self.is_income,
-            "is_expense": self.is_expense,
-            "similar_transaction_id": self.similar_transaction_id,
-            "similarity_score": self.similarity_score,
-            "timestamp": datetime.now().isoformat(),
-        })
-    
+        return json.dumps(
+            {
+                "category": self.category,
+                "main_category": self.main_category,
+                "subcategory": self.subcategory,
+                "clean_merchant": self.clean_merchant,
+                "confidence": self.confidence,
+                "method": self.method.value,
+                "is_income": self.is_income,
+                "is_expense": self.is_expense,
+                "similar_transaction_id": self.similar_transaction_id,
+                "similarity_score": self.similarity_score,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+
     @classmethod
     def from_json(cls, json_str: str) -> "CategorizationServiceResult":
         """Crée un résultat depuis une chaîne JSON."""
@@ -103,22 +106,22 @@ class CategorizationServiceResult:
 class CategorizationService:
     """
     Service de catégorisation avec persistance des métadonnées.
-    
+
     Cette classe wrap le TransactionCategorizer existant et ajoute :
     - Stockage des métadonnées dans la base de données
     - Interface simplifiée
     - Gestion des erreurs
-    
+
     Usage:
         service = CategorizationService()
-        
+
         # Catégoriser une transaction
         result = service.categorize("MONOPRIX PARIS", -45.67, "2024-01-15")
-        
+
         # Sauvegarder avec métadonnées
         service.save_categorization(transaction_id=123, result=result)
     """
-    
+
     def __init__(
         self,
         similarity_threshold: float = 0.85,
@@ -128,7 +131,7 @@ class CategorizationService:
     ):
         """
         Initialise le service de catégorisation.
-        
+
         Args:
             similarity_threshold: Seuil pour le matching par similarité (0-1)
             min_confidence: Confiance minimale pour accepter un résultat IA
@@ -142,10 +145,10 @@ class CategorizationService:
             use_cloud_fallback=use_cloud_fallback,
         )
         self.tx_repo = TransactionRepository() if TransactionRepository else None
-        
+
         # S'assurer que la colonne meta_data existe
         self._ensure_meta_data_column()
-    
+
     def _ensure_meta_data_column(self):
         """Vérifie et crée la colonne meta_data si nécessaire."""
         try:
@@ -153,16 +156,14 @@ class CategorizationService:
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA table_info(transactions)")
                 columns = [info[1] for info in cursor.fetchall()]
-                
+
                 if "meta_data" not in columns:
-                    cursor.execute(
-                        "ALTER TABLE transactions ADD COLUMN meta_data TEXT"
-                    )
+                    cursor.execute("ALTER TABLE transactions ADD COLUMN meta_data TEXT")
                     conn.commit()
                     logger.info("Colonne meta_data ajoutée à la table transactions")
         except sqlite3.Error as e:
             logger.error(f"Erreur lors de la vérification de meta_data: {e}")
-    
+
     def categorize(
         self,
         label: str,
@@ -172,22 +173,22 @@ class CategorizationService:
     ) -> CategorizationServiceResult:
         """
         Catégorise une transaction.
-        
+
         Args:
             label: Libellé de la transaction
             amount: Montant (négatif pour dépense, positif pour revenu)
             date: Date de la transaction (format ISO)
             transaction_id: ID de la transaction (optionnel, pour contexte)
-            
+
         Returns:
             Résultat de la catégorisation enrichi
         """
         # Appeler le catégoriseur de la cascade
         cascade_result = self.categorizer.categorize(label, amount, date)
-        
+
         # Convertir le résultat
         return self._convert_result(cascade_result, amount)
-    
+
     def _convert_result(
         self,
         cascade_result: CascadeResult,
@@ -200,7 +201,7 @@ class CategorizationService:
         else:
             main_cat = cascade_result.category
             sub_cat = ""
-        
+
         # Déterminer la méthode
         method_map = {
             "heuristic": CategorizationMethod.HEURISTIC,
@@ -209,7 +210,7 @@ class CategorizationService:
             "cloud_ai": CategorizationMethod.CLOUD_AI,
         }
         method = method_map.get(cascade_result.source, CategorizationMethod.HEURISTIC)
-        
+
         # Construire les métadonnées au format PFCv2
         metadata = {
             "clean_merchant": cascade_result.clean_merchant,
@@ -222,9 +223,9 @@ class CategorizationService:
                 "method_used": method.value,
                 "timestamp": datetime.now().isoformat(),
                 "pfc_version": "v2",
-            }
+            },
         }
-        
+
         return CategorizationServiceResult(
             category=cascade_result.category,
             main_category=main_cat,
@@ -238,7 +239,7 @@ class CategorizationService:
             similar_transaction_id=cascade_result.similar_transaction_id,
             similarity_score=cascade_result.similarity_score,
         )
-    
+
     def save_categorization(
         self,
         transaction_id: int,
@@ -246,18 +247,18 @@ class CategorizationService:
     ) -> bool:
         """
         Sauvegarde les métadonnées de catégorisation en base.
-        
+
         Args:
             transaction_id: ID de la transaction
             result: Résultat de la catégorisation
-            
+
         Returns:
             True si sauvegardé avec succès
         """
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 # Mettre à jour la transaction avec la catégorie et les métadonnées
                 cursor.execute(
                     """
@@ -271,50 +272,47 @@ class CategorizationService:
                         result.category,
                         json.dumps(result.metadata),
                         transaction_id,
-                    )
+                    ),
                 )
                 conn.commit()
-                
+
                 logger.info(
                     f"Transaction {transaction_id} catégorisée: {result.category} "
                     f"(confiance: {result.confidence}, méthode: {result.method.value})"
                 )
                 return True
-                
+
         except sqlite3.Error as e:
             logger.error(f"Erreur lors de la sauvegarde: {e}")
             return False
-    
+
     def get_categorization_metadata(
         self,
         transaction_id: int,
     ) -> Optional[Dict[str, Any]]:
         """
         Récupère les métadonnées de catégorisation d'une transaction.
-        
+
         Args:
             transaction_id: ID de la transaction
-            
+
         Returns:
             Métadonnées ou None si pas trouvé
         """
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT meta_data FROM transactions WHERE id = ?",
-                    (transaction_id,)
-                )
+                cursor.execute("SELECT meta_data FROM transactions WHERE id = ?", (transaction_id,))
                 row = cursor.fetchone()
-                
+
                 if row and row[0]:
                     return json.loads(row[0])
                 return None
-                
+
         except (sqlite3.Error, json.JSONDecodeError) as e:
             logger.error(f"Erreur lors de la récupération: {e}")
             return None
-    
+
     def batch_categorize(
         self,
         transactions: List[Dict[str, Any]],
@@ -322,16 +320,16 @@ class CategorizationService:
     ) -> List[CategorizationServiceResult]:
         """
         Catégorise plusieurs transactions en batch.
-        
+
         Args:
             transactions: Liste de dicts avec keys: id, label, amount, date
             save: Si True, sauvegarde les résultats en base
-            
+
         Returns:
             Liste des résultats
         """
         results = []
-        
+
         for tx in transactions:
             result = self.categorize(
                 label=tx["label"],
@@ -340,12 +338,12 @@ class CategorizationService:
                 transaction_id=tx.get("id"),
             )
             results.append(result)
-            
+
             if save and tx.get("id"):
                 self.save_categorization(tx["id"], result)
-        
+
         return results
-    
+
     def find_similar_transactions(
         self,
         label: str,
@@ -354,12 +352,12 @@ class CategorizationService:
     ) -> List[Dict[str, Any]]:
         """
         Trouve les transactions similaires dans l'historique.
-        
+
         Args:
             label: Libellé à chercher
             threshold: Seuil de similarité
             limit: Nombre maximum de résultats
-            
+
         Returns:
             Liste des transactions similaires
         """
@@ -367,31 +365,34 @@ class CategorizationService:
         try:
             with get_db_connection() as conn:
                 import pandas as pd
+
                 history = pd.read_sql_query(
                     "SELECT id, label, category_validated FROM transactions WHERE status = 'validated' LIMIT 5000",
-                    conn
+                    conn,
                 )
         except Exception:
             history = None
-        
+
         if history is None or history.empty:
             return []
-        
+
         from difflib import SequenceMatcher
-        
+
         matches = []
         for _, row in history.iterrows():
             hist_label = str(row.get("label", ""))
             similarity = SequenceMatcher(None, label.upper(), hist_label.upper()).ratio()
-            
+
             if similarity >= threshold:
-                matches.append({
-                    "id": row.get("id"),
-                    "label": hist_label,
-                    "category": row.get("category_validated"),
-                    "similarity": round(similarity, 3),
-                })
-        
+                matches.append(
+                    {
+                        "id": row.get("id"),
+                        "label": hist_label,
+                        "category": row.get("category_validated"),
+                        "similarity": round(similarity, 3),
+                    }
+                )
+
         # Trier par similarité décroissante
         matches.sort(key=lambda x: x["similarity"], reverse=True)
         return matches[:limit]
@@ -417,7 +418,7 @@ def categorize_transaction(
 ) -> CategorizationServiceResult:
     """
     Fonction utilitaire pour catégoriser une transaction.
-    
+
     Usage:
         result = categorize_transaction("MONOPRIX", -45.67, "2024-01-15")
         print(result.category)

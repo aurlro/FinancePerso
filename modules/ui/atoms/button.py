@@ -2,7 +2,7 @@
 
 Usage:
     from modules.ui.atoms import Button
-    
+
     Button.primary("Sauvegarder", on_click=save_handler)
     Button.secondary("Annuler")
     Button.danger("Supprimer", confirm=True)
@@ -18,6 +18,7 @@ from modules.ui.tokens import Colors
 
 class ButtonVariant(str, Enum):
     """Variantes de boutons."""
+
     PRIMARY = "primary"
     SECONDARY = "secondary"
     TERTIARY = "tertiary"
@@ -27,10 +28,10 @@ class ButtonVariant(str, Enum):
 
 class Button:
     """Boutons standardisés selon le Design System.
-    
+
     Tous les boutons de l'application doivent utiliser cette classe.
     """
-    
+
     @staticmethod
     def _render(
         label: str,
@@ -42,7 +43,7 @@ class Button:
         icon: str | None = None,
     ) -> bool:
         """Rendu interne du bouton.
-        
+
         Args:
             label: Texte du bouton
             variant: Style du bouton
@@ -51,12 +52,12 @@ class Button:
             disabled: État désactivé
             use_container_width: Prendre toute la largeur
             icon: Emoji/icône optionnelle
-        
+
         Returns:
             True si cliqué
         """
         label_text = f"{icon} {label}" if icon else label
-        
+
         # Mapping vers les types Streamlit natifs
         type_mapping = {
             ButtonVariant.PRIMARY: "primary",
@@ -65,7 +66,7 @@ class Button:
             ButtonVariant.DANGER: "primary",  # Streamlit n'a pas de type danger
             ButtonVariant.GHOST: "secondary",
         }
-        
+
         # Pour les boutons danger, on ajoute une classe CSS
         if variant == ButtonVariant.DANGER:
             st.markdown(
@@ -81,9 +82,9 @@ class Button:
                 }}
                 </style>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-        
+
         clicked = st.button(
             label=label_text,
             key=key,
@@ -92,9 +93,9 @@ class Button:
             use_container_width=use_container_width,
             type=type_mapping[variant],
         )
-        
+
         return clicked
-    
+
     @classmethod
     def primary(
         cls,
@@ -106,7 +107,7 @@ class Button:
         icon: str | None = None,
     ) -> bool:
         """Bouton primaire (action principale).
-        
+
         Usage:
             if Button.primary("Sauvegarder", key="save"):
                 save_data()
@@ -120,7 +121,7 @@ class Button:
             use_container_width=use_container_width,
             icon=icon,
         )
-    
+
     @classmethod
     def secondary(
         cls,
@@ -132,7 +133,7 @@ class Button:
         icon: str | None = None,
     ) -> bool:
         """Bouton secondaire (action alternative).
-        
+
         Usage:
             if Button.secondary("Annuler", key="cancel"):
                 go_back()
@@ -146,7 +147,7 @@ class Button:
             use_container_width=use_container_width,
             icon=icon,
         )
-    
+
     @classmethod
     def danger(
         cls,
@@ -160,11 +161,11 @@ class Button:
         confirm_message: str = "Êtes-vous sûr ? Cette action est irréversible.",
     ) -> bool:
         """Bouton danger (action destructive).
-        
+
         Args:
             confirm: Si True, affiche une confirmation avant l'action
             confirm_message: Message de confirmation
-        
+
         Usage:
             if Button.danger("Supprimer", key="delete", confirm=True):
                 delete_item()
@@ -172,7 +173,7 @@ class Button:
         if confirm and key:
             # Vérifier si on doit afficher la confirmation
             confirm_key = f"{key}_confirm_open"
-            
+
             if not st.session_state.get(confirm_key, False):
                 if cls._render(
                     label=label,
@@ -200,7 +201,7 @@ class Button:
                         st.session_state[confirm_key] = False
                         st.rerun()
                 return False
-        
+
         return cls._render(
             label=label,
             variant=ButtonVariant.DANGER,
@@ -210,7 +211,7 @@ class Button:
             use_container_width=use_container_width,
             icon=icon,
         )
-    
+
     @classmethod
     def ghost(
         cls,
@@ -222,7 +223,7 @@ class Button:
         icon: str | None = None,
     ) -> bool:
         """Bouton ghost (action légère/subtile).
-        
+
         Usage:
             if Button.ghost("Voir plus", key="see_more"):
                 expand()
@@ -236,7 +237,7 @@ class Button:
             use_container_width=use_container_width,
             icon=icon,
         )
-    
+
     @classmethod
     def icon_button(
         cls,
@@ -247,7 +248,7 @@ class Button:
         help: str | None = None,
     ) -> bool:
         """Bouton icône seul (sans texte).
-        
+
         Usage:
             if Button.icon_button("✏️", key="edit"):
                 edit_item()

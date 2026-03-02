@@ -17,14 +17,14 @@ from modules.ui.components.welcome_empty_state import (
 def example_1_basic_usage():
     """Exemple 1: Utilisation basique avec les valeurs par défaut."""
     st.subheader("Exemple 1: Utilisation basique")
-    
+
     WelcomeEmptyState.render()
 
 
 def example_2_customized():
     """Exemple 2: Personnalisation complète."""
     st.subheader("Exemple 2: Personnalisation")
-    
+
     WelcomeEmptyState.render(
         title="🎉 Bienvenue !",
         subtitle="Votre nouveau tableau de bord financier",
@@ -41,14 +41,14 @@ def example_2_customized():
 def example_3_with_callbacks():
     """Exemple 3: Utilisation avec des callbacks Python."""
     st.subheader("Exemple 3: Avec callbacks Python")
-    
+
     def on_primary_click():
         st.session_state["show_import_modal"] = True
         st.toast("Ouverture du modal d'import...")
-    
+
     def on_secondary_click():
         st.session_state["show_help"] = True
-    
+
     WelcomeEmptyState.render(
         title="👋 Hello !",
         subtitle="Prêt à gérer vos finances ?",
@@ -62,14 +62,14 @@ def example_3_with_callbacks():
 def example_4_custom_steps():
     """Exemple 4: Étapes personnalisées."""
     st.subheader("Exemple 4: Étapes personnalisées")
-    
+
     custom_steps = [
         ("📱", "Connectez votre banque"),
         ("🔐", "Sécurisez vos données"),
         ("📊", "Analysez vos dépenses"),
         ("🎯", "Définissez vos objectifs"),
     ]
-    
+
     WelcomeEmptyState.render(
         title="🏦 Bienvenue !",
         subtitle="Configuration initiale requise",
@@ -82,7 +82,7 @@ def example_4_custom_steps():
 def example_5_no_steps():
     """Exemple 5: Sans la section étapes."""
     st.subheader("Exemple 5: Sans étapes")
-    
+
     WelcomeEmptyState.render(
         title="🌟 C'est parti !",
         subtitle="Votre espace est prêt",
@@ -93,7 +93,7 @@ def example_5_no_steps():
 def example_6_quick_function():
     """Exemple 6: Fonction utilitaire rapide."""
     st.subheader("Exemple 6: Fonction utilitaire")
-    
+
     # Utilisation de la fonction rapide
     render_welcome_empty_state(
         title="💰 Gérez votre argent",
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         page_icon="👋",
         layout="centered",
     )
-    
+
     st.title("👋 WelcomeEmptyState - Exemples d'utilisation")
     st.markdown("""
     Ce fichier démontre différentes façons d'utiliser le composant `WelcomeEmptyState`.
@@ -118,9 +118,9 @@ if __name__ == "__main__":
     from modules.ui.components.welcome_empty_state import WelcomeEmptyState
     ```
     """)
-    
+
     st.divider()
-    
+
     # Sélecteur d'exemple
     example = st.selectbox(
         "Choisir un exemple",
@@ -133,9 +133,9 @@ if __name__ == "__main__":
             "6. Fonction utilitaire",
         ],
     )
-    
+
     st.divider()
-    
+
     # Afficher l'exemple sélectionné
     if example.startswith("1"):
         example_1_basic_usage()

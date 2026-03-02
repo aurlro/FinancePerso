@@ -10,7 +10,7 @@ from modules.wealth import Subscription, SubscriptionDetector, SubscriptionStatu
 
 class TestSubscriptionEngine:
     """Tests du moteur d'abonnements"""
-    
+
     def test_subscription_creation(self):
         """Test: Création d'un abonnement"""
         sub = Subscription(
@@ -24,18 +24,18 @@ class TestSubscriptionEngine:
             status=SubscriptionStatus.ACTIF.value,
             transaction_count=12,
         )
-        
+
         assert sub.merchant == "NETFLIX"
         assert sub.frequency == "monthly"
-    
+
     def test_remaining_budget_calculation(self):
         """Test: Calcul Reste à Vivre"""
         from modules.wealth import calculate_remaining_budget
         from datetime import datetime, timedelta
-        
+
         # Créer un abonnement avec date future
         future_date = (datetime.now() + timedelta(days=15)).strftime("%Y-%m-%d")
-        
+
         sub = Subscription(
             merchant="NETFLIX",
             frequency="monthly",
@@ -47,13 +47,13 @@ class TestSubscriptionEngine:
             status="ACTIF",
             transaction_count=12,
         )
-        
+
         result = calculate_remaining_budget(
             current_balance=1500.0,
             subscriptions=[sub],
             days_ahead=30,
         )
-        
+
         # Vérifier que le calcul fonctionne (valeur exacte dépend des dates)
         assert result.remaining_budget <= 1500.0  # Doit être moins après déduction
         assert result.current_balance == 1500.0

@@ -19,20 +19,16 @@ class TestMigrations:
         conn = sqlite3.connect(temp_db)
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='transactions'
-        """
-        )
+        """)
         assert cursor.fetchone() is not None
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT name FROM sqlite_master 
             WHERE type='table' AND name='categories'
-        """
-        )
+        """)
         assert cursor.fetchone() is not None
 
         conn.close()

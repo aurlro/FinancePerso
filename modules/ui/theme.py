@@ -11,33 +11,34 @@ import streamlit as st
 @dataclass
 class ThemeConfig:
     """Configuration complète d'un thème."""
+
     # Couleurs principales
     primary: str
     primary_light: str
     primary_dark: str
-    
+
     # Couleurs de texte
     text_primary: str
     text_secondary: str
     text_muted: str
-    
+
     # Couleurs de fond
     bg_page: str
     bg_card: str
     bg_hover: str
-    
+
     # Couleurs d'état
     positive: str
     negative: str
     warning: str
     info: str
-    
+
     # Bordures et ombres
     border: str
     shadow_sm: str
     shadow_md: str
     shadow_lg: str
-    
+
     # Nom du thème
     name: str
     is_dark: bool = False
@@ -184,26 +185,26 @@ THEMES: dict[str, ThemeConfig] = {
 
 class ThemeManager:
     """Gestionnaire de thème pour l'application."""
-    
+
     DEFAULT_THEME = "light_green"
-    
+
     @classmethod
     def get_current_theme(cls) -> ThemeConfig:
         """Récupère le thème actuel depuis la session."""
         theme_name = st.session_state.get("theme_name", cls.DEFAULT_THEME)
         return THEMES.get(theme_name, THEMES[cls.DEFAULT_THEME])
-    
+
     @classmethod
     def set_theme(cls, theme_name: str) -> None:
         """Change le thème actuel."""
         if theme_name in THEMES:
             st.session_state["theme_name"] = theme_name
-    
+
     @classmethod
     def toggle_dark_mode(cls) -> None:
         """Bascule entre light et dark mode en gardant la palette."""
         current = cls.get_current_theme()
-        
+
         # Extraire la palette (green, blue, purple)
         if "green" in current.name:
             palette = "green"
@@ -211,28 +212,28 @@ class ThemeManager:
             palette = "blue"
         else:
             palette = "purple"
-        
+
         # Inverser le mode
         new_mode = "dark" if not current.is_dark else "light"
         new_theme = f"{new_mode}_{palette}"
-        
+
         cls.set_theme(new_theme)
-    
+
     @classmethod
     def set_palette(cls, palette: str) -> None:
         """Change la palette de couleurs en gardant le mode."""
         current = cls.get_current_theme()
         mode = "dark" if current.is_dark else "light"
         new_theme = f"{mode}_{palette}"
-        
+
         if new_theme in THEMES:
             cls.set_theme(new_theme)
-    
+
     @classmethod
     def apply_theme_css(cls) -> None:
         """Injecte les CSS du thème actuel dans la page."""
         theme = cls.get_current_theme()
-        
+
         css = f"""
         <style>
         :root {{
@@ -277,10 +278,10 @@ def get_theme() -> ThemeConfig:
 def render_theme_toggle() -> None:
     """Affiche le toggle light/dark dans la sidebar."""
     theme = get_theme()
-    
+
     with st.sidebar:
         st.divider()
-        
+
         # Toggle Light/Dark
         col1, col2 = st.columns([1, 3])
         with col1:
@@ -288,31 +289,27 @@ def render_theme_toggle() -> None:
             if st.button(icon, key="theme_toggle", help="Basculer light/dark mode"):
                 ThemeManager.toggle_dark_mode()
                 st.rerun()
-        
+
         with col2:
             st.caption("Mode " + ("sombre" if theme.is_dark else "clair"))
-        
+
         # Sélecteur de palette
-        palettes = {
-            "green": "🟢 Vert",
-            "blue": "🔵 Bleu", 
-            "purple": "🟣 Violet"
-        }
-        
+        palettes = {"green": "🟢 Vert", "blue": "🔵 Bleu", "purple": "🟣 Violet"}
+
         current_palette = "green"
         if "blue" in theme.name:
             current_palette = "blue"
         elif "purple" in theme.name:
             current_palette = "purple"
-        
+
         selected = st.selectbox(
             "Couleur d'accent",
             options=list(palettes.keys()),
             format_func=lambda x: palettes[x],
             index=list(palettes.keys()).index(current_palette),
-            key="palette_selector"
+            key="palette_selector",
         )
-        
+
         if selected != current_palette:
             ThemeManager.set_palette(selected)
             st.rerun()

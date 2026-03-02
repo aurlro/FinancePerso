@@ -17,12 +17,10 @@ class TestOrphanLabels:
         db_connection.commit()
 
         # Add transaction with official member
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, member)
             VALUES ('2024-01-15', 'TX', -50.00, 'Official')
-        """
-        )
+        """)
         db_connection.commit()
 
         orphans = get_orphan_labels()
@@ -33,12 +31,10 @@ class TestOrphanLabels:
         """Test detecting orphan labels."""
         # Add transaction with non-official member
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, member)
             VALUES ('2024-01-15', 'TX', -50.00, 'Orphan Member')
-        """
-        )
+        """)
         db_connection.commit()
 
         orphans = get_orphan_labels()
@@ -52,12 +48,10 @@ class TestSuggestedMappings:
         """Test when no card suffixes need mapping."""
         # Add transaction without card info
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount)
             VALUES ('2024-01-15', 'NO CARD INFO', -50.00)
-        """
-        )
+        """)
         db_connection.commit()
 
         get_suggested_mappings()
@@ -67,18 +61,14 @@ class TestSuggestedMappings:
         """Test detecting card suffixes that need mapping."""
         # Add transactions with card suffixes in label
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount)
             VALUES ('2024-01-15', 'PAYMENT CARD 1234', -50.00)
-        """
-        )
-        cursor.execute(
-            """
+        """)
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount)
             VALUES ('2024-01-16', 'PAYMENT CARD 1234', -30.00)
-        """
-        )
+        """)
         db_connection.commit()
 
         suggestions = get_suggested_mappings()
@@ -94,12 +84,10 @@ class TestTransferInconsistencies:
         """Test when there are no inconsistencies."""
         # Add properly categorized transfer
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'VIREMENT VERS LIVRET', -500.00, 'Virement Interne')
-        """
-        )
+        """)
         db_connection.commit()
 
         missing, wrong = get_transfer_inconsistencies()
@@ -109,12 +97,10 @@ class TestTransferInconsistencies:
         """Test detecting transfers without correct category."""
         # Add transaction that looks like transfer but not categorized
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'VIREMENT VERS LIVRET', -500.00, 'Inconnu')
-        """
-        )
+        """)
         db_connection.commit()
 
         missing, wrong = get_transfer_inconsistencies()
@@ -124,12 +110,10 @@ class TestTransferInconsistencies:
         """Test detecting non-transfers wrongly categorized as transfers."""
         # Add normal transaction categorized as transfer
         cursor = db_connection.cursor()
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, category_validated)
             VALUES ('2024-01-15', 'CARREFOUR MARKET', -50.00, 'Virement Interne')
-        """
-        )
+        """)
         db_connection.commit()
 
         missing, wrong = get_transfer_inconsistencies()

@@ -11,13 +11,13 @@ import streamlit as st
 def is_mobile() -> bool:
     """
     Détecte approximativement si on est sur mobile.
-    
+
     Streamlit ne donne pas directement la taille de l'écran.
     Cette fonction utilise une heuristique basée sur session_state
     qui peut être mise à jour par du JavaScript côté client.
-    
+
     Par défaut, retourne False (desktop) si non déterminé.
-    
+
     Returns:
         True si l'appareil est probablement un mobile
     """
@@ -30,7 +30,7 @@ def is_mobile() -> bool:
 def get_viewport_width() -> int:
     """
     Retourne la largeur de viewport estimée.
-    
+
     Returns:
         Largeur en pixels (défaut: 1200 si non déterminée)
     """
@@ -40,7 +40,7 @@ def get_viewport_width() -> int:
 def get_column_config() -> dict:
     """
     Retourne la configuration de colonnes adaptée au viewport.
-    
+
     Returns:
         Dict avec les configurations pour différents layouts
     """
@@ -50,25 +50,26 @@ def get_column_config() -> dict:
             "full_width": True,
             "button_layout": "vertical",
             "card_padding": "1rem",
-            "font_scale": 0.875
+            "font_scale": 0.875,
         }
     return {
         "kpi_columns": 2,
         "full_width": False,
         "button_layout": "horizontal",
         "card_padding": "1.25rem",
-        "font_scale": 1.0
+        "font_scale": 1.0,
     }
 
 
 def inject_viewport_detector() -> None:
     """
     Injecte du JavaScript pour détecter la taille de l'écran.
-    
+
     À appeler au début de chaque page pour activer la détection mobile.
     Met à jour st.session_state["viewport_width"] avec la largeur réelle.
     """
-    st.markdown("""
+    st.markdown(
+        """
     <script>
         // Mettre à jour le viewport_width dans session_state
         const updateViewportWidth = () => {
@@ -84,13 +85,15 @@ def inject_viewport_detector() -> None:
         updateViewportWidth();
         window.addEventListener('resize', updateViewportWidth);
     </script>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 def get_responsive_styles() -> str:
     """
     Retourne les styles CSS de base pour le responsive design.
-    
+
     Returns:
         String CSS à injecter avec st.markdown(..., unsafe_allow_html=True)
     """

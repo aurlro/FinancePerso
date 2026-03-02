@@ -195,9 +195,7 @@ class SuggestionEngine:
         Returns:
             Dictionary mapping group names to analyzer names
         """
-        return {
-            group: [a.name for a in analyzers] for group, analyzers in self._analyzers.items()
-        }
+        return {group: [a.name for a in analyzers] for group, analyzers in self._analyzers.items()}
 
 
 # Backward compatibility alias
@@ -226,7 +224,9 @@ def get_smart_suggestions(
     return engine.analyze_all()
 
 
-def get_suggestions_by_type(suggestions: list[Suggestion], suggestion_type: str) -> list[Suggestion]:
+def get_suggestions_by_type(
+    suggestions: list[Suggestion], suggestion_type: str
+) -> list[Suggestion]:
     """Filter suggestions by type.
 
     Args:

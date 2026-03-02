@@ -11,27 +11,42 @@ def render_empty_state(title, message, icon="📭"):
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_transactions_state(title="Aucune transaction", message="Aucune transaction à afficher pour cette période.", icon="📭", key=None):
+def render_no_transactions_state(
+    title="Aucune transaction",
+    message="Aucune transaction à afficher pour cette période.",
+    icon="📭",
+    key=None,
+):
     """Affiche un état vide pour les transactions."""
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_budgets_state(title="Aucun budget", message="Aucun budget défini. Créez un budget pour commencer.", icon="💰"):
+def render_no_budgets_state(
+    title="Aucun budget", message="Aucun budget défini. Créez un budget pour commencer.", icon="💰"
+):
     """Affiche un état vide pour les budgets."""
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_rules_state(title="Aucune règle", message="Aucune règle de catégorisation définie.", icon="📋"):
+def render_no_rules_state(
+    title="Aucune règle", message="Aucune règle de catégorisation définie.", icon="📋"
+):
     """Affiche un état vide pour les règles."""
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_categories_state(title="Aucune catégorie", message="Aucune catégorie définie. Créez des catégories pour organiser vos transactions.", icon="🏷️"):
+def render_no_categories_state(
+    title="Aucune catégorie",
+    message="Aucune catégorie définie. Créez des catégories pour organiser vos transactions.",
+    icon="🏷️",
+):
     """Affiche un état vide pour les catégories."""
     st.info(f"{icon} **{title}**: {message}")
 
 
-def render_no_search_results(title="Aucun résultat", message="La recherche n'a retourné aucun résultat.", icon="🔍"):
+def render_no_search_results(
+    title="Aucun résultat", message="La recherche n'a retourné aucun résultat.", icon="🔍"
+):
     """Affiche un état vide pour les résultats de recherche."""
     st.warning(f"{icon} **{title}**: {message}")
 

@@ -10,45 +10,47 @@ from enum import Enum
 
 class BorderRadius(str, Enum):
     """Rayons de bordure.
-    
+
     Échelle: 0, 4, 8, 12, 16, 9999px
     """
+
     NONE = "0"
     SM = "4px"
     MD = "8px"
     LG = "12px"
     XL = "16px"
     FULL = "9999px"  # Pour badges/pills ronds
-    ROUND = "50%"    # Pour cercles parfaits
+    ROUND = "50%"  # Pour cercles parfaits
 
 
 @dataclass(frozen=True)
 class Shadow:
     """Ombres prédéfinies.
-    
+
     Usage:
         from modules.ui.tokens import Shadow
-        
+
         box_shadow = Shadow.SM
     """
+
     # No shadow
     NONE: str = "none"
-    
+
     # Small (subtle elevation)
     SM: str = "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
-    
+
     # Medium (cards default)
     MD: str = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-    
+
     # Large (modals, dropdowns)
     LG: str = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-    
+
     # Extra large (high elevation)
     XL: str = "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-    
+
     # Inner (inset)
     INNER: str = "inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)"
-    
+
     # Focus ring
     FOCUS: str = "0 0 0 3px rgba(59, 130, 246, 0.5)"
 

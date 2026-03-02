@@ -66,7 +66,7 @@ def delete_member(member_id: int) -> None:
 
     # Clear cache to ensure fresh data
     get_members.clear()
-    
+
     EventBus.emit("members.changed")
 
 
@@ -340,28 +340,24 @@ def get_all_member_names() -> list[str]:
 def get_member_detection_data() -> tuple[dict[str, str], list[str], dict[str, str]]:
     """
     Charge en une fois toutes les données nécessaires à la détection de membre.
-    
+
     Cette fonction est utilisée pour éviter le problème N+1 lors de l'import
     de transactions en masse.
-    
+
     Returns:
         Tuple contenant:
         - mappings: dict[card_suffix -> member_name]
         - all_members: list[str] des noms de membres
         - account_maps: dict[account_label -> member_name]
     """
-    return (
-        get_member_mappings(),
-        get_all_member_names(),
-        get_account_member_mappings()
-    )
+    return (get_member_mappings(), get_all_member_names(), get_account_member_mappings())
 
 
 def detect_member_from_content(
     label: str,
     card_suffix: str = None,
     account_label: str = None,
-    cached_data: tuple[dict[str, str], list[str], dict[str, str]] | None = None
+    cached_data: tuple[dict[str, str], list[str], dict[str, str]] | None = None,
 ) -> str:
     """
     Detect member based on label, card suffix, and account.
@@ -510,28 +506,24 @@ def get_unknown_member_stats() -> dict:
         percentage = (unknown_count / total_count * 100) if total_count > 0 else 0
 
         # Breakdown by account
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT account_label, COUNT(*) as cnt 
             FROM transactions 
             WHERE member = 'Inconnu' 
             GROUP BY account_label 
             ORDER BY cnt DESC
-        """
-        )
+        """)
         by_account = {row[0] or "Unknown": row[1] for row in cursor.fetchall()}
 
         # Most common labels
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT label, COUNT(*) as cnt 
             FROM transactions 
             WHERE member = 'Inconnu' 
             GROUP BY label 
             ORDER BY cnt DESC 
             LIMIT 10
-        """
-        )
+        """)
         by_label = [{"label": row[0], "count": row[1]} for row in cursor.fetchall()]
 
         return {
@@ -565,14 +557,12 @@ def repair_unknown_members(dry_run: bool = False) -> dict:
         cursor = conn.cursor()
 
         # Get count and sample
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT id, label, account_label 
             FROM transactions 
             WHERE member = 'Inconnu'
             ORDER BY date DESC
-        """
-        )
+        """)
         rows = cursor.fetchall()
 
         if not rows:
@@ -630,8 +620,7 @@ def analyze_unknown_patterns() -> list[dict]:
         suggestions = []
 
         # 1. Find common card suffixes in unknown transactions
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT card_suffix, COUNT(*) as cnt 
             FROM transactions 
             WHERE member = 'Inconnu' 
@@ -640,8 +629,7 @@ def analyze_unknown_patterns() -> list[dict]:
             GROUP BY card_suffix 
             ORDER BY cnt DESC 
             LIMIT 5
-        """
-        )
+        """)
 
         for row in cursor.fetchall():
             suggestions.append(
@@ -655,8 +643,7 @@ def analyze_unknown_patterns() -> list[dict]:
             )
 
         # 2. Find account labels with many unknowns
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT account_label, COUNT(*) as cnt 
             FROM transactions 
             WHERE member = 'Inconnu' 
@@ -665,8 +652,7 @@ def analyze_unknown_patterns() -> list[dict]:
             GROUP BY account_label 
             HAVING cnt > 5
             ORDER BY cnt DESC
-        """
-        )
+        """)
 
         for row in cursor.fetchall():
             suggestions.append(

@@ -5,17 +5,17 @@ Ce module fournit les tokens de design unifiés pour toute l'application.
 
 Usage:
     from modules.ui.tokens import Colors, Typography, Spacing, BorderRadius
-    
+
     # Couleurs
     primary = Colors.PRIMARY
     danger = Colors.DANGER
-    
+
     # Typographie
     font_size = Typography.SIZE_BASE
-    
+
     # Espacements
     padding = Spacing.MD
-    
+
     # Border radius
     radius = BorderRadius.LG
 """

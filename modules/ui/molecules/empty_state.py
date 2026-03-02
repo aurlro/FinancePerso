@@ -4,7 +4,7 @@ Remplace toutes les variantes d'états vides dispersées dans l'application.
 
 Usage:
     from modules.ui.molecules import EmptyState
-    
+
     EmptyState.render(
         title="Aucune transaction",
         message="Commencez par importer vos données",
@@ -24,7 +24,7 @@ from modules.ui.tokens import BorderRadius, Colors, Spacing, Typography
 
 class EmptyState:
     """État vide unifié pour toute l'application.
-    
+
     Remplace:
     - render_empty_state() de components/empty_states.py
     - render_no_transactions_state() de components/empty_states.py
@@ -32,7 +32,7 @@ class EmptyState:
     - render_empty_state() de assistant/components.py
     - etc.
     """
-    
+
     @staticmethod
     def render(
         title: str,
@@ -45,7 +45,7 @@ class EmptyState:
         key: str | None = None,
     ) -> None:
         """Rend un état vide standardisé.
-        
+
         Args:
             title: Titre principal
             message: Description détaillée
@@ -67,12 +67,15 @@ class EmptyState:
             border-radius: {BorderRadius.LG};
             text-align: center;
         """
-        
+
         st.markdown(f'<div style="{container_style}">', unsafe_allow_html=True)
-        
+
         # Icône
-        st.markdown(f'<div style="font-size: 3rem; margin-bottom: {Spacing.MD};">{icon}</div>', unsafe_allow_html=True)
-        
+        st.markdown(
+            f'<div style="font-size: 3rem; margin-bottom: {Spacing.MD};">{icon}</div>',
+            unsafe_allow_html=True,
+        )
+
         # Titre
         title_style = f"""
             font-size: {Typography.SIZE_XL};
@@ -81,7 +84,7 @@ class EmptyState:
             margin-bottom: {Spacing.XS};
         """
         st.markdown(f'<div style="{title_style}">{title}</div>', unsafe_allow_html=True)
-        
+
         # Message
         message_style = f"""
             font-size: {Typography.SIZE_BASE};
@@ -90,19 +93,26 @@ class EmptyState:
             max-width: 400px;
         """
         st.markdown(f'<div style="{message_style}">{message}</div>', unsafe_allow_html=True)
-        
+
         # Boutons
         if action_text and on_action and key:
             col1, col2 = st.columns([1, 1])
             with col1:
-                Button.primary(action_text, key=f"{key}_primary", on_click=on_action, use_container_width=True)
-            
+                Button.primary(
+                    action_text, key=f"{key}_primary", on_click=on_action, use_container_width=True
+                )
+
             if secondary_action_text and on_secondary_action:
                 with col2:
-                    Button.secondary(secondary_action_text, key=f"{key}_secondary", on_click=on_secondary_action, use_container_width=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
+                    Button.secondary(
+                        secondary_action_text,
+                        key=f"{key}_secondary",
+                        on_click=on_secondary_action,
+                        use_container_width=True,
+                    )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
     @classmethod
     def no_transactions(
         cls,
@@ -110,7 +120,7 @@ class EmptyState:
         key: str | None = None,
     ) -> None:
         """État vide spécifique: aucune transaction.
-        
+
         Usage:
             EmptyState.no_transactions(on_import=import_handler)
         """
@@ -120,9 +130,9 @@ class EmptyState:
             icon=Icon.FILE,
             action_text="📥 Importer des transactions",
             on_action=on_import,
-            key=key or "no_transactions"
+            key=key or "no_transactions",
         )
-    
+
     @classmethod
     def no_budgets(
         cls,
@@ -130,7 +140,7 @@ class EmptyState:
         key: str | None = None,
     ) -> None:
         """État vide spécifique: aucun budget.
-        
+
         Usage:
             EmptyState.no_budgets(on_create=create_handler)
         """
@@ -140,9 +150,9 @@ class EmptyState:
             icon=Icon.TARGET,
             action_text="🎯 Créer un budget",
             on_action=on_create,
-            key=key or "no_budgets"
+            key=key or "no_budgets",
         )
-    
+
     @classmethod
     def no_search_results(
         cls,
@@ -151,20 +161,24 @@ class EmptyState:
         key: str | None = None,
     ) -> None:
         """État vide spécifique: recherche sans résultat.
-        
+
         Usage:
             EmptyState.no_search_results(search_term="restaurant")
         """
-        message = f"Aucun résultat trouvé pour \"{search_term}\"." if search_term else "Aucun résultat trouvé."
+        message = (
+            f'Aucun résultat trouvé pour "{search_term}".'
+            if search_term
+            else "Aucun résultat trouvé."
+        )
         cls.render(
             title="Pas de résultats",
             message=message,
             icon=Icon.SEARCH,
             action_text="🔄 Effacer la recherche",
             on_action=on_clear,
-            key=key or "no_search_results"
+            key=key or "no_search_results",
         )
-    
+
     @classmethod
     def no_data(
         cls,
@@ -173,7 +187,7 @@ class EmptyState:
         key: str | None = None,
     ) -> None:
         """État vide générique.
-        
+
         Usage:
             EmptyState.no_data(data_type="catégories")
         """
@@ -183,5 +197,5 @@ class EmptyState:
             icon=Icon.INFO,
             action_text="🔄 Actualiser",
             on_action=on_action,
-            key=key or f"no_{data_type}"
+            key=key or f"no_{data_type}",
         )

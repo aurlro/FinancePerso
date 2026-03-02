@@ -5,7 +5,6 @@ Handles monthly budget management by category with an optimized UX.
 Shows only active budgets by default, with option to add/edit others.
 """
 
-
 import pandas as pd
 import streamlit as st
 

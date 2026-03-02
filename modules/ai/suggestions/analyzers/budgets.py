@@ -40,7 +40,9 @@ class BudgetOverrunAnalyzer(BaseAnalyzer):
                     Suggestion(
                         id=self._generate_id("budget", hash(category) % 10000),
                         type=SuggestionType.BUDGET.value,
-                        priority=Priority.HIGH.value if overspend_pct > 50 else Priority.MEDIUM.value,
+                        priority=(
+                            Priority.HIGH.value if overspend_pct > 50 else Priority.MEDIUM.value
+                        ),
                         title=f"💰 Dépassement budget : {category}",
                         description=f"Dépensé : {spent:.0f}€ / Budget : {budget_amount:.0f}€ (+{overspend_pct}%). Ajustez votre budget ou surveillez vos dépenses.",
                         action_label="Ajuster le budget",
@@ -143,7 +145,11 @@ class SavingsOpportunityAnalyzer(BaseAnalyzer):
                         title=f"💸 Dépense récurrente : '{label[:30]}...' ({monthly_amount:.0f}€/mois)",
                         description=f"Cette dépense revient tous les mois. Vérifiez si vous pouvez la réduire ou la supprimer.",
                         action_label="Analyser",
-                        action_data={"label": label, "amount": monthly_amount, "type": "analyze_recurring"},
+                        action_data={
+                            "label": label,
+                            "amount": monthly_amount,
+                            "type": "analyze_recurring",
+                        },
                         impact_score=min(int(monthly_amount), 80),
                         auto_fixable=False,
                     )
@@ -160,9 +166,13 @@ class SavingsOpportunityAnalyzer(BaseAnalyzer):
                 found_subscriptions.append((keyword, total))
 
         # If multiple streaming services, suggest review
-        streaming_count = sum(1 for k, _ in found_subscriptions if k in ["netflix", "spotify", "disney", "amazon"])
+        streaming_count = sum(
+            1 for k, _ in found_subscriptions if k in ["netflix", "spotify", "disney", "amazon"]
+        )
         if streaming_count >= 3:
-            total_streaming = sum(v for k, v in found_subscriptions if k in ["netflix", "spotify", "disney", "amazon"])
+            total_streaming = sum(
+                v for k, v in found_subscriptions if k in ["netflix", "spotify", "disney", "amazon"]
+            )
             suggestions.append(
                 Suggestion(
                     id="savings_multiple_streaming",

@@ -145,10 +145,8 @@ def render_dashboard_tab(
     st.subheader("💡 Insight récent")
 
     # Placeholder for latest insight
-    st.info(
-        """
+    st.info("""
     **Analyse disponible**
     
     Lancez un audit ou une analyse de tendances pour obtenir des insights personnalisés sur vos finances.
-    """
-    )
+    """)

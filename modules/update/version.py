@@ -129,7 +129,7 @@ class VersionManager:
         try:
             # Create directory if it doesn't exist
             os.makedirs(os.path.dirname(self.constants_path), exist_ok=True)
-            
+
             if os.path.exists(self.constants_path):
                 # Update existing file
                 with open(self.constants_path, encoding="utf-8") as f:

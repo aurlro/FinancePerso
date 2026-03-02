@@ -279,5 +279,7 @@ def merge_categories(source_category: str, target_category: str) -> dict:
         "transactions": result["transactions"],
         "rules": result["rules"],
         "budgets_transferred": result["budgets"] > 0,
-        "category_deleted": result["transactions"] > 0 or result["rules"] > 0 or result["budgets"] > 0,
+        "category_deleted": result["transactions"] > 0
+        or result["rules"] > 0
+        or result["budgets"] > 0,
     }

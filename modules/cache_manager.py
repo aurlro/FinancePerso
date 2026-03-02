@@ -11,10 +11,10 @@ import streamlit as st
 from modules.core.events import EventBus, on_event
 from modules.logger import logger
 
-
 # ============================================================================
 # EVENT HANDLERS - Automatically clear caches when data changes
 # ============================================================================
+
 
 @on_event("transactions.changed")
 def _on_transactions_changed(**kwargs):
@@ -22,6 +22,7 @@ def _on_transactions_changed(**kwargs):
     try:
         # Import inside handler to avoid circular dependency at module level
         from modules.db.transactions import get_all_transactions, get_all_hashes
+
         get_all_transactions.clear()
         get_all_hashes.clear()
         logger.debug("Transaction caches cleared via event")
@@ -116,6 +117,7 @@ def _on_audit_changed(**kwargs):
 # PUBLIC API - Cache invalidation functions
 # ============================================================================
 
+
 def invalidate_transaction_caches():
     """Invalidate only transaction-related caches.
 
@@ -132,10 +134,15 @@ def invalidate_rule_caches():
     Emits 'rules.changed' event and clears Streamlit caches.
     """
     EventBus.emit("rules.changed")
-    
+
     # Clear Streamlit caches for rules
     try:
-        from modules.db.rules import get_learning_rules, get_compiled_learning_rules, get_rules_for_category
+        from modules.db.rules import (
+            get_learning_rules,
+            get_compiled_learning_rules,
+            get_rules_for_category,
+        )
+
         get_learning_rules.clear()
         get_compiled_learning_rules.clear()
         get_rules_for_category.clear()
@@ -192,6 +199,7 @@ def invalidate_all_caches():
 # BACKWARD COMPATIBILITY
 # ============================================================================
 
+
 def clear_transaction_cache():
     """Legacy function name - delegates to invalidate_transaction_caches()."""
     invalidate_transaction_caches()
@@ -200,6 +208,7 @@ def clear_transaction_cache():
 # ============================================================================
 # UTILITY DECORATORS
 # ============================================================================
+
 
 def cache_with_key(key_prefix: str):
     """Decorator for caching with a specific key prefix.

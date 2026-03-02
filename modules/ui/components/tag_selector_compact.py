@@ -8,7 +8,6 @@ Features:
 - Visual hierarchy: current tags > quick adds > selector
 """
 
-
 import streamlit as st
 
 from modules.db.categories import add_tag_to_category, get_categories_suggested_tags

@@ -7,7 +7,7 @@ Les templates définissent la structure générale des pages :
 
 Usage:
     from modules.ui.templates import PageLayout
-    
+
     PageLayout.render(
         title="Ma Page",
         content=render_content,

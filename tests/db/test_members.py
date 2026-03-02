@@ -137,18 +137,14 @@ class TestRenameMember:
         # Add transactions with old member name
         cursor = db_connection.cursor()
         cursor.execute("INSERT INTO members (name) VALUES ('OldMember')")
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, member)
             VALUES ('2024-01-15', 'TX 1', -50.00, 'OldMember')
-        """
-        )
-        cursor.execute(
-            """
+        """)
+        cursor.execute("""
             INSERT INTO transactions (date, label, amount, member)
             VALUES ('2024-01-16', 'TX 2', -30.00, 'OldMember')
-        """
-        )
+        """)
         db_connection.commit()
 
         # Rename
@@ -156,18 +152,14 @@ class TestRenameMember:
         assert count == 2
 
         # Verify
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*) FROM transactions WHERE member = 'NewMember'
-        """
-        )
+        """)
         assert cursor.fetchone()[0] == 2
 
-        cursor.execute(
-            """
+        cursor.execute("""
             SELECT COUNT(*) FROM transactions WHERE member = 'OldMember'
-        """
-        )
+        """)
         assert cursor.fetchone()[0] == 0
 
 

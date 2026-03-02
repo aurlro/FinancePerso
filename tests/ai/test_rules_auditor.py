@@ -1,6 +1,7 @@
 """
 Tests for rules_auditor.py module.
 """
+
 import pytest
 import pandas as pd
 from modules.ai.rules_auditor import analyze_rules_integrity

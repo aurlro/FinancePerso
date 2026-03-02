@@ -2,6 +2,7 @@
 """
 Pytest configuration and shared fixtures for FinancePerso tests.
 """
+
 import os
 import sqlite3
 import tempfile
@@ -53,16 +54,17 @@ def temp_db():
     from modules.db.migrations import init_db
 
     init_db()  # Utilise le vrai schéma de production via DB_PATH
-    
+
     # Appliquer les migrations SQL depuis le dossier migrations/
     import glob
-    migrations_dir = os.path.join(os.path.dirname(__file__), '..', 'migrations')
+
+    migrations_dir = os.path.join(os.path.dirname(__file__), "..", "migrations")
     if os.path.exists(migrations_dir):
-        migration_files = sorted(glob.glob(os.path.join(migrations_dir, '*.sql')))
+        migration_files = sorted(glob.glob(os.path.join(migrations_dir, "*.sql")))
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         for migration_file in migration_files:
-            with open(migration_file, 'r') as f:
+            with open(migration_file, "r") as f:
                 sql = f.read()
                 cursor.executescript(sql)
         conn.commit()
@@ -89,7 +91,9 @@ def temp_db():
 
     # Insert default members
     default_members = [("Maison", "HOUSEHOLD"), ("Famille", "HOUSEHOLD"), ("Inconnu", "EXTERNAL")]
-    cursor.executemany("INSERT OR IGNORE INTO members (name, member_type) VALUES (?, ?)", default_members)
+    cursor.executemany(
+        "INSERT OR IGNORE INTO members (name, member_type) VALUES (?, ?)", default_members
+    )
 
     conn.commit()
     conn.close()

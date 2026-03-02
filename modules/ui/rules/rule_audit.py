@@ -190,78 +190,90 @@ def render_audit_section():
         ):
             st.info("Un pattern est contenu dans un autre avec une catégorie différente.")
             st.caption("Cela peut créer des comportements inattendus selon l'ordre d'application.")
-            
+
             # Action globale
             col_global = st.columns([1, 1, 2])
             with col_global[0]:
-                if st.button("📋 Voir toutes les règles", use_container_width=True, key="overlap_voir_regles"):
+                if st.button(
+                    "📋 Voir toutes les règles", use_container_width=True, key="overlap_voir_regles"
+                ):
                     st.session_state["audit_active_tab"] = "📋 Audit des Règles"
                     st.rerun()
             with col_global[1]:
-                if st.button("🧠 Intelligence → Règles", use_container_width=True, key="overlap_voir_intelligence"):
+                if st.button(
+                    "🧠 Intelligence → Règles",
+                    use_container_width=True,
+                    key="overlap_voir_intelligence",
+                ):
                     st.switch_page("pages/03_Intelligence.py")
-            
+
             st.divider()
 
             for i, ov in enumerate(overlaps):
                 with st.container(border=True):
                     col1, col2 = st.columns([3, 1])
-                    
+
                     with col1:
                         st.markdown(
                             f"**{i+1}. `{ov['shorter_pattern']}`** ({ov['shorter_category']}) "
                             f"→ inclus dans → "
                             f"**`{ov['longer_pattern']}`** ({ov['longer_category']})"
                         )
-                        
+
                         # Impact analysis
                         from modules.db.connection import get_db_connection
+
                         with get_db_connection() as conn:
                             cursor = conn.cursor()
                             # Count affected transactions
                             cursor.execute(
                                 "SELECT COUNT(*) FROM transactions WHERE label LIKE ?",
-                                (f"%{ov['shorter_pattern']}%",)
+                                (f"%{ov['shorter_pattern']}%",),
                             )
                             affected = cursor.fetchone()[0]
-                            
+
                             if affected > 0:
-                                st.caption(f"📊 {affected} transaction(s) seraient affectées par '{ov['shorter_pattern']}'")
+                                st.caption(
+                                    f"📊 {affected} transaction(s) seraient affectées par '{ov['shorter_pattern']}'"
+                                )
                             else:
-                                st.caption("📊 Aucune transaction historique ne correspond à ce pattern")
-                    
+                                st.caption(
+                                    "📊 Aucune transaction historique ne correspond à ce pattern"
+                                )
+
                     with col2:
                         st.markdown("**💡 Actions:**")
-                        
+
                         # Get rule IDs for the patterns (need new connection)
                         with get_db_connection() as conn:
                             cursor = conn.cursor()
                             cursor.execute(
                                 "SELECT id, priority FROM learning_rules WHERE pattern = ?",
-                                (ov['shorter_pattern'],)
+                                (ov["shorter_pattern"],),
                             )
                             shorter_rule = cursor.fetchone()
-                            
+
                             cursor.execute(
                                 "SELECT id, priority FROM learning_rules WHERE pattern = ?",
-                                (ov['longer_pattern'],)
+                                (ov["longer_pattern"],),
                             )
                             longer_rule = cursor.fetchone()
-                        
+
                         # Action: Increase priority of shorter pattern
                         if shorter_rule and longer_rule:
                             shorter_id, shorter_priority = shorter_rule
                             longer_id, longer_priority = longer_rule
-                            
+
                             if shorter_priority <= longer_priority:
                                 new_priority = longer_priority + 10
                                 if st.button(
-                                    "⬆️ Priorité +10", 
+                                    "⬆️ Priorité +10",
                                     key=f"overlap_up_{shorter_id}_{i}",
-                                    help=f"Augmenter la priorité de '{ov['shorter_pattern']}' à {new_priority}"
+                                    help=f"Augmenter la priorité de '{ov['shorter_pattern']}' à {new_priority}",
                                 ):
                                     try:
                                         from modules.db.rules import update_learning_rule
+
                                         update_learning_rule(shorter_id, priority=new_priority)
                                         st.success("✅ Priorité augmentée !")
                                         invalidate_audit_cache()
@@ -269,13 +281,13 @@ def render_audit_section():
                                         st.rerun(scope="fragment")
                                     except Exception as e:
                                         st.error(f"Erreur: {e}")
-                        
+
                         # Action: Delete shorter pattern
                         if shorter_rule:
                             if st.button(
                                 "🗑️ Supprimer court",
                                 key=f"overlap_del_{shorter_rule[0]}_{i}",
-                                help=f"Supprimer la règle '{ov['shorter_pattern']}'"
+                                help=f"Supprimer la règle '{ov['shorter_pattern']}'",
                             ):
                                 try:
                                     delete_learning_rule(shorter_rule[0])
@@ -285,13 +297,13 @@ def render_audit_section():
                                     st.rerun(scope="fragment")
                                 except Exception as e:
                                     st.error(f"Erreur: {e}")
-                        
+
                         # Action: Keep longer only
                         if longer_rule:
                             if st.button(
                                 "✅ Garder long",
                                 key=f"overlap_keep_{longer_rule[0]}_{i}",
-                                help=f"Conserver uniquement '{ov['longer_pattern']}'"
+                                help=f"Conserver uniquement '{ov['longer_pattern']}'",
                             ):
                                 try:
                                     if shorter_rule:

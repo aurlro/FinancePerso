@@ -21,9 +21,7 @@ def _get_financial_analytics():
 
         # Charger modules/analytics.py manuellement pour éviter le conflit de noms
         analytics_file = Path(__file__).parent.parent / "analytics.py"
-        spec = importlib.util.spec_from_file_location(
-            "_financial_analytics", analytics_file
-        )
+        spec = importlib.util.spec_from_file_location("_financial_analytics", analytics_file)
         module = importlib.util.module_from_spec(spec)
         sys.modules["_financial_analytics"] = module
         spec.loader.exec_module(module)

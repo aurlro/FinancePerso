@@ -26,19 +26,19 @@ from modules.gamification.streaks import (
 
 __all__ = [
     # Legacy
-    'GamificationManager',
+    "GamificationManager",
     # Challenges
-    'Challenge',
-    'ChallengeManager',
-    'check_challenges',
-    'get_active_challenges',
+    "Challenge",
+    "ChallengeManager",
+    "check_challenges",
+    "get_active_challenges",
     # Badges
-    'Badge',
-    'BadgeManager',
-    'get_user_badges',
-    'has_badge',
+    "Badge",
+    "BadgeManager",
+    "get_user_badges",
+    "has_badge",
     # Streaks
-    'StreakManager',
-    'get_current_streak',
-    'record_daily_login',
+    "StreakManager",
+    "get_current_streak",
+    "record_daily_login",
 ]

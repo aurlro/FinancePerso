@@ -3,9 +3,7 @@
 import warnings
 
 warnings.warn(
-    "Notifications V2 is deprecated. Please migrate to V3.",
-    DeprecationWarning,
-    stacklevel=2
+    "Notifications V2 is deprecated. Please migrate to V3.", DeprecationWarning, stacklevel=2
 )
 
 from .center import (

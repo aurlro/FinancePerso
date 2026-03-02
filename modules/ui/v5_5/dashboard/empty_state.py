@@ -170,8 +170,7 @@ def _show_guide_modal() -> None:
 
     @st.dialog("📖 Guide de démarrage", width="large")
     def guide_dialog():
-        st.markdown(
-            """
+        st.markdown("""
         ### Comment utiliser FinancePerso
         
         #### 1. 📥 Importez vos relevés
@@ -213,8 +212,7 @@ def _show_guide_modal() -> None:
         - Suivi budgétaire par catégorie
         - Prédictions et conseils d'épargne
         - Analyses tendances
-        """
-        )
+        """)
 
         col1, col2 = st.columns(2)
 

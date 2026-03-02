@@ -290,10 +290,10 @@ def get_transaction_by_id(tx_id: int) -> dict | None:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM transactions WHERE id = ?", (tx_id,))
         row = cursor.fetchone()
-        
+
         if not row:
             return None
-            
+
         # Convertir en dict avec les noms de colonnes
         columns = [desc[0] for desc in cursor.description]
         return dict(zip(columns, row))
@@ -302,11 +302,11 @@ def get_transaction_by_id(tx_id: int) -> dict | None:
 def delete_transaction(tx_id: int, permanent: bool = False) -> int:
     """
     Delete a specific transaction.
-    
+
     Args:
         tx_id: Transaction ID to delete
         permanent: If True, permanently delete (bypass recycle bin)
-    
+
     Returns:
         Number of rows deleted (0 or 1)
     """
@@ -319,22 +319,22 @@ def delete_transaction(tx_id: int, permanent: bool = False) -> int:
     # Clear cache to ensure fresh data
     get_all_transactions.clear()
     get_pending_transactions.clear()
-    
+
     if deleted > 0:
         EventBus.emit("transactions.changed", tx_id=tx_id, action="deleted")
-    
+
     return deleted
 
 
 def delete_transaction_by_id(tx_id: int) -> int:
     """
     Delete a specific transaction.
-    
+
     DEPRECATED: Use delete_transaction() instead.
-    
+
     Args:
         tx_id: Transaction ID to delete
-    
+
     Returns:
         Number of rows deleted (0 or 1)
     """
@@ -561,7 +561,7 @@ def bulk_update_transaction_status(
     # Clear cache to ensure fresh data
     get_all_transactions.clear()
     get_pending_transactions.clear()
-    
+
     EventBus.emit("transactions.changed", tx_ids=tx_ids, action="bulk_updated")
 
 

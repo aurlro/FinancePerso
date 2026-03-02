@@ -2,7 +2,6 @@
 Explorer Launcher - Boutons et utilitaires pour lancer l'explorateur.
 """
 
-
 import streamlit as st
 
 

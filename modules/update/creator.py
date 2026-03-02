@@ -141,16 +141,14 @@ class UpdateCreator:
         # Check for breaking changes
         for commit in commits:
             if any(
-                indicator in commit.lower()
-                for indicator in ["breaking", "break", "major", "!:"]
+                indicator in commit.lower() for indicator in ["breaking", "break", "major", "!:"]
             ):
                 return "major"
 
         # Check for new features
         for commit in commits:
             if any(
-                indicator in commit.lower()
-                for indicator in ["feature", "feat", "add ", "new "]
+                indicator in commit.lower() for indicator in ["feature", "feat", "add ", "new "]
             ):
                 return "minor"
 

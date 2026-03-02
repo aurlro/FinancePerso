@@ -49,7 +49,7 @@ class CategoryInsightsEngine:
         Initialize avec l'historique complet des transactions.
 
         Args:
-            df_full: DataFrame avec toutes les transactions (doit avoir 
+            df_full: DataFrame avec toutes les transactions (doit avoir
                 date_dt, category_validated, amount, label)
         """
         self.df = df_full.copy()

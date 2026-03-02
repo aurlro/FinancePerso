@@ -50,13 +50,15 @@ def render_transaction_drill_down(
     # Convert to DataFrame for display
     data = []
     for tx in transactions:
-        data.append({
-            "Date": tx.get("date"),
-            "Description": tx.get("label"),
-            "Montant": tx.get("amount"),
-            "Catégorie": tx.get("category_validated") or tx.get("category") or "Non catégorisé",
-            "Statut": "Validé" if tx.get("validated") else "En attente",
-        })
+        data.append(
+            {
+                "Date": tx.get("date"),
+                "Description": tx.get("label"),
+                "Montant": tx.get("amount"),
+                "Catégorie": tx.get("category_validated") or tx.get("category") or "Non catégorisé",
+                "Statut": "Validé" if tx.get("validated") else "En attente",
+            }
+        )
 
     df = pd.DataFrame(data)
 
@@ -92,6 +94,7 @@ def render_transaction_drill_down(
             )
             if st.button("Sauvegarder", key=f"{key_prefix}_save"):
                 from modules.db.transactions import update_transaction_category
+
                 update_transaction_category(tx.get("id"), new_category)
                 st.success("Catégorie mise à jour!")
                 st.rerun()

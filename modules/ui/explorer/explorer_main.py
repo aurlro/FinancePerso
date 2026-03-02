@@ -2,7 +2,6 @@
 Explorer Main - Vue principale de l'explorateur.
 """
 
-
 import pandas as pd
 import streamlit as st
 
@@ -95,14 +94,12 @@ def render_explorer_empty_state(explorer_type: str, explorer_value: str):
         unsafe_allow_html=True,
     )
 
-    st.info(
-        f"""
+    st.info(f"""
     **Conseils :**
     - Vérifiez que les transactions sont bien catégorisées comme "{explorer_value}"
     - Pour les tags, assurez-vous qu'ils sont séparés par des virgules
     - Importez de nouvelles données si nécessaire
-    """
-    )
+    """)
 
 
 def render_explorer_page(explorer_type: str, explorer_value: str, from_page: str):

@@ -24,7 +24,7 @@ class TransactionRepository(BaseRepository[dict]):
     def get_all(self, filters: dict[str, Any] | None = None) -> list[dict]:
         """Get all transactions with optional filters."""
         df = get_all_transactions(filters=filters)
-        return df.to_dict('records') if not df.empty else []
+        return df.to_dict("records") if not df.empty else []
 
     def create(self, data: dict[str, Any]) -> dict:
         """Create new transaction."""
@@ -44,10 +44,10 @@ class TransactionRepository(BaseRepository[dict]):
             return None
 
         # Extract fields to update
-        new_category = data.get('category_validated', current.get('category_validated'))
-        tags = data.get('tags', current.get('tags'))
-        beneficiary = data.get('beneficiary', current.get('beneficiary'))
-        notes = data.get('notes', current.get('notes'))
+        new_category = data.get("category_validated", current.get("category_validated"))
+        tags = data.get("tags", current.get("tags"))
+        beneficiary = data.get("beneficiary", current.get("beneficiary"))
+        notes = data.get("notes", current.get("notes"))
 
         update_transaction_category(id, new_category, tags, beneficiary, notes)
         return self.get_by_id(id)
@@ -60,7 +60,7 @@ class TransactionRepository(BaseRepository[dict]):
     def get_pending(self) -> list[dict]:
         """Get pending transactions."""
         df = get_pending_transactions()
-        return df.to_dict('records') if not df.empty else []
+        return df.to_dict("records") if not df.empty else []
 
     def get_by_period(self, month_str: str) -> list[dict]:
         """Get transactions for a specific period (YYYY-MM)."""

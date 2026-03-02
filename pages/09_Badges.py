@@ -21,7 +21,8 @@ apply_vibe_theme()
 load_css()
 
 # Header avec Design System
-st.markdown(f"""
+st.markdown(
+    f"""
 <h1 style="
     font-size: {Typography.SIZE_3XL};
     font-weight: {Typography.WEIGHT_BOLD};
@@ -33,7 +34,9 @@ st.markdown(f"""
 ">
     🏆 Collection de Badges
 </h1>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # Vérifier et attribuer les nouveaux badges
 new_badges = BadgeManager.check_and_award_badges()
@@ -49,7 +52,8 @@ render_badges_collection()
 
 # Section Challenges
 st.divider()
-st.markdown(f"""
+st.markdown(
+    f"""
 <h2 style="
     font-size: {Typography.SIZE_2XL};
     font-weight: {Typography.WEIGHT_SEMIBOLD};
@@ -61,7 +65,9 @@ st.markdown(f"""
 ">
     🎯 Challenges en cours
 </h2>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 from modules.gamification.challenges import render_challenges_widget
 

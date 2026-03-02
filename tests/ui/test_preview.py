@@ -16,14 +16,16 @@ class TestCalculateImportStats:
 
     def test_calculate_stats_basic(self):
         """Test basic stats calculation."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01', '2024-01-02', '2024-01-03'],
-            'label': ['A', 'B', 'C'],
-            'amount': [100.0, -50.0, -30.0]
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+                "label": ["A", "B", "C"],
+                "amount": [100.0, -50.0, -30.0],
+            }
+        )
 
-        total_in = df[df['amount'] > 0]['amount'].sum()
-        total_out = abs(df[df['amount'] < 0]['amount'].sum())
+        total_in = df[df["amount"] > 0]["amount"].sum()
+        total_out = abs(df[df["amount"] < 0]["amount"].sum())
         balance = total_in - total_out
 
         assert total_in == 100.0
@@ -32,14 +34,12 @@ class TestCalculateImportStats:
 
     def test_calculate_stats_all_expenses(self):
         """Test stats with only expenses."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01', '2024-01-02'],
-            'label': ['A', 'B'],
-            'amount': [-50.0, -30.0]
-        })
+        df = pd.DataFrame(
+            {"date": ["2024-01-01", "2024-01-02"], "label": ["A", "B"], "amount": [-50.0, -30.0]}
+        )
 
-        total_in = df[df['amount'] > 0]['amount'].sum() if len(df[df['amount'] > 0]) > 0 else 0
-        total_out = abs(df[df['amount'] < 0]['amount'].sum())
+        total_in = df[df["amount"] > 0]["amount"].sum() if len(df[df["amount"] > 0]) > 0 else 0
+        total_out = abs(df[df["amount"] < 0]["amount"].sum())
         balance = total_in - total_out
 
         assert total_in == 0
@@ -48,14 +48,14 @@ class TestCalculateImportStats:
 
     def test_calculate_stats_all_income(self):
         """Test stats with only income."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01', '2024-01-02'],
-            'label': ['A', 'B'],
-            'amount': [100.0, 200.0]
-        })
+        df = pd.DataFrame(
+            {"date": ["2024-01-01", "2024-01-02"], "label": ["A", "B"], "amount": [100.0, 200.0]}
+        )
 
-        total_in = df[df['amount'] > 0]['amount'].sum()
-        total_out = abs(df[df['amount'] < 0]['amount'].sum()) if len(df[df['amount'] < 0]) > 0 else 0
+        total_in = df[df["amount"] > 0]["amount"].sum()
+        total_out = (
+            abs(df[df["amount"] < 0]["amount"].sum()) if len(df[df["amount"] < 0]) > 0 else 0
+        )
         balance = total_in - total_out
 
         assert total_in == 300.0
@@ -64,10 +64,12 @@ class TestCalculateImportStats:
 
     def test_calculate_stats_empty_dataframe(self):
         """Test stats with empty DataFrame."""
-        df = pd.DataFrame({'date': [], 'label': [], 'amount': []})
+        df = pd.DataFrame({"date": [], "label": [], "amount": []})
 
-        total_in = df[df['amount'] > 0]['amount'].sum() if len(df[df['amount'] > 0]) > 0 else 0
-        total_out = abs(df[df['amount'] < 0]['amount'].sum()) if len(df[df['amount'] < 0]) > 0 else 0
+        total_in = df[df["amount"] > 0]["amount"].sum() if len(df[df["amount"] > 0]) > 0 else 0
+        total_out = (
+            abs(df[df["amount"] < 0]["amount"].sum()) if len(df[df["amount"] < 0]) > 0 else 0
+        )
         balance = total_in - total_out
 
         assert total_in == 0
@@ -76,14 +78,14 @@ class TestCalculateImportStats:
 
     def test_calculate_stats_with_zero_amounts(self):
         """Test stats with zero amounts."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01', '2024-01-02'],
-            'label': ['A', 'B'],
-            'amount': [100.0, 0.0]
-        })
+        df = pd.DataFrame(
+            {"date": ["2024-01-01", "2024-01-02"], "label": ["A", "B"], "amount": [100.0, 0.0]}
+        )
 
-        total_in = df[df['amount'] > 0]['amount'].sum()
-        total_out = abs(df[df['amount'] < 0]['amount'].sum()) if len(df[df['amount'] < 0]) > 0 else 0
+        total_in = df[df["amount"] > 0]["amount"].sum()
+        total_out = (
+            abs(df[df["amount"] < 0]["amount"].sum()) if len(df[df["amount"] < 0]) > 0 else 0
+        )
         balance = total_in - total_out
 
         assert total_in == 100.0
@@ -96,43 +98,51 @@ class TestFormatPreviewDataframe:
 
     def test_format_preview_selects_correct_columns(self):
         """Test that preview selects the right columns."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01'],
-            'label': ['Test'],
-            'amount': [100.0],
-            'category_validated': ['Alimentation'],
-            'extra_col': ['ignored']
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01"],
+                "label": ["Test"],
+                "amount": [100.0],
+                "category_validated": ["Alimentation"],
+                "extra_col": ["ignored"],
+            }
+        )
 
         # Simulate the logic in render_import_preview
         preview_df = df.head(5).copy()
-        display_cols = ['date', 'label', 'amount', 'category_validated'] if 'category_validated' in preview_df.columns else ['date', 'label', 'amount']
+        display_cols = (
+            ["date", "label", "amount", "category_validated"]
+            if "category_validated" in preview_df.columns
+            else ["date", "label", "amount"]
+        )
         result = preview_df[display_cols]
 
-        assert list(result.columns) == ['date', 'label', 'amount', 'category_validated']
-        assert 'extra_col' not in result.columns
+        assert list(result.columns) == ["date", "label", "amount", "category_validated"]
+        assert "extra_col" not in result.columns
 
     def test_format_preview_without_category(self):
         """Test preview formatting without category column."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01'],
-            'label': ['Test'],
-            'amount': [100.0]
-        })
+        df = pd.DataFrame({"date": ["2024-01-01"], "label": ["Test"], "amount": [100.0]})
 
         preview_df = df.head(5).copy()
-        display_cols = ['date', 'label', 'amount', 'category_validated'] if 'category_validated' in preview_df.columns else ['date', 'label', 'amount']
+        display_cols = (
+            ["date", "label", "amount", "category_validated"]
+            if "category_validated" in preview_df.columns
+            else ["date", "label", "amount"]
+        )
         result = preview_df[display_cols]
 
-        assert list(result.columns) == ['date', 'label', 'amount']
+        assert list(result.columns) == ["date", "label", "amount"]
 
     def test_format_preview_limits_to_5_rows(self):
         """Test that preview limits to 5 rows."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01'] * 10,
-            'label': [f'Test {i}' for i in range(10)],
-            'amount': [100.0] * 10
-        })
+        df = pd.DataFrame(
+            {
+                "date": ["2024-01-01"] * 10,
+                "label": [f"Test {i}" for i in range(10)],
+                "amount": [100.0] * 10,
+            }
+        )
 
         preview_df = df.head(5).copy()
 
@@ -140,11 +150,9 @@ class TestFormatPreviewDataframe:
 
     def test_format_preview_with_less_than_5_rows(self):
         """Test preview with less than 5 rows."""
-        df = pd.DataFrame({
-            'date': ['2024-01-01'] * 3,
-            'label': ['A', 'B', 'C'],
-            'amount': [100.0, 200.0, 300.0]
-        })
+        df = pd.DataFrame(
+            {"date": ["2024-01-01"] * 3, "label": ["A", "B", "C"], "amount": [100.0, 200.0, 300.0]}
+        )
 
         preview_df = df.head(5).copy()
 
@@ -167,7 +175,7 @@ class TestDuplicateCountLogic:
     def test_count_with_duplicates(self):
         """Test counting with duplicates."""
         total_tx = 10
-        duplicates = pd.DataFrame({'col': range(3)})
+        duplicates = pd.DataFrame({"col": range(3)})
         duplicate_count = len(duplicates)
         new_tx = total_tx - duplicate_count
 
@@ -177,7 +185,7 @@ class TestDuplicateCountLogic:
     def test_count_empty_duplicates_dataframe(self):
         """Test with empty duplicates DataFrame."""
         total_tx = 10
-        duplicates = pd.DataFrame({'col': []})
+        duplicates = pd.DataFrame({"col": []})
         duplicate_count = len(duplicates)
         new_tx = total_tx - duplicate_count
 
@@ -190,15 +198,11 @@ class TestImportOptionsLogic:
 
     def test_default_options(self):
         """Test default import options."""
-        options = {
-            'ignore_duplicates': True,
-            'auto_categorize': True,
-            'skip_validation': False
-        }
+        options = {"ignore_duplicates": True, "auto_categorize": True, "skip_validation": False}
 
-        assert options['ignore_duplicates'] is True
-        assert options['auto_categorize'] is True
-        assert options['skip_validation'] is False
+        assert options["ignore_duplicates"] is True
+        assert options["auto_categorize"] is True
+        assert options["skip_validation"] is False
 
     def test_options_with_no_duplicates(self):
         """Test options when no duplicates exist."""
@@ -206,12 +210,12 @@ class TestImportOptionsLogic:
         ignore_duplicates = False if duplicate_count == 0 else True
 
         options = {
-            'ignore_duplicates': ignore_duplicates,
-            'auto_categorize': True,
-            'skip_validation': False
+            "ignore_duplicates": ignore_duplicates,
+            "auto_categorize": True,
+            "skip_validation": False,
         }
 
-        assert options['ignore_duplicates'] is False
+        assert options["ignore_duplicates"] is False
 
 
 class TestImportSummaryStats:

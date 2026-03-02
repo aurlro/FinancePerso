@@ -29,7 +29,7 @@ def confirm_dialog(
 ) -> bool | None:
     """
     Affiche une boîte de dialogue de confirmation.
-    
+
     Args:
         title: Titre du dialog
         message: Message explicatif
@@ -37,12 +37,12 @@ def confirm_dialog(
         cancel_label: Label du bouton d'annulation
         confirm_type: Type du bouton confirm (primary/secondary)
         danger: Si True, affiche comme une action dangereuse
-        
+
     Returns:
         True si confirmé, False si annulé, None si pas encore de réponse
     """
     _warn_deprecation()
-    
+
     # Utiliser un container avec bordure pour simuler un dialog
     with st.container(border=True):
         if danger:
@@ -50,11 +50,11 @@ def confirm_dialog(
         else:
             st.warning(f"⚠️ {title}")
         st.markdown(message)
-        
+
         st.markdown("---")
-        
+
         col1, col2 = st.columns([1, 1])
-        
+
         with col1:
             cancelled = st.button(
                 cancel_label,
@@ -62,7 +62,7 @@ def confirm_dialog(
                 use_container_width=True,
                 type="secondary",
             )
-        
+
         with col2:
             confirmed = st.button(
                 confirm_label,
@@ -70,7 +70,7 @@ def confirm_dialog(
                 use_container_width=True,
                 type="primary" if not danger else "secondary",
             )
-            
+
             if danger:
                 # Style pour le bouton danger
                 st.markdown(
@@ -84,12 +84,12 @@ def confirm_dialog(
                     """,
                     unsafe_allow_html=True,
                 )
-        
+
         if cancelled:
             return False
         if confirmed:
             return True
-        
+
         return None
 
 
@@ -100,22 +100,22 @@ def confirm_delete(
 ) -> bool | None:
     """
     Dialog de confirmation pour une suppression.
-    
+
     Args:
         entity_name: Nom de l'entité à supprimer
         entity_description: Description supplémentaire
         on_confirm: Callback appelé si confirmé
-        
+
     Returns:
         True si confirmé, False si annulé, None si pas encore de réponse
     """
     _warn_deprecation()
-    
+
     message = f"Vous êtes sur le point de supprimer **{entity_name}**."
     if entity_description:
         message += f"\n\n{entity_description}"
     message += "\n\n🗑️ Cette action est irréversible."
-    
+
     result = confirm_dialog(
         title="Confirmer la suppression",
         message=message,
@@ -123,10 +123,10 @@ def confirm_delete(
         cancel_label="Annuler",
         danger=True,
     )
-    
+
     if result is True and on_confirm:
         on_confirm()
-    
+
     return result
 
 
@@ -138,22 +138,22 @@ def confirm_action(
 ) -> bool | None:
     """
     Dialog de confirmation pour une action critique.
-    
+
     Args:
         action: Nom de l'action (ex: "fusionner", "archiver")
         target: Cible de l'action
         consequences: Description des conséquences
         on_confirm: Callback appelé si confirmé
-        
+
     Returns:
         True si confirmé, False si annulé, None si pas encore de réponse
     """
     _warn_deprecation()
-    
+
     message = f"Vous êtes sur le point de **{action}** : **{target}**."
     if consequences:
         message += f"\n\n{consequences}"
-    
+
     result = confirm_dialog(
         title="Confirmer l'action",
         message=message,
@@ -161,10 +161,10 @@ def confirm_action(
         cancel_label="Annuler",
         danger=False,
     )
-    
+
     if result is True and on_confirm:
         on_confirm()
-    
+
     return result
 
 
@@ -175,23 +175,23 @@ def info_dialog(
 ) -> bool:
     """
     Dialog informatif simple.
-    
+
     Args:
         title: Titre du dialog
         message: Message à afficher
         button_label: Label du bouton
-        
+
     Returns:
         True quand fermé (bouton OK cliqué)
     """
     _warn_deprecation()
-    
+
     with st.container(border=True):
         st.info(f"ℹ️ {title}")
         st.markdown(message)
-        
+
         st.markdown("---")
-        
+
         if st.button(
             button_label,
             key=f"info_dialog_{hash(title + message)}",
@@ -199,7 +199,7 @@ def info_dialog(
             type="primary",
         ):
             return True
-    
+
     return False
 
 

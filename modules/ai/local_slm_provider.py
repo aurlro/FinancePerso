@@ -12,7 +12,7 @@ Dependencies:
 
 Usage:
     from modules.ai.local_slm_provider import LocalSLMProvider
-    
+
     provider = LocalSLMProvider(model_name="unsloth/Llama-3.2-3B-Instruct")
     result = provider.generate_json(prompt)
 """
@@ -29,6 +29,7 @@ from modules.logger import logger
 try:
     from unsloth import FastLanguageModel
     import torch
+
     UNSLOTH_AVAILABLE = True
 except ImportError:
     logger.warning("Unsloth not available. Local SLM provider will use fallback.")
@@ -38,6 +39,7 @@ except ImportError:
 
 try:
     from transformers import AutoTokenizer
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
     logger.warning("Transformers not available.")
@@ -48,11 +50,11 @@ except ImportError:
 class LocalSLMProvider(AIProvider):
     """
     Provider pour Small Language Models locaux.
-    
+
     Utilise Unsloth pour un chargement optimisé en 4-bit.
     Fallback automatique sur Gemini/DeepSeek si le modèle local
     n'est pas disponible ou échoue.
-    
+
     Attributes:
         model_name: Nom du modèle HuggingFace (ex: unsloth/Llama-3.2-3B-Instruct)
         max_seq_length: Longueur max des séquences
@@ -79,7 +81,7 @@ class LocalSLMProvider(AIProvider):
     ):
         """
         Initialize le provider SLM local.
-        
+
         Args:
             model_name: Nom du modèle HuggingFace ou clé RECOMMENDED_MODELS
             max_seq_length: Longueur maximale des séquences
@@ -92,33 +94,33 @@ class LocalSLMProvider(AIProvider):
         self.load_in_4bit = load_in_4bit
         self.device = device or ("cuda" if torch and torch.cuda.is_available() else "cpu")
         self.fallback_to_cloud = fallback_to_cloud
-        
+
         # Model components
         self.model = None
         self.tokenizer = None
         self._model_loaded = False
-        
+
         # Fallback provider (lazy loaded)
         self._fallback_provider = None
-        
+
         # Load model
         self._load_model()
 
     def _load_model(self) -> bool:
         """
         Charge le modèle avec Unsloth en 4-bit.
-        
+
         Returns:
             True si chargement réussi, False sinon
         """
         if not UNSLOTH_AVAILABLE or not TRANSFORMERS_AVAILABLE:
             logger.error("Unsloth or Transformers not available. Cannot load local model.")
             return False
-        
+
         try:
             logger.info(f"Loading local SLM: {self.model_name}")
             logger.info(f"Device: {self.device}, 4-bit: {self.load_in_4bit}")
-            
+
             # Load model with FastLanguageModel (Unsloth)
             self.model, self.tokenizer = FastLanguageModel.from_pretrained(
                 model_name=self.model_name,
@@ -126,25 +128,25 @@ class LocalSLMProvider(AIProvider):
                 dtype=None,  # Auto-detect
                 load_in_4bit=self.load_in_4bit,
             )
-            
+
             # Fix tokenizer padding (Tokenizer Trap)
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             self.tokenizer.padding_side = "left"
-            
+
             # Prepare model for inference
             FastLanguageModel.for_inference(self.model)
-            
+
             self._model_loaded = True
             logger.info("✅ Local SLM loaded successfully")
-            
+
             # Log VRAM usage if CUDA
             if torch and torch.cuda.is_available():
                 vram_used = torch.cuda.memory_allocated() / 1024**3
                 logger.info(f"VRAM usage: {vram_used:.2f} GB")
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load local model: {e}")
             self._model_loaded = False
@@ -154,7 +156,7 @@ class LocalSLMProvider(AIProvider):
         """Initialize le provider de fallback (cloud)."""
         if self._fallback_provider is None:
             from modules.ai_manager import GeminiProvider, OpenAICompatibleProvider
-            
+
             # Try Gemini first
             gemini_key = os.getenv("GEMINI_API_KEY")
             if gemini_key:
@@ -170,13 +172,13 @@ class LocalSLMProvider(AIProvider):
                     )
                 else:
                     raise RuntimeError("No fallback provider available")
-        
+
         return self._fallback_provider
 
     def _build_prompt(self, user_prompt: str, system_prompt: Optional[str] = None) -> str:
         """
         Construit le prompt formaté pour Llama 3.2 Instruct.
-        
+
         Format attendu:
         <|begin_of_text|><|start_header_id|>system<|end_header_id|>
         {system_prompt}<|eot_id|>
@@ -187,9 +189,9 @@ class LocalSLMProvider(AIProvider):
         default_system = """Tu es un classificateur de transactions bancaires de haute précision. 
 Ta seule fonction est d'extraire des données structurées au format JSON.
 Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
-        
+
         system = system_prompt or default_system
-        
+
         prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 {system}<|eot_id|>
 <|start_header_id|>user<|end_header_id|>
@@ -204,24 +206,24 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
         Gère les markdown code blocks.
         """
         # Remove markdown code blocks
-        text = re.sub(r'```json\s*', '', text)
-        text = re.sub(r'```\s*', '', text)
+        text = re.sub(r"```json\s*", "", text)
+        text = re.sub(r"```\s*", "", text)
         text = text.strip()
-        
+
         # Find JSON object
         try:
             # Try direct parsing first
             return json.loads(text)
         except json.JSONDecodeError:
             # Try to extract JSON object from text
-            match = re.search(r'\{[\s\S]*\}', text)
+            match = re.search(r"\{[\s\S]*\}", text)
             if match:
                 return json.loads(match.group())
             raise
 
     def generate_json(
-        self, 
-        prompt: str, 
+        self,
+        prompt: str,
         model_name: str | None = None,
         system_prompt: Optional[str] = None,
         max_new_tokens: int = 512,
@@ -229,14 +231,14 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
     ) -> dict[str, Any]:
         """
         Génère une réponse JSON à partir du prompt.
-        
+
         Args:
             prompt: Le prompt utilisateur
             model_name: Ignoré (pour compatibilité interface)
             system_prompt: Prompt système optionnel
             max_new_tokens: Nombre max de tokens générés
             temperature: Température de génération (basse pour JSON strict)
-            
+
         Returns:
             Dictionnaire JSON parsé
         """
@@ -245,15 +247,12 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                 logger.warning("Local model not loaded, using fallback")
                 return self._get_fallback_provider().generate_json(prompt, model_name)
             else:
-                return {
-                    "error": "Local model not available",
-                    "status": "model_not_loaded"
-                }
-        
+                return {"error": "Local model not available", "status": "model_not_loaded"}
+
         try:
             # Build formatted prompt
             formatted_prompt = self._build_prompt(prompt, system_prompt)
-            
+
             # Tokenize
             inputs = self.tokenizer(
                 formatted_prompt,
@@ -262,7 +261,7 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                 truncation=True,
                 max_length=self.max_seq_length,
             ).to(self.device)
-            
+
             # Generate
             with torch.no_grad():
                 outputs = self.model.generate(
@@ -274,50 +273,46 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
-            
+
             # Decode
             generated_text = self.tokenizer.decode(
-                outputs[0][inputs.input_ids.shape[1]:],
-                skip_special_tokens=True
+                outputs[0][inputs.input_ids.shape[1] :], skip_special_tokens=True
             )
-            
+
             # Extract and parse JSON
             result = self._extract_json(generated_text)
-            
+
             # Add metadata
             result["_source"] = "local_slm"
             result["_model"] = self.model_name
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Local generation error: {e}")
-            
+
             if self.fallback_to_cloud:
                 logger.info("Falling back to cloud provider")
                 return self._get_fallback_provider().generate_json(prompt, model_name)
             else:
-                return {
-                    "error": f"Generation failed: {str(e)}",
-                    "status": "generation_error"
-                }
+                return {"error": f"Generation failed: {str(e)}", "status": "generation_error"}
 
     def generate_text(
-        self, 
-        prompt: str, 
+        self,
+        prompt: str,
         model_name: str | None = None,
         max_new_tokens: int = 512,
         temperature: float = 0.7,
     ) -> str:
         """
         Génère une réponse textuelle.
-        
+
         Args:
             prompt: Le prompt utilisateur
             model_name: Ignoré (compatibilité)
             max_new_tokens: Nombre max de tokens
             temperature: Température de génération
-            
+
         Returns:
             Texte généré
         """
@@ -326,10 +321,10 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                 return self._get_fallback_provider().generate_text(prompt, model_name)
             else:
                 return "⚠️ Modèle local non disponible"
-        
+
         try:
             formatted_prompt = self._build_prompt(prompt)
-            
+
             inputs = self.tokenizer(
                 formatted_prompt,
                 return_tensors="pt",
@@ -337,7 +332,7 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                 truncation=True,
                 max_length=self.max_seq_length,
             ).to(self.device)
-            
+
             with torch.no_grad():
                 outputs = self.model.generate(
                     **inputs,
@@ -348,17 +343,16 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
                 )
-            
+
             generated_text = self.tokenizer.decode(
-                outputs[0][inputs.input_ids.shape[1]:],
-                skip_special_tokens=True
+                outputs[0][inputs.input_ids.shape[1] :], skip_special_tokens=True
             )
-            
+
             return generated_text.strip()
-            
+
         except Exception as e:
             logger.error(f"Text generation error: {e}")
-            
+
             if self.fallback_to_cloud:
                 return self._get_fallback_provider().generate_text(prompt, model_name)
             else:
@@ -377,11 +371,11 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
             "quantization": "4-bit" if self.load_in_4bit else "full",
             "max_seq_length": self.max_seq_length,
         }
-        
+
         if torch and torch.cuda.is_available():
             info["vram_allocated_gb"] = round(torch.cuda.memory_allocated() / 1024**3, 2)
             info["vram_reserved_gb"] = round(torch.cuda.memory_reserved() / 1024**3, 2)
-        
+
         return info
 
     def unload_model(self):
@@ -392,10 +386,10 @@ Réponds UNIQUEMENT avec du JSON brut, sans texte introductif."""
         if self.tokenizer is not None:
             del self.tokenizer
             self.tokenizer = None
-        
+
         if torch and torch.cuda.is_available():
             torch.cuda.empty_cache()
-        
+
         self._model_loaded = False
         logger.info("Model unloaded, VRAM freed")
 
@@ -407,11 +401,11 @@ def get_local_slm_provider(
 ) -> LocalSLMProvider:
     """
     Factory function pour LocalSLMProvider.
-    
+
     Args:
         model_name: Clé du modèle (llama-3.2-3b, llama-3.2-1b, etc.)
         fallback_to_cloud: Autoriser fallback sur cloud
-        
+
     Returns:
         LocalSLMProvider configuré
     """

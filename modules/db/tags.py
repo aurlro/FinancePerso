@@ -83,6 +83,7 @@ def remove_tag_from_all_transactions(tag_to_remove: str) -> int:
 
     # Clear cache to ensure fresh data
     from modules.db.transactions import get_all_transactions
+
     get_all_transactions.clear()
 
     EventBus.emit("tags.changed", action="removed", tag=tag_to_remove)

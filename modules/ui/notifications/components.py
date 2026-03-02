@@ -24,27 +24,33 @@ def render_toast_container():
     """Container for toasts - fallback implementation."""
     pass
 
+
 def render_notification_toast(message, level="info", title=None, duration=None):
     """Render a notification toast - fallback to st.toast."""
     icon = DEFAULT_ICONS.get(level, "ℹ️")
     st.toast(f"{title + ': ' if title else ''}{message}", icon=icon)
 
+
 def render_all_active_toasts():
     """Render all active toasts - fallback implementation."""
     pass
+
 
 def render_inline_notification(message, level="info"):
     """Render an inline notification - fallback implementation."""
     icon = DEFAULT_ICONS.get(level, "ℹ️")
     st.info(f"{icon} {message}")
 
+
 def render_achievement_unlock(title, description, icon="🏆"):
     """Render achievement unlock notification."""
     st.success(f"{icon} **{title}**: {description}")
 
+
 def render_loading_state(message="Chargement..."):
     """Render loading state."""
     st.spinner(message)
+
 
 def render_empty_state(title, message, icon="📭"):
     """Render empty state."""
@@ -54,7 +60,7 @@ def render_empty_state(title, message, icon="📭"):
 def render_notifications_auto():
     """
     Affiche automatiquement les notifications appropriées.
-    
+
     ⚠️ DEPRECATED: Use render_all_active_toasts() instead.
     """
     warnings.warn(
@@ -72,7 +78,7 @@ def show_native_toast(
 ):
     """
     Affiche un toast natif Streamlit.
-    
+
     ⚠️ DEPRECATED: Use st.toast() directly
     """
     warnings.warn(
@@ -92,7 +98,7 @@ def show_confirmation(
 ):
     """
     Affiche une boîte de confirmation.
-    
+
     ⚠️ DEPRECATED: Use native Streamlit dialogs
     """
     warnings.warn(
@@ -102,7 +108,7 @@ def show_confirmation(
     )
     # Fallback: simple dialog using st.dialog if available
     import streamlit as st
-    
+
     @st.dialog(title)
     def _confirm():
         st.write(message)
@@ -117,7 +123,7 @@ def show_confirmation(
                 if on_cancel:
                     on_cancel()
                 st.rerun()
-    
+
     _confirm()
 
 

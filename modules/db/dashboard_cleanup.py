@@ -362,12 +362,10 @@ class DashboardCleanupManager:
         try:
             with get_db_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id, name, layout_data, is_active 
                     FROM dashboard_layouts
-                """
-                )
+                """)
                 rows = cursor.fetchall()
 
                 return [

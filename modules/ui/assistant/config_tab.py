@@ -2,7 +2,6 @@
 Configuration Tab - Paramétrage de l'IA et configuration automatique.
 """
 
-
 import pandas as pd
 import streamlit as st
 
@@ -69,26 +68,22 @@ def render_ai_status_card():
 
     except Exception:
         st.error("❌ IA non disponible")
-        st.info(
-            """
+        st.info("""
         Pour activer l'IA :
         1. Obtenez une clé API sur [Google AI Studio](https://aistudio.google.com/app/apikey)
         2. Configurez-la dans **⚙️ Configuration → 🔑 API & Services**
-        """
-        )
+        """)
 
 
 def render_auto_config():
     """Render automatic configuration section."""
     st.subheader("🏗️ Détection Automatique")
-    st.markdown(
-        """
+    st.markdown("""
     L'IA analysera vos transactions pour détecter automatiquement :
     - Vos revenus réguliers (salaire, etc.)
     - Vos charges fixes (loyer, électricité, etc.)
     - Vos abonnements récurrents
-    """
-    )
+    """)
 
     if st.button("🚀 Lancer la détection", type="primary"):
         df = get_all_transactions()
