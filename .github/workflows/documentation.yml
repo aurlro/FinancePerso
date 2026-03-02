@@ -111,6 +111,12 @@ jobs:
               # Skip empty paths
               [ -z "$path" ] && continue
               
+              # Skip URLs with query parameters (app URLs, not files)
+              echo "$path" | grep -q '\?' && continue
+              
+              # Skip absolute URLs that look like app routes (start with / and contain ? or special chars)
+              [[ "$path" == /* ]] && [[ "$path" =~ [\?\{\}] ]] && continue
+              
               # Resolve relative path
               dir=$(dirname "$file")
               if [[ "$path" == /* ]]; then
