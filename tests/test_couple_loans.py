@@ -1,6 +1,5 @@
 """Tests pour la gestion des emprunts (Module 4)."""
 
-
 import pytest
 
 from modules.couple.loans import (

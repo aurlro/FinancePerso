@@ -14,7 +14,6 @@ Usage:
     render_projections_page()
 """
 
-
 import numpy as np
 import streamlit as st
 

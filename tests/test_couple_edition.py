@@ -3,7 +3,6 @@
 Teste les fonctionnalités de confidentialité et de gestion couple.
 """
 
-
 import pytest
 
 from modules.couple.card_mappings import (

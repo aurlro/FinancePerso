@@ -3,7 +3,6 @@
 Utilise le Design System pour une interface cohérente.
 """
 
-
 import streamlit as st
 
 from modules.ui.atoms import Badge, Button

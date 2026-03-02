@@ -1,6 +1,5 @@
 """Category-related analyzers."""
 
-
 from modules.ai.suggestions.base import BaseAnalyzer
 from modules.ai.suggestions.models import AnalysisContext, Priority, Suggestion, SuggestionType
 
