@@ -1,5 +1,5 @@
 # Application Version
-APP_VERSION = "5.5.0"
+APP_VERSION = "5.6.0"
 
 # Feature flags
 USE_NOTIFICATIONS_V3 = True  # Active le système de notifications V3 par défaut
