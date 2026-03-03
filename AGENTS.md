@@ -80,8 +80,15 @@ FinancePerso/
 │   ├── finance.db             # Base SQLite principale
 │   └── backups/               # Sauvegardes automatiques
 ├── docs/                       # Documentation
-│   ├── archive/               # Anciens documents
-│   └── *.md                   # Guides et spécifications
+│   ├── README.md              # Point d'entrée documentation
+│   ├── INDEX.md               # Index de navigation
+│   ├── ACTIVE/                # Documentation maintenue
+│   ├── PLANNING/              # Plans et roadmaps
+│   ├── REFERENCE/             # Référence technique
+│   ├── adr/                   # ADRs legacy (→ REFERENCE/adr/)
+│   ├── archive/               # Documentation historique
+│   ├── ARCHITECTURE.md        # Architecture (résumé)
+│   └── USER_GUIDE.md          # Guide utilisateur (résumé)
 ├── scripts/                    # Scripts utilitaires
 ├── migrations/                 # Scripts de migration SQL
 └── .streamlit/config.toml     # Configuration Streamlit
@@ -464,7 +471,7 @@ with st.form("mon_form"):
 
 - Toujours utiliser NotificationService V3 pour les nouvelles notifications
 - Les détecteurs s'exécutent automatiquement au démarrage
-- Voir docs/MIGRATION_NOTIFICATIONS_V3.md pour la migration depuis V2
+- Voir docs/ACTIVE/migration/notifications-v3.md pour la migration depuis V2
 
 ---
 
@@ -836,10 +843,22 @@ DashboardController(
 
 ## Ressources utiles
 
-- **Documentation utilisateur** : `docs/USER_GUIDE.md`
+## Documentation
+
+- **Point d'entrée** : `docs/README.md` - Vue d'ensemble et navigation
+- **Index global** : `docs/INDEX.md` - Index de tous les documents
+- **Documentation active** : `docs/ACTIVE/` - Guides maintenus à jour
+  - `ACTIVE/user-guide/getting-started.md` - Guide de démarrage
+  - `ACTIVE/migration/` - Guides de migration
+- **Planification** : `docs/PLANNING/` - Roadmaps et specs
+- **Référence** : `docs/REFERENCE/` - ADRs et architecture
+- **Guide utilisateur** : `docs/USER_GUIDE.md`
+- **Architecture** : `docs/ARCHITECTURE.md`
+
+## Ressources projet
+
 - **Guide contribution** : `CONTRIBUTING.md`
 - **Changelog** : `CHANGELOG.md`
-- **Architecture détaillée** : `docs/ARCHITECTURE.md`
 - **Guide Consistency Keeper** : `~/.config/agents/skills/consistency-keeper/SKILL.md`
 
 ---
@@ -873,7 +892,7 @@ modules/ui/v5_5/components/
 
 **Outils de migration:**
 - `scripts/migrate_to_v5_5.py` - Script avec --check / --apply / --rollback
-- `docs/MIGRATION_V5_5.md` - Guide de migration complet
+- `docs/ACTIVE/migration/v5-5-dashboard.md` - Guide de migration complet
 
 **Validation:** 21/21 tests passent ✅
 
@@ -908,6 +927,47 @@ modules/ui/v5_5/components/
 - ✅ CI/CD configuré dans `.github/workflows/ci.yml`
 - ✅ Tests exécutés sur Python 3.11 et 3.12
 
+### 2026-03-03 - Restructuration Documentation ✅
+**Nouvelle organisation de la documentation en 4 sections**
+
+**Structure créée:**
+```
+docs/
+├── README.md              ← Point d'entrée
+├── INDEX.md               ← Index de navigation
+├── ACTIVE/                📖 Documentation maintenue
+│   ├── user-guide/
+│   ├── migration/
+│   ├── development/
+│   └── api/
+├── PLANNING/              🎯 Plans et roadmaps
+│   ├── current/
+│   ├── fusion/
+│   └── v5-5/
+├── REFERENCE/             📋 Référence technique
+│   ├── adr/
+│   ├── architecture/
+│   ├── personas/
+│   └── specifications/
+└── archive/               📦 Documentation historique
+    ├── 2024-H2/
+    ├── 2025-Q1/
+    └── ...
+```
+
+**Fichiers créés:**
+- ✅ `docs/README.md` - Point d'entrée avec navigation par profil
+- ✅ `docs/INDEX.md` - Index global de navigation
+- ✅ `docs/ACTIVE/README.md` - Documentation active
+- ✅ `docs/ACTIVE/INDEX.md` - Index ACTIVE
+- ✅ `docs/PLANNING/README.md` - Planification
+- ✅ `docs/REFERENCE/README.md` - Référence technique
+- ✅ `docs/archive/README.md` - Archive historique
+- ✅ `docs/adr/README.md` - Redirection ADRs
+- ✅ README dans chaque sous-dossier (user-guide, migration, fusion)
+
+**Chemins mis à jour dans AGENTS.md**
+
 ---
 
-Dernière mise à jour : 2026-03-01 (v5.5.6) - CI/CD VALIDÉ ✅
+Dernière mise à jour : 2026-03-03 (v5.5.7) - Documentation restructurée ✅

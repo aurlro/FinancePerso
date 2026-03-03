@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueprint V2 : Architecture & Backlog Fintech</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .uc-card { transition: all 0.2s ease; }
+        .uc-card:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); }
+        .tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+    </style>
+</head>
+<body class="p-4 md:p-8 antialiased">
+
+    <header class="max-w-7xl mx-auto mb-10 border-b border-slate-200 pb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Blueprint Produit : App Fintech V2</h1>
+            <p class="text-lg text-slate-600">Cartographie systémique et Référentiel des Use Cases (Backlog)</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex gap-3">
+            <span class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg font-semibold text-sm border border-indigo-200">Rôle : PO / BA</span>
+            <span class="bg-emerald-100 text-emerald-800 px-4 py-2 rounded-lg font-semibold text-sm border border-emerald-200">Prêt pour Vibe Coding</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto">
+        
+        <!-- ========================================== -->
+        <!-- RAPPEL ARCHITECTURE (Miniaturisé)          -->
+        <!-- ========================================== -->
+        <section class="mb-12">
+            <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <span class="bg-slate-200 w-8 h-8 rounded flex items-center justify-center mr-3">🏗️</span>
+                Rappel : Architecture Modulaire Cible
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-indigo-500">
+                    <h3 class="font-bold text-indigo-900 mb-1">UI (app.py)</h3>
+                    <p class="text-sm text-slate-600">Dashboard Streamlit, st.data_editor, graphiques Plotly interactifs, affichage des métriques.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-cyan-500">
+                    <h3 class="font-bold text-cyan-900 mb-1">Core (processor.py)</h3>
+                    <p class="text-sm text-slate-600">Merchant Cleaning, Regex, LLM Prompts, Calcul du Cash-Burn et algorithmes d'épargne.</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border-t-4 border-slate-500">
+                    <h3 class="font-bold text-slate-900 mb-1">Data (database_manager.py)</h3>
+                    <p class="text-sm text-slate-600">Ingestion CSV/API, requêtes SQLite/Pandas, gestion du session_state de l'utilisateur.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- BACKLOG : USE CASES DÉTAILLÉS              -->
+        <!-- ========================================== -->
+        <section>
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center border-b pb-4">
+                <span class="bg-indigo-600 text-white w-10 h-10 rounded flex items-center justify-center mr-3">📋</span>
+                Référentiel des Use Cases (User Stories & Logique)
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <!-- USE CASE 1 : Ingestion & Cleaning -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-cyan-100 text-cyan-800 px-2 py-1 rounded">UC-01 | Data Pipeline</span>
+                        <span class="text-slate-400 text-sm font-mono">processor.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Nettoyage et Catégorisation Automatique</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux que mes transactions brutes soient transformées en noms de commerçants lisibles et catégorisées automatiquement afin d'avoir une vue claire de mes dépenses sans effort."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Upload du CSV (<code class="bg-slate-100 px-1 rounded">app.py</code>).</li>
+                            <li>Extraction Pandas et passage au dictionnaire Regex (<code class="bg-slate-100 px-1 rounded">processor.py</code>).</li>
+                            <li>Si inconnu : appel API LLM avec schéma de sortie strict (ex: `{"merchant": "SNCF", "category": "Transport"}`).</li>
+                            <li>Sauvegarde en base (<code class="bg-slate-100 px-1 rounded">database_manager.py</code>).</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://platform.openai.com/docs/guides/structured-outputs" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 OpenAI Structured Outputs</a>
+                        <a href="https://pandas.pydata.org/docs/reference/api/pandas.Series.str.extract.html" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Pandas Regex Extract</a>
+                    </div>
+                </div>
+
+                <!-- USE CASE 2 : Data Grid Editing -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-indigo-100 text-indigo-800 px-2 py-1 rounded">UC-02 | User Interface</span>
+                        <span class="text-slate-400 text-sm font-mono">app.py & database.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Correction Manuelle (Active Learning)</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux pouvoir corriger manuellement une mauvaise catégorisation directement dans un tableau, afin que mes graphiques soient justes et que l'application apprenne de ma correction."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Affichage des données via <code class="bg-slate-100 px-1 rounded">st.data_editor</code>.</li>
+                            <li>L'utilisateur modifie la cellule "Catégorie".</li>
+                            <li>L'événement <code class="bg-slate-100 px-1 rounded">on_change</code> déclenche une mise à jour en BDD.</li>
+                            <li>Mise à jour du dictionnaire local pour les futures transactions similaires.</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://docs.streamlit.io/library/api-reference/data/st.data_editor" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Streamlit Data Editor</a>
+                        <a href="https://docs.streamlit.io/library/advanced-features/session-state" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Streamlit Session State</a>
+                    </div>
+                </div>
+
+                <!-- USE CASE 3 : Subscriptions -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-emerald-100 text-emerald-800 px-2 py-1 rounded">UC-03 | Analytics Engine</span>
+                        <span class="text-slate-400 text-sm font-mono">processor.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Détection d'Abonnements (Charges Fixes)</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux que l'application identifie automatiquement mes prélèvements récurrents afin de calculer précisément mon 'Reste à vivre' mensuel."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>L'algorithme groupe les dépenses par "Marchand" sur les 3 derniers mois.</li>
+                            <li>Si variance de montant &lt; 5% et écart temporel ≈ 30 jours ➔ Flag <code class="bg-slate-100 px-1 rounded">is_sub = True</code>.</li>
+                            <li>Soustraction automatique de ces montants du revenu pour isoler le reste à vivre.</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://pandas.pydata.org/docs/reference/api/pandas.core.groupby.DataFrameGroupBy.aggregate.html" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Pandas GroupBy Aggregation</a>
+                    </div>
+                </div>
+
+                <!-- USE CASE 4 : Cash Burn Alert -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-rose-100 text-rose-800 px-2 py-1 rounded">UC-04 | KPI & Alerting</span>
+                        <span class="text-slate-400 text-sm font-mono">app.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Suivi du "Cash-Burn" (Vitesse de dépense)</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux visualiser immédiatement si je dépense mon argent plus vite que le mois dernier, afin d'ajuster mon comportement avant la fin du mois."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Calcul de la somme cumulée des dépenses à J-courant pour le mois N et le mois N-1.</li>
+                            <li>Affichage d'un KPI dynamique avec flèche rouge/verte (<code class="bg-slate-100 px-1 rounded">st.metric</code>).</li>
+                            <li>Rendu d'un graphique linéaire (Plotly) superposant la courbe de vélocité des deux mois.</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://docs.streamlit.io/library/api-reference/data/st.metric" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Streamlit st.metric</a>
+                        <a href="https://plotly.com/python/cumulative-animations/" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Plotly Cumulative Lines</a>
+                    </div>
+                </div>
+
+                <!-- USE CASE 5 : GenAI What-If -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-amber-100 text-amber-800 px-2 py-1 rounded">UC-05 | GenAI Advisory</span>
+                        <span class="text-slate-400 text-sm font-mono">app.py & processor.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Simulateur d'Épargne "What-If"</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux simuler des réductions sur des catégories spécifiques (ex: Restaurants) et recevoir un conseil textuel sur l'impact pour mon épargne cible."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Interface avec sliders (<code class="bg-slate-100 px-1 rounded">st.slider</code>) pour modifier l'enveloppe budgétaire.</li>
+                            <li>Recalcul dynamique de l'épargne potentielle.</li>
+                            <li>Envoi d'un prompt au LLM intégrant le Delta : <br><em>"L'utilisateur a réduit ses loisirs de 50€. Rédige un encouragement."</em></li>
+                            <li>Affichage de la recommandation générée.</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://docs.streamlit.io/library/api-reference/widgets/st.slider" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Streamlit Sliders</a>
+                        <a href="https://platform.openai.com/docs/api-reference/chat/create" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 OpenAI Chat API</a>
+                    </div>
+                </div>
+
+                <!-- USE CASE 6 : Reporting Mensuel -->
+                <div class="bg-white rounded-2xl p-6 border border-slate-200 uc-card relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="tag bg-purple-100 text-purple-800 px-2 py-1 rounded">UC-06 | Reporting</span>
+                        <span class="text-slate-400 text-sm font-mono">processor.py</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Génération du Rapport Synthetique Mensuel</h3>
+                    <p class="italic text-sm text-slate-600 mb-4 bg-slate-50 p-3 rounded border-l-2 border-slate-300">
+                        "En tant qu'utilisateur, je veux obtenir un bilan écrit (façon banquier privé) résumant mes tops dépenses et mes écarts budgétaires à la fin du mois."
+                    </p>
+                    <div class="space-y-2 text-sm text-slate-700 mb-6">
+                        <p><strong class="text-slate-900">Flux logique :</strong></p>
+                        <ol class="list-decimal pl-5 space-y-1">
+                            <li>Extraction des "Top 3 catégories" et des variations vs Mois précédent.</li>
+                            <li>Assemblage des données dans un Prompt structuré (Data-to-Text).</li>
+                            <li>Le LLM rédige un compte-rendu formaté en Markdown.</li>
+                            <li>Affichage via <code class="bg-slate-100 px-1 rounded">st.markdown</code> et bouton d'export optionnel.</li>
+                        </ol>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+                        <a href="https://docs.streamlit.io/library/api-reference/text/st.markdown" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Streamlit Markdown</a>
+                        <a href="https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.nlargest.html" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-full transition flex items-center">🔗 Pandas nlargest (Top 3)</a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- FOOTER INSTRUCTIONS POUR L'IA -->
+        <footer class="mt-16 bg-slate-900 text-slate-300 p-8 rounded-2xl">
+            <h4 class="text-lg font-bold text-white mb-2">💡 Note au Product Owner / IA de Vibe Coding</h4>
+            <p class="text-sm leading-relaxed">
+                Ce document sert de contrat d'interface (Definition of Ready). Lors de la génération du code avec l'IA, soumettez ce fichier et demandez-lui d'implémenter <strong>un Use Case à la fois</strong> (par exemple : "Implémente l'UC-01 en créant la fonction de nettoyage dans processor.py"). Cela garantira la modularité et évitera les régressions ("hallucinations" de code global).
+            </p>
+        </footer>
+
+    </main>
+
+</body>
+</html>
