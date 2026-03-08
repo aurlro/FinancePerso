@@ -163,8 +163,18 @@ def categorize_transaction(label, amount, date, prefer_local_ml: bool = False):
     if cat:
         return cat, "rule", conf
 
-    # 2. Heuristic: Internal Transfers Detection
-
+    # 2. Heuristic: Internal Transfers and Partner Contributions Detection
+    # Use the transfer_detection module for unified detection logic
+    try:
+        from modules.transfer_detection import detect_transfer_type
+        
+        detected_category = detect_transfer_type(label)
+        if detected_category:
+            return detected_category, "rule", 1.0
+    except Exception as e:
+        logger.debug(f"Transfer detection error: {e}")
+    
+    # Fallback: legacy heuristic for transfers (backward compatibility)
     transfer_keywords = ["VIR ", "VIREMENT", "VRT", "PIVOT", "MOUVEMENT", "TRANSFERT"]
     internal_targets = _get_cached_transfer_targets()
 

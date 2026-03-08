@@ -18,6 +18,10 @@ from modules.ui.config.log_viewer import render_log_viewer
 from modules.ui.config.member_management import render_member_management
 from modules.ui.config.notifications import render_notification_settings
 from modules.ui.config.recycle_bin import render_recycle_bin_manager
+from modules.ui.config.transfer_settings import (
+    render_transfer_detection_tool,
+    render_transfer_settings,
+)
 from modules.ui.couple.setup_wizard import render_couple_setup
 from modules.ui.feedback import display_flash_messages, toast_info
 

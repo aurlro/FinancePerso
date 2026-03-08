@@ -147,7 +147,8 @@ def init_db() -> None:
             ("Abonnements", "📱", 1, "Netflix, Spotify, Internet, Mobile"),
             ("Services", "🛠️", 0, "Assurance, Banque, Impôts"),
             ("Cadeaux", "🎁", 0, "Anniversaire, Noël"),
-            ("Virement Interne", "🔄", 0, ""),
+            ("Virement Interne", "🔄", 0, "Transfert entre mes comptes"),
+            ("Contribution Partenaire", "🤝", 0, "Apport externe, Virement partenaire"),
             ("Inconnu", "❓", 0, ""),
             ("Hors Budget", "🚫", 0, ""),
             ("Impôts", "🧾", 1, ""),
@@ -252,10 +253,25 @@ def init_db() -> None:
             ("VIR INST", "Virement Interne", 5),
             ("VIR VRT", "Virement Interne", 5),
             ("VIR SEPA", "Virement Interne", 5),
+            ("Virement Interne", "Virement Interne", 10),  # Pattern exact, priorité haute
+        ]
+        
+        # Initialize default rules for partner contributions (apports externes)
+        default_contribution_rules = [
+            ("Virement de ELISE", "Contribution Partenaire", 10),
+            ("Virement de COMPAGNE", "Contribution Partenaire", 10),
+            ("Virement de PARTENAIRE", "Contribution Partenaire", 10),
+            ("Virement DE ELISE", "Contribution Partenaire", 10),
         ]
         cursor.executemany(
             "INSERT OR IGNORE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)",
             default_rules,
+        )
+        
+        # Insert partner contribution rules
+        cursor.executemany(
+            "INSERT OR IGNORE INTO learning_rules (pattern, category, priority) VALUES (?, ?, ?)",
+            default_contribution_rules,
         )
 
         # Initialize default card mappings (generic)
@@ -280,8 +296,13 @@ def init_db() -> None:
         default_settings = [
             (
                 "internal_transfer_targets",
-                "AURELIEN,DUO,JOINT,EPARGNE,LDDS,LIVRET,ELISE",
-                "Mots-clés pour détecter les virements internes (séparés par des virgules)",
+                "AURELIEN,DUO,JOINT,EPARGNE,LDDS,LIVRET",
+                "Mots-clés pour détecter les virements internes entre MES comptes (séparés par des virgules)",
+            ),
+            (
+                "partner_contribution_patterns",
+                "ELISE,COMPAGNE,PARTENAIRE",
+                "Mots-clés pour détecter les contributions/apports externes (virements du partenaire)",
             ),
         ]
         cursor.executemany(

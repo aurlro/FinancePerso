@@ -80,6 +80,7 @@ def temp_db():
         ("Logement", "🏠", 1, ""),
         ("Revenus", "💰", 1, ""),
         ("Virement Interne", "🔄", 0, ""),
+        ("Contribution Partenaire", "🤝", 0, ""),
         ("Hors Budget", "🚫", 0, ""),
         ("Inconnu", "❓", 0, ""),
     ]

@@ -46,25 +46,67 @@ pip install -r requirements-ml.txt
 
 Puis dans **Configuration > IA & Services**, choisissez le mode "ML Local".
 
-## 🚀 Installation
+## 🚀 Installation & Lancement
 
 ### Prérequis
 
-- Python 3.8+
+- Python 3.11+ (3.8+ supporté mais 3.11+ recommandé)
 - pip
 
-### Installation rapide
+### 🎯 Lancement Rapide (Recommandé)
+
+**macOS / Linux :**
+```bash
+# Double-cliquez sur MyFinance.command
+# Ou en ligne de commande :
+./MyFinance.command
+```
+
+**Windows :**
+```bash
+# Double-cliquez sur MyFinance.bat
+# Ou en ligne de commande :
+MyFinance.bat
+```
+
+### Installation Complète (Première fois)
 
 ```bash
-# Cloner le dépôt
+# 1. Cloner le dépôt
 git clone <repository-url>
 cd FinancePerso
+
+# 2. Lancer le script d'installation
+./setup.sh              # macOS / Linux
+# ou
+setup.bat               # Windows
+
+# 3. Configurer les clés API (optionnel mais recommandé)
+cp .env.example .env
+# Éditez .env avec vos clés
+
+# 4. Lancer
+./MyFinance.command     # macOS / Linux
+# ou
+MyFinance.bat           # Windows
+```
+
+### Installation Manuelle
+
+```bash
+# Créer l'environnement virtuel
+python -m venv .venv
+
+# Activer
+source .venv/bin/activate  # macOS/Linux
+# ou
+.venv\Scripts\activate    # Windows
 
 # Installer les dépendances
 pip install -r requirements.txt
 
-# Lancer l'application
-streamlit run Accueil.py
+# Lancer
+streamlit run app.py
 ```
 
 ## ⚙️ Configuration

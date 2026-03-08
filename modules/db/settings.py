@@ -249,3 +249,51 @@ def get_primary_account_holder() -> str:
         Primary account holder name
     """
     return get_default_member()
+
+
+# ============================================================================
+# PARTNER CONTRIBUTION SETTINGS
+# ============================================================================
+
+
+def get_partner_contribution_patterns() -> list[str]:
+    """
+    Get the list of partner contribution detection patterns.
+
+    These patterns are used to automatically identify transfers from an
+    external partner account (e.g., partner's personal account to joint account).
+    These transactions should be excluded from income calculations.
+
+    Returns:
+        List of keywords/patterns used to detect partner contributions
+    """
+    patterns_str = get_setting("partner_contribution_patterns", "")
+    if not patterns_str:
+        # Fallback defaults if setting doesn't exist
+        return ["ELISE", "COMPAGNE", "PARTENAIRE"]
+
+    # Split by comma and clean up whitespace, convert to uppercase
+    return [p.strip().upper() for p in patterns_str.split(",") if p.strip()]
+
+
+def set_partner_contribution_patterns(patterns: list[str]) -> bool:
+    """
+    Set the list of partner contribution detection patterns.
+
+    Args:
+        patterns: List of keywords/patterns (will be converted to uppercase)
+
+    Returns:
+        True if successful, False otherwise
+    """
+    # Clean and uppercase the patterns
+    cleaned_patterns = [p.strip().upper() for p in patterns if p.strip()]
+
+    # Join with commas
+    patterns_str = ",".join(cleaned_patterns)
+
+    return set_setting(
+        "partner_contribution_patterns",
+        patterns_str,
+        "Mots-clés pour détecter les contributions/apports externes (virements du partenaire)",
+    )

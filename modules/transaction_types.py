@@ -42,6 +42,8 @@ EXCLUDED_CATEGORIES = [
     "Hors Budget",
     "Transfert",
     "Épargne",  # Mouvements entre comptes
+    "Contribution Partenaire",  # Apport externe (ex: compte compagne → compte joint)
+    "Apport Externe",  # Alternative naming pour apports externes
 ]
 
 # Catégories de REMBOURSEMENT (entrées d'argent liées à une dépense précédente)
