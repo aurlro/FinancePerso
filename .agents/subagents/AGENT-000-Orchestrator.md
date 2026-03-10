@@ -19,6 +19,13 @@ Orchestrateur central de tous les agents spécialisés de FinancePerso. Responsa
 │                         (Coordination & Supervision)                         │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
+│  STRATEGIC LAYER: MASTER ARCHITECT (UNIVERSEL)                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │ AGENT-022   │ Master Architect & Agent Supervisor                    │    │
+│  │             │ (UNIVERSEL - Fonctionne sur TOUS les projets)          │    │
+│  │             │ Audit, Refactoring, Création agents locaux             │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
 │  LAYER 1: INFRASTRUCTURE (Foundation)                                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                          │
 │  │ AGENT-001   │  │ AGENT-002   │  │ AGENT-003   │                          │
@@ -26,6 +33,8 @@ Orchestrateur central de tous les agents spécialisés de FinancePerso. Responsa
 │  │ Architect   │  │ Guardian    │  │ Engineer    │                          │
 │  └──────┬──────┘  └─────────────┘  └─────────────┘                          │
 │         │                                                                    │
+│         ▼                                                                    │
+│         │ Délégation audits complexes                                        │
 │         ▼                                                                    │
 │  LAYER 2: CORE BUSINESS (Heart)                                             │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                          │
@@ -442,6 +451,9 @@ def diagnose_conflict(agent_a: str, agent_b: str) -> dict:
 | Budget/épargne | **014** | 001, 006, 016 |
 | Membres | **015** | 001, 002, 004 |
 | Notification | **016** | 014, 015 |
+| Audit architectural | **022** | 001-021 |
+| Refactoring majeur | **022** | 009, 010, 012 |
+| Création agent | **022** | 000 |
 
 ---
 
@@ -784,6 +796,111 @@ def on_changelog_generated(version: str, changelog: str):
     })
 ```
 
+### 11. Protocol: Master Architect Invocation (022)
+
+```python
+"""
+Quand AGENT-000 détecte un défi architectural complexe.
+Délégation à AGENT-022 pour audit et supervision stratégique.
+"""
+
+def on_architectural_challenge_detected(context: dict) -> dict:
+    """
+    Détermine si le challenge nécessite AGENT-022.
+    
+    Args:
+        context: {
+            'source_type': 'ui_screenshot' | 'python_legacy' | 'lovable_target' | 'mixed',
+            'source': Any,  # Image, code, ou mixed
+            'complexity': 'low' | 'medium' | 'high',
+            'learning_logs': list[dict],  # Optionnel
+            'requires_refactoring': bool,
+            'priority': 'low' | 'normal' | 'high'
+        }
+    
+    Returns:
+        {'delegated_to': '022'} ou {'handle_directly': True}
+    """
+    # Critères de délégation à AGENT-022
+    needs_master_architect = (
+        context.get('complexity') == 'high' or
+        context.get('source_type') in ['ui_screenshot', 'mixed'] or
+        context.get('requires_refactoring') or
+        context.get('learning_logs')  # Logs présents = contexte complexe
+    )
+    
+    if needs_master_architect:
+        # Déléguer à AGENT-022
+        notify_agent('022', {
+            'event': 'ARCHITECTURAL_CHALLENGE',
+            'source': context.get('source'),
+            'source_type': context.get('source_type'),
+            'logs': context.get('learning_logs', []),
+            'priority': context.get('priority', 'normal'),
+            'requested_by': '000'
+        })
+        
+        return {
+            'delegated_to': '022',
+            'reason': 'Complexité architecturale détectée',
+            'next_steps': [
+                'AGENT-022 Phase 0: Ingestion mémoire',
+                'AGENT-022 Phase 1: Audit multimodal',
+                'Attente validation utilisateur (Phase 2)',
+                'Orchestration agents (Phase 3)',
+                'Génération mémoire (Phase 4)'
+            ]
+        }
+    
+    # Gérer directement si simple
+    return {'handle_directly': True}
+
+
+def on_master_architect_task_completed(result: dict):
+    """
+    Handler appelé par AGENT-022 quand une tâche est terminée.
+    
+    Args:
+        result: {
+            'tache_initiale': str,
+            'statut': 'succes' | 'echec',
+            'agents_modified': list[str],
+            'new_agents_created': list[str],
+            'memory_json': dict,
+            'recommendations': list[str]
+        }
+    """
+    # Mettre à jour l'état global
+    update_system_state({
+        'last_architect_task': result['tache_initiale'],
+        'agents_modified': result.get('agents_modified', []),
+        'new_agents': result.get('new_agents_created', []),
+        'learning_log': result['memory_json']
+    })
+    
+    # Notifier agents modifiés
+    for agent_id in result.get('agents_modified', []):
+        notify_agent(agent_id, {
+            'event': 'INSTRUCTIONS_UPDATED',
+            'by': '022',
+            'reason': result['tache_initiale'],
+            'changes_summary': result.get('changes_summary', 'Mise à jour contexte')
+        })
+    
+    # Enregistrer nouveaux agents dans registre
+    for new_agent_id in result.get('new_agents_created', []):
+        register_new_agent(new_agent_id, created_by='022')
+    
+    # Logger pour mémoire future
+    store_learning_log(result['memory_json'])
+    
+    # Afficher résumé à l'utilisateur
+    print(f"✅ Tâche architecturale terminée: {result['tache_initiale']}")
+    print(f"📊 Agents modifiés: {', '.join(result.get('agents_modified', []))}")
+    print(f"🆕 Nouveaux agents: {', '.join(result.get('new_agents_created', []))}")
+    print(f"💡 Leçon apprise: {result['memory_json'].get('nouvelle_regle_acquise', 'N/A')}")
+```
+
 ---
 
 ## 📊 Matrice de Dépendances Étendue (001-021)
@@ -795,6 +912,7 @@ def on_changelog_generated(version: str, changelog: str):
 | **019** | 001, 003 | 001, 003, 006, 015 |
 | **020** | 009, 010 | 009, 010, 015 |
 | **021** | 000, 017, 018 | 003, 015 |
+| **022** | 000, 001-021 | 000, 001-021 |
 
 ---
 
@@ -812,9 +930,145 @@ def on_changelog_generated(version: str, changelog: str):
 | ARIA/composants | **020** | 009, 010 |
 | Changelog | **021** | 000, 003 |
 | API docs | **021** | 018 |
+| Audit architectural | **022** | Agents locaux du projet |
+| Refactoring majeur | **022** | Agents locaux UI/Test |
+| Création agent local | **022** | 000 |
 
 ---
 
-**Version**: 2.0  
-**Date**: 2026-02-25  
-**Agents Supervisés**: 001-021 (22 agents complets)
+---
+
+## 🌍 Configuration des Agents Locaux (Par Projet)
+
+AGENT-022 est **universel**, mais les agents 001-0XX sont **spécifiques au projet**. Chaque projet doit définir sa cartographie.
+
+### Template de Configuration
+
+```python
+# À ajouter en début de ce fichier (AGENT-000) pour chaque projet
+
+LOCAL_AGENT_CATALOG = {
+    # Cartographie des agents pour CE projet
+    # Format: "role_fonctionnel": "agent_id"
+    
+    "database": "001",        # AGENT-001: Database Architect
+    "security": "002",        # AGENT-002: Security Guardian
+    "devops": "003",          # AGENT-003: DevOps Engineer
+    "transaction": "004",     # AGENT-004: Transaction Engine
+    "categorization": "005",  # AGENT-005: Categorization AI
+    "analytics": "006",       # AGENT-006: Analytics Dashboard
+    "ai_provider": "007",     # AGENT-007: AI Provider Manager
+    "ui_component": "009",    # AGENT-009: UI Component Architect
+    "navigation": "010",      # AGENT-010: Navigation Experience
+    "test_auto": "012",       # AGENT-012: Test Automation
+    "budget": "014",          # AGENT-014: Budget Wealth Manager
+    "member": "015",          # AGENT-015: Member Management
+    "notification": "016",    # AGENT-016: Notification System
+}
+
+# Type de projet (pour AGENT-022)
+PROJECT_TYPE = "python_streamlit"  # ou "react_node", "java_spring", etc.
+```
+
+### Création d'Agents Locaux
+
+Si AGENT-022 détecte qu'un agent est manquant pour une tâche :
+
+```python
+def create_local_agent(role: str, template: str) -> str:
+    """
+    Crée un agent local spécifique au projet.
+    
+    Args:
+        role: Rôle fonctionnel (ex: 'ui_component')
+        template: Template de base (ex: 'react_frontend')
+    
+    Returns:
+        Nouvel agent_id (ex: '025')
+    """
+    new_id = get_next_available_id()  # 023, 024, etc.
+    
+    # Générer le prompt système adapté au projet
+    prompt = generate_agent_prompt(
+        role=role,
+        template=template,
+        project_type=PROJECT_TYPE,
+        project_specifics=get_project_context()
+    )
+    
+    # Créer le fichier
+    write_file(f".agents/subagents/AGENT-{new_id}-{role}.md", prompt)
+    
+    # Mettre à jour le catalogue
+    LOCAL_AGENT_CATALOG[role] = new_id
+    
+    return new_id
+```
+
+### Exemples par Type de Projet
+
+| Type de Projet | Agents Locaux Typiques | AGENT-022 détecte via |
+|----------------|----------------------|---------------------|
+| **Python/Streamlit** | 001-016 (comme FinancePerso) | `requirements.txt` + `app.py` |
+| **React/Node** | Frontend, Backend, DB, Test | `package.json` |
+| **Java/Spring** | Backend, DB, Security, Test | `pom.xml` / `build.gradle` |
+| **Mobile** | UI, API, Storage, Test | `pubspec.yaml`, `Podfile` |
+
+---
+
+## 🔌 Configuration MCP (Recommandé)
+
+AGENT-022 et les agents locaux peuvent utiliser des **MCP (Model Context Protocol)** pour des capacités étendues.
+
+### MCP Recommandés pour ce Projet
+
+```json
+{
+  "mcpServers": {
+    "sqlite": {
+      "command": "uvx",
+      "args": ["mcp-server-sqlite", "--db-path", "./Data/finance.db"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/aurelien/Documents/Projets/FinancePerso"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+    }
+  }
+}
+```
+
+### Installation
+
+```bash
+# SQLite MCP
+uvx mcp-server-sqlite --help
+
+# Filesystem MCP
+npx -y @modelcontextprotocol/server-filesystem /chemin/projet
+
+# Playwright MCP  
+npx -y @executeautomation/playwright-mcp-server
+```
+
+### Utilisation par Agent
+
+| Agent | MCP Utilisés | Capacités |
+|-------|-------------|-----------|
+| **001** (Database) | `sqlite` | Requêtes SQL, migrations |
+| **006** (Analytics) | `sqlite`, `playwright` | Dashboard, screenshots |
+| **009** (UI) | `playwright`, `filesystem` | Tests UI, composants |
+| **012** (Tests) | `playwright` | Tests E2E |
+| **022** (Master) | **Tous** | Orchestration complète |
+
+**Voir AGENT-022 pour le guide d'installation complet.**
+
+---
+
+**Version**: 2.3  
+**Date**: 2026-03-08  
+**Agents Supervisés**: 001-0XX (dynamique par projet) + 022 (universel)  
+**MCP Support**: sqlite, filesystem, playwright, github, fetch, context7
