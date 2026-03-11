@@ -428,3 +428,220 @@ class ImportResponse(BaseModel):
                 "attributed_count": 5,
             }
         }
+
+
+# =============================================================================
+# Category Models
+# =============================================================================
+
+
+class CategoryResponse(BaseModel):
+    """Response model for a category."""
+
+    id: int = Field(..., description="Category ID")
+    name: str = Field(..., description="Category name")
+    emoji: str = Field(..., description="Category emoji")
+    is_fixed: int = Field(..., description="Whether this is a fixed expense category")
+    suggested_tags: Optional[str] = Field(None, description="Suggested tags for this category")
+    created_at: str = Field(..., description="Creation timestamp")
+
+    class Config:
+        from_attributes = True
+
+
+class CategoryCreateRequest(BaseModel):
+    """Request model for creating a category."""
+
+    name: str = Field(..., min_length=1, description="Category name")
+    emoji: str = Field(default="🏷️", description="Category emoji")
+    is_fixed: int = Field(default=0, description="Whether this is a fixed expense category")
+    suggested_tags: Optional[str] = Field(None, description="Suggested tags")
+
+
+class CategoryUpdateRequest(BaseModel):
+    """Request model for updating a category."""
+
+    name: Optional[str] = Field(None, min_length=1, description="Category name")
+    emoji: Optional[str] = Field(None, description="Category emoji")
+    is_fixed: Optional[int] = Field(None, description="Whether this is a fixed expense category")
+    suggested_tags: Optional[str] = Field(None, description="Suggested tags")
+
+
+class CategoriesListResponse(BaseModel):
+    """Response model for list of categories."""
+
+    items: list[CategoryResponse] = Field(..., description="List of categories")
+    total: int = Field(..., description="Total number of categories")
+
+
+# =============================================================================
+# Budget Models
+# =============================================================================
+
+
+class BudgetResponse(BaseModel):
+    """Response model for a budget."""
+
+    category: str = Field(..., description="Category name")
+    amount: float = Field(..., description="Budget amount")
+    updated_at: str = Field(..., description="Last update timestamp")
+    spent: Optional[float] = Field(None, description="Amount spent this month")
+    remaining: Optional[float] = Field(None, description="Remaining budget")
+
+    class Config:
+        from_attributes = True
+
+
+class BudgetCreateRequest(BaseModel):
+    """Request model for creating a budget."""
+
+    category: str = Field(..., description="Category name")
+    amount: float = Field(..., ge=0, description="Budget amount")
+
+
+class BudgetUpdateRequest(BaseModel):
+    """Request model for updating a budget."""
+
+    amount: float = Field(..., ge=0, description="Budget amount")
+
+
+class BudgetsListResponse(BaseModel):
+    """Response model for list of budgets."""
+
+    items: list[BudgetResponse] = Field(..., description="List of budgets")
+    total: int = Field(..., description="Total number of budgets")
+
+
+# =============================================================================
+# Member Models
+# =============================================================================
+
+
+class MemberResponse(BaseModel):
+    """Response model for a household member."""
+
+    id: int = Field(..., description="Member ID")
+    name: str = Field(..., description="Member name")
+    member_type: str = Field(..., description="Member type (HOUSEHOLD, etc.)")
+    created_at: str = Field(..., description="Creation timestamp")
+
+    class Config:
+        from_attributes = True
+
+
+class MemberCreateRequest(BaseModel):
+    """Request model for creating a member."""
+
+    name: str = Field(..., min_length=1, description="Member name")
+    member_type: str = Field(default="HOUSEHOLD", description="Member type")
+
+
+class MemberUpdateRequest(BaseModel):
+    """Request model for updating a member."""
+
+    name: Optional[str] = Field(None, min_length=1, description="Member name")
+    member_type: Optional[str] = Field(None, description="Member type")
+
+
+class MembersListResponse(BaseModel):
+    """Response model for list of members."""
+
+    items: list[MemberResponse] = Field(..., description="List of members")
+    total: int = Field(..., description="Total number of members")
+
+
+# =============================================================================
+# Rule Models
+# =============================================================================
+
+
+class RuleResponse(BaseModel):
+    """Response model for a learning rule."""
+
+    id: int = Field(..., description="Rule ID")
+    pattern: str = Field(..., description="Pattern to match")
+    category: str = Field(..., description="Target category")
+    priority: int = Field(..., description="Rule priority (higher = first)")
+    created_at: str = Field(..., description="Creation timestamp")
+    match_count: Optional[int] = Field(None, description="Number of matches")
+
+    class Config:
+        from_attributes = True
+
+
+class RuleCreateRequest(BaseModel):
+    """Request model for creating a rule."""
+
+    pattern: str = Field(..., min_length=1, description="Pattern to match")
+    category: str = Field(..., description="Target category")
+    priority: int = Field(default=1, ge=1, description="Rule priority")
+
+
+class RuleUpdateRequest(BaseModel):
+    """Request model for updating a rule."""
+
+    pattern: Optional[str] = Field(None, min_length=1, description="Pattern to match")
+    category: Optional[str] = Field(None, description="Target category")
+    priority: Optional[int] = Field(None, ge=1, description="Rule priority")
+
+
+class RulesListResponse(BaseModel):
+    """Response model for list of rules."""
+
+    items: list[RuleResponse] = Field(..., description="List of rules")
+    total: int = Field(..., description="Total number of rules")
+
+
+class RuleTestRequest(BaseModel):
+    """Request model for testing a rule pattern."""
+
+    pattern: str = Field(..., description="Pattern to test")
+    test_labels: list[str] = Field(default=[], description="Labels to test against")
+
+
+class RuleTestResponse(BaseModel):
+    """Response model for rule test."""
+
+    pattern: str = Field(..., description="Tested pattern")
+    matches: list[str] = Field(..., description="Labels that matched")
+    match_count: int = Field(..., description="Number of matches")
+    total_tested: int = Field(..., description="Total labels tested")
+
+
+# =============================================================================
+# Notification Models (PR #6)
+# =============================================================================
+
+
+class NotificationResponse(BaseModel):
+    """Response model for a notification."""
+
+    id: int = Field(..., description="Notification ID")
+    user_id: int = Field(..., description="User ID")
+    type: str = Field(..., description="Notification type (info, warning, success, error)")
+    category: str = Field(..., description="Category (transaction, budget, invitation, system)")
+    title: str = Field(..., description="Notification title")
+    message: str = Field(..., description="Notification message")
+    data: Optional[dict] = Field(None, description="Additional data")
+    is_read: bool = Field(False, description="Whether notification is read")
+    read_at: Optional[str] = Field(None, description="Read timestamp")
+    created_at: str = Field(..., description="Creation timestamp")
+
+
+class NotificationCreateRequest(BaseModel):
+    """Request model for creating a notification."""
+
+    user_id: int = Field(..., description="Target user ID")
+    type: str = Field(default="info", description="Notification type")
+    category: str = Field(..., description="Category")
+    title: str = Field(..., description="Notification title")
+    message: str = Field(..., description="Notification message")
+    data: Optional[dict] = Field(None, description="Additional data")
+
+
+class NotificationsListResponse(BaseModel):
+    """Response model for list of notifications."""
+
+    items: list[NotificationResponse] = Field(..., description="List of notifications")
+    total: int = Field(..., description="Total number of notifications")
+    unread_count: int = Field(..., description="Number of unread notifications")

@@ -26,12 +26,13 @@ from routers.accounts import router as accounts_router
 from routers.dashboard import router as dashboard_router
 from routers.transactions import router as transactions_router
 from routers.import_csv import router as import_router
-
-# TODO: Create these routers
-# from routers.categories import router as categories_router
-# from routers.budgets import router as budgets_router
-# from routers.household import router as household_router
-# from routers.rules import router as rules_router
+from routers.categories import router as categories_router
+from routers.budgets import router as budgets_router
+from routers.members import router as members_router
+from routers.rules import router as rules_router
+from routers.notifications import router as notifications_router
+from routers.households import router as households_router
+from routers.export import router as export_router
 
 settings = get_settings()
 
@@ -44,9 +45,13 @@ async def lifespan(app: FastAPI):
     print(f"📊 Environment: {settings.environment}")
     print(f"🔗 Database: {settings.database_url}")
     
-    # TODO: Initialiser la base de données et créer les tables
-    # from database import init_db
-    # await init_db()
+    # Run V2 migrations (PR #6, #7, #8)
+    try:
+        import db.migrations_v2 as migrations_v2
+        migrations_v2.run_migrations()
+        print("✅ Migrations V2 completed")
+    except Exception as e:
+        print(f"⚠️  Migrations V2 error: {e}")
     
     yield
     
@@ -79,10 +84,13 @@ app.include_router(accounts_router, prefix="/api/accounts", tags=["Accounts"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(transactions_router, prefix="/api/transactions", tags=["Transactions"])
 app.include_router(import_router, prefix="/api/transactions", tags=["Import"])
-# app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])
-# app.include_router(budgets_router, prefix="/api/budgets", tags=["Budgets"])
-# app.include_router(household_router, prefix="/api/household", tags=["Household"])
-# app.include_router(rules_router, prefix="/api/rules", tags=["Rules"])
+app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])
+app.include_router(budgets_router, prefix="/api/budgets", tags=["Budgets"])
+app.include_router(members_router, prefix="/api/members", tags=["Members"])
+app.include_router(rules_router, prefix="/api/rules", tags=["Rules"])
+app.include_router(notifications_router, prefix="/api/notifications", tags=["Notifications"])
+app.include_router(households_router, prefix="/api/households", tags=["Households"])
+app.include_router(export_router, prefix="/api/export", tags=["Export"])
 
 
 @app.get("/api/health", tags=["Health"])

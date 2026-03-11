@@ -20,6 +20,7 @@ export {
   useTransactions,
   useTransaction,
   useUpdateTransaction,
+  useDeleteTransaction,
   useCategorizeTransactions,
   useBulkUpdateStatus,
 } from "./useTransactionsApi";
@@ -43,14 +44,19 @@ export {
 } from "./useAccounts";
 
 // ============================================
-// CATÉGORIES (via Mock → API à venir)
+// CATÉGORIES (via API FastAPI)
 // ============================================
 export {
   useCategories,
-  useCategory,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
+} from "./useCategoriesApi";
+
+// Fallback mock (temporaire)
+export {
+  useCategories as useCategoriesMock,
+  useCategory as useCategoryMock,
 } from "./useCategories";
 
 // Gestion catégories via Supabase (fonctionnalités avancées)
@@ -61,26 +67,40 @@ export {
 } from "./useCategoryManagement";
 
 // ============================================
-// BUDGETS (via Mock → API à venir)
+// BUDGETS (via API FastAPI)
 // ============================================
 export {
   useBudgets,
-  useBudget,
-  useCreateBudget,
+  useCreateOrUpdateBudget,
   useUpdateBudget,
   useDeleteBudget,
-  useUpsertBudget,
+} from "./useBudgetsApi";
+
+// Fallback mock (temporaire)
+export {
+  useBudgets as useBudgetsMock,
+  useBudget as useBudgetMock,
+  useCreateBudget as useCreateBudgetMock,
+  useUpsertBudget as useUpsertBudgetMock,
 } from "./useBudgets";
 
 // ============================================
-// FOyer / MEMBRES (via Mock → API à venir)
+// MEMBRES (via API FastAPI)
 // ============================================
+export {
+  useMembers,
+  useCreateMember,
+  useUpdateMember,
+  useDeleteMember,
+} from "./useMembersApi";
+
+// Fallback mock (temporaire) - Household legacy
 export {
   useHouseholdMembers,
   useHousehold,
-  useAddMember,
-  useUpdateMember,
-  useDeleteMember,
+  useAddMember as useAddMemberMock,
+  useUpdateMember as useUpdateMemberMock,
+  useDeleteMember as useDeleteMemberMock,
   useToggleMemberActive,
   useSendInvitation,
   useInvitations,
@@ -98,15 +118,24 @@ export {
 } from "./useHousehold";
 
 // ============================================
-// RÈGLES DE CATÉGORISATION (via Mock → API à venir)
+// RÈGLES DE CATÉGORISATION (via API FastAPI)
 // ============================================
 export {
   useRules,
-  useRule,
   useCreateRule,
   useUpdateRule,
   useDeleteRule,
   useTestRule,
+} from "./useRulesApi";
+
+// Fallback mock (temporaire)
+export {
+  useRules as useRulesMock,
+  useRule as useRuleMock,
+  useCreateRule as useCreateRuleMock,
+  useUpdateRule as useUpdateRuleMock,
+  useDeleteRule as useDeleteRuleMock,
+  useTestRule as useTestRuleMock,
 } from "./useRules";
 
 // Règles d'attribution (via Supabase)
@@ -130,11 +159,54 @@ export {
 } from "./useDashboard";
 
 // ============================================
-// FONCTIONNALITÉS SUPABASE (Temps réel)
+// NOTIFICATIONS (PR #6 - via API FastAPI + WebSocket)
+// ============================================
+export {
+  useNotifications,
+  useUnreadNotificationsCount,
+  useMarkNotificationAsRead,
+  useMarkAllNotificationsAsRead,
+  useDeleteNotification,
+  useNotificationsWebSocket,
+} from "./useNotificationsApi";
+
+// Fallback Supabase (legacy)
+export { useNotifications as useNotificationsLegacy, createNotification } from "./useNotifications";
+
+// ============================================
+// HOUSEHOLDS (PR #7 - via API FastAPI)
+// ============================================
+export {
+  useMyHousehold,
+  useCreateHousehold,
+  useUpdateHousehold,
+  useDeleteHousehold,
+  useHouseholdMembers,
+  useRemoveHouseholdMember,
+  useCreateInvitation,
+  useHouseholdInvitations,
+  useAcceptInvitation,
+  useDeclineInvitation,
+  useCancelInvitation,
+} from "./useHouseholdsApi";
+
+// ============================================
+// EXPORT (PR #8 - via API FastAPI)
+// ============================================
+export {
+  useExportTransactionsCsv,
+  useExportTransactionsJson,
+  useMonthlyReport,
+  useAnnualReport,
+  useFullBackup,
+  downloadFile,
+} from "./useExportApi";
+
+// ============================================
+// FONCTIONNALITÉS SUPABASE (Temps réel - Legacy)
 // ============================================
 export { useCoupleBalance } from "./useCoupleBalance";
 export { useForecast } from "./useForecast";
-export { useNotifications, createNotification } from "./useNotifications";
 export { useSavingsGoals } from "./useSavingsGoals";
 export { useTransactionComments, useTransactionCommentCounts } from "./useTransactionComments";
 

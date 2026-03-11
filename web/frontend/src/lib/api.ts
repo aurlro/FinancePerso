@@ -164,6 +164,11 @@ export const transactionsApi = {
       method: "POST",
       body: JSON.stringify({ ids, status }),
     }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/transactions/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 // ============================================================================
@@ -174,15 +179,20 @@ export interface Category {
   id: number;
   name: string;
   emoji: string;
-  color?: string;
-  is_fixed: boolean;
-  budget?: number;
+  is_fixed: number;
+  suggested_tags?: string;
+  created_at: string;
+}
+
+export interface CategoriesList {
+  items: Category[];
+  total: number;
 }
 
 export const categoriesApi = {
-  list: () => fetchApi<Category[]>(`/categories`),
+  list: () => fetchApi<CategoriesList>(`/categories`).then(r => r.items),
   
-  create: (data: Omit<Category, "id">) =>
+  create: (data: { name: string; emoji?: string; is_fixed?: number; suggested_tags?: string }) =>
     fetchApi<Category>(`/categories`, {
       method: "POST",
       body: JSON.stringify(data),
@@ -193,6 +203,11 @@ export const categoriesApi = {
       method: "PUT",
       body: JSON.stringify(data),
     }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/categories/${id}`, {
+      method: "DELETE",
+    }),
 };
 
 // ============================================================================
@@ -202,21 +217,124 @@ export const categoriesApi = {
 export interface Budget {
   category: string;
   amount: number;
-  spent: number;
-  percentage: number;
-  alert?: boolean;
+  updated_at: string;
+  spent?: number;
+  remaining?: number;
+}
+
+export interface BudgetsList {
+  items: Budget[];
+  total: number;
 }
 
 export const budgetsApi = {
-  list: (month?: string) => {
-    const query = month ? `?month=${month}` : "";
-    return fetchApi<Budget[]>(`/budgets${query}`);
-  },
+  list: (month?: string) =>
+    fetchApi<BudgetsList>(`/budgets${month ? `?month=${month}` : ""}`).then(r => r.items),
   
-  setBudget: (category: string, amount: number) =>
+  createOrUpdate: (data: { category: string; amount: number }) =>
     fetchApi<Budget>(`/budgets`, {
       method: "POST",
-      body: JSON.stringify({ category, amount }),
+      body: JSON.stringify(data),
+    }),
+  
+  update: (category: string, data: { amount: number }) =>
+    fetchApi<Budget>(`/budgets/${encodeURIComponent(category)}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  
+  delete: (category: string) =>
+    fetchApi<{ deleted: boolean; category: string }>(`/budgets/${encodeURIComponent(category)}`, {
+      method: "DELETE",
+    }),
+};
+
+// ============================================================================
+// MEMBERS API
+// ============================================================================
+
+export interface Member {
+  id: number;
+  name: string;
+  member_type: string;
+  created_at: string;
+}
+
+export interface MembersList {
+  items: Member[];
+  total: number;
+}
+
+export const membersApi = {
+  list: () => fetchApi<MembersList>(`/members`).then(r => r.items),
+  
+  create: (data: { name: string; member_type?: string }) =>
+    fetchApi<Member>(`/members`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  
+  update: (id: number, data: Partial<Member>) =>
+    fetchApi<Member>(`/members/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/members/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+// ============================================================================
+// RULES API
+// ============================================================================
+
+export interface Rule {
+  id: number;
+  pattern: string;
+  category: string;
+  priority: number;
+  created_at: string;
+  match_count?: number;
+}
+
+export interface RulesList {
+  items: Rule[];
+  total: number;
+}
+
+export interface RuleTestResult {
+  pattern: string;
+  matches: string[];
+  match_count: number;
+  total_tested: number;
+}
+
+export const rulesApi = {
+  list: () => fetchApi<RulesList>(`/rules`).then(r => r.items),
+  
+  create: (data: { pattern: string; category: string; priority?: number }) =>
+    fetchApi<Rule>(`/rules`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  
+  update: (id: number, data: Partial<Rule>) =>
+    fetchApi<Rule>(`/rules/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/rules/${id}`, {
+      method: "DELETE",
+    }),
+  
+  test: (data: { pattern: string; testLabels?: string[] }) =>
+    fetchApi<RuleTestResult>(`/rules/test`, {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
 };
 
@@ -464,6 +582,235 @@ export const importApi = {
         skip_duplicates: skipDuplicates,
       }),
     }),
+};
+
+// ============================================================================
+// NOTIFICATIONS API (PR #6)
+// ============================================================================
+
+export interface Notification {
+  id: number;
+  user_id: number;
+  type: "info" | "warning" | "success" | "error";
+  category: "transaction" | "budget" | "invitation" | "system";
+  title: string;
+  message: string;
+  data?: Record<string, any>;
+  is_read: boolean;
+  read_at?: string;
+  created_at: string;
+}
+
+export interface NotificationsList {
+  items: Notification[];
+  total: number;
+  unread_count: number;
+}
+
+export const notificationsApi = {
+  list: (params?: { unreadOnly?: boolean; limit?: number; offset?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.unreadOnly) query.set("unread_only", "true");
+    if (params?.limit) query.set("limit", params.limit.toString());
+    if (params?.offset) query.set("offset", params.offset.toString());
+    return fetchApi<NotificationsList>(`/notifications?${query.toString()}`);
+  },
+  
+  getUnreadCount: () =>
+    fetchApi<{ unread_count: number }>("/notifications/unread-count"),
+  
+  markAsRead: (id: number) =>
+    fetchApi<{ success: boolean; id: number }>(`/notifications/${id}/read`, {
+      method: "POST",
+    }),
+  
+  markAllAsRead: () =>
+    fetchApi<{ success: boolean; marked_read: number }>("/notifications/mark-all-read", {
+      method: "POST",
+    }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/notifications/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+// ============================================================================
+// HOUSEHOLDS API (PR #7)
+// ============================================================================
+
+export interface Household {
+  id: number;
+  name: string;
+  description?: string;
+  owner_id: number;
+  created_at: string;
+  updated_at: string;
+  member_count: number;
+}
+
+export interface HouseholdMember {
+  id: number;
+  user_id: number;
+  name: string;
+  email: string;
+  role: "owner" | "admin" | "member";
+  is_active: boolean;
+  joined_at: string;
+}
+
+export interface Invitation {
+  id: number;
+  household_id: number;
+  email: string;
+  status: "pending" | "accepted" | "declined" | "expired";
+  role: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export const householdsApi = {
+  getMyHousehold: () =>
+    fetchApi<Household | null>("/households/my"),
+  
+  create: (data: { name: string; description?: string }) =>
+    fetchApi<Household>("/households", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  
+  update: (id: number, data: { name?: string; description?: string }) =>
+    fetchApi<Household>(`/households/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  
+  delete: (id: number) =>
+    fetchApi<{ deleted: boolean; id: number }>(`/households/${id}`, {
+      method: "DELETE",
+    }),
+  
+  // Members
+  listMembers: (householdId: number) =>
+    fetchApi<HouseholdMember[]>(`/households/${householdId}/members`),
+  
+  removeMember: (householdId: number, userId: number) =>
+    fetchApi<{ removed: boolean; user_id: number }>(
+      `/households/${householdId}/members/${userId}`,
+      { method: "DELETE" }
+    ),
+  
+  // Invitations
+  createInvitation: (householdId: number, data: { email: string; role?: string }) =>
+    fetchApi<Invitation>(`/households/${householdId}/invitations`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  
+  listInvitations: (householdId: number) =>
+    fetchApi<Invitation[]>(`/households/${householdId}/invitations`),
+  
+  acceptInvitation: (token: string) =>
+    fetchApi<{ success: boolean; household_id: number }>("/households/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+  
+  declineInvitation: (token: string) =>
+    fetchApi<{ success: boolean }>("/households/invitations/decline", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+  
+  cancelInvitation: (householdId: number, invitationId: number) =>
+    fetchApi<{ cancelled: boolean; id: number }>(
+      `/households/${householdId}/invitations/${invitationId}`,
+      { method: "DELETE" }
+    ),
+};
+
+// ============================================================================
+// EXPORT API (PR #8)
+// ============================================================================
+
+export interface MonthlyReport {
+  month: string;
+  generated_at: string;
+  summary: {
+    total_income: number;
+    total_expenses: number;
+    balance: number;
+    transaction_count: number;
+  };
+  by_category: Record<string, { income: number; expenses: number; count: number }>;
+  transactions: any[];
+}
+
+export interface AnnualReport {
+  year: number;
+  generated_at: string;
+  summary: {
+    total_income: number;
+    total_expenses: number;
+    balance: number;
+    transaction_count: number;
+    average_monthly_income: number;
+    average_monthly_expenses: number;
+  };
+  monthly_breakdown: Record<string, { income: number; expenses: number; count: number }>;
+  top_categories: Record<string, { income: number; expenses: number; count: number }>;
+}
+
+export const exportApi = {
+  exportCsv: (params: {
+    startDate?: string;
+    endDate?: string;
+    category?: string;
+    status?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.startDate) query.set("start_date", params.startDate);
+    if (params.endDate) query.set("end_date", params.endDate);
+    if (params.category) query.set("category", params.category);
+    if (params.status) query.set("status", params.status);
+    
+    return fetch(`/api/export/transactions/csv?${query.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+      },
+    }).then((res) => {
+      if (!res.ok) throw new Error("Export failed");
+      return res.blob();
+    });
+  },
+  
+  exportJson: (params: {
+    startDate?: string;
+    endDate?: string;
+    category?: string;
+    status?: string;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.startDate) query.set("start_date", params.startDate);
+    if (params.endDate) query.set("end_date", params.endDate);
+    if (params.category) query.set("category", params.category);
+    if (params.status) query.set("status", params.status);
+    
+    return fetchApi<{ exported_at: string; count: number; transactions: any[] }>(
+      `/export/transactions/json?${query.toString()}`
+    );
+  },
+  
+  getMonthlyReport: (month: string) =>
+    fetchApi<MonthlyReport>(`/export/report/monthly?month=${month}`),
+  
+  getAnnualReport: (year: number) =>
+    fetchApi<AnnualReport>(`/export/report/annual?year=${year}`),
+  
+  getFullBackup: () =>
+    fetchApi<{ exported_at: string; version: string; user: any; accounts: any[]; transactions: any[]; categories: any[]; budgets: any[]; rules: any[] }>(
+      "/export/backup/full"
+    ),
 };
 
 // ============================================================================
