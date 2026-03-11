@@ -25,6 +25,7 @@ from routers.auth import router as auth_router
 from routers.accounts import router as accounts_router
 from routers.dashboard import router as dashboard_router
 from routers.transactions import router as transactions_router
+from routers.import_csv import router as import_router
 
 # TODO: Create these routers
 # from routers.categories import router as categories_router
@@ -77,6 +78,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(accounts_router, prefix="/api/accounts", tags=["Accounts"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(transactions_router, prefix="/api/transactions", tags=["Transactions"])
+app.include_router(import_router, prefix="/api/transactions", tags=["Import"])
 # app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])
 # app.include_router(budgets_router, prefix="/api/budgets", tags=["Budgets"])
 # app.include_router(household_router, prefix="/api/household", tags=["Household"])

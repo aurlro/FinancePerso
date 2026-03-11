@@ -343,3 +343,88 @@ class ChangePasswordRequest(BaseModel):
 
     current_password: str = Field(..., description="Current password")
     new_password: str = Field(..., min_length=8, description="New password (min 8 characters)")
+
+
+# =============================================================================
+# Import Models
+# =============================================================================
+
+
+class CsvMapping(BaseModel):
+    """CSV column mapping configuration."""
+
+    date_column: str = Field(..., description="Column name for date")
+    label_column: str = Field(..., description="Column name for label/description")
+    amount_column: Optional[str] = Field(None, description="Column name for amount (if single column)")
+    debit_column: Optional[str] = Field(None, description="Column name for debit amounts")
+    credit_column: Optional[str] = Field(None, description="Column name for credit amounts")
+    use_debit_credit: bool = Field(False, description="Whether to use separate debit/credit columns")
+
+
+class ImportTransactionItem(BaseModel):
+    """Single transaction data for import."""
+
+    date: str = Field(..., description="Transaction date (YYYY-MM-DD)")
+    label: str = Field(..., description="Transaction label")
+    amount: float = Field(..., description="Transaction amount (negative for expenses)")
+    raw_data: Optional[dict] = Field(None, description="Original CSV row data")
+
+
+class ImportRequest(BaseModel):
+    """Request model for CSV import."""
+
+    account_id: int = Field(..., description="Target bank account ID")
+    csv_content: str = Field(..., description="Raw CSV file content")
+    mapping: CsvMapping = Field(..., description="Column mapping configuration")
+    skip_duplicates: bool = Field(True, description="Skip transactions that already exist")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "account_id": 1,
+                "csv_content": "Date;Libellé;Montant\n2024-03-15;Supermarché;-45.20\n2024-03-16;Salaire;2500.00",
+                "mapping": {
+                    "date_column": "Date",
+                    "label_column": "Libellé",
+                    "amount_column": "Montant",
+                    "use_debit_credit": False,
+                },
+                "skip_duplicates": True,
+            }
+        }
+
+
+class ImportResultItem(BaseModel):
+    """Result for a single imported transaction."""
+
+    row_index: int = Field(..., description="Row index in CSV")
+    status: Literal["imported", "duplicate", "error"] = Field(..., description="Import status")
+    transaction_id: Optional[int] = Field(None, description="Created transaction ID (if imported)")
+    error_message: Optional[str] = Field(None, description="Error message (if failed)")
+    label: str = Field(..., description="Transaction label")
+    amount: float = Field(..., description="Transaction amount")
+
+
+class ImportResponse(BaseModel):
+    """Response model for CSV import."""
+
+    total_rows: int = Field(..., description="Total rows processed")
+    imported: int = Field(..., description="Number of transactions imported")
+    duplicates: int = Field(..., description="Number of duplicates skipped")
+    errors: int = Field(..., description="Number of errors")
+    transactions: list[ImportResultItem] = Field(..., description="Details for each row")
+    transfer_detected_count: int = Field(0, description="Number of internal transfers detected")
+    attributed_count: int = Field(0, description="Number of transactions auto-attributed")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "total_rows": 10,
+                "imported": 8,
+                "duplicates": 1,
+                "errors": 1,
+                "transactions": [],
+                "transfer_detected_count": 2,
+                "attributed_count": 5,
+            }
+        }

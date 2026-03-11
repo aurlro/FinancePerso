@@ -139,6 +139,11 @@ export { useSavingsGoals } from "./useSavingsGoals";
 export { useTransactionComments, useTransactionCommentCounts } from "./useTransactionComments";
 
 // ============================================
+// IMPORT
+// ============================================
+export { useImportTransactions } from "./useImport";
+
+// ============================================
 // ONBOARDING
 // ============================================
 export { useOnboardingStatus } from "./useOnboardingStatus";

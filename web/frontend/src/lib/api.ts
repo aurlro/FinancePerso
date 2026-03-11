@@ -417,6 +417,56 @@ export const accountsApi = {
 };
 
 // ============================================================================
+// IMPORT API
+// ============================================================================
+
+export interface CsvMapping {
+  date_column: string;
+  label_column: string;
+  amount_column?: string;
+  debit_column?: string;
+  credit_column?: string;
+  use_debit_credit: boolean;
+}
+
+export interface ImportResultItem {
+  row_index: number;
+  status: "imported" | "duplicate" | "error";
+  transaction_id?: number;
+  error_message?: string;
+  label: string;
+  amount: number;
+}
+
+export interface ImportResponse {
+  total_rows: number;
+  imported: number;
+  duplicates: number;
+  errors: number;
+  transactions: ImportResultItem[];
+  transfer_detected_count: number;
+  attributed_count: number;
+}
+
+export const importApi = {
+  importCsv: (
+    accountId: number,
+    csvContent: string,
+    mapping: CsvMapping,
+    skipDuplicates: boolean = true
+  ) =>
+    fetchApi<ImportResponse>("/transactions/import", {
+      method: "POST",
+      body: JSON.stringify({
+        account_id: accountId,
+        csv_content: csvContent,
+        mapping,
+        skip_duplicates: skipDuplicates,
+      }),
+    }),
+};
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 
