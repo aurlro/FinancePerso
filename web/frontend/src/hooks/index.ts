@@ -203,6 +203,19 @@ export {
 } from "./useExportApi";
 
 // ============================================
+// ANALYTICS AVANCÉS (PR #9 - via API FastAPI)
+// ============================================
+export {
+  useAnomalies,
+  useCashflowPredictions,
+  useRecurringTransactions,
+  useCategoryTrends,
+  useSeasonality,
+  useSpendingInsights,
+  usePeriodComparison,
+} from "./useAnalyticsApi";
+
+// ============================================
 // FONCTIONNALITÉS SUPABASE (Temps réel - Legacy)
 // ============================================
 export { useCoupleBalance } from "./useCoupleBalance";

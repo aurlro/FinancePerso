@@ -814,6 +814,142 @@ export const exportApi = {
 };
 
 // ============================================================================
+// ANALYTICS API (PR #9)
+// ============================================================================
+
+export interface Anomaly {
+  type: string;
+  label: string;
+  details: string;
+  expected_mean: number;
+  expected_std: number;
+  transactions: Array<{
+    id: number;
+    date: string;
+    label: string;
+    amount: number;
+    category: string;
+  }>;
+  transaction_count: number;
+}
+
+export interface CashflowPrediction {
+  start_date: string;
+  end_date: string;
+  starting_balance: number;
+  predicted_income: number;
+  predicted_expenses: number;
+  predicted_balance: number;
+  confidence: number;
+  warnings: string[];
+}
+
+export interface RecurringTransaction {
+  label: string;
+  category: string;
+  amount: number;
+  frequency: string;
+  confidence: number;
+  occurrence_count: number;
+  first_seen: string;
+  last_seen: string;
+}
+
+export interface CategoryTrend {
+  category: string;
+  trend: "increasing" | "decreasing" | "stable";
+  slope: number;
+  avg_monthly: number;
+  current_month: number;
+  previous_month: number;
+  change_percent: number;
+}
+
+export interface SpendingInsight {
+  type: "info" | "warning" | "success";
+  title: string;
+  message: string;
+  priority: "high" | "medium" | "low";
+}
+
+export interface PeriodComparison {
+  period: string;
+  current: {
+    start_date: string;
+    income: number;
+    expenses: number;
+    balance: number;
+    transaction_count: number;
+  };
+  previous: {
+    start_date: string;
+    end_date: string;
+    income: number;
+    expenses: number;
+    balance: number;
+    transaction_count: number;
+  };
+  changes_percent: {
+    income: number;
+    expenses: number;
+    balance: number;
+  };
+}
+
+export const analyticsApi = {
+  getAnomalies: (threshold: number = 2.0) =>
+    fetchApi<{ anomalies: Anomaly[]; total_checked: number; threshold_sigma: number }>(
+      `/analytics/anomalies?threshold=${threshold}`
+    ),
+  
+  getCashflowPredictions: (monthsAhead: number = 3) =>
+    fetchApi<{ predictions: CashflowPrediction[]; months_ahead: number }>(
+      `/analytics/predictions/cashflow?months_ahead=${monthsAhead}`
+    ),
+  
+  getRecurringTransactions: () =>
+    fetchApi<{ recurring: RecurringTransaction[]; total_count: number }>(
+      "/analytics/recurring"
+    ),
+  
+  getCategoryTrends: (months: number = 6, category?: string) => {
+    const query = new URLSearchParams();
+    query.set("months", months.toString());
+    if (category) query.set("category", category);
+    return fetchApi<{ trends: CategoryTrend[]; months_analyzed: number; categories_count: number }>(
+      `/analytics/trends/categories?${query.toString()}`
+    );
+  },
+  
+  getSeasonality: (category?: string) => {
+    const query = category ? `?category=${encodeURIComponent(category)}` : "";
+    return fetchApi<{
+      seasonality: Record<string, number>;
+      peak_months: string[];
+      low_months: string[];
+      has_pattern: boolean;
+      category?: string;
+    }>(`/analytics/seasonality${query}`);
+  },
+  
+  getSpendingInsights: () =>
+    fetchApi<{
+      insights: SpendingInsight[];
+      score: number;
+      metrics: {
+        total_income: number;
+        total_expenses: number;
+        savings_rate: number;
+        transaction_count: number;
+      };
+      top_expense_categories: Record<string, number>;
+    }>("/analytics/insights"),
+  
+  getPeriodComparison: (period: "month" | "quarter" | "year") =>
+    fetchApi<PeriodComparison>(`/analytics/comparison?period=${period}`),
+};
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 

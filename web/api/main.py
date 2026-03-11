@@ -33,6 +33,7 @@ from routers.rules import router as rules_router
 from routers.notifications import router as notifications_router
 from routers.households import router as households_router
 from routers.export import router as export_router
+from routers.analytics import router as analytics_router
 
 settings = get_settings()
 
@@ -91,6 +92,7 @@ app.include_router(rules_router, prefix="/api/rules", tags=["Rules"])
 app.include_router(notifications_router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(households_router, prefix="/api/households", tags=["Households"])
 app.include_router(export_router, prefix="/api/export", tags=["Export"])
+app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
 
 
 @app.get("/api/health", tags=["Health"])
