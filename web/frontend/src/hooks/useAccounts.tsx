@@ -23,6 +23,8 @@ export function useAccounts() {
       // TODO: GET /api/accounts
       return MOCK_ACCOUNTS;
     },
+    staleTime: 0,         // Force le re-fetch pour éviter les données stale
+    refetchOnMount: true, // Re-fetch à chaque mount du composant
   });
 }
 

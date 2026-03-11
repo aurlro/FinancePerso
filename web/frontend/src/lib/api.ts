@@ -221,6 +221,148 @@ export const budgetsApi = {
 };
 
 // ============================================================================
+// AUTHENTICATION API
+// ============================================================================
+
+export interface User {
+  id: number;
+  email: string;
+  name: string;
+  household_id: number | null;
+  created_at: string;
+}
+
+export interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+}
+
+async function fetchAuth<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...((options.headers as Record<string, string>) || {}),
+  };
+  
+  // Don't add auth token for login/register endpoints
+  if (authToken && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+  
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `HTTP ${response.status}: ${response.statusText}`);
+  }
+  
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  
+  return response.json();
+}
+
+export const authApi = {
+  register: (credentials: RegisterCredentials) =>
+    fetchAuth<User>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    }),
+  
+  login: async (credentials: LoginCredentials): Promise<AuthTokens> => {
+    // Use form data for OAuth2 compatibility
+    const formData = new URLSearchParams();
+    formData.append("username", credentials.email);
+    formData.append("password", credentials.password);
+    
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || "Invalid credentials");
+    }
+    
+    const data = await response.json() as AuthTokens;
+    
+    // Store tokens
+    setAuthToken(data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    
+    return data;
+  },
+  
+  logout: () => {
+    clearAuthToken();
+    localStorage.removeItem("refresh_token");
+  },
+  
+  me: () =>
+    fetchApi<User>("/auth/me"),
+  
+  refreshToken: async (): Promise<AuthTokens> => {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+    
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to refresh token");
+    }
+    
+    const data = await response.json() as AuthTokens;
+    setAuthToken(data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    
+    return data;
+  },
+  
+  changePassword: (currentPassword: string, newPassword: string) =>
+    fetchApi<void>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    }),
+};
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 

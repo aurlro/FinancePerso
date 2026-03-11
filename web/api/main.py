@@ -8,23 +8,28 @@ Architecture:
     - Architecture en couches (routers -> services -> repositories -> models)
 """
 
+import sys
+from pathlib import Path
 from contextlib import asynccontextmanager
+
+# Add FinancePerso root to path for importing modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from web.api.config import get_settings
+from config import get_settings
 
 # Import routers directly from modules to avoid circular imports
-from web.api.routers.dashboard import router as dashboard_router
-from web.api.routers.transactions import router as transactions_router
+from routers.auth import router as auth_router
+from routers.dashboard import router as dashboard_router
+from routers.transactions import router as transactions_router
 
 # TODO: Create these routers
-# from web.api.routers.categories import router as categories_router
-# from web.api.routers.budgets import router as budgets_router
-# from web.api.routers.household import router as household_router
-# from web.api.routers.rules import router as rules_router
-# from web.api.routers.auth import router as auth_router
+# from routers.categories import router as categories_router
+# from routers.budgets import router as budgets_router
+# from routers.household import router as household_router
+# from routers.rules import router as rules_router
 
 settings = get_settings()
 
@@ -67,8 +72,7 @@ app.add_middleware(
 )
 
 # Inclusion des routers
-# TODO: Add these routers when created
-# app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(transactions_router, prefix="/api/transactions", tags=["Transactions"])
 # app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])

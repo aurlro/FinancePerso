@@ -5,7 +5,8 @@ Handles CRUD operations for transactions.
 
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # Add FinancePerso root to path
+# Add FinancePerso root to path for importing modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from typing import Annotated
 
@@ -20,7 +21,7 @@ from modules.db.transactions import (
 )
 from modules.logger import logger
 
-from web.api.models.schemas import (
+from models.schemas import (
     TransactionFilters,
     TransactionResponse,
     TransactionsListResponse,

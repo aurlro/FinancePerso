@@ -1,19 +1,50 @@
 /**
  * @file index.ts
  * @description Export centralisé de tous les hooks
+ * 
+ * ARCHITECTURE:
+ * - Hooks API (FastAPI): Source de vérité pour les données
+ * - Hooks Supabase: Pour fonctionnalités temps réel (notifications, comments)
+ * - Hooks Mock: Fallback temporaire pendant la migration
  */
 
-// Hooks de base
+// ============================================
+// AUTHENTIFICATION
+// ============================================
 export { useAuth } from "./useAuth";
-export { useDashboard, useMonthlyTrends, useCategoryBreakdown } from "./useDashboard";
+
+// ============================================
+// TRANSACTIONS (via API FastAPI)
+// ============================================
 export {
   useTransactions,
   useTransaction,
-  useCreateTransaction,
   useUpdateTransaction,
-  useDeleteTransaction,
-  useImportTransactions,
+  useCategorizeTransactions,
+  useBulkUpdateStatus,
+} from "./useTransactionsApi";
+
+// Fallback mock (temporaire)
+export {
+  useCreateTransaction as useCreateTransactionMock,
+  useDeleteTransaction as useDeleteTransactionMock,
+  useImportTransactions as useImportTransactionsMock,
 } from "./useTransactions";
+
+// ============================================
+// COMPTES BANCAIRES (via Mock → API à venir)
+// ============================================
+export {
+  useAccounts,
+  useCreateAccount,
+  useUpdateAccount,
+  useDeleteAccount,
+  useHouseholdId,
+} from "./useAccounts";
+
+// ============================================
+// CATÉGORIES (via Mock → API à venir)
+// ============================================
 export {
   useCategories,
   useCategory,
@@ -21,19 +52,54 @@ export {
   useUpdateCategory,
   useDeleteCategory,
 } from "./useCategories";
+
+// Gestion catégories via Supabase (fonctionnalités avancées)
+export {
+  useCreateCategory as useCreateCategorySupabase,
+  useUpdateCategory as useUpdateCategorySupabase,
+  useDeleteCategory as useDeleteCategorySupabase,
+} from "./useCategoryManagement";
+
+// ============================================
+// BUDGETS (via Mock → API à venir)
+// ============================================
 export {
   useBudgets,
   useBudget,
   useCreateBudget,
   useUpdateBudget,
   useDeleteBudget,
+  useUpsertBudget,
 } from "./useBudgets";
+
+// ============================================
+// FOyer / MEMBRES (via Mock → API à venir)
+// ============================================
 export {
   useHouseholdMembers,
-  useCreateMember,
+  useHousehold,
+  useAddMember,
   useUpdateMember,
   useDeleteMember,
+  useToggleMemberActive,
+  useSendInvitation,
+  useInvitations,
+  useCancelInvitation,
+  useAcceptInvitation,
+  useLeaveHousehold,
+  useUpdateProfile,
+  useRemoveMember,
+  useUpdateGhostMember,
+  useDeleteGhostMember,
+  useUpdateMemberCard,
+  useUpdateHousehold,
+  useAddGhostMember,
+  useUpdateHouseholdId,
 } from "./useHousehold";
+
+// ============================================
+// RÈGLES DE CATÉGORISATION (via Mock → API à venir)
+// ============================================
 export {
   useRules,
   useRule,
@@ -43,17 +109,42 @@ export {
   useTestRule,
 } from "./useRules";
 
-// Hooks UI (inchangés)
-export { useToast } from "./use-toast";
-export { useMobile } from "./use-mobile";
-
-// TODO: Adapter les hooks suivants
-export { useAccounts } from "./useAccounts";
+// Règles d'attribution (via Supabase)
 export { useAttributionRules } from "./useAttributionRules";
-export { useCategoryManagement } from "./useCategoryManagement";
+
+// ============================================
+// DASHBOARD (via API FastAPI)
+// ============================================
+export {
+  useDashboardStats,
+  useCategoryBreakdown,
+  useMonthlyEvolution,
+  useAccountTypeBreakdown,
+} from "./useDashboardApi";
+
+// Dashboard legacy (mock)
+export {
+  useDashboardMetrics as useDashboardMock,
+  useMonthlyTrends as useMonthlyTrendsMock,
+  useCategoryBreakdown as useCategoryBreakdownMock,
+} from "./useDashboard";
+
+// ============================================
+// FONCTIONNALITÉS SUPABASE (Temps réel)
+// ============================================
 export { useCoupleBalance } from "./useCoupleBalance";
 export { useForecast } from "./useForecast";
-export { useNotifications } from "./useNotifications";
-export { useOnboardingStatus } from "./useOnboardingStatus";
+export { useNotifications, createNotification } from "./useNotifications";
 export { useSavingsGoals } from "./useSavingsGoals";
-export { useTransactionComments } from "./useTransactionComments";
+export { useTransactionComments, useTransactionCommentCounts } from "./useTransactionComments";
+
+// ============================================
+// ONBOARDING
+// ============================================
+export { useOnboardingStatus } from "./useOnboardingStatus";
+
+// ============================================
+// UI
+// ============================================
+export { useToast } from "./use-toast";
+export { useIsMobile } from "./use-mobile";

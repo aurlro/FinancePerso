@@ -1,8 +1,3 @@
-/**
- * @file useHousehold.tsx
- * @description Hook pour la gestion des membres du foyer - VERSION ADAPTÉE POUR FASTAPI
- */
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export interface HouseholdMember {
@@ -14,6 +9,7 @@ export interface HouseholdMember {
   color: string;
   incomeShare?: number;
   expenseShare?: number;
+  isActive: boolean; // Ajout du statut actif/non-actif
   createdAt: string;
   updatedAt: string;
 }
@@ -25,32 +21,22 @@ export interface CreateMemberInput {
   color?: string;
   incomeShare?: number;
   expenseShare?: number;
+  isActive?: boolean;
 }
 
 // ============================================
-// MOCK DATA - À remplacer par appels API réels
+// MOCK DATA - Démarrage avec l'utilisateur actif (connecté) par défaut
 // ============================================
-const MOCK_MEMBERS: HouseholdMember[] = [
+let MOCK_MEMBERS: HouseholdMember[] = [
   {
-    id: "mem-1",
+    id: "mem-owner",
     name: "Moi",
     role: "owner",
     color: "#10b981",
-    incomeShare: 50,
-    expenseShare: 50,
-    createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "mem-2", 
-    name: "Partenaire",
-    role: "member",
-    color: "#3b82f6",
-    incomeShare: 50,
-    expenseShare: 50,
-    createdAt: "2024-01-01T00:00:00Z",
-    updatedAt: "2024-01-01T00:00:00Z",
-  },
+    isActive: true, // Actif = se connecte à l'app
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
 ];
 
 // ============================================
@@ -62,13 +48,12 @@ export function useHouseholdMembers() {
     queryKey: ["household", "members"],
     queryFn: async (): Promise<HouseholdMember[]> => {
       // TODO: GET /api/household/members
-      await new Promise(resolve => setTimeout(resolve, 300));
       return MOCK_MEMBERS;
     },
   });
 }
 
-// Alias pour compatibilité avec les composants qui importent useHousehold
+// Alias pour compatibilité
 export const useHousehold = useHouseholdMembers;
 
 export function useAddMember() {
@@ -79,14 +64,18 @@ export function useAddMember() {
       // TODO: POST /api/household/members
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      return {
+      const newMember: HouseholdMember = {
         ...input,
         id: `mem-${Date.now()}`,
         role: input.role || "member",
         color: input.color || "#6b7280",
+        isActive: input.isActive ?? true, // Par défaut actif
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      
+      MOCK_MEMBERS.push(newMember);
+      return newMember;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["household", "members"] });
@@ -102,10 +91,16 @@ export function useUpdateMember() {
       // TODO: PUT /api/household/members/{id}
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const member = MOCK_MEMBERS.find(m => m.id === id);
-      if (!member) throw new Error("Member not found");
+      const idx = MOCK_MEMBERS.findIndex(m => m.id === id);
+      if (idx === -1) throw new Error("Member not found");
       
-      return { ...member, ...data, updatedAt: new Date().toISOString() };
+      MOCK_MEMBERS[idx] = { 
+        ...MOCK_MEMBERS[idx], 
+        ...data, 
+        updatedAt: new Date().toISOString() 
+      };
+      
+      return MOCK_MEMBERS[idx];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["household", "members"] });
@@ -120,6 +115,7 @@ export function useDeleteMember() {
     mutationFn: async (id: string): Promise<void> => {
       // TODO: DELETE /api/household/members/{id}
       await new Promise(resolve => setTimeout(resolve, 300));
+      MOCK_MEMBERS = MOCK_MEMBERS.filter(m => m.id !== id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["household", "members"] });
@@ -127,21 +123,40 @@ export function useDeleteMember() {
   });
 }
 
-// Exports additionnels pour compatibilité
+// Hook pour activer/désactiver un membre
+export function useToggleMemberActive() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }): Promise<void> => {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const idx = MOCK_MEMBERS.findIndex(m => m.id === id);
+      if (idx === -1) throw new Error("Member not found");
+      
+      MOCK_MEMBERS[idx].isActive = isActive;
+      MOCK_MEMBERS[idx].updatedAt = new Date().toISOString();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["household", "members"] });
+    },
+  });
+}
+
+// Exports pour compatibilité
 export const useUpdateHousehold = useUpdateMember;
 export const useAddGhostMember = useAddMember;
-export function useSendInvitation() {
+export const useSendInvitation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (_email: string): Promise<void> => {
-      // TODO: POST /api/household/invite
+    mutationFn: async (_email: string) => {
       await new Promise(resolve => setTimeout(resolve, 300));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["household"] });
     },
   });
-}
+};
 export const useUpdateMemberCard = useUpdateMember;
 export const useHouseholdId = () => "household-1";
 export const useUpdateHouseholdId = () => {
@@ -199,4 +214,3 @@ export const useAcceptInvitation = () => {
 export const useUpdateGhostMember = useUpdateMember;
 export const useRemoveMember = useDeleteMember;
 export const useDeleteGhostMember = useDeleteMember;
-export const useToggleMemberActive = useUpdateMember;

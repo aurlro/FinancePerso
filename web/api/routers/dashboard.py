@@ -12,7 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 # Import existing modules (adjust path for web/api/ location)
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))  # Add FinancePerso root to path
+# Add FinancePerso root to path for importing modules
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from modules.db.categories import get_categories_with_emojis
 from modules.db.connection import get_db_connection
@@ -25,7 +26,7 @@ from modules.transaction_types import (
     calculate_true_income,
 )
 
-from web.api.models.schemas import (
+from models.schemas import (
     DashboardBreakdownResponse,
     DashboardEvolutionResponse,
     DashboardStatsResponse,

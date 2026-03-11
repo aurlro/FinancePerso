@@ -25,7 +25,7 @@ http://localhost:8081 (ou le port indiqué)
 
 ### Test 1: Onboarding Complet
 
-**Étape 1: Page d'accueil**
+**Étape 1: Page d'accueille**
 - [ ] Vérifier que l'écran "Bienvenue sur FinancePerso" s'affiche
 - [ ] Cliquer sur "Commencer"
 
@@ -34,73 +34,54 @@ http://localhost:8081 (ou le port indiqué)
 - [ ] Cliquer sur "Continuer"
 
 **Étape 3: Ajout de membres**
-- [ ] Ajouter un premier membre (ex: "Jean")
-- [ ] Ajouter un deuxième membre (ex: "Marie")
+- [ ] Vérifier que "Moi" est présent (connecté par défaut)
+- [ ] Vérifier l'explication : "Actif = se connecte à l'app"
+- [ ] Ajouter un partenaire actif (ex: "Marie") - pourra se connecter
+- [ ] Ajouter un membre non-actif (ex: "Bébé") - participe aux dépenses mais ne se connecte pas
+- [ ] Tester le toggle pour passer un membre en "Hors-ligne"
 - [ ] Cliquer sur "Continuer"
 
 **Étape 4: Ajout d'un compte bancaire**
+- [ ] Vérifier le toggle "Compte commun (joint)" - activé par défaut
 - [ ] Nom du compte: "Compte Courant"
-- [ ] Type: "Compte joint"
-- [ ] Solde initial: "2500"
+- [ ] Banque: "Boursorama"
+- [ ] Type: "Compte commun"
 - [ ] Cliquer sur "Ajouter le compte"
 - [ ] Cliquer sur "Continuer"
 
 **Étape 5: Import de transactions**
-- [ ] Option A: Cliquer sur "Passer cette étape" pour l'instant
-- [ ] OU Option B: Sélectionner un fichier CSV et tester l'import
+- [ ] Option A: Cliquer sur "Passer cette étape"
 
 **Résultat attendu:**
 - [ ] Redirection vers le Dashboard
-- [ ] Les stats s'affichent avec les données du compte créé
 
-### Test 2: Revenir au Dashboard après onboarding
+## 📖 Explication Actif vs Non-Actif (CORRECTE)
 
-1. Rafraîchir la page
-2. **Résultat:** Onboarding ne doit PAS réapparaître (localStorage marqué comme complété)
+### 👤 Actif (bouton vert "Connecté")
+- **Se connecte** à l'application avec un email/mot de passe
+- **Exemples** : vous, votre partenaire, un colocataire
+- **Peut** : voir toutes les transactions, ajouter des dépenses, configurer
 
-### Test 3: Reset et recommencer
+### 🚫 Non-Actif (bouton gris "Hors-ligne")  
+- **Participe** aux dépenses mais **ne se connecte pas**
+- **Exemples** : bébé/enfant (dépenses puériculture), animal de compagnie (vétérinaire), voiture (essence/entretien)
+- **Usage** : permet de catégoriser les dépenses sans créer de compte utilisateur
 
-Dans la console du navigateur:
-```javascript
-localStorage.removeItem('onboarding-completed')
-localStorage.removeItem('fp_token')
-```
-
-Rafraîchir → L'onboarding doit réapparaître
-
-## 🔧 Dépannage
-
-### Problème: Page blanche
-
-**Vérifier:**
-1. L'API tourne sur http://localhost:8000
-2. Le frontend tourne sans erreur dans le terminal
-3. Console navigateur (F12) sans erreurs rouges
-
-### Problème: Onboarding bloque à une étape
-
-**Console → taper:**
-```javascript
-// Forcer la complétion
-localStorage.setItem('onboarding-completed', 'true')
-location.reload()
-```
-
-### Problème: Données non sauvegardées
-
-Les données sont stockées en mémoire (mock). Pour persister:
-- À l'étape 4, vérifier que le compte apparaît dans la liste
-- Sinon, vérifier la console pour les erreurs
+**Cas d'usage typique :**
+- 👤 Vous (Actif)
+- 👤 Partenaire (Actif) 
+- 🚫 Bébé (Non-actif) - pour les dépenses bébé sans que bébé ait un compte 😉
+- 🚫 Chien (Non-actif) - pour les frais vétérinaire
 
 ## ✅ Validation
 
 | Étape | Status |
 |-------|--------|
-| Écran Bienvenue | ⬜ |
-| Création foyer | ⬜ |
-| Ajout membres | ⬜ |
-| Ajout compte | ⬜ |
-| Skip import | ⬜ |
+| "Moi" présent par défaut | ⬜ |
+| Explication correcte Actif/Non-actif | ⬜ |
+| Ajout membre actif (connecté) | ⬜ |
+| Ajout membre non-actif (hors-ligne) | ⬜ |
+| Toggle fonctionne | ⬜ |
 | Dashboard affiché | ⬜ |
 
 **Date de test:** _____

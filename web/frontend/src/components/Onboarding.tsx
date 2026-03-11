@@ -11,7 +11,7 @@ import {
   Sparkles, Home, Users, CreditCard, Upload, ChevronRight, ChevronLeft,
   Plus, Trash2, UserPlus, Send, Check, FileUp, ArrowRight,
 } from "lucide-react";
-import { useHousehold, useUpdateHousehold, useHouseholdMembers, useAddGhostMember, useSendInvitation } from "@/hooks/useHousehold";
+import { useHousehold, useUpdateHousehold, useHouseholdMembers, useAddGhostMember, useSendInvitation, useToggleMemberActive, useDeleteMember } from "@/hooks/useHousehold";
 import { useAccounts, useCreateAccount, useHouseholdId } from "@/hooks/useAccounts";
 import { useAuth } from "@/hooks/useAuth";
 import { parseCsv, parseDate, parseAmount, BANK_PRESETS, type ParsedCsv, type BankPreset } from "@/lib/csv-parser";
@@ -31,9 +31,14 @@ const STEPS = [
 ];
 
 const ACCOUNT_TYPES = [
-  { value: "perso_a" as const, label: "Personnel A", description: "Votre compte personnel" },
-  { value: "perso_b" as const, label: "Personnel B", description: "Compte du partenaire" },
-  { value: "joint" as const, label: "Compte joint", description: "Compte partagé" },
+  { value: "perso_a" as const, label: "💳 Mon compte perso", description: "Vos dépenses personnelles (shopping, hobbies...)" },
+  { value: "perso_b" as const, label: "💳 Compte de mon partenaire", description: "Ses dépenses personnelles" },
+  { value: "joint" as const, label: "🏠 Notre compte commun", description: "Dépenses partagées : loyer, courses, factures..." },
+];
+
+const ACCOUNT_TYPES_NO_JOINT = [
+  { value: "perso_a" as const, label: "💳 Mon compte perso", description: "Vos dépenses personnelles" },
+  { value: "perso_b" as const, label: "💳 Compte de mon partenaire", description: "Ses dépenses personnelles" },
 ];
 
 interface Props {
@@ -169,6 +174,7 @@ function StepHousehold({ onNext, onPrev }: { onNext: () => void; onPrev: () => v
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Foyer Dupont"
             maxLength={50}
+            autoComplete="organization"
             autoFocus
           />
         </div>
@@ -184,6 +190,8 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
   const { data: members } = useHouseholdMembers();
   const addGhost = useAddGhostMember();
   const sendInvitation = useSendInvitation();
+  const toggleActive = useToggleMemberActive();
+  const deleteMember = useDeleteMember();
   const household = profile?.households as any;
 
   const [ghostName, setGhostName] = useState("");
@@ -192,18 +200,18 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
   const [mode, setMode] = useState<"ghost" | "invite" | null>(null);
 
   const handleAddGhost = () => {
-    if (household && ghostName.trim()) {
+    if (ghostName.trim()) {
       addGhost.mutate(
-        { householdId: household.id, displayName: ghostName.trim(), cardIdentifier: ghostCard },
+        { name: ghostName.trim(), color: "#3b82f6", isActive: true },
         { onSuccess: () => { setGhostName(""); setGhostCard(""); setMode(null); } }
       );
     }
   };
 
   const handleInvite = () => {
-    if (household && inviteEmail.trim()) {
+    if (inviteEmail.trim()) {
       sendInvitation.mutate(
-        { householdId: household.id, email: inviteEmail.trim() },
+        inviteEmail.trim(),
         { onSuccess: () => { setInviteEmail(""); setMode(null); } }
       );
     }
@@ -216,7 +224,11 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
           <Users className="h-5 w-5 text-primary" /> Membres du foyer
         </CardTitle>
         <CardDescription>
-          Ajoutez votre partenaire ou d'autres membres. Vous pourrez le faire plus tard.
+          Ajoutez votre partenaire ou d'autres membres. 
+          <span className="block mt-1 text-xs">
+            <strong>Actif</strong> = se connecte à l'app (vous, partenaire). 
+            <strong>Non-actif</strong> = participe aux dépenses mais ne se connecte pas (enfant, animal...).
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -224,13 +236,36 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
         <div className="space-y-2">
           {members?.map((m: any) => (
             <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border">
-              <span className="text-sm font-medium">{m.display_name}</span>
-              <div className="flex gap-1.5">
-                {m.is_active && <Badge variant="secondary">Actif</Badge>}
-                {!m.is_active && <Badge variant="outline">Non-actif</Badge>}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{m.name || m.display_name}</span>
+                {m.role === "owner" && <Badge variant="default" className="text-[10px]">Propriétaire</Badge>}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant={m.isActive ? "default" : "outline"} 
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => toggleActive.mutate({ id: m.id, isActive: !m.isActive })}
+                  title={m.isActive ? "Se connecte à l'application" : "Ne se connecte pas (participe aux dépenses)"}
+                >
+                  {m.isActive ? "👤 Connecté" : "🚫 Hors-ligne"}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0 text-destructive"
+                  onClick={() => deleteMember.mutate(m.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           ))}
+          {members?.length === 1 && members[0].id === "mem-owner" && (
+            <div className="p-4 rounded-lg border border-dashed bg-muted/30 text-center text-sm text-muted-foreground">
+              Vous êtes connecté. Ajoutez votre partenaire (s'il se connecte) ou d'autres membres.
+            </div>
+          )}
         </div>
 
         {/* Add actions */}
@@ -249,12 +284,27 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
           <div className="space-y-3 p-4 rounded-lg border border-dashed bg-muted/30">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Nom</Label>
-                <Input value={ghostName} onChange={(e) => setGhostName(e.target.value)} placeholder="Ex: Élise" autoFocus />
+                <Label htmlFor="ghost-member-name">Nom</Label>
+                <Input
+                  id="ghost-member-name"
+                  name="ghostMemberName"
+                  value={ghostName}
+                  onChange={(e) => setGhostName(e.target.value)}
+                  placeholder="Ex: Élise"
+                  autoComplete="name"
+                  autoFocus
+                />
               </div>
               <div className="space-y-1.5">
-                <Label>Identifiant carte (optionnel)</Label>
-                <Input value={ghostCard} onChange={(e) => setGhostCard(e.target.value)} placeholder="Ex: CB *7890" />
+                <Label htmlFor="ghost-member-card">Identifiant carte (optionnel)</Label>
+                <Input
+                  id="ghost-member-card"
+                  name="ghostMemberCard"
+                  value={ghostCard}
+                  onChange={(e) => setGhostCard(e.target.value)}
+                  placeholder="Ex: CB *7890"
+                  autoComplete="off"
+                />
               </div>
             </div>
             <div className="flex gap-2">
@@ -269,8 +319,17 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
         {mode === "invite" && (
           <div className="space-y-3 p-4 rounded-lg border border-dashed bg-muted/30">
             <div className="space-y-1.5">
-              <Label>Email du partenaire</Label>
-              <Input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@exemple.com" autoFocus />
+              <Label htmlFor="invite-email">Email du partenaire</Label>
+              <Input
+                id="invite-email"
+                name="inviteEmail"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="email@exemple.com"
+                autoComplete="email"
+                autoFocus
+              />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleInvite} disabled={sendInvitation.isPending || !inviteEmail.trim()}>
@@ -290,16 +349,23 @@ function StepMembers({ onNext, onPrev }: { onNext: () => void; onPrev: () => voi
 /* ─── Step 4: Accounts ────────────────────────────── */
 function StepAccounts({ onNext, onPrev }: { onNext: () => void; onPrev: () => void }) {
   const { data: accounts } = useAccounts();
-  const { data: householdId } = useHouseholdId();
+  const householdId = useHouseholdId(); // ✅ Correction: pas de destructuration { data: ... }
   const createAccount = useCreateAccount();
   const [name, setName] = useState("");
   const [bank, setBank] = useState("");
   const [type, setType] = useState<"perso_a" | "perso_b" | "joint">("joint");
+  const [hasJointAccount, setHasJointAccount] = useState(true);
 
   const handleAdd = () => {
     if (householdId && name.trim()) {
       createAccount.mutate(
-        { household_id: householdId, name: name.trim(), bank_name: bank.trim() || null, account_type: type },
+        { 
+          household_id: householdId, 
+          name: name.trim(), 
+          bank_name: bank.trim() || undefined, // ✅ Correction: undefined au lieu de null
+          account_type: type,
+          balance: 0, // ✅ Correction: ajout du balance requis
+        },
         { onSuccess: () => { setName(""); setBank(""); setType("joint"); } }
       );
     }
@@ -314,10 +380,28 @@ function StepAccounts({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
           <CreditCard className="h-5 w-5 text-primary" /> Vos comptes bancaires
         </CardTitle>
         <CardDescription>
-          Ajoutez au moins un compte pour pouvoir importer des transactions.
+          Ajoutez vos comptes personnels et/ou votre compte commun.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Toggle compte joint */}
+        <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+          <div>
+            <span className="text-sm font-medium">Compte commun (joint)</span>
+            <p className="text-xs text-muted-foreground">
+              {hasJointAccount 
+                ? "Vous pourrez suivre les dépenses communes" 
+                : "Chaque membre aura uniquement son compte perso"}
+            </p>
+          </div>
+          <Button
+            variant={hasJointAccount ? "default" : "outline"}
+            size="sm"
+            onClick={() => setHasJointAccount(!hasJointAccount)}
+          >
+            {hasJointAccount ? "✓ Activé" : "Désactivé"}
+          </Button>
+        </div>
         {/* Existing accounts */}
         {accounts && accounts.length > 0 && (
           <div className="space-y-2">
@@ -339,19 +423,34 @@ function StepAccounts({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
         <div className="space-y-3 p-4 rounded-lg border border-dashed bg-muted/30">
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Nom du compte *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Compte courant" autoFocus />
+              <Label htmlFor="account-name">Nom du compte *</Label>
+              <Input
+                id="account-name"
+                name="accountName"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Compte courant"
+                autoComplete="off"
+                autoFocus
+              />
             </div>
             <div className="space-y-1.5">
-              <Label>Banque</Label>
-              <Input value={bank} onChange={(e) => setBank(e.target.value)} placeholder="Ex: Boursorama" />
+              <Label htmlFor="bank-name">Banque</Label>
+              <Input
+                id="bank-name"
+                name="bankName"
+                value={bank}
+                onChange={(e) => setBank(e.target.value)}
+                placeholder="Ex: Boursorama"
+                autoComplete="off"
+              />
             </div>
             <div className="space-y-1.5">
-              <Label>Type</Label>
+              <Label>Type {hasJointAccount ? "(compte commun disponible)" : "(sans compte commun)"}</Label>
               <Select value={type} onValueChange={(v: any) => setType(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {ACCOUNT_TYPES.map((t) => (
+                  {(hasJointAccount ? ACCOUNT_TYPES : ACCOUNT_TYPES_NO_JOINT).map((t) => (
                     <SelectItem key={t.value} value={t.value}>
                       {t.label}
                     </SelectItem>
@@ -361,7 +460,7 @@ function StepAccounts({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            {ACCOUNT_TYPES.find((t) => t.value === type)?.description}
+            {(hasJointAccount ? ACCOUNT_TYPES : ACCOUNT_TYPES_NO_JOINT).find((t) => t.value === type)?.description}
           </p>
           <Button size="sm" onClick={handleAdd} disabled={createAccount.isPending || !name.trim()}>
             <Plus className="h-4 w-4 mr-1" /> Ajouter le compte
@@ -526,21 +625,36 @@ function StepImport({ onComplete, onPrev }: { onComplete: () => void; onPrev: ()
             </div>
 
             <div className="space-y-2">
-              <Label>Compte cible</Label>
+              <Label htmlFor="target-account">Compte cible</Label>
               <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un compte" /></SelectTrigger>
+                <SelectTrigger id="target-account">
+                  <SelectValue placeholder={accounts === undefined ? "Chargement..." : "Sélectionner un compte"} />
+                </SelectTrigger>
                 <SelectContent>
+                  {accounts?.length === 0 && (
+                    <SelectItem value="" disabled>Aucun compte disponible</SelectItem>
+                  )}
                   {accounts?.map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.name} {a.bank_name ? `(${a.bank_name})` : ""}</SelectItem>
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name} {a.bank_name ? `(${a.bank_name})` : ""} 
+                      <span className="text-muted-foreground text-xs ml-1">
+                        {a.account_type === "joint" ? "- Commun" : a.account_type === "perso_a" ? "- Perso A" : "- Perso B"}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {accounts?.length === 0 && (
+                <p className="text-xs text-destructive">
+                  Aucun compte trouvé. Veuillez d'abord créer un compte à l'étape précédente.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label>Format bancaire</Label>
+              <Label htmlFor="bank-format">Format bancaire</Label>
               <Select onValueChange={(v) => { const p = BANK_PRESETS[parseInt(v)]; if (p) applyPreset(p, csv.headers); }}>
-                <SelectTrigger><SelectValue placeholder="Détection auto ou choisir…" /></SelectTrigger>
+                <SelectTrigger id="bank-format"><SelectValue placeholder="Détection auto ou choisir…" /></SelectTrigger>
                 <SelectContent>
                   {BANK_PRESETS.map((p, i) => <SelectItem key={i} value={String(i)}>{p.name}</SelectItem>)}
                 </SelectContent>
@@ -549,40 +663,40 @@ function StepImport({ onComplete, onPrev }: { onComplete: () => void; onPrev: ()
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <Label>Date</Label>
+                <Label htmlFor="col-date">Date</Label>
                 <Select value={dateCol} onValueChange={setDateCol}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger id="col-date"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>{csv.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Libellé</Label>
+                <Label htmlFor="col-label">Libellé</Label>
                 <Select value={labelCol} onValueChange={setLabelCol}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger id="col-label"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>{csv.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               {!useDebitCredit ? (
                 <div className="space-y-1.5">
-                  <Label>Montant</Label>
+                  <Label htmlFor="col-amount">Montant</Label>
                   <Select value={amountCol} onValueChange={setAmountCol}>
-                    <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                    <SelectTrigger id="col-amount"><SelectValue placeholder="—" /></SelectTrigger>
                     <SelectContent>{csv.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               ) : (
                 <>
                   <div className="space-y-1.5">
-                    <Label>Débit</Label>
+                    <Label htmlFor="col-debit">Débit</Label>
                     <Select value={debitCol} onValueChange={setDebitCol}>
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectTrigger id="col-debit"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>{csv.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Crédit</Label>
+                    <Label htmlFor="col-credit">Crédit</Label>
                     <Select value={creditCol} onValueChange={setCreditCol}>
-                      <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                      <SelectTrigger id="col-credit"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>{csv.headers.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>

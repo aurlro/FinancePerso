@@ -168,3 +168,102 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="API version")
     database: str = Field(..., description="Database connection status")
     timestamp: str = Field(..., description="Current timestamp")
+
+
+# =============================================================================
+# Authentication Models
+# =============================================================================
+
+
+class UserRegisterRequest(BaseModel):
+    """Request model for user registration."""
+
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., min_length=8, description="User password (min 8 characters)")
+    name: str = Field(..., min_length=2, description="User display name")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "password": "securepassword123",
+                "name": "John Doe",
+            }
+        }
+
+
+class UserLoginRequest(BaseModel):
+    """Request model for user login."""
+
+    email: str = Field(..., description="User email address")
+    password: str = Field(..., description="User password")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "password": "securepassword123",
+            }
+        }
+
+
+class UserResponse(BaseModel):
+    """Response model for user data."""
+
+    id: int = Field(..., description="User ID")
+    email: str = Field(..., description="User email address")
+    name: str = Field(..., description="User display name")
+    household_id: Optional[int] = Field(None, description="Associated household ID")
+    created_at: str = Field(..., description="Account creation timestamp")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "John Doe",
+                "household_id": None,
+                "created_at": "2024-03-15T10:30:00",
+            }
+        }
+
+
+class TokenResponse(BaseModel):
+    """Response model for authentication tokens."""
+
+    access_token: str = Field(..., description="JWT access token")
+    refresh_token: str = Field(..., description="JWT refresh token")
+    token_type: str = Field(default="bearer", description="Token type")
+    expires_in: int = Field(..., description="Token expiration time in seconds")
+    user: UserResponse = Field(..., description="User information")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "user": {
+                    "id": 1,
+                    "email": "user@example.com",
+                    "name": "John Doe",
+                    "household_id": None,
+                    "created_at": "2024-03-15T10:30:00",
+                },
+            }
+        }
+
+
+class RefreshTokenRequest(BaseModel):
+    """Request model for token refresh."""
+
+    refresh_token: str = Field(..., description="Valid refresh token")
+
+
+class ChangePasswordRequest(BaseModel):
+    """Request model for password change."""
+
+    current_password: str = Field(..., description="Current password")
+    new_password: str = Field(..., min_length=8, description="New password (min 8 characters)")

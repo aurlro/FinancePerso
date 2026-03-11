@@ -1,17 +1,19 @@
 /**
  * @file useAuth.tsx
- * @description Hook d'authentification - VERSION ADAPTÉE POUR FASTAPI
+ * @description Hook d'authentification - Utilise l'API FastAPI
  * 
- * ⚠️  À ADAPTER : Remplacer l'appel à Supabase par des appels à l'API FastAPI
- * 
- * Cette version utilise un mock local pour permettre le développement frontend
- * indépendamment de l'API. À remplacer par des appels fetch vers /api/auth/*
+ * Endpoints utilisés:
+ * - POST /api/auth/register
+ * - POST /api/auth/login
+ * - GET /api/auth/me
+ * - POST /api/auth/refresh
+ * - POST /api/auth/logout
  */
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { authApi, setAuthToken, clearAuthToken } from "@/lib/api";
 
-// TODO: Définir ces types dans un fichier types/auth.ts
 interface User {
   id: string;
   email: string;
@@ -40,40 +42,41 @@ export function useAuth() {
   return ctx;
 }
 
-// ============================================
-// MOCK LOCAL - À REMPLACER PAR API FASTAPI
-// ============================================
-const MOCK_USER: User = {
-  id: "mock-user-001",
-  email: "demo@financeperso.local",
-  displayName: "Utilisateur Demo",
-};
-
-const MOCK_SESSION: Session = {
-  user: MOCK_USER,
-  token: "mock-jwt-token",
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  // Check for existing session on mount
   useEffect(() => {
-    // TODO: Remplacer par : GET /api/auth/me ou vérification du token stocké
-    // Simulation d'une vérification de session
     const checkSession = async () => {
       try {
-        // Mock : auto-login pour le développement
-        // En prod : vérifier le token JWT stocké
-        const storedToken = localStorage.getItem("fp_token");
-        if (storedToken) {
-          setSession(MOCK_SESSION);
-          setUser(MOCK_USER);
+        // Try to get current user - this validates the stored token
+        const userData = await authApi.me();
+        
+        // If successful, restore the session
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+          setSession({
+            user: {
+              id: userData.id.toString(),
+              email: userData.email,
+              displayName: userData.name,
+            },
+            token,
+          });
+          setUser({
+            id: userData.id.toString(),
+            email: userData.email,
+            displayName: userData.name,
+          });
         }
       } catch (error) {
-        console.error("Session check failed:", error);
+        // Token is invalid or expired - clear it
+        console.log("Session invalid, clearing tokens");
+        clearAuthToken();
+        localStorage.removeItem("refresh_token");
       } finally {
         setLoading(false);
       }
@@ -83,48 +86,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
-    // TODO: Remplacer par : POST /api/auth/register
-    console.log("[MOCK] Sign up:", { email, password, displayName });
-    
-    // Simulation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      email,
-      displayName,
-    };
-    
-    const newSession: Session = {
-      user: newUser,
-      token: `token-${Date.now()}`,
-    };
-    
-    localStorage.setItem("fp_token", newSession.token);
-    setSession(newSession);
-    setUser(newUser);
+    try {
+      // Register new user
+      const newUser = await authApi.register({
+        email,
+        password,
+        name: displayName || email.split("@")[0],
+      });
+
+      // Auto-login after registration
+      const tokens = await authApi.login({ email, password });
+
+      // Set session
+      setSession({
+        user: {
+          id: tokens.user.id.toString(),
+          email: tokens.user.email,
+          displayName: tokens.user.name,
+        },
+        token: tokens.access_token,
+      });
+      setUser({
+        id: tokens.user.id.toString(),
+        email: tokens.user.email,
+        displayName: tokens.user.name,
+      });
+    } catch (error) {
+      console.error("Sign up failed:", error);
+      throw error;
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    // TODO: Remplacer par : POST /api/auth/login
-    console.log("[MOCK] Sign in:", { email, password });
-    
-    // Simulation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    localStorage.setItem("fp_token", MOCK_SESSION.token);
-    setSession(MOCK_SESSION);
-    setUser(MOCK_USER);
+    try {
+      const tokens = await authApi.login({ email, password });
+
+      setSession({
+        user: {
+          id: tokens.user.id.toString(),
+          email: tokens.user.email,
+          displayName: tokens.user.name,
+        },
+        token: tokens.access_token,
+      });
+      setUser({
+        id: tokens.user.id.toString(),
+        email: tokens.user.email,
+        displayName: tokens.user.name,
+      });
+    } catch (error) {
+      console.error("Sign in failed:", error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
-    // TODO: Remplacer par : POST /api/auth/logout
-    console.log("[MOCK] Sign out");
-    
-    localStorage.removeItem("fp_token");
-    setSession(null);
-    setUser(null);
-    queryClient.clear();
+    try {
+      // Call logout endpoint (optional - token will be invalidated on client side anyway)
+      // await authApi.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear tokens and state
+      authApi.logout();
+      setSession(null);
+      setUser(null);
+      queryClient.clear();
+    }
   };
 
   return (
