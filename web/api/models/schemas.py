@@ -3,6 +3,7 @@ Pydantic models for API request/response validation.
 """
 
 from datetime import date
+from enum import Enum
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -168,6 +169,81 @@ class HealthResponse(BaseModel):
     version: str = Field(..., description="API version")
     database: str = Field(..., description="Database connection status")
     timestamp: str = Field(..., description="Current timestamp")
+
+
+# =============================================================================
+# Account Models
+# =============================================================================
+
+
+class AccountType(str, Enum):
+    """Account type enumeration."""
+    PERSO_A = "perso_a"
+    PERSO_B = "perso_b"
+    JOINT = "joint"
+
+
+class AccountCreateRequest(BaseModel):
+    """Request model for creating a bank account."""
+
+    name: str = Field(..., min_length=1, description="Account name")
+    bank_name: Optional[str] = Field(None, description="Bank name")
+    account_type: AccountType = Field(..., description="Account type")
+    balance: float = Field(default=0.0, description="Initial balance")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "name": "Compte courant",
+                "bank_name": "BNP Paribas",
+                "account_type": "joint",
+                "balance": 0.0,
+            }
+        }
+
+
+class AccountUpdateRequest(BaseModel):
+    """Request model for updating a bank account."""
+
+    name: Optional[str] = Field(None, min_length=1, description="Account name")
+    bank_name: Optional[str] = Field(None, description="Bank name")
+    account_type: Optional[AccountType] = Field(None, description="Account type")
+    balance: Optional[float] = Field(None, description="Current balance")
+
+
+class AccountResponse(BaseModel):
+    """Response model for a bank account."""
+
+    id: int = Field(..., description="Account ID")
+    name: str = Field(..., description="Account name")
+    bank_name: Optional[str] = Field(None, description="Bank name")
+    account_type: str = Field(..., description="Account type")
+    balance: float = Field(..., description="Current balance")
+    household_id: Optional[int] = Field(None, description="Associated household ID")
+    created_at: str = Field(..., description="Creation timestamp")
+    updated_at: Optional[str] = Field(None, description="Last update timestamp")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "name": "Compte courant",
+                "bank_name": "BNP Paribas",
+                "account_type": "joint",
+                "balance": 1500.50,
+                "household_id": 1,
+                "created_at": "2024-03-15T10:30:00",
+                "updated_at": "2024-03-15T10:30:00",
+            }
+        }
+
+
+class AccountsListResponse(BaseModel):
+    """Response model for list of accounts."""
+
+    items: list[AccountResponse] = Field(..., description="List of accounts")
+    total: int = Field(..., description="Total number of accounts")
 
 
 # =============================================================================

@@ -363,6 +363,60 @@ export const authApi = {
 };
 
 // ============================================================================
+// ACCOUNTS API
+// ============================================================================
+
+export interface Account {
+  id: number;
+  name: string;
+  bank_name?: string;
+  account_type: "perso_a" | "perso_b" | "joint";
+  balance: number;
+  household_id?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateAccountInput {
+  name: string;
+  bank_name?: string;
+  account_type: "perso_a" | "perso_b" | "joint";
+  balance?: number;
+}
+
+export interface UpdateAccountInput {
+  name?: string;
+  bank_name?: string;
+  account_type?: "perso_a" | "perso_b" | "joint";
+  balance?: number;
+}
+
+export const accountsApi = {
+  list: () =>
+    fetchApi<{ items: Account[]; total: number }>("/accounts"),
+  
+  getById: (id: number) =>
+    fetchApi<Account>(`/accounts/${id}`),
+  
+  create: (data: CreateAccountInput) =>
+    fetchApi<Account>("/accounts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  
+  update: (id: number, data: UpdateAccountInput) =>
+    fetchApi<Account>(`/accounts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  
+  delete: (id: number) =>
+    fetchApi<void>(`/accounts/${id}`, {
+      method: "DELETE",
+    }),
+};
+
+// ============================================================================
 // HEALTH CHECK
 // ============================================================================
 

@@ -22,6 +22,7 @@ from config import get_settings
 
 # Import routers directly from modules to avoid circular imports
 from routers.auth import router as auth_router
+from routers.accounts import router as accounts_router
 from routers.dashboard import router as dashboard_router
 from routers.transactions import router as transactions_router
 
@@ -73,6 +74,7 @@ app.add_middleware(
 
 # Inclusion des routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(accounts_router, prefix="/api/accounts", tags=["Accounts"])
 app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"])
 app.include_router(transactions_router, prefix="/api/transactions", tags=["Transactions"])
 # app.include_router(categories_router, prefix="/api/categories", tags=["Categories"])
