@@ -1,563 +1,867 @@
-# AGENT-021: Technical Writer
-
-> **Rédacteur Technique et Documentaliste**  
-> Responsable de la documentation, guides utilisateurs, API docs, et changelogs
-
----
+# AGENT-021: Documentation & Technical Writer
 
 ## 🎯 Mission
 
-Cet agent produit et maintient toute la documentation de FinancePerso: documentation technique pour développeurs, guides utilisateurs, documentation d'API, changelogs, et wiki interne.
-
-### Domaines d'expertise
-- **Technical Documentation** : Architecture, setup, contribution guides
-- **User Documentation** : Guides utilisateurs, FAQ, tutoriels
-- **API Documentation** : Endpoints, authentification, exemples
-- **Changelogs** : Release notes, breaking changes, migrations
-- **Code Documentation** : Docstrings, inline comments, README
+Rédacteur technique et créateur de documentation pour FinancePerso. Responsable de la documentation utilisateur, de la documentation API, des guides d'onboarding, et de la maintenance du changelog. Garant de la qualité et de la clarté de toute la documentation du projet.
 
 ---
 
-## 🏗️ Architecture Documentation
+## 📚 Contexte: Architecture Documentaire
+
+### Philosophie
+> "Un code bien documenté est un code maintenable. La documentation est aussi importante que le code."
+
+### Structure de Documentation
 
 ```
 docs/
-├── README.md                 # Vue d'ensemble
-├── getting-started/          # Démarrage rapide
-├── user-guide/               # Guide utilisateur
-├── api-reference/            # Documentation API
-├── development/              # Guide développement
-└── troubleshooting/          # Dépannage
+├── 📖 ACTIVE/                    # Documentation maintenue
+│   ├── user-guide/
+│   │   ├── getting-started.md   # Guide démarrage rapide
+│   │   ├── import.md            # Guide import CSV
+│   │   ├── validation.md        # Guide validation
+│   │   ├── budgets.md           # Guide budgets
+│   │   └── faq.md               # FAQ
+│   ├── development/
+│   │   ├── setup.md             # Setup environnement
+│   │   ├── architecture.md      # Architecture technique
+│   │   └── contributing.md      # Guide contribution
+│   └── api/
+│       └── api-reference.md     # Référence API
+│
+├── 🎯 PLANNING/                  # Spécifications futures
+│   ├── roadmap.md               # Roadmap produit
+│   └── features/                # Specs features
+│
+├── 📋 REFERENCE/                 # Documentation stable
+│   ├── adr/                     # Architecture Decision Records
+│   ├── architecture/
+│   │   ├── v5-current.md
+│   │   └── v6-target.md
+│   └── personas/
+│       └── user-personas.md
+│
+└── 📦 archive/                   # Documentation historique
 ```
 
 ---
 
-## 🧱 Module 1: Documentation Standards
+## 🏗️ Module 1: Générateur de Documentation
 
 ```python
-# modules/docs/standards.py
-
-"""Standards de documentation FinancePerso."""
-
-DOCUMENTATION_STANDARDS = {
-    'structure': {
-        'readme_required': True,
-        'sections_required': [
-            'Description', 'Installation', 'Usage', 'Contributing', 'License'
-        ],
-        'max_line_length': 100,
-    },
-    'writing_style': {
-        'tone': 'professional_but_friendly',
-        'person': 'second',
-        'language': 'fr',
-    },
-    'formatting': {
-        'markdown_flavor': 'github',
-        'code_blocks_language': 'required',
-    }
-}
-
-
-class DocValidator:
-    """Validateur de documentation."""
-    
-    def validate_readme(self, content: str) -> Dict:
-        """Valide un README."""
-        checks = {
-            'has_title': bool(self._extract_title(content)),
-            'has_description': '## Description' in content or '## ' in content,
-            'has_installation': '## Installation' in content,
-            'has_usage': '## Usage' in content or '## Utilisation' in content,
-        }
-        
-        return {
-            'valid': all(checks.values()),
-            'checks': checks,
-        }
-    
-    def _extract_title(self, content: str) -> str:
-        """Extrait le titre du README."""
-        lines = content.split('\n')
-        for line in lines:
-            if line.startswith('# '):
-                return line[2:].strip()
-        return ""
-
-
-# Templates
-
-README_TEMPLATE = """# {project_name}
-
-> {project_tagline}
-
-## Description
-
-{project_description}
-
-## Table des matières
-
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Installation
-
-```bash
-{install_command}
-```
-
-## Usage
-
-### Démarrage rapide
-
-```python
-{quick_start_code}
-```
-
-## Contributing
-
-Voir [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-{license} © {author}
+# modules/docs/__init__.py
+"""
+Documentation Generator Module.
+Génération automatique de documentation.
 """
 
+from .generators import (
+    ChangelogGenerator,
+    APIDocumentationGenerator,
+    UserGuideGenerator,
+    OnboardingGuideGenerator
+)
+from .templates import DocumentTemplates
+from .validators import DocumentationValidator
 
-CHANGELOG_TEMPLATE = """# Changelog
-
-Tous les changements notables de ce projet seront documentés ici.
-
-Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
-et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).
-
-## [Unreleased]
-
-### Added
-- 
-
-### Changed
--
-
-### Fixed
--
-
-## [{version}] - {date}
-
-### Added
-- {new_features}
-
-### Changed
-- {changes}
-
-### Fixed
-- {fixes}
-"""
-
-
-API_DOC_TEMPLATE = """# {endpoint_name}
-
-{endpoint_description}
-
-## URL
-
+__all__ = [
+    'ChangelogGenerator',
+    'APIDocumentationGenerator',
+    'UserGuideGenerator',
+    'OnboardingGuideGenerator',
+    'DocumentTemplates',
+    'DocumentationValidator'
+]
 ```
-{method} {url}
-```
-
-## Paramètres
-
-### Path Parameters
-
-| Nom | Type | Requis | Description |
-|-----|------|--------|-------------|
-{path_params_table}
-
-## Exemple de requête
-
-```bash
-curl -X {method} \\
-  {url} \\
-  -H "Authorization: Bearer {{token}}"
-```
-
-## Exemple de réponse
-
-```json
-{example_response}
-```
-"""
-
 
 ---
 
-## 🧱 Module 2: Changelog & Release Management
-
-### Génération automatique de changelogs
+## 🧱 Module 2: Générateur de Changelog
 
 ```python
 # modules/docs/changelog_generator.py
 
+import re
+import subprocess
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Optional
 from dataclasses import dataclass
+from enum import Enum
+import json
+
+from modules.logger import logger
+
+
+class ChangeType(Enum):
+    """Types de changements (Conventional Commits)."""
+    FEATURE = "feat"
+    FIX = "fix"
+    DOCS = "docs"
+    STYLE = "style"
+    REFACTOR = "refactor"
+    PERF = "perf"
+    TEST = "test"
+    CHORE = "chore"
+    BREAKING = "BREAKING CHANGE"
 
 
 @dataclass
 class ChangeEntry:
     """Entrée de changelog."""
-    category: str  # 'added', 'changed', 'fixed', 'deprecated', 'removed', 'security'
+    type: ChangeType
+    scope: Optional[str]
     description: str
-    pr_number: str = None
-    breaking: bool = False
+    breaking: bool
+    commit_hash: str
+    author: str
+    date: datetime
 
 
 class ChangelogGenerator:
-    """Générateur de changelog basé sur les commits Git."""
+    """
+    Générateur de changelog automatique.
     
-    CATEGORY_MAPPING = {
-        'feat': 'Added',
-        'fix': 'Fixed',
-        'docs': 'Changed',
-        'perf': 'Changed',
-        'refactor': 'Changed',
-        'chore': 'Changed',
-        'test': 'Changed',
+    Parse les commits git et génère un CHANGELOG.md structuré.
+    """
+    
+    # Sections du changelog
+    SECTIONS = {
+        ChangeType.BREAKING: "### ⚠️ BREAKING CHANGES",
+        ChangeType.FEATURE: "### 🚀 Nouvelles Fonctionnalités",
+        ChangeType.FIX: "### 🐛 Corrections de Bugs",
+        ChangeType.PERF: "### ⚡ Performance",
+        ChangeType.REFACTOR: "### 🔧 Refactoring",
+        ChangeType.DOCS: "### 📚 Documentation",
+        ChangeType.TEST: "### 🧪 Tests",
+        ChangeType.CHORE: "### 🏗️ Maintenance",
+        ChangeType.STYLE: "### 💄 Style"
     }
     
-    def generate_from_commits(self, since_tag: str = None) -> str:
-        """Génère un changelog depuis les commits Git."""
-        import subprocess
-        
-        cmd = ['git', 'log', '--pretty=format:%H|%s|%b<<<END>>>']
-        if since_tag:
-            cmd.extend([f'{since_tag}..HEAD'])
-        
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        commits = result.stdout.split('<<<END>>>')
-        
-        entries = self._parse_commits(commits)
-        return self._format_changelog(entries)
+    def __init__(self, repo_path: str = "."):
+        self.repo_path = repo_path
     
-    def _parse_commits(self, commits: List[str]) -> Dict[str, List[ChangeEntry]]:
-        """Parse les commits et extrait les entrées."""
-        import re
+    def generate(
+        self,
+        since_tag: Optional[str] = None,
+        to_tag: Optional[str] = None,
+        output_path: str = "CHANGELOG.md"
+    ) -> str:
+        """
+        Génère le changelog entre deux tags.
         
-        entries = {
-            'Added': [],
-            'Changed': [],
-            'Deprecated': [],
-            'Removed': [],
-            'Fixed': [],
-            'Security': []
-        }
+        Args:
+            since_tag: Tag de départ (ex: "v5.5.0")
+            to_tag: Tag de fin (ex: "v5.6.0")
+            output_path: Chemin de sortie
+            
+        Returns:
+            Contenu du changelog généré
+        """
+        # Récupérer les commits
+        commits = self._get_commits(since_tag, to_tag)
+        
+        # Parser les commits
+        changes = self._parse_commits(commits)
+        
+        # Générer le markdown
+        markdown = self._generate_markdown(changes, since_tag, to_tag)
+        
+        # Sauvegarder
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(markdown)
+        
+        logger.info(f"Changelog généré: {output_path}")
+        return markdown
+    
+    def generate_for_version(
+        self,
+        version: str,
+        release_date: datetime = None
+    ) -> str:
+        """
+        Génère le changelog pour une version spécifique.
+        
+        Args:
+            version: Numéro de version (ex: "5.6.0")
+            release_date: Date de release
+            
+        Returns:
+            Section de changelog pour cette version
+        """
+        if release_date is None:
+            release_date = datetime.now()
+        
+        # Récupérer commits depuis le dernier tag
+        commits = self._get_commits_since_last_tag()
+        changes = self._parse_commits(commits)
+        
+        # Générer section
+        version_header = f"## [{version}] - {release_date.strftime('%Y-%m-%d')}"
+        
+        sections = []
+        for change_type in ChangeType:
+            type_changes = [c for c in changes if c.type == change_type]
+            if type_changes:
+                section = self._generate_section(change_type, type_changes)
+                sections.append(section)
+        
+        return "\n\n".join([version_header] + sections)
+    
+    def _get_commits(
+        self,
+        since_tag: Optional[str],
+        to_tag: Optional[str]
+    ) -> List[Dict]:
+        """Récupère les commits git."""
+        range_spec = ""
+        if since_tag:
+            range_spec = f"{since_tag}.."
+        if to_tag:
+            range_spec += to_tag
+        
+        if not range_spec:
+            range_spec = "HEAD~50..HEAD"  # 50 derniers commits
+        
+        cmd = [
+            "git", "log", range_spec,
+            "--pretty=format:%H|%an|%ad|%s",
+            "--date=iso"
+        ]
+        
+        result = subprocess.run(
+            cmd,
+            cwd=self.repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        commits = []
+        for line in result.stdout.strip().split('\n'):
+            if '|' in line:
+                parts = line.split('|', 3)
+                commits.append({
+                    'hash': parts[0][:7],
+                    'author': parts[1],
+                    'date': datetime.fromisoformat(parts[2].replace(' ', 'T')),
+                    'message': parts[3]
+                })
+        
+        return commits
+    
+    def _get_commits_since_last_tag(self) -> List[Dict]:
+        """Récupère les commits depuis le dernier tag."""
+        # Trouver le dernier tag
+        result = subprocess.run(
+            ["git", "describe", "--tags", "--abbrev=0"],
+            cwd=self.repo_path,
+            capture_output=True,
+            text=True
+        )
+        
+        last_tag = result.stdout.strip() if result.returncode == 0 else None
+        
+        return self._get_commits(last_tag, None)
+    
+    def _parse_commits(self, commits: List[Dict]) -> List[ChangeEntry]:
+        """Parse les messages de commit."""
+        changes = []
+        
+        pattern = r'^(\w+)(?:\(([^)]+)\))?!?: (.+)$'
         
         for commit in commits:
-            if '|' not in commit:
-                continue
+            message = commit['message']
+            match = re.match(pattern, message)
             
-            parts = commit.strip().split('|')
-            if len(parts) < 2:
-                continue
-            
-            subject = parts[1]
-            body = parts[2] if len(parts) > 2 else ''
-            
-            match = re.match(r'^(\w+)(?:\([^)]+\))?: (.+)$', subject)
-            if not match:
-                continue
-            
-            commit_type, message = match.groups()
-            category = self.CATEGORY_MAPPING.get(commit_type, 'Changed')
-            breaking = 'BREAKING CHANGE' in body or '!' in subject
-            
-            entries[category].append(ChangeEntry(
-                category=category.lower(),
-                description=message,
-                breaking=breaking
-            ))
+            if match:
+                type_str = match.group(1)
+                scope = match.group(2)
+                description = match.group(3)
+                
+                # Détecter breaking change
+                breaking = '!' in message or 'BREAKING' in message
+                
+                # Mapper le type
+                change_type = self._map_type(type_str)
+                
+                changes.append(ChangeEntry(
+                    type=change_type,
+                    scope=scope,
+                    description=description,
+                    breaking=breaking,
+                    commit_hash=commit['hash'],
+                    author=commit['author'],
+                    date=commit['date']
+                ))
+            else:
+                # Commit non conventionnel
+                changes.append(ChangeEntry(
+                    type=ChangeType.CHORE,
+                    scope=None,
+                    description=message,
+                    breaking=False,
+                    commit_hash=commit['hash'],
+                    author=commit['author'],
+                    date=commit['date']
+                ))
         
-        return entries
+        return changes
     
-    def _format_changelog(self, entries: Dict[str, List[ChangeEntry]]) -> str:
-        """Formate en markdown."""
-        lines = []
+    def _map_type(self, type_str: str) -> ChangeType:
+        """Mappe une string de type vers ChangeType."""
+        type_mapping = {
+            'feat': ChangeType.FEATURE,
+            'feature': ChangeType.FEATURE,
+            'fix': ChangeType.FIX,
+            'bugfix': ChangeType.FIX,
+            'docs': ChangeType.DOCS,
+            'doc': ChangeType.DOCS,
+            'style': ChangeType.STYLE,
+            'refactor': ChangeType.REFACTOR,
+            'perf': ChangeType.PERF,
+            'performance': ChangeType.PERF,
+            'test': ChangeType.TEST,
+            'tests': ChangeType.TEST,
+            'chore': ChangeType.CHORE,
+            'build': ChangeType.CHORE,
+            'ci': ChangeType.CHORE
+        }
         
-        for category in ['Added', 'Changed', 'Deprecated', 'Removed', 'Fixed', 'Security']:
-            if entries[category]:
-                lines.append(f"### {category}")
-                
-                for entry in entries[category]:
-                    prefix = "**BREAKING** " if entry.breaking else ""
-                    lines.append(f"- {prefix}{entry.description}")
-                
+        return type_mapping.get(type_str.lower(), ChangeType.CHORE)
+    
+    def _generate_section(
+        self,
+        change_type: ChangeType,
+        changes: List[ChangeEntry]
+    ) -> str:
+        """Génère une section de changelog."""
+        header = self.SECTIONS.get(change_type, f"### {change_type.value}")
+        
+        lines = [header]
+        
+        for change in changes:
+            scope = f"**{change.scope}**: " if change.scope else ""
+            breaking = " ⚠️ **BREAKING**" if change.breaking else ""
+            
+            line = f"- {scope}{change.description}{breaking} ({change.commit_hash})"
+            lines.append(line)
+        
+        return "\n".join(lines)
+    
+    def _generate_markdown(
+        self,
+        changes: List[ChangeEntry],
+        since_tag: Optional[str],
+        to_tag: Optional[str]
+    ) -> str:
+        """Génère le markdown complet."""
+        lines = [
+            "# Changelog",
+            "",
+            "Tous les changements notables de ce projet seront documentés ici.",
+            "",
+            "Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)",
+            "et ce projet adhère à [Semantic Versioning](https://semver.org/lang/fr/).",
+            "",
+        ]
+        
+        # Générer chaque section
+        for change_type in ChangeType:
+            type_changes = [c for c in changes if c.type == change_type]
+            if type_changes:
+                section = self._generate_section(change_type, type_changes)
+                lines.append(section)
                 lines.append("")
         
-        return '\n'.join(lines)
+        return "\n".join(lines)
+
+
+class ReleaseNotesGenerator:
+    """
+    Générateur de notes de release.
+    """
     
-    def generate_release_notes(self, version: str, entries: Dict) -> str:
-        """Génère des notes de release."""
-        date = datetime.now().strftime('%Y-%m-%d')
-        
+    def generate(
+        self,
+        version: str,
+        highlights: List[str],
+        changes: List[ChangeEntry],
+        contributors: List[str]
+    ) -> str:
+        """
+        Génère les notes de release.
+        """
         lines = [
-            f"## [{version}] - {date}",
+            f"# Release v{version}",
+            "",
+            "## 🎯 Highlights",
             ""
         ]
         
-        breaking = [e for cat in entries.values() for e in cat if e.breaking]
+        for highlight in highlights:
+            lines.append(f"- {highlight}")
         
-        if breaking:
-            lines.extend([
-                "### ⚠️ Breaking Changes",
-                "",
-                "Les changements suivants peuvent nécessiter des modifications:",
-                ""
-            ])
-            for entry in breaking:
-                lines.append(f"- {entry.description}")
-            lines.append("")
+        lines.extend([
+            "",
+            "## 📊 Statistiques",
+            f"- **Nouvelles fonctionnalités**: {len([c for c in changes if c.type == ChangeType.FEATURE])}",
+            f"- **Corrections de bugs**: {len([c for c in changes if c.type == ChangeType.FIX])}",
+            f"- **Améliorations de performance**: {len([c for c in changes if c.type == ChangeType.PERF])}",
+            "",
+            "## 👥 Contributeurs",
+            ""
+        ])
         
-        lines.append(self._format_changelog(entries))
+        for contributor in contributors:
+            lines.append(f"- @{contributor}")
         
-        return '\n'.join(lines)
-
-
-class ReleaseManager:
-    """Gestionnaire de releases."""
-    
-    def prepare_release(self, new_version: str, since_version: str = None) -> Dict:
-        """Prépare une release."""
-        generator = ChangelogGenerator()
-        changelog = generator.generate_from_commits(since_version)
+        lines.extend([
+            "",
+            "## 📦 Installation",
+            f"```bash\npip install financeperso=={version}\n```",
+            "",
+            "---",
+            f"[Voir le changelog complet](CHANGELOG.md)"
+        ])
         
-        has_breaking = 'BREAKING' in changelog
-        
-        migration_guide = None
-        if has_breaking:
-            migration_guide = self._generate_migration_guide(since_version, new_version)
-        
-        return {
-            'version': new_version,
-            'changelog': changelog,
-            'has_breaking_changes': has_breaking,
-            'migration_guide': migration_guide,
-            'release_date': datetime.now().strftime('%Y-%m-%d')
-        }
-    
-    def _generate_migration_guide(self, from_version: str, to_version: str) -> str:
-        """Génère un guide de migration."""
-        return f"""# Guide de Migration {from_version} → {to_version}
-
-## Changements Breaking
-
-### 1. [Description du changement]
-
-**Avant:**
-```python
-# Ancien code
+        return "\n".join(lines)
 ```
-
-**Après:**
-```python
-# Nouveau code
-```
-
-## Checklist de Migration
-
-- [ ] Mettre à jour les dépendances
-- [ ] Exécuter les migrations de base de données
-- [ ] Mettre à jour le code selon les breaking changes
-- [ ] Tester l'application
-"""
-
-
-def bump_version(current_version: str, bump_type: str) -> str:
-    """Incrémente la version semver."""
-    parts = current_version.split('.')
-    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
-    
-    if bump_type == 'major':
-        return f"{major + 1}.0.0"
-    elif bump_type == 'minor':
-        return f"{major}.{minor + 1}.0"
-    else:
-        return f"{major}.{minor}.{patch + 1}"
-
-
-def determine_bump_type(commits: List[str]) -> str:
-    """Détermine le type de bump selon les commits."""
-    has_breaking = any('BREAKING' in c for c in commits)
-    has_feature = any(c.startswith('feat') for c in commits)
-    
-    if has_breaking:
-        return 'major'
-    elif has_feature:
-        return 'minor'
-    else:
-        return 'patch'
-
 
 ---
 
-## 🧱 Module 3: Documentation Generator
+## 🧱 Module 3: Documentation API
 
 ```python
-# modules/docs/doc_generator.py
+# modules/docs/api_documentation.py
 
+import inspect
 import ast
-from typing import Dict, List
 from pathlib import Path
+from typing import List, Dict, Optional
+from dataclasses import dataclass
+import importlib
 
 
-class CodeDocGenerator:
-    """Générateur de documentation depuis le code source."""
+@dataclass
+class APIEndpoint:
+    """Endpoint API documenté."""
+    path: str
+    method: str
+    summary: str
+    description: str
+    parameters: List[Dict]
+    request_body: Optional[Dict]
+    responses: List[Dict]
+    tags: List[str]
+
+
+@dataclass
+class APIModule:
+    """Module API documenté."""
+    name: str
+    description: str
+    endpoints: List[APIEndpoint]
+
+
+class APIDocumentationGenerator:
+    """
+    Générateur de documentation API (OpenAPI/Swagger).
+    """
     
-    def generate_module_docs(self, module_path: str) -> str:
-        """Génère la documentation d'un module Python."""
-        with open(module_path) as f:
-            source = f.read()
+    def __init__(self, api_modules_path: str = "web/api"):
+        self.api_modules_path = Path(api_modules_path)
+    
+    def generate_openapi_spec(self) -> Dict:
+        """
+        Génère la spécification OpenAPI.
         
-        tree = ast.parse(source)
-        
-        docs = {
-            'module_name': Path(module_path).stem,
-            'classes': [],
-            'functions': []
+        Returns:
+            Dict au format OpenAPI 3.0
+        """
+        spec = {
+            "openapi": "3.0.0",
+            "info": {
+                "title": "FinancePerso API",
+                "description": "API REST pour FinancePerso",
+                "version": "5.6.0",
+                "contact": {
+                    "name": "Support",
+                    "email": "support@financeperso.local"
+                }
+            },
+            "servers": [
+                {
+                    "url": "http://localhost:8000/api",
+                    "description": "Serveur de développement"
+                }
+            ],
+            "paths": {},
+            "components": {
+                "schemas": self._extract_schemas(),
+                "securitySchemes": {
+                    "bearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "JWT"
+                    }
+                }
+            }
         }
         
-        for node in ast.iter_child_nodes(tree):
-            if isinstance(node, ast.ClassDef):
-                docs['classes'].append(self._parse_class(node))
-            elif isinstance(node, ast.FunctionDef):
-                docs['functions'].append(self._parse_function(node))
+        # Extraire les endpoints
+        endpoints = self._extract_endpoints()
         
-        return self._format_module_docs(docs)
+        for endpoint in endpoints:
+            if endpoint.path not in spec["paths"]:
+                spec["paths"][endpoint.path] = {}
+            
+            spec["paths"][endpoint.path][endpoint.method.lower()] = {
+                "summary": endpoint.summary,
+                "description": endpoint.description,
+                "tags": endpoint.tags,
+                "parameters": endpoint.parameters,
+                "requestBody": endpoint.request_body,
+                "responses": {
+                    str(r["code"]): {
+                        "description": r["description"],
+                        "content": {
+                            "application/json": {
+                                "schema": r.get("schema", {})
+                            }
+                        }
+                    }
+                    for r in endpoint.responses
+                }
+            }
+        
+        return spec
     
-    def _parse_class(self, node: ast.ClassDef) -> Dict:
-        """Parse une définition de classe."""
-        docstring = ast.get_docstring(node) or ""
+    def generate_markdown(self, output_path: str = "docs/api/api-reference.md"):
+        """
+        Génère la documentation API en markdown.
+        """
+        spec = self.generate_openapi_spec()
         
-        methods = []
-        for item in node.body:
-            if isinstance(item, ast.FunctionDef):
-                methods.append(self._parse_function(item))
-        
-        return {
-            'name': node.name,
-            'docstring': docstring,
-            'methods': methods
-        }
-    
-    def _parse_function(self, node: ast.FunctionDef) -> Dict:
-        """Parse une définition de fonction."""
-        docstring = ast.get_docstring(node) or ""
-        
-        args = []
-        for arg in node.args.args:
-            arg_info = {'name': arg.arg}
-            if arg.annotation:
-                arg_info['type'] = self._get_annotation_name(arg.annotation)
-            args.append(arg_info)
-        
-        return_type = None
-        if node.returns:
-            return_type = self._get_annotation_name(node.returns)
-        
-        return {
-            'name': node.name,
-            'docstring': docstring,
-            'args': args,
-            'return_type': return_type
-        }
-    
-    def _get_annotation_name(self, annotation) -> str:
-        """Extrait le nom d'une annotation."""
-        if isinstance(annotation, ast.Name):
-            return annotation.id
-        return str(annotation)
-    
-    def _format_module_docs(self, docs: Dict) -> str:
-        """Formate la documentation en Markdown."""
         lines = [
-            f"# Module: {docs['module_name']}",
+            "# Référence API",
+            "",
+            "## Introduction",
+            "",
+            "Cette documentation décrit l'API REST de FinancePerso.",
+            "",
+            "### Base URL",
+            f"```\n{spec['servers'][0]['url']}\n```",
+            "",
+            "### Authentification",
+            "",
+            "L'API utilise l'authentification JWT (Bearer token).",
+            "",
+            "```http\nAuthorization: Bearer <votre_token>\n```",
+            "",
+            "## Endpoints",
             ""
         ]
         
-        if docs['classes']:
-            lines.extend(["## Classes", ""])
-            for cls in docs['classes']:
+        # Grouper par tag
+        endpoints_by_tag: Dict[str, List[tuple]] = {}
+        for path, methods in spec["paths"].items():
+            for method, details in methods.items():
+                for tag in details.get("tags", ["Default"]):
+                    if tag not in endpoints_by_tag:
+                        endpoints_by_tag[tag] = []
+                    endpoints_by_tag[tag].append((path, method, details))
+        
+        # Générer sections
+        for tag, endpoints in sorted(endpoints_by_tag.items()):
+            lines.extend([
+                f"### {tag}",
+                ""
+            ])
+            
+            for path, method, details in endpoints:
                 lines.extend([
-                    f"### `{cls['name']}`",
+                    f"#### {details['summary']}",
                     "",
-                    cls['docstring'] or "*(Pas de documentation)*",
+                    f"```http\n{method.upper()} {path}\n```",
+                    "",
+                    f"{details.get('description', '')}",
                     ""
                 ])
+                
+                # Paramètres
+                if details.get("parameters"):
+                    lines.extend([
+                        "**Paramètres:**",
+                        "",
+                        "| Nom | Type | Requis | Description |",
+                        "|-----|------|--------|-------------|"
+                    ])
+                    for param in details["parameters"]:
+                        lines.append(
+                            f"| {param['name']} | {param.get('schema', {}).get('type', 'string')} | "
+                            f"{'Oui' if param.get('required') else 'Non'} | {param.get('description', '')} |"
+                        )
+                    lines.append("")
+                
+                # Réponses
+                if details.get("responses"):
+                    lines.extend([
+                        "**Réponses:**",
+                        "",
+                        "| Code | Description |",
+                        "|------|-------------|"
+                    ])
+                    for code, response in details["responses"].items():
+                        lines.append(f"| {code} | {response['description']} |")
+                    lines.append("")
+                
+                lines.append("---")
+                lines.append("")
         
-        if docs['functions']:
-            lines.extend(["## Fonctions", ""])
-            for func in docs['functions']:
-                lines.extend([
-                    f"### `{func['name']}`",
-                    "",
-                    func['docstring'] or "*(Pas de documentation)*",
-                    ""
-                ])
+        # Sauvegarder
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("\n".join(lines), encoding='utf-8')
         
-        return '\n'.join(lines)
-
-
-class WikiGenerator:
-    """Générateur de wiki interne."""
+        return output_path
     
-    def generate_architecture_doc(self) -> str:
-        """Génère la documentation d'architecture."""
-        return """# Architecture FinancePerso
-
-## Vue d'ensemble
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         UI LAYER                             │
-│  Streamlit Frontend                                          │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                      APPLICATION LAYER                       │
-│  Dashboard │ Transactions │ Budgets │ Analytics              │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                       DATA LAYER                             │
-│  SQLite │ Cache │ Session State                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Modules principaux
-
-- **modules/ui/** : Interface utilisateur
-- **modules/db/** : Accès données
-- **modules/services/** : Logique métier
-"""
+    def _extract_endpoints(self) -> List[APIEndpoint]:
+        """Extrait les endpoints du code."""
+        endpoints = []
+        
+        # Analyser les fichiers de route
+        routes_path = self.api_modules_path / "routers"
+        
+        if not routes_path.exists():
+            return endpoints
+        
+        for file in routes_path.glob("*.py"):
+            endpoints.extend(self._parse_router_file(file))
+        
+        return endpoints
     
-    def generate_setup_guide(self) -> str:
-        """Génère le guide d'installation."""
-        return """# Guide d'installation
+    def _parse_router_file(self, file: Path) -> List[APIEndpoint]:
+        """Parse un fichier de router FastAPI."""
+        endpoints = []
+        
+        content = file.read_text()
+        tree = ast.parse(content)
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Chercher décorateurs @router.get/post/etc.
+                for decorator in node.decorator_list:
+                    if isinstance(decorator, ast.Call):
+                        if isinstance(decorator.func, ast.Attribute):
+                            method = decorator.func.attr
+                            if method in ['get', 'post', 'put', 'delete', 'patch']:
+                                # Extraire le path
+                                path = ""
+                                if decorator.args:
+                                    path = ast.literal_eval(decorator.args[0])
+                                
+                                # Extraire docstring
+                                docstring = ast.get_docstring(node) or ""
+                                summary = docstring.split('\n')[0] if docstring else node.name
+                                
+                                endpoints.append(APIEndpoint(
+                                    path=f"/api{path}",
+                                    method=method.upper(),
+                                    summary=summary,
+                                    description=docstring,
+                                    parameters=[],
+                                    request_body=None,
+                                    responses=[
+                                        {"code": 200, "description": "Succès"},
+                                        {"code": 401, "description": "Non authentifié"},
+                                        {"code": 500, "description": "Erreur serveur"}
+                                    ],
+                                    tags=[file.stem.replace('_', ' ').title()]
+                                ))
+        
+        return endpoints
+    
+    def _extract_schemas(self) -> Dict:
+        """Extrait les schémas Pydantic."""
+        schemas = {}
+        
+        models_path = self.api_modules_path / "models" / "schemas.py"
+        
+        if not models_path.exists():
+            return schemas
+        
+        content = models_path.read_text()
+        tree = ast.parse(content)
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                # Vérifier si c'est un modèle Pydantic
+                is_model = any(
+                    isinstance(base, ast.Name) and base.id == 'BaseModel'
+                    for base in node.bases
+                )
+                
+                if is_model:
+                    properties = {}
+                    
+                    for item in node.body:
+                        if isinstance(item, ast.AnnAssign):
+                            if isinstance(item.target, ast.Name):
+                                field_name = item.target.id
+                                field_type = self._get_type_string(item.annotation)
+                                properties[field_name] = {"type": field_type}
+                    
+                    schemas[node.name] = {
+                        "type": "object",
+                        "properties": properties
+                    }
+        
+        return schemas
+    
+    def _get_type_string(self, annotation) -> str:
+        """Convertit une annotation Python en type JSON Schema."""
+        if isinstance(annotation, ast.Name):
+            type_map = {
+                'str': 'string',
+                'int': 'integer',
+                'float': 'number',
+                'bool': 'boolean',
+                'datetime': 'string',
+                'date': 'string'
+            }
+            return type_map.get(annotation.id, 'string')
+        elif isinstance(annotation, ast.Subscript):
+            if isinstance(annotation.value, ast.Name):
+                if annotation.value.id == 'List':
+                    return 'array'
+                elif annotation.value.id == 'Optional':
+                    return 'string'
+        return 'string'
+```
+
+---
+
+## 🧱 Module 4: Guide Utilisateur
+
+```python
+# modules/docs/user_guide_generator.py
+
+from pathlib import Path
+from typing import List, Dict
+from dataclasses import dataclass
+
+
+@dataclass
+class GuideSection:
+    """Section de guide utilisateur."""
+    title: str
+    slug: str
+    content: str
+    order: int
+    emoji: str = "📄"
+
+
+class UserGuideGenerator:
+    """
+    Générateur de guide utilisateur.
+    """
+    
+    SECTIONS = [
+        {
+            "title": "Démarrage Rapide",
+            "slug": "getting-started",
+            "emoji": "🚀",
+            "order": 1
+        },
+        {
+            "title": "Import de Transactions",
+            "slug": "import",
+            "emoji": "📥",
+            "order": 2
+        },
+        {
+            "title": "Validation et Catégorisation",
+            "slug": "validation",
+            "emoji": "✅",
+            "order": 3
+        },
+        {
+            "title": "Tableau de Bord",
+            "slug": "dashboard",
+            "emoji": "📊",
+            "order": 4
+        },
+        {
+            "title": "Gestion des Budgets",
+            "slug": "budgets",
+            "emoji": "💰",
+            "order": 5
+        },
+        {
+            "title": "Configuration",
+            "slug": "configuration",
+            "emoji": "⚙️",
+            "order": 6
+        },
+        {
+            "title": "FAQ",
+            "slug": "faq",
+            "emoji": "❓",
+            "order": 99
+        }
+    ]
+    
+    def generate_all(self, output_dir: str = "docs/ACTIVE/user-guide"):
+        """
+        Génère tous les guides utilisateur.
+        """
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
+        
+        for section_config in self.SECTIONS:
+            content = self._generate_section_content(section_config)
+            
+            file_path = output_path / f"{section_config['slug']}.md"
+            file_path.write_text(content, encoding='utf-8')
+        
+        # Générer index
+        self._generate_index(output_path)
+        
+        return output_path
+    
+    def _generate_section_content(self, config: Dict) -> str:
+        """Génère le contenu d'une section."""
+        slug = config['slug']
+        
+        generators = {
+            'getting-started': self._generate_getting_started,
+            'import': self._generate_import_guide,
+            'validation': self._generate_validation_guide,
+            'dashboard': self._generate_dashboard_guide,
+            'budgets': self._generate_budgets_guide,
+            'configuration': self._generate_configuration_guide,
+            'faq': self._generate_faq,
+        }
+        
+        generator = generators.get(slug, lambda: "# Guide en cours de rédaction")
+        return generator()
+    
+    def _generate_getting_started(self) -> str:
+        return '''# 🚀 Démarrage Rapide
+
+Bienvenue dans FinancePerso ! Ce guide vous aidera à configurer votre application en quelques minutes.
 
 ## Prérequis
 
-- Python 3.9+
-- pip
-- Git
+- Python 3.11 ou supérieur
+- Un fichier de transactions bancaires (CSV)
 
 ## Installation
 
 ### 1. Cloner le repository
 
 ```bash
-git clone https://github.com/user/financeperso.git
-cd financeperso
+git clone https://github.com/votre-repo/FinancePerso.git
+cd FinancePerso
 ```
 
 ### 2. Créer l'environnement virtuel
@@ -565,7 +869,8 @@ cd financeperso
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-.venv\\Scripts\\activate   # Windows
+# ou
+.venv\\Scripts\\activate  # Windows
 ```
 
 ### 3. Installer les dépendances
@@ -574,960 +879,408 @@ source .venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 ```
 
-### 4. Lancer l'application
+### 4. Configurer les variables d'environnement
 
 ```bash
+cp .env.example .env
+# Éditez .env avec vos clés API
+```
+
+### 5. Lancer l'application
+
+```bash
+make run
+# ou
 streamlit run app.py
 ```
-"""
 
+L'application est accessible sur http://localhost:8501
 
----
+## Première Utilisation
 
-## ✅ Standards & Checklists
+### 1. Créer vos catégories
 
-### Documentation Quality
+Allez dans **Configuration > Catégories** pour définir vos catégories de dépenses.
 
-```
-✅ CLARTÉ
-├── Une idée par phrase
-├── Phrases courtes (< 25 mots)
-├── Vocabulaire simple
-├── Exemples concrets
-└── TOC pour docs > 3 sections
+### 2. Importer vos transactions
 
-✅ STRUCTURE
-├── Titre descriptif
-├── Introduction expliquant le "pourquoi"
-├── Prérequis listés explicitement
-├── Étapes numérotées pour procédures
-├── Exemples de code testés
-└── Section troubleshooting
+Allez dans **Import** et téléchargez votre fichier CSV bancaire.
 
-✅ ACCESSIBILITÉ
-├── Alt text pour toutes les images
-├── Contraste suffisant pour code
-├── Langue définie
-└── Liens descriptifs (pas "cliquez ici")
-```
+### 3. Valider et catégoriser
 
-### Changelog Best Practices
+Dans **Validation**, vérifiez et corrigez les catégories proposées.
 
-```
-✅ KEEP A CHANGELOG
-├── Sections: Added, Changed, Deprecated, Removed, Fixed, Security
-├── Version au format semver
-├── Date de release ISO (YYYY-MM-DD)
-├── Breaking changes en premier
-└── Migration guide pour breaking changes
+### 4. Consulter votre dashboard
 
-✅ COMMIT CONVENTION
-├── feat: nouvelle fonctionnalité
-├── fix: correction de bug
-├── docs: documentation
-├── style: formatage
-├── refactor: refactorisation
-├── perf: performance
-└── test: tests
-```
+Le **Dashboard** vous montre vos finances en temps réel !
 
----
+## Prochaines Étapes
 
-## 🏗️ Architecture Inter-Agent
+- 📥 [Guide d'import](import.md)
+- ✅ [Guide de validation](validation.md)
+- 📊 [Guide du dashboard](dashboard.md)
+'''
+    
+    def _generate_import_guide(self) -> str:
+        return '''# 📥 Import de Transactions
 
-```
-AGENT-021 (Technical Writer)
-         │
-         ├──→ AGENT-000 (Orchestrator) : Documentation architecture
-         ├──→ AGENT-017 (Data Pipeline) : Docs migration
-         ├──→ AGENT-018 (Open Banking) : API documentation
-         ├──→ AGENT-019 (Performance) : Optimization guides
-         └──→ Tous agents : Agent-specific documentation
+Ce guide explique comment importer vos transactions bancaires.
+
+## Formats Supportés
+
+| Format | Extension | Description |
+|--------|-----------|-------------|
+| CSV | .csv | Format universel |
+| QIF | .qif | Quicken Interchange Format |
+| OFX | .ofx | Open Financial Exchange |
+| JSON | .json | Export FinancePerso |
+
+## Import CSV
+
+### Format attendu
+
+Votre CSV doit contenir au minimum:
+- **date**: Date de la transaction (YYYY-MM-DD)
+- **label**: Libellé de la transaction
+- **amount**: Montant (négatif pour dépenses, positif pour revenus)
+
+### Exemple
+
+```csv
+date,label,amount,category
+2024-01-15,SUPER U PARIS,-45.67,Alimentation
+2024-01-14,SALAIRE JANVIER,2500.00,Revenus
+2024-01-13,PHARMACIE CENTRALE,-23.50,Santé
 ```
 
----
+### Import pas à pas
 
-## 📚 Templates
+1. Allez dans la page **Import**
+2. Glissez-déposez votre fichier ou cliquez pour sélectionner
+3. Mappez les colonnes si nécessaire
+4. Cliquez sur **Importer**
 
-### Pull Request Template
+## Import Massif (10 000+ transactions)
 
-```markdown
-## Description
+Pour les imports de grande taille:
 
-[Bref résumé des changements]
+1. Utilisez la page **Import Massif** (AGENT-017)
+2. Le système traite par batch de 1000
+3. Vous recevrez une notification à la fin
 
-## Type de changement
+## Import depuis Open Banking
 
-- [ ] Bug fix
-- [ ] Nouvelle fonctionnalité
-- [ ] Breaking change
-- [ ] Documentation
+Si vous avez connecté vos comptes bancaires:
 
-## Checklist
+1. Allez dans **Comptes Bancaires**
+2. Cliquez sur **Synchroniser**
+3. Les transactions sont importées automatiquement
 
-- [ ] Tests passent
-- [ ] Documentation mise à jour
-- [ ] Changelog mis à jour
-- [ ] Code review effectuée
+## Dépannage
+
+### Problème: "Format de date non reconnu"
+
+Solution: Utilisez le format YYYY-MM-DD ou vérifiez les paramètres régionaux.
+
+### Problème: "Montant invalide"
+
+Solution: Utilisez le point comme séparateur décimal (45.67, pas 45,67).
+
+### Problème: "Doublons détectés"
+
+Solution: Le système détecte automatiquement les doublons. Vérifiez dans l'historique.
+'''
+    
+    def _generate_validation_guide(self) -> str:
+        return '''# ✅ Validation et Catégorisation
+
+Ce guide explique comment valider et catégoriser vos transactions.
+
+## Pourquoi valider ?
+
+La validation permet de:
+- ✅ Vérifier la catégorisation automatique
+- ✅ Corriger les erreurs
+- ✅ Apprendre au système vos préférences
+- ✅ Améliorer la précision future
+
+## Processus de Validation
+
+### 1. Accéder aux transactions en attente
+
+Allez dans **Validation** pour voir les transactions importées récemment.
+
+### 2. Vue groupe (recommandé)
+
+Les transactions sont groupées par similitude:
+- Même libellé
+- Même montant
+- Même période
+
+### 3. Valider par groupe
+
+- ✅ **Valider tout**: Confirme tout le groupe
+- 📝 **Modifier**: Change la catégorie
+- 👤 **Changer membre**: Attribue à un autre membre
+- 🏷️ **Ajouter tags**: Ajoute des labels
+- ✏️ **Éditer**: Modifie les détails
+
+### 4. Règles d'apprentissage
+
+Quand vous corrigez une catégorie:
+- Le système crée une règle
+- Les futures transactions similaires seront auto-catégorisées
+
+## Catégories Intelligentes
+
+Le système utilise plusieurs méthodes:
+
+1. **Règles exactes** (priorité 1)
+   - Vos corrections précédentes
+
+2. **Règles partielles** (priorité 2)
+   - Pattern matching sur les libellés
+
+3. **IA Cloud** (priorité 3)
+   - Gemini/OpenAI pour les cas complexes
+
+4. **ML Local** (priorité 4)
+   - Scikit-learn offline
+
+## Tips et Astuces
+
+### Utiliser les tags
+
+Les tags permettent de grouper transversalement:
+- #vacances-2024
+- #remboursable
+- #pro
+
+### Validation rapide
+
+- **Flèches** pour naviguer
+- **Entrée** pour valider
+- **Espace** pour sélectionner
+
+### Mode avancé
+
+Activez le mode avancé dans **Configuration** pour:
+- Voir les scores de confiance
+- Éditer les règles
+- Gérer les conflits
+'''
+    
+    def _generate_faq(self) -> str:
+        return '''# ❓ FAQ
+
+## Général
+
+### Qu'est-ce que FinancePerso ?
+
+FinancePerso est une application de gestion financière personnelle qui vous aide à:
+- Importer automatiquement vos transactions
+- Catégoriser vos dépenses
+- Suivre vos budgets
+- Analyser vos finances
+
+### Mes données sont-elles sécurisées ?
+
+Oui ! Toutes vos données:
+- Sont stockées localement (SQLite)
+- Peuvent être chiffrées (AES-256)
+- Ne quittent jamais votre machine (sauf si vous activez l'IA cloud)
+
+### Puis-je utiliser FinancePerso hors ligne ?
+
+Oui, entièrement ! L'application fonctionne 100% offline.
+Seules les fonctionnalités IA cloud nécessitent internet.
+
+## Import
+
+### Quelles banques sont supportées ?
+
+Toutes les banques exportant en CSV, QIF ou OFX:
+- BNP Paribas
+- Crédit Mutuel
+- Société Générale
+- Banque Postale
+- etc.
+
+### Puis-je importer plusieurs années d'historique ?
+
+Oui ! Utilisez la fonction **Import Massif** pour 10 000+ transactions.
+
+## Fonctionnalités
+
+### Comment fonctionne la catégorisation automatique ?
+
+Le système utilise une cascade:
+1. Vos règles personnalisées
+2. Pattern matching
+3. Intelligence artificielle (optionnel)
+4. Catégorie par défaut
+
+### Puis-je créer mes propres catégories ?
+
+Oui, illimité ! Allez dans **Configuration > Catégories**.
+
+### Qu'est-ce que le mode couple ?
+
+Le mode couple permet de:
+- Gérer un budget partagé
+- Attribuer les dépenses par membre
+- Suivre les dettes entre vous
+
+## Problèmes Techniques
+
+### L'application ne démarre pas
+
+1. Vérifiez Python 3.11+
+2. Vérifiez les dépendances: `pip install -r requirements.txt`
+3. Lancez `python scripts/doctor.py`
+
+### Erreur "Module not found"
+
+```bash
+# Réinstallez les dépendances
+pip install -r requirements.txt --force-reinstall
 ```
 
-### Issue Template
+### Problèmes de performance
 
-```markdown
-## Description
+- Vider le cache: **Configuration > Maintenance**
+- Optimiser la base: **Configuration > Outils avancés**
+- Réduire l'historique affiché
 
-[Description claire du problème]
+## Contribution
 
-## Reproduction
+### Puis-je contribuer au projet ?
 
-1. Aller à '...'
-2. Cliquer sur '...'
-3. Erreur: '...'
+Oui ! Voir [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
-## Comportement attendu
+### Où signaler un bug ?
 
-[Ce qui devrait se passer]
-
-## Environnement
-
-- OS: [ex: macOS 14]
-- Version: [ex: 1.2.3]
-- Navigateur: [ex: Chrome 120]
-```
-
----
-
-## 🎯 Métriques Documentation
-
-| Métrique | Target | Mesure |
-|----------|--------|--------|
-| Doc Coverage | >90% | % fonctions documentées |
-| README Completeness | 100% | Validation checklist |
-| Changelog Currency | <1 release retard | Versions documentées |
-
----
-
-**Agent spécialisé AGENT-021** - Technical Writer  
-_Version 1.0 - Documentation complète_  
-_Couvre 98% des besoins documentation pour FinancePerso_
-
-
----
-
-## 📚 Références Détaillées
-
-### Standards de Documentation
-
-#### Documentation Technique
-- **Docs as Code**: https://www.writethedocs.org/guide/docs-as-code/
-- **Diátaxis Framework**: https://diataxis.fr/ (Tutorial, How-to, Reference, Explanation)
-- **Documentation System**: https://documentation.divio.com/
-
-#### Style Guides
-- **Microsoft Writing Style Guide**: https://learn.microsoft.com/en-us/style-guide/welcome/
-- **Google Developer Documentation**: https://developers.google.com/style
-- **Apple Style Guide**: https://support.apple.com/en-us/HT207018
-- **Plain Language Guidelines**: https://www.plainlanguage.gov/guidelines/
-
-#### Markdown et Formatage
-- **CommonMark Spec**: https://spec.commonmark.org/
-- **GitHub Flavored Markdown**: https://github.github.com/gfm/
-- **MDX**: Markdown pour documentation interactive
-
-### Outils de Documentation
-
-#### Générateurs de Documentation
-- **MkDocs**: https://www.mkdocs.org/ - Documentation statique
-- **Docusaurus**: https://docusaurus.io/ - Documentation React-based
-- **Sphinx**: https://www.sphinx-doc.org/ - Documentation Python
-- **VitePress**: https://vitepress.dev/ - Documentation Vue-based
-- **GitBook**: https://www.gitbook.com/ - Hébergement et édition
-
-#### API Documentation
-- **OpenAPI/Swagger**: https://swagger.io/specification/
-- **Postman Collections**: https://learning.postman.com/
-- **Insomnia**: https://insomnia.rest/ - API Client avec docs
-- **Stoplight**: https://stoplight.io/ - Design et docs API
-
-#### Quality & Testing
-- **Vale**: https://vale.sh/ - Linter de prose
-- **Markdownlint**: https://github.com/DavidAnson/markdownlint
-- **Proselint**: http://proselint.com/ - Linter de style
-- **Write Good**: https://github.com/btford/write-good
-
-### Versioning et Releases
-
-#### Semantic Versioning
-- **SemVer Spec**: https://semver.org/lang/fr/
-- **SemVer Check**: https://jubianchi.github.io/semver-check/
-
-#### Conventional Commits
-- **Spécification**: https://www.conventionalcommits.org/
-- **Commitlint**: https://commitlint.js.org/
-- **Standard Version**: https://github.com/conventional-changelog/standard-version
-
-#### Changelogs
-- **Keep a Changelog**: https://keepachangelog.com/fr/1.0.0/
-- **GitHub Releases**: https://docs.github.com/en/repositories/releasing-projects-on-github
-
----
-
-## 🧱 Module 4: API Documentation Generator
-
-### OpenAPI Specification Generator
-
-```python
-# modules/docs/openapi_generator.py
-
-"""Générateur de documentation OpenAPI depuis le code."""
-
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-import json
-import inspect
-
-
-@dataclass
-class APIEndpoint:
-    """Définition d'un endpoint API."""
-    path: str
-    method: str
-    summary: str
-    description: str = ""
-    parameters: List[Dict] = None
-    request_body: Dict = None
-    responses: Dict = None
-    tags: List[str] = None
-    deprecated: bool = False
+Créez une issue sur GitHub avec:
+- Version de FinancePerso
+- Système d'exploitation
+- Description détaillée
+- Étapes de reproduction
+'''
     
-    def __post_init__(self):
-        if self.parameters is None:
-            self.parameters = []
-        if self.responses is None:
-            self.responses = {}
-        if self.tags is None:
-            self.tags = []
+    def _generate_dashboard_guide(self) -> str:
+        return "# Guide Dashboard - En cours de rédaction"
+    
+    def _generate_budgets_guide(self) -> str:
+        return "# Guide Budgets - En cours de rédaction"
+    
+    def _generate_configuration_guide(self) -> str:
+        return "# Guide Configuration - En cours de rédaction"
+    
+    def _generate_index(self, output_path: Path):
+        """Génère l'index du guide."""
+        content = '''# Guide Utilisateur
+
+Bienvenue dans le guide utilisateur de FinancePerso !
+
+## 📚 Sommaire
+
+| Guide | Description |
+|-------|-------------|
+| 🚀 [Démarrage Rapide](getting-started.md) | Installation et première utilisation |
+| 📥 [Import](import.md) | Importer vos transactions |
+| ✅ [Validation](validation.md) | Valider et catégoriser |
+| 📊 [Dashboard](dashboard.md) | Comprendre vos finances |
+| 💰 [Budgets](budgets.md) | Gérer vos budgets |
+| ⚙️ [Configuration](configuration.md) | Personnaliser l'application |
+| ❓ [FAQ](faq.md) | Questions fréquentes |
+
+## 🆘 Support
+
+- Documentation technique: [README.md](../../README.md)
+- Guide développeur: [AGENTS.md](../../AGENTS.md)
+- Signaler un bug: GitHub Issues
+'''
+        (output_path / "README.md").write_text(content, encoding='utf-8')
 
 
-@dataclass
-class APISchema:
-    """Définition d'un schéma de données."""
-    name: str
-    properties: Dict[str, Dict]
-    required: List[str] = None
-    description: str = ""
+class OnboardingGuideGenerator:
+    """
+    Générateur de guide d'onboarding interactif.
+    """
     
-    def __post_init__(self):
-        if self.required is None:
-            self.required = []
-
-
-class OpenAPIGenerator:
-    """Générateur de spécification OpenAPI 3.0."""
-    
-    OPENAPI_VERSION = "3.0.3"
-    
-    def __init__(self, title: str, version: str, description: str = ""):
-        self.title = title
-        self.version = version
-        self.description = description
-        self.endpoints: List[APIEndpoint] = []
-        self.schemas: Dict[str, APISchema] = {}
-        self.security_schemes: Dict = {}
-    
-    def add_endpoint(self, endpoint: APIEndpoint):
-        """Ajoute un endpoint."""
-        self.endpoints.append(endpoint)
-    
-    def add_schema(self, schema: APISchema):
-        """Ajoute un schéma."""
-        self.schemas[schema.name] = schema
-    
-    def add_security_scheme(self, name: str, scheme: Dict):
-        """Ajoute un schéma de sécurité."""
-        self.security_schemes[name] = scheme
-    
-    def generate(self) -> Dict:
-        """Génère la spécification complète."""
-        spec = {
-            "openapi": self.OPENAPI_VERSION,
-            "info": {
-                "title": self.title,
-                "version": self.version,
-                "description": self.description
-            },
-            "paths": self._build_paths(),
-            "components": {
-                "schemas": self._build_schemas()
-            }
-        }
-        
-        if self.security_schemes:
-            spec["components"]["securitySchemes"] = self.security_schemes
-        
-        return spec
-    
-    def _build_paths(self) -> Dict:
-        """Construit la section paths."""
-        paths = {}
-        
-        for endpoint in self.endpoints:
-            if endpoint.path not in paths:
-                paths[endpoint.path] = {}
-            
-            paths[endpoint.path][endpoint.method.lower()] = {
-                "summary": endpoint.summary,
-                "description": endpoint.description,
-                "parameters": endpoint.parameters,
-                "tags": endpoint.tags,
-                "deprecated": endpoint.deprecated
-            }
-            
-            if endpoint.request_body:
-                paths[endpoint.path][endpoint.method.lower()]["requestBody"] = endpoint.request_body
-            
-            if endpoint.responses:
-                paths[endpoint.path][endpoint.method.lower()]["responses"] = endpoint.responses
-        
-        return paths
-    
-    def _build_schemas(self) -> Dict:
-        """Construit la section schemas."""
-        result = {}
-        
-        for name, schema in self.schemas.items():
-            result[name] = {
-                "type": "object",
-                "properties": schema.properties,
-                "required": schema.required,
-                "description": schema.description
-            }
-        
-        return result
-    
-    def to_json(self, indent: int = 2) -> str:
-        """Exporte en JSON."""
-        return json.dumps(self.generate(), indent=indent, ensure_ascii=False)
-    
-    def to_yaml(self) -> str:
-        """Exporte en YAML."""
-        try:
-            import yaml
-            return yaml.dump(self.generate(), allow_unicode=True, sort_keys=False)
-        except ImportError:
-            raise ImportError("PyYAML requis: pip install pyyaml")
-
-
-# Décorateurs pour documentation API
-
-def api_endpoint(
-    path: str,
-    method: str = "GET",
-    summary: str = "",
-    description: str = "",
-    tags: List[str] = None,
-    responses: Dict = None
-):
-    """Décorateur pour documenter un endpoint."""
-    def decorator(func):
-        func._api_doc = APIEndpoint(
-            path=path,
-            method=method,
-            summary=summary,
-            description=description,
-            tags=tags or [],
-            responses=responses or {
-                "200": {"description": "Success"}
-            }
-        )
-        return func
-    return decorator
-
-
-def api_parameter(name: str, param_in: str, type_: str, required: bool = True, description: str = ""):
-    """Décorateur pour ajouter un paramètre."""
-    def decorator(func):
-        if not hasattr(func, '_api_params'):
-            func._api_params = []
-        
-        func._api_params.append({
-            "name": name,
-            "in": param_in,
-            "required": required,
-            "description": description,
-            "schema": {"type": type_}
-        })
-        return func
-    return decorator
-
-
-# Example usage for FinancePerso
-
-def generate_financeperso_api_docs():
-    """Génère la documentation API de FinancePerso."""
-    
-    gen = OpenAPIGenerator(
-        title="FinancePerso API",
-        version="5.2.1",
-        description="API de gestion financière personnelle"
-    )
-    
-    # Schémas
-    gen.add_schema(APISchema(
-        name="Transaction",
-        properties={
-            "id": {"type": "integer", "description": "ID unique"},
-            "date": {"type": "string", "format": "date"},
-            "amount": {"type": "number", "description": "Montant"},
-            "description": {"type": "string"},
-            "category_id": {"type": "integer"}
-        },
-        required=["date", "amount", "description"]
-    ))
-    
-    gen.add_schema(APISchema(
-        name="Category",
-        properties={
-            "id": {"type": "integer"},
-            "name": {"type": "string"},
-            "color": {"type": "string"},
-            "budget_limit": {"type": "number", "nullable": True}
-        }
-    ))
-    
-    # Endpoints
-    gen.add_endpoint(APIEndpoint(
-        path="/api/transactions",
-        method="GET",
-        summary="Liste des transactions",
-        description="Récupère la liste des transactions avec filtres optionnels",
-        parameters=[
+    def generate_checklist(self) -> List[Dict]:
+        """Génère une checklist d'onboarding."""
+        return [
             {
-                "name": "start_date",
-                "in": "query",
-                "schema": {"type": "string", "format": "date"},
-                "description": "Date de début (YYYY-MM-DD)"
+                "step": 1,
+                "title": "Installation",
+                "description": "Installer FinancePerso et vérifier qu'il fonctionne",
+                "action": "Lancer l'application",
+                "completed": False
             },
             {
-                "name": "end_date",
-                "in": "query",
-                "schema": {"type": "string", "format": "date"},
-                "description": "Date de fin (YYYY-MM-DD)"
+                "step": 2,
+                "title": "Configuration initiale",
+                "description": "Créer vos catégories et configurer les membres",
+                "action": "Aller dans Configuration",
+                "completed": False
             },
             {
-                "name": "category_id",
-                "in": "query",
-                "schema": {"type": "integer"},
-                "description": "Filtrer par catégorie"
+                "step": 3,
+                "title": "Premier import",
+                "description": "Importer vos transactions du mois dernier",
+                "action": "Aller dans Import",
+                "completed": False
+            },
+            {
+                "step": 4,
+                "title": "Validation",
+                "description": "Valider et corriger la catégorisation",
+                "action": "Aller dans Validation",
+                "completed": False
+            },
+            {
+                "step": 5,
+                "title": "Explorer le dashboard",
+                "description": "Découvrir les graphiques et analyses",
+                "action": "Aller dans Dashboard",
+                "completed": False
             }
-        ],
-        responses={
-            "200": {
-                "description": "Liste des transactions",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "array",
-                            "items": {"$ref": "#/components/schemas/Transaction"}
-                        }
-                    }
-                }
-            }
-        },
-        tags=["Transactions"]
-    ))
-    
-    gen.add_endpoint(APIEndpoint(
-        path="/api/transactions",
-        method="POST",
-        summary="Créer une transaction",
-        request_body={
-            "required": True,
-            "content": {
-                "application/json": {
-                    "schema": {"$ref": "#/components/schemas/Transaction"}
-                }
-            }
-        },
-        responses={
-            "201": {"description": "Transaction créée"},
-            "400": {"description": "Données invalides"},
-            "401": {"description": "Non authentifié"}
-        },
-        tags=["Transactions"]
-    ))
-    
-    # Sécurité
-    gen.add_security_scheme("bearerAuth", {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-    })
-    
-    return gen
-
-
-def render_api_documentation():
-    """Affiche la documentation API interactive dans Streamlit."""
-    import streamlit as st
-    import streamlit.components.v1 as components
-    
-    st.header("📚 API Documentation")
-    
-    # Générer la spec
-    gen = generate_financeperso_api_docs()
-    spec = gen.generate()
-    
-    # Tabs pour différents formats
-    tab1, tab2, tab3 = st.tabs(["Swagger UI", "OpenAPI JSON", "OpenAPI YAML"])
-    
-    with tab1:
-        # Swagger UI (via CDN)
-        swagger_html = f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-        </head>
-        <body>
-            <div id="swagger-ui"></div>
-            <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-            <script>
-                SwaggerUIBundle({{
-                    spec: {json.dumps(spec)},
-                    dom_id: '#swagger-ui',
-                    presets: [
-                        SwaggerUIBundle.presets.apis,
-                        SwaggerUIBundle.presets.standaloneSetup
-                    ]
-                }});
-            </script>
-        </body>
-        </html>
-        '''
-        components.html(swagger_html, height=800, scrolling=True)
-    
-    with tab2:
-        st.code(gen.to_json(), language="json")
-    
-    with tab3:
-        st.code(gen.to_yaml(), language="yaml")
-```
-
-### Interactive Documentation Components
-
-```python
-# modules/docs/interactive_docs.py
-
-import streamlit as st
-from typing import Dict, List, Callable
-
-
-class InteractiveGuide:
-    """Guide interactif étape par étape."""
-    
-    def __init__(self, title: str, steps: List[Dict]):
-        """
-        steps: [{'title': 'Titre', 'content': 'Contenu', 'action': func}, ...]
-        """
-        self.title = title
-        self.steps = steps
-        self.current_key = f"guide_{title}_step"
-    
-    def render(self):
-        """Affiche le guide interactif."""
-        st.subheader(self.title)
-        
-        current = st.session_state.get(self.current_key, 0)
-        total = len(self.steps)
-        
-        # Barre de progression
-        progress = (current + 1) / total
-        st.progress(progress)
-        st.caption(f"Étape {current + 1} sur {total}")
-        
-        # Contenu de l'étape
-        step = self.steps[current]
-        st.markdown(f"### {step['title']}")
-        st.markdown(step['content'])
-        
-        # Action optionnelle
-        if 'action' in step:
-            step['action']()
-        
-        # Navigation
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col1:
-            if current > 0:
-                if st.button("← Précédent"):
-                    st.session_state[self.current_key] = current - 1
-                    st.rerun()
-        
-        with col3:
-            if current < total - 1:
-                if st.button("Suivant →"):
-                    st.session_state[self.current_key] = current + 1
-                    st.rerun()
-            else:
-                if st.button("✓ Terminer"):
-                    st.success("Guide complété !")
-                    st.session_state[self.current_key] = 0
-
-
-class CodeExample:
-    """Exemple de code avec copie et exécution."""
-    
-    def __init__(self, code: str, language: str = "python", 
-                 runnable: bool = False, description: str = ""):
-        self.code = code
-        self.language = language
-        self.runnable = runnable
-        self.description = description
-    
-    def render(self):
-        """Affiche l'exemple de code."""
-        if self.description:
-            st.markdown(self.description)
-        
-        # Code avec bouton copier
-        col1, col2 = st.columns([10, 1])
-        
-        with col1:
-            st.code(self.code, language=self.language)
-        
-        with col2:
-            if st.button("📋", help="Copier"):
-                import pyperclip
-                pyperclip.copy(self.code)
-                st.toast("Code copié !")
-        
-        # Bouton exécuter si applicable
-        if self.runnable and self.language == "python":
-            if st.button("▶ Exécuter"):
-                with st.expander("Résultat"):
-                    try:
-                        exec(self.code)
-                    except Exception as e:
-                        st.error(f"Erreur: {e}")
-
-
-class FAQSection:
-    """Section FAQ interactive."""
-    
-    def __init__(self, faqs: List[Dict]):
-        """
-        faqs: [{'question': 'Q?', 'answer': 'A.', 'tags': ['tag1']}, ...]
-        """
-        self.faqs = faqs
-    
-    def render(self):
-        """Affiche la FAQ."""
-        # Recherche
-        search = st.text_input("🔍 Rechercher dans la FAQ")
-        
-        # Filtre par tag
-        all_tags = list(set(tag for faq in self.faqs for tag in faq.get('tags', [])))
-        if all_tags:
-            selected_tags = st.multiselect("Filtrer par tag", all_tags)
-        else:
-            selected_tags = []
-        
-        # Afficher les FAQ filtrées
-        for faq in self.faqs:
-            # Filtre recherche
-            if search and search.lower() not in faq['question'].lower() and search.lower() not in faq['answer'].lower():
-                continue
-            
-            # Filtre tags
-            if selected_tags and not any(tag in faq.get('tags', []) for tag in selected_tags):
-                continue
-            
-            with st.expander(f"❓ {faq['question']}"):
-                st.markdown(faq['answer'])
-                
-                if faq.get('tags'):
-                    st.caption(f"Tags: {', '.join(faq['tags'])}")
-
-
-class SearchableDocumentation:
-    """Documentation avec recherche full-text."""
-    
-    def __init__(self, sections: List[Dict]):
-        """
-        sections: [{'title': 'Titre', 'content': 'Contenu', 'keywords': ['kw1']}, ...]
-        """
-        self.sections = sections
-    
-    def render(self):
-        """Affiche la documentation avec recherche."""
-        # Index pour recherche
-        search_query = st.text_input("🔍 Rechercher dans la documentation")
-        
-        # Afficher les sections
-        for section in self.sections:
-            # Si recherche active, filtrer
-            if search_query:
-                content_to_search = f"{section['title']} {section.get('content', '')} {' '.join(section.get('keywords', []))}"
-                if search_query.lower() not in content_to_search.lower():
-                    continue
-                
-                # Mettre en évidence les termes recherchés
-                st.markdown(f"### {self._highlight(section['title'], search_query)}")
-                if 'content' in section:
-                    st.markdown(self._highlight(section['content'], search_query))
-            else:
-                with st.expander(section['title']):
-                    if 'content' in section:
-                        st.markdown(section['content'])
-    
-    def _highlight(self, text: str, query: str) -> str:
-        """Met en évidence les termes recherchés."""
-        import re
-        pattern = re.compile(f'({re.escape(query)})', re.IGNORECASE)
-        return pattern.sub(r'**\1**', text)
+        ]
 ```
 
 ---
 
-## ✅ Checklist Complète de Documentation
-
-### Documentation de Code
+## ✅ Checklist Documentation
 
 ```
-✅ DOCSTRINGS
-├── Toutes les fonctions publiques ont une docstring
-├── Format: Google Style ou NumPy Style
-├── Args documentés avec types
-├── Return documenté avec type
-├── Raises documentés si applicable
-├── Exemples pour fonctions complexes
-└── Module-level docstrings
+✅ DOCUMENTATION UTILISATEUR
+├── [ ] Guide démarrage rapide
+├── [ ] Guide import
+├── [ ] Guide validation
+├── [ ] Guide dashboard
+├── [ ] Guide budgets
+├── [ ] Guide configuration
+├── [ ] FAQ complète
+└── [ ] Vidéos tutoriels (optionnel)
 
-✅ INLINE COMMENTS
-├── Expliquer le "pourquoi" pas le "quoi"
-├── TODOs avec issue/ticket associé
-├── FIXMEs priorisés
-├── Complex algorithms expliqués
-└── Business logic commentée
-
-✅ README FILES
-├── Titre et description
-├── Installation détaillée
-├── Configuration
-├── Usage basique et avancé
-├── API reference (si applicable)
-├── Contributing guidelines
-├── License
-└── Badges (build, coverage, version)
-```
-
-### Documentation Utilisateur
-
-```
-✅ USER GUIDE
-├── Getting Started (5 minutes)
-├── Installation complète
-├── Configuration initiale
-├── Navigation overview
-├── Features principales
-├── Tâches communes (tutoriels)
-├── FAQ
-├── Troubleshooting
-└── Contact et support
-
-✅ TUTORIELS
-├── Objectif clair
-├── Prérequis listés
-├── Étapes numérotées
-├── Screenshots pertinents
-├── Code copy-paste ready
-├── Vérification à chaque étape
-├── Next steps
-└── Liens connexes
-
-✅ UI TEXT
-├── Labels clairs et concis
-├── Messages d'erreur actionnables
-├── Tooltips informatives
-├── Empty states utiles
-├── Loading states
-└── Confirmation dialogs clairs
-```
-
-### Documentation Technique
-
-```
-✅ ARCHITECTURE DOCS
-├── Overview et diagrammes
-├── Component descriptions
-├── Data flow diagrams
-├── API specifications
-├── Database schema
-├── Security considerations
-├── Deployment guide
-└── Troubleshooting ops
-
-✅ API DOCUMENTATION
-├── Endpoints complets
-├── Authentication
-├── Request/response examples
-├── Error codes
-├── Rate limits
-├── SDKs et client libraries
-└── Changelog API
-
-✅ RELEASE DOCUMENTATION
-├── Changelog (Keep a Changelog format)
-├── Migration guides
-├── Breaking changes
-├── Deprecation notices
-├── Release notes
-└── Upgrade procedures
-```
-
-### Quality Assurance
-
-```
-✅ REVIEW CHECKLIST
-├── Pas de fautes d'orthographe
-├── Pas de liens cassés
-├── Code examples testés
-├── Images chargées correctement
-├── Navigation fonctionnelle
-├── Search fonctionnel
-├── Mobile responsive
-└── Accessibilité (AGENT-020)
+✅ DOCUMENTATION TECHNIQUE
+├── [ ] Architecture
+├── [ ] API Reference
+├── [ ] Guide contribution
+├── [ ] Setup développement
+├── [ ] Déploiement
+└── [ ] Troubleshooting
 
 ✅ MAINTENANCE
-├── Docs à jour avec le code
-├── Review docs dans PRs
-├── Monthly doc audit
-├── User feedback collected
-├── Analytics sur pages les plus vues
-└── Archiver docs obsolètes
+├── [ ] Changelog à jour
+├── [ ] Release notes
+├── [ ] Migrations guides
+└── [ ] ADRs (Architecture Decision Records)
 ```
 
 ---
 
-## 🏗️ Architecture Inter-Agent Détaillée
-
-### Matrice de coordination
-
-```
-AGENT-021 (Technical Writer)
-    │
-    ├── INPUTS ─────────────────────────────────────────────┐
-    │  ├── AGENT-000: Architecture globale                  │
-    │  ├── AGENT-001: Database schema                       │
-    │  ├── AGENT-017: Data pipeline documentation           │
-    │  ├── AGENT-018: Open Banking API docs                 │
-    │  ├── AGENT-019: Performance guides                    │
-    │  ├── AGENT-020: Accessibility documentation           │
-    │  └── Tous agents: Updates de features                 │
-    │                                                       │
-    ├── OUTPUTS ────────────────────────────────────────────┤
-    │  ├── → AGENT-000: Architecture documentation          │
-    │  ├── → AGENT-009/010: UI documentation                │
-    │  ├── → AGENT-017: Migration guides                    │
-    │  ├── → AGENT-018: API documentation                   │
-    │  ├── → AGENT-019: Performance guides                  │
-    │  ├── → AGENT-020: Accessibility guides                │
-    │  └── → Users: User guides, FAQs                       │
-    │                                                       │
-    └── PROTOCOLES ─────────────────────────────────────────┤
-       ├── NEW_FEATURE_DOC: Doc créée avec feature          │
-       ├── API_CHANGE: Changelog mis à jour                │
-       ├── RELEASE_PREP: Release notes générées            │
-       └── DOC_AUDIT: Audit mensuel qualité                │
-```
-
-### Protocoles de coordination
-
-```python
-# Protocole: New Feature Documentation
-def on_feature_implemented(feature: Dict):
-    """
-    Tout agent → AGENT-021
-    Quand une feature est implémentée.
-    """
-    # Créer documentation
-    doc = create_feature_documentation(feature)
-    
-    # Mettre à jour changelog
-    add_to_changelog(feature)
-    
-    # Générer mise à jour user guide si nécessaire
-    if feature.get('user_visible'):
-        update_user_guide(feature)
-    
-    # Notifier pour review
-    notify_agent('000', {
-        'event': 'DOC_CREATED',
-        'feature': feature['name'],
-        'doc_path': doc['path']
-    })
-
-
-# Protocole: Release Documentation Preparation
-def on_release_scheduled(version: str, changes: List[Dict]):
-    """
-    AGENT-000 → AGENT-021
-    Quand une release est planifiée.
-    """
-    # Générer release notes
-    release_notes = generate_release_notes(version, changes)
-    
-    # Créer migration guide si breaking changes
-    breaking = [c for c in changes if c.get('breaking')]
-    migration_guide = None
-    if breaking:
-        migration_guide = generate_migration_guide(version, breaking)
-    
-    # Mettre à jour CHANGELOG.md
-    update_changelog_file(version, changes)
-    
-    return {
-        'release_notes': release_notes,
-        'migration_guide': migration_guide,
-        'changelog_updated': True
-    }
-
-
-# Protocole: API Documentation Update
-def on_api_endpoint_changed(endpoint: Dict, change_type: str):
-    """
-    AGENT-018 → AGENT-021
-    Quand un endpoint API change.
-    """
-    # Mettre à jour OpenAPI spec
-    update_openapi_spec(endpoint, change_type)
-    
-    # Marquer comme breaking si nécessaire
-    if change_type in ['removed', 'modified']:
-        mark_breaking_change(endpoint)
-    
-    # Regénérer API docs
-    regenerate_api_docs()
-```
-
----
-
-## 🎯 Métriques de Documentation
-
-| Métrique | Target | Alerte | Critique |
-|----------|--------|--------|----------|
-| Doc Coverage | > 90% | < 85% | < 75% |
-| README Completeness | 100% | < 100% | - |
-| API Doc Coverage | > 95% | < 90% | < 80% |
-| Code Example Success Rate | > 98% | < 95% | < 90% |
-| User Guide Freshness | < 30j | < 60j | < 90j |
-| Changelog Currency | < 1 release | < 2 releases | > 2 releases |
-| Broken Links | 0 | > 0 | > 5 |
-| Translation Coverage | > 95% | < 90% | < 80% |
-
----
-
-**Agent spécialisé AGENT-021** - Technical Writer  
-_Version 2.0 - Documentation exhaustive_  
-_Couvre 99.9% des besoins documentation pour FinancePerso_
+**Agent spécialisé AGENT-021** - Documentation & Technical Writer  
+_Version 1.0 - Génération automatique de documentation_  
+_Cibles: Utilisateurs finaux + Développeurs contributeurs_

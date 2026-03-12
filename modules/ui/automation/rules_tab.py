@@ -125,7 +125,7 @@ def _render_conflict_alerts():
                         st.markdown(f"- **{rule['category']}** (ID: {rule['id']})")
 
             elif conflict["type"] == "overlapping":
-                with st.expander(f"🟡 Patterns se chevauchant"):
+                with st.expander("🟡 Patterns se chevauchant"):
                     col1, col2 = st.columns(2)
                     with col1:
                         st.markdown(f"**`{conflict['pattern1'][:30]}`** → {conflict['category1']}")
@@ -596,7 +596,7 @@ def _render_database_test(pattern: str):
                 highlighted_label = f"{label[:start]}**`{label[start:end]}`**{label[end:]}"
             else:
                 highlighted_label = label
-        except:
+        except re.error:
             highlighted_label = label
 
         col1, col2, col3 = st.columns([3, 1, 1])

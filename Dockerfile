@@ -15,7 +15,7 @@ ARG GID=1000
 # Labels
 LABEL maintainer="FinancePerso Team"
 LABEL description="Application de gestion financière personnelle"
-LABEL version="5.2.1"
+LABEL version="5.6.0"
 
 WORKDIR /app
 

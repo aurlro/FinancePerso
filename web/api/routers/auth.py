@@ -9,6 +9,7 @@ Provides endpoints for:
 - Password change
 """
 
+import os
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Annotated
@@ -38,8 +39,12 @@ from models.schemas import (
 
 router = APIRouter(tags=["Authentication"])
 
-# Security configuration
-SECRET_KEY = "your-secret-key-change-in-production"  # TODO: Move to environment variable
+# Security configuration - Load from environment variable
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    logger.warning("JWT_SECRET_KEY not set, using fallback (INSECURE for production)")
+    SECRET_KEY = "dev-secret-key-change-immediately"
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7 days

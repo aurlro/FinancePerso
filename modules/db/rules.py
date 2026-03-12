@@ -5,7 +5,6 @@ Handles pattern-based categorization rules.
 
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 import pandas as pd
 import streamlit as st
@@ -22,7 +21,7 @@ class RuleStats:
     pattern: str
     category: str
     match_count: int
-    last_match_date: Optional[str]
+    last_match_date: str | None
     confidence_score: float  # Based on match consistency
 
 
@@ -229,7 +228,7 @@ def update_learning_rule(
 # =============================================================================
 
 
-def get_rule_statistics(rule_id: int) -> Optional[RuleStats]:
+def get_rule_statistics(rule_id: int) -> RuleStats | None:
     """
     Get usage statistics for a specific rule.
     
