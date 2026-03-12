@@ -42,6 +42,9 @@ test_results_*.txt
 .pytest_cache/
 htmlcov/
 
+# Node.js / Electron
+node_modules/
+
 # IDE
 .vscode/
 .idea/
