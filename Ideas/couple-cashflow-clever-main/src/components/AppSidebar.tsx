@@ -7,10 +7,6 @@ import {
   FileText,
   Wallet,
   LogOut,
-  BarChart3,
-  CalendarCheck,
-  Scale,
-  RefreshCw,
 } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -25,7 +21,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { NotificationBell } from "@/components/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
@@ -35,10 +30,6 @@ const navItems = [
   { title: "Import", icon: Upload, path: "/import" },
   { title: "Comptes", icon: Landmark, path: "/accounts" },
   { title: "Règles", icon: FileText, path: "/rules" },
-  { title: "Analytics", icon: BarChart3, path: "/analytics" },
-  { title: "Bilan mensuel", icon: CalendarCheck, path: "/recap" },
-  { title: "Équilibre", icon: Scale, path: "/balance" },
-  { title: "Abonnements", icon: RefreshCw, path: "/subscriptions" },
   { title: "Paramètres", icon: Settings, path: "/settings" },
 ];
 
@@ -84,12 +75,9 @@ export function AppSidebar() {
             <span className="text-xs text-muted-foreground truncate max-w-[140px]">
               {user.email}
             </span>
-            <div className="flex items-center gap-1">
-              <NotificationBell />
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={signOut}>
-                <LogOut className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={signOut}>
+              <LogOut className="h-3.5 w-3.5" />
+            </Button>
           </div>
         )}
         <div className="flex items-center justify-between">

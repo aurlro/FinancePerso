@@ -1,1 +1,0 @@
-ALTER TABLE public.transactions ADD COLUMN is_subscription boolean NOT NULL DEFAULT false;

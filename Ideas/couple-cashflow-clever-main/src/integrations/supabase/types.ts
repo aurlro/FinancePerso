@@ -14,57 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      attribution_rules: {
-        Row: {
-          created_at: string
-          household_id: string
-          id: string
-          is_active: boolean
-          member_id: string
-          name: string
-          priority: number
-          regex_pattern: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          household_id: string
-          id?: string
-          is_active?: boolean
-          member_id: string
-          name: string
-          priority?: number
-          regex_pattern: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          household_id?: string
-          id?: string
-          is_active?: boolean
-          member_id?: string
-          name?: string
-          priority?: number
-          regex_pattern?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "attribution_rules_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attribution_rules_member_id_fkey"
-            columns: ["member_id"]
-            isOneToOne: false
-            referencedRelation: "household_members"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bank_accounts: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"]
@@ -117,8 +66,6 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
-          exclude_from_expenses: boolean
-          exclude_from_income: boolean
           household_id: string | null
           icon: string | null
           id: string
@@ -128,8 +75,6 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string
-          exclude_from_expenses?: boolean
-          exclude_from_income?: boolean
           household_id?: string | null
           icon?: string | null
           id?: string
@@ -139,8 +84,6 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string
-          exclude_from_expenses?: boolean
-          exclude_from_income?: boolean
           household_id?: string | null
           icon?: string | null
           id?: string
@@ -208,48 +151,6 @@ export type Database = {
           },
         ]
       }
-      category_budgets: {
-        Row: {
-          category_id: string
-          created_at: string
-          household_id: string
-          id: string
-          monthly_amount: number
-          updated_at: string
-        }
-        Insert: {
-          category_id: string
-          created_at?: string
-          household_id: string
-          id?: string
-          monthly_amount?: number
-          updated_at?: string
-        }
-        Update: {
-          category_id?: string
-          created_at?: string
-          household_id?: string
-          id?: string
-          monthly_amount?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "category_budgets_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "category_budgets_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       household_invitations: {
         Row: {
           created_at: string
@@ -295,156 +196,49 @@ export type Database = {
           },
         ]
       }
-      household_members: {
-        Row: {
-          card_identifier: string | null
-          created_at: string
-          display_name: string
-          household_id: string
-          id: string
-          is_active: boolean
-          is_couple: boolean
-          user_id: string | null
-        }
-        Insert: {
-          card_identifier?: string | null
-          created_at?: string
-          display_name: string
-          household_id: string
-          id?: string
-          is_active?: boolean
-          is_couple?: boolean
-          user_id?: string | null
-        }
-        Update: {
-          card_identifier?: string | null
-          created_at?: string
-          display_name?: string
-          household_id?: string
-          id?: string
-          is_active?: boolean
-          is_couple?: boolean
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "household_members_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "household_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       households: {
         Row: {
-          contribution_ratio: number
           created_at: string
-          currency: string
           id: string
           name: string
-          start_date: string | null
           updated_at: string
         }
         Insert: {
-          contribution_ratio?: number
           created_at?: string
-          currency?: string
           id?: string
           name?: string
-          start_date?: string | null
           updated_at?: string
         }
         Update: {
-          contribution_ratio?: number
           created_at?: string
-          currency?: string
           id?: string
           name?: string
-          start_date?: string | null
           updated_at?: string
         }
         Relationships: []
       }
-      notifications: {
-        Row: {
-          body: string | null
-          created_at: string
-          household_id: string
-          id: string
-          is_read: boolean
-          link: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          body?: string | null
-          created_at?: string
-          household_id: string
-          id?: string
-          is_read?: boolean
-          link?: string | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          body?: string | null
-          created_at?: string
-          household_id?: string
-          id?: string
-          is_read?: boolean
-          link?: string | null
-          title?: string
-          type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
-          card_identifier: string | null
           created_at: string
           display_name: string | null
           household_id: string | null
           id: string
-          onboarding_completed_at: string | null
           role: string
           updated_at: string
         }
         Insert: {
-          card_identifier?: string | null
           created_at?: string
           display_name?: string | null
           household_id?: string | null
           id: string
-          onboarding_completed_at?: string | null
           role?: string
           updated_at?: string
         }
         Update: {
-          card_identifier?: string | null
           created_at?: string
           display_name?: string | null
           household_id?: string | null
           id?: string
-          onboarding_completed_at?: string | null
           role?: string
           updated_at?: string
         }
@@ -458,95 +252,9 @@ export type Database = {
           },
         ]
       }
-      savings_goals: {
-        Row: {
-          color: string | null
-          created_at: string
-          current_amount: number
-          deadline: string | null
-          household_id: string
-          icon: string | null
-          id: string
-          is_completed: boolean
-          name: string
-          target_amount: number
-          updated_at: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          current_amount?: number
-          deadline?: string | null
-          household_id: string
-          icon?: string | null
-          id?: string
-          is_completed?: boolean
-          name: string
-          target_amount?: number
-          updated_at?: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          current_amount?: number
-          deadline?: string | null
-          household_id?: string
-          icon?: string | null
-          id?: string
-          is_completed?: boolean
-          name?: string
-          target_amount?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "savings_goals_household_id_fkey"
-            columns: ["household_id"]
-            isOneToOne: false
-            referencedRelation: "households"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      transaction_comments: {
-        Row: {
-          content: string
-          created_at: string
-          display_name: string
-          id: string
-          transaction_id: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          display_name: string
-          id?: string
-          transaction_id: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          display_name?: string
-          id?: string
-          transaction_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "transaction_comments_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       transactions: {
         Row: {
           amount: number
-          attributed_to: string | null
           bank_account_id: string
           category_id: string | null
           created_at: string
@@ -554,16 +262,12 @@ export type Database = {
           id: string
           import_hash: string | null
           is_internal_transfer: boolean
-          is_subscription: boolean
           label: string
-          last_modified_by: string | null
           matched_transfer_id: string | null
           notes: string | null
-          validation_status: string | null
         }
         Insert: {
           amount: number
-          attributed_to?: string | null
           bank_account_id: string
           category_id?: string | null
           created_at?: string
@@ -571,16 +275,12 @@ export type Database = {
           id?: string
           import_hash?: string | null
           is_internal_transfer?: boolean
-          is_subscription?: boolean
           label: string
-          last_modified_by?: string | null
           matched_transfer_id?: string | null
           notes?: string | null
-          validation_status?: string | null
         }
         Update: {
           amount?: number
-          attributed_to?: string | null
           bank_account_id?: string
           category_id?: string | null
           created_at?: string
@@ -588,21 +288,11 @@ export type Database = {
           id?: string
           import_hash?: string | null
           is_internal_transfer?: boolean
-          is_subscription?: boolean
           label?: string
-          last_modified_by?: string | null
           matched_transfer_id?: string | null
           notes?: string | null
-          validation_status?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "transactions_attributed_to_fkey"
-            columns: ["attributed_to"]
-            isOneToOne: false
-            referencedRelation: "household_members"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "transactions_bank_account_id_fkey"
             columns: ["bank_account_id"]
@@ -632,13 +322,6 @@ export type Database = {
     }
     Functions: {
       accept_invitation: { Args: { invitation_id: string }; Returns: undefined }
-      get_profile_immutable_fields: {
-        Args: { uid: string }
-        Returns: {
-          household_id: string
-          role: string
-        }[]
-      }
       get_user_household_id: { Args: { user_uuid: string }; Returns: string }
     }
     Enums: {

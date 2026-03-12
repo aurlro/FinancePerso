@@ -7,12 +7,9 @@ export interface DashboardStats {
   totalIncome: number;
   resteAVivre: number;
   epargneNette: number;
-  excludedTransfers: number;
-  excludedContributions: number;
 }
 
 export interface CategoryBreakdown {
-  id: string | null;
   name: string;
   color: string;
   amount: number;
@@ -38,23 +35,6 @@ function getMonthRange(ref: Date) {
   };
 }
 
-/** Check if a transaction counts as real income (not transfer, not excluded category) */
-function isRealIncome(t: { amount: number; is_internal_transfer: boolean; categories?: any }) {
-  if (t.amount <= 0) return false;
-  if (t.is_internal_transfer) return false;
-  if ((t.categories as any)?.exclude_from_income) return false;
-  return true;
-}
-
-/** Check if a transaction counts as real expense (not transfer, not internal-movement category) */
-function isRealExpense(t: { amount: number; is_internal_transfer: boolean; categories?: any }) {
-  if (t.amount >= 0) return false;
-  if (t.is_internal_transfer) return false;
-  if ((t.categories as any)?.exclude_from_income) return false;
-  if ((t.categories as any)?.exclude_from_expenses) return false;
-  return true;
-}
-
 export function useDashboardStats(month: Date = new Date()) {
   return useQuery({
     queryKey: ["dashboard-stats", format(month, "yyyy-MM")],
@@ -62,23 +42,16 @@ export function useDashboardStats(month: Date = new Date()) {
       const { start, end } = getMonthRange(month);
       const { data, error } = await supabase
         .from("transactions")
-        .select("amount, is_internal_transfer, categories(exclude_from_income, exclude_from_expenses)")
+        .select("amount, is_internal_transfer")
         .gte("date", start)
-        .lte("date", end)
-        .limit(10000);
+        .lte("date", end);
       if (error) throw error;
 
-      const totalExpenses = (data || []).filter((t) => isRealExpense(t)).reduce((s, t) => s + Math.abs(t.amount), 0);
-      const totalIncome = (data || []).filter((t) => isRealIncome(t)).reduce((s, t) => s + t.amount, 0);
+      const filtered = (data || []).filter((t) => !t.is_internal_transfer);
+      const totalExpenses = filtered.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
+      const totalIncome = filtered.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
 
-      const excludedTransfers = (data || [])
-        .filter((t) => t.is_internal_transfer)
-        .reduce((s, t) => s + Math.abs(t.amount), 0);
-      const excludedContributions = (data || [])
-        .filter((t) => !t.is_internal_transfer && (t.categories as any)?.exclude_from_income)
-        .reduce((s, t) => s + Math.abs(t.amount), 0);
-
-      return { totalExpenses, totalIncome, resteAVivre: totalIncome - totalExpenses, epargneNette: totalIncome - totalExpenses, excludedTransfers, excludedContributions } as DashboardStats;
+      return { totalExpenses, totalIncome, resteAVivre: totalIncome - totalExpenses, epargneNette: totalIncome - totalExpenses } as DashboardStats;
     },
   });
 }
@@ -90,20 +63,18 @@ export function useCategoryBreakdown(month: Date = new Date()) {
       const { start, end } = getMonthRange(month);
       const { data, error } = await supabase
         .from("transactions")
-        .select("amount, is_internal_transfer, category_id, categories(name, color, exclude_from_income, exclude_from_expenses)")
+        .select("amount, is_internal_transfer, categories(name, color)")
         .gte("date", start)
-        .lte("date", end)
-        .limit(10000);
+        .lte("date", end);
       if (error) throw error;
 
-      const map = new Map<string, { id: string | null; name: string; color: string; amount: number }>();
+      const map = new Map<string, { name: string; color: string; amount: number }>();
       for (const t of data || []) {
-        if (!isRealExpense(t)) continue;
+        if (t.is_internal_transfer || t.amount >= 0) continue;
         const cat = t.categories as any;
         const name = cat?.name || "Non catégorisé";
         const color = cat?.color || "#94a3b8";
-        const id = t.category_id || null;
-        const entry = map.get(name) || { id, name, color, amount: 0 };
+        const entry = map.get(name) || { name, color, amount: 0 };
         entry.amount += Math.abs(t.amount);
         map.set(name, entry);
       }
@@ -124,10 +95,9 @@ export function useMonthlyEvolution() {
 
       const { data, error } = await supabase
         .from("transactions")
-        .select("date, amount, is_internal_transfer, categories(exclude_from_income, exclude_from_expenses)")
+        .select("date, amount, is_internal_transfer")
         .gte("date", sixMonthsAgo)
-        .lte("date", endDate)
-        .limit(10000);
+        .lte("date", endDate);
       if (error) throw error;
 
       for (let i = 5; i >= 0; i--) {
@@ -137,12 +107,12 @@ export function useMonthlyEvolution() {
         const label = format(m, "MMM yy");
         const monthTx = (data || []).filter((t) => {
           const d = new Date(t.date);
-          return d >= mStart && d <= mEnd;
+          return d >= mStart && d <= mEnd && !t.is_internal_transfer;
         });
         months.push({
           month: label,
-          depenses: monthTx.filter((t) => isRealExpense(t)).reduce((s, t) => s + Math.abs(t.amount), 0),
-          revenus: monthTx.filter((t) => isRealIncome(t)).reduce((s, t) => s + t.amount, 0),
+          depenses: monthTx.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0),
+          revenus: monthTx.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0),
         });
       }
       return months;
@@ -157,16 +127,15 @@ export function useAccountTypeBreakdown(month: Date = new Date()) {
       const { start, end } = getMonthRange(month);
       const { data, error } = await supabase
         .from("transactions")
-        .select("amount, is_internal_transfer, bank_accounts(account_type), categories(name, exclude_from_income, exclude_from_expenses)")
+        .select("amount, is_internal_transfer, bank_accounts(account_type), categories(name)")
         .gte("date", start)
-        .lte("date", end)
-        .limit(10000);
+        .lte("date", end);
       if (error) throw error;
 
       const labels: Record<string, string> = { perso_a: "Perso A", perso_b: "Perso B", joint: "Compte Joint" };
       const typeMap = new Map<string, { amount: number; cats: Map<string, number> }>();
       for (const t of data || []) {
-        if (!isRealExpense(t)) continue;
+        if (t.is_internal_transfer || t.amount >= 0) continue;
         const accType = (t.bank_accounts as any)?.account_type || "joint";
         const catName = (t.categories as any)?.name || "Non catégorisé";
         const entry = typeMap.get(accType) || { amount: 0, cats: new Map() };

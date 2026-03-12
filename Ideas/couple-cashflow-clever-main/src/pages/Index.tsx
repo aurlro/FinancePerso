@@ -1,22 +1,13 @@
-import { useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingDown, TrendingUp, Wallet, PiggyBank, ChevronLeft, ChevronRight, ArrowLeftRight, Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingDown, TrendingUp, Wallet, PiggyBank, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDashboardStats, useCategoryBreakdown, useMonthlyEvolution, useAccountTypeBreakdown } from "@/hooks/useDashboard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BudgetAlerts } from "@/components/BudgetAlerts";
-import { BudgetForecast } from "@/components/BudgetForecast";
-import { MonthlyRecapWidget } from "@/components/MonthlyRecapWidget";
-import { CoupleBalanceWidget } from "@/components/CoupleBalanceWidget";
-import { SavingsGoalsWidget } from "@/components/SavingsGoalsWidget";
-import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-import { Onboarding } from "@/components/Onboarding";
 import { format, addMonths, subMonths, isSameMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -25,39 +16,13 @@ function fmt(n: number) {
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const { needsOnboarding, isLoading: onboardingLoading, initialStep, markOnboardingComplete } = useOnboardingStatus();
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const isCurrentMonth = isSameMonth(selectedMonth, new Date());
-
-  const navigateToCategory = useCallback((categoryId: string | null) => {
-    const monthParam = format(selectedMonth, "yyyy-MM");
-    const params = new URLSearchParams({ month: monthParam });
-    if (categoryId) params.set("category", categoryId);
-    navigate(`/transactions?${params.toString()}`);
-  }, [selectedMonth, navigate]);
 
   const { data: stats, isLoading: loadingStats } = useDashboardStats(selectedMonth);
   const { data: catBreakdown, isLoading: loadingCat } = useCategoryBreakdown(selectedMonth);
   const { data: monthlyData, isLoading: loadingMonthly } = useMonthlyEvolution();
   const { data: accountData, isLoading: loadingAccounts } = useAccountTypeBreakdown(selectedMonth);
-
-  if (onboardingLoading) {
-    return (
-      <AppLayout title="Dashboard">
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-64" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[1,2,3,4].map(i => <Skeleton key={i} className="h-32" />)}
-          </div>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  if (needsOnboarding) {
-    return <Onboarding initialStep={initialStep} onComplete={() => markOnboardingComplete.mutate()} />;
-  }
 
   const hasData = stats && (stats.totalExpenses > 0 || stats.totalIncome > 0);
 
@@ -78,11 +43,7 @@ export default function Dashboard() {
               {format(selectedMonth, "MMMM yyyy", { locale: fr })}
             </h2>
             <p className="text-muted-foreground">
-              {hasData ? "Résumé de vos finances." : (
-                <Link to="/import" className="underline hover:text-foreground transition-colors">
-                  Importez vos premiers relevés pour commencer l'analyse.
-                </Link>
-              )}
+              {hasData ? "Résumé de vos finances." : "Importez vos premiers relevés pour commencer l'analyse."}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -97,40 +58,6 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
-
-        {/* Monthly recap widget */}
-        <MonthlyRecapWidget />
-        <CoupleBalanceWidget month={selectedMonth} />
-
-        {/* Savings goals */}
-        <SavingsGoalsWidget />
-
-        {/* Budget alerts */}
-        <BudgetAlerts month={selectedMonth} />
-
-        {/* Budget forecast */}
-        <BudgetForecast month={selectedMonth} />
-
-        {/* Excluded internals indicator */}
-        {stats && (stats.excludedTransfers > 0 || stats.excludedContributions > 0) && (
-          <div className="flex items-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 px-4 py-2.5 text-sm text-muted-foreground">
-            <ArrowLeftRight className="h-4 w-4 shrink-0" />
-            <span>
-              <strong className="font-medium text-foreground">{fmt(stats.excludedTransfers + stats.excludedContributions)}</strong> de mouvements internes exclus du calcul
-            </span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 shrink-0 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="max-w-[280px] text-xs">
-                <p className="font-medium mb-1">Détail des exclusions :</p>
-                {stats.excludedTransfers > 0 && <p>• Virements internes : {fmt(stats.excludedTransfers)}</p>}
-                {stats.excludedContributions > 0 && <p>• Contributions partenaire : {fmt(stats.excludedContributions)}</p>}
-                <p className="mt-1 text-muted-foreground">Ces montants ne sont comptés ni en revenus ni en dépenses.</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        )}
 
         {/* Stats cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -162,7 +89,7 @@ export default function Dashboard() {
                 <div className="flex flex-col items-center gap-4">
                   <ChartContainer config={{}} className="h-[250px] w-full">
                     <PieChart>
-                      <Pie data={catBreakdown} dataKey="amount" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} strokeWidth={2} stroke="hsl(var(--background))" style={{ cursor: "pointer" }} onClick={(_: any, index: number) => navigateToCategory(catBreakdown[index].id)}>
+                      <Pie data={catBreakdown} dataKey="amount" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} strokeWidth={2} stroke="hsl(var(--background))">
                         {catBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                       </Pie>
                       <ChartTooltip content={<ChartTooltipContent formatter={(value) => fmt(Number(value))} />} />
@@ -170,11 +97,11 @@ export default function Dashboard() {
                   </ChartContainer>
                   <div className="flex flex-wrap justify-center gap-2">
                     {catBreakdown.slice(0, 8).map((c) => (
-                      <button key={c.name} className="flex items-center gap-1.5 text-xs hover:bg-muted rounded-md px-1.5 py-1 transition-colors" onClick={() => navigateToCategory(c.id)}>
+                      <div key={c.name} className="flex items-center gap-1.5 text-xs">
                         <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: c.color }} />
                         <span className="text-muted-foreground">{c.name}</span>
                         <span className="font-medium">{fmt(c.amount)}</span>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>

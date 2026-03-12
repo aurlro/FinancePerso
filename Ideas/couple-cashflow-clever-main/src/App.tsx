@@ -10,11 +10,7 @@ import Transactions from "./pages/Transactions";
 import ImportPage from "./pages/Import";
 import Accounts from "./pages/Accounts";
 import Rules from "./pages/Rules";
-import Analytics from "./pages/Analytics";
-import MonthlyRecap from "./pages/MonthlyRecap";
-import CoupleBalance from "./pages/CoupleBalance";
 import SettingsPage from "./pages/SettingsPage";
-import Subscriptions from "./pages/Subscriptions";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -42,10 +38,6 @@ const AppRoutes = () => (
     <Route path="/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
     <Route path="/accounts" element={<ProtectedRoute><Accounts /></ProtectedRoute>} />
     <Route path="/rules" element={<ProtectedRoute><Rules /></ProtectedRoute>} />
-    <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-    <Route path="/recap" element={<ProtectedRoute><MonthlyRecap /></ProtectedRoute>} />
-    <Route path="/balance" element={<ProtectedRoute><CoupleBalance /></ProtectedRoute>} />
-    <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
     <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>

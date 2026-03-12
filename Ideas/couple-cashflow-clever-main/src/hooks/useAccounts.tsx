@@ -39,21 +39,6 @@ export function useCreateAccount() {
   });
 }
 
-export function useUpdateAccount() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; name?: string; bank_name?: string | null; account_type?: "perso_a" | "perso_b" | "joint" }) => {
-      const { error } = await supabase.from("bank_accounts").update(updates).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["bank_accounts"] });
-      toast.success("Compte mis à jour");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
 export function useDeleteAccount() {
   const qc = useQueryClient();
   return useMutation({

@@ -38,11 +38,9 @@ export function useHouseholdMembers() {
       if (!profile?.household_id) return [];
 
       const { data, error } = await supabase
-        .from("household_members")
+        .from("profiles")
         .select("*")
-        .eq("household_id", profile.household_id)
-        .order("is_active", { ascending: false })
-        .order("created_at", { ascending: true });
+        .eq("household_id", profile.household_id);
       if (error) throw error;
       return data;
     },
@@ -153,107 +151,6 @@ export function useDeleteInvitation() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["invitations"] });
       toast.success("Invitation supprimée");
-    },
-    onError: () => toast.error("Erreur lors de la suppression"),
-  });
-}
-
-export function useToggleMemberActive() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const { error } = await supabase
-        .from("household_members")
-        .update({ is_active: isActive })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["household-members"] });
-      toast.success("Statut du membre mis à jour");
-    },
-    onError: () => toast.error("Erreur lors de la mise à jour"),
-  });
-}
-
-/* ─── Update card identifier ────────────────────────── */
-
-export function useUpdateMemberCard() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, cardIdentifier }: { id: string; cardIdentifier: string }) => {
-      const { error } = await supabase
-        .from("household_members")
-        .update({ card_identifier: cardIdentifier })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["household-members"] });
-    },
-    onError: () => toast.error("Erreur lors de la mise à jour de la carte"),
-  });
-}
-
-/* ─── Ghost member CRUD ─────────────────────────────── */
-
-export function useAddGhostMember() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ householdId, displayName, cardIdentifier }: {
-      householdId: string;
-      displayName: string;
-      cardIdentifier?: string;
-    }) => {
-      const { error } = await supabase.from("household_members").insert({
-        household_id: householdId,
-        display_name: displayName,
-        card_identifier: cardIdentifier?.trim() || null,
-        is_active: false,
-        user_id: null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["household-members"] });
-      toast.success("Membre ajouté");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
-export function useUpdateGhostMember() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, displayName, cardIdentifier }: {
-      id: string;
-      displayName: string;
-      cardIdentifier?: string;
-    }) => {
-      const { error } = await supabase.from("household_members").update({
-        display_name: displayName,
-        card_identifier: cardIdentifier?.trim() || null,
-      }).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["household-members"] });
-      toast.success("Membre mis à jour");
-    },
-    onError: () => toast.error("Erreur lors de la mise à jour"),
-  });
-}
-
-export function useDeleteGhostMember() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("household_members").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["household-members"] });
-      toast.success("Membre supprimé");
     },
     onError: () => toast.error("Erreur lors de la suppression"),
   });

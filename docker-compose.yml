@@ -1,103 +1,45 @@
-# =============================================================================
-# Docker Compose pour FinancePerso
-# =============================================================================
-# Usage:
-#   docker-compose up -d          # Démarrer en arrière-plan
-#   docker-compose down           # Arrêter
-#   docker-compose logs -f        # Voir les logs
-#   docker-compose build          # Reconstruire l'image
-# =============================================================================
-
 version: '3.8'
 
 services:
-  app:
+  api:
     build:
-      context: .
+      context: ./server
       dockerfile: Dockerfile
-      args:
-        - ENVIRONMENT=${ENVIRONMENT:-production}
-    container_name: financeperso-app
-    image: financeperso:latest
-    
     ports:
-      - "${STREAMLIT_PORT:-8501}:8501"
-    
+      - "8000:8000"
     volumes:
-      # Persistance de la base de données
       - ./Data:/app/Data
-      # Persistance des logs
-      - ./logs:/app/logs
-      # Fichier de configuration (read-only)
-      - ./.env:/app/.env:ro
-    
     environment:
-      - PYTHONUNBUFFERED=1
-      - PYTHONDONTWRITEBYTECODE=1
-      - ENVIRONMENT=${ENVIRONMENT:-production}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DB_PATH=${DB_PATH:-/app/Data/finance.db}
-    
-    # Variables depuis le fichier .env
-    env_file:
-      - .env
-    
+      - DATABASE_URL=sqlite+aiosqlite:///app/Data/finance_v6.db
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
     restart: unless-stopped
-    
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    
-    # Sécurité
-    security_opt:
-      - no-new-privileges:true
-    
-    # Limites de ressources (optionnel, décommenter pour production)
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '2'
-    #       memory: 2G
-    #     reservations:
-    #       cpus: '1'
-    #       memory: 512M
 
-  # Optionnel: Service de backup automatique
-  # backup:
-  #   image: alpine:latest
-  #   container_name: financeperso-backup
-  #   volumes:
-  #     - ./Data:/data:ro
-  #     - ./backups:/backups
-  #   command: >
-  #     sh -c "
-  #       apk add --no-cache sqlite &&
-  #       while true; do
-  #         sleep 86400 &&
-  #         sqlite3 /data/finance.db \".backup /backups/finance_$$(date +%Y%m%d_%H%M%S).db\"
-  #       done
-  #     "
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - app
-  #   profiles:
-  #     - backup
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
 
-# =============================================================================
-# Volumes nommés (optionnel)
-# =============================================================================
-# volumes:
-#   financeperso_data:
-#     driver: local
-#   financeperso_logs:
-#     driver: local
-
-# =============================================================================
-# Réseau personnalisé (optionnel)
-# =============================================================================
-# networks:
-#   financeperso_network:
-#     driver: bridge
+  # Optional: Use nginx as reverse proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - client
+    restart: unless-stopped
+    profiles:
+      - nginx

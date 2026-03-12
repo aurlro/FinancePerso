@@ -1,1 +1,0 @@
-ALTER TABLE public.profiles ADD COLUMN onboarding_completed_at timestamptz DEFAULT NULL;

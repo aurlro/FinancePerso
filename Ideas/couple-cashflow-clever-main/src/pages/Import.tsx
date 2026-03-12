@@ -6,17 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileUp, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeftRight } from "lucide-react";
+import { Upload, FileUp, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
 import { parseCsv, parseDate, parseAmount, BANK_PRESETS, type ParsedCsv, type BankPreset } from "@/lib/csv-parser";
-import { categorize, hashTransaction, detectTransfersAgainstExisting, detectInternalTransfers, attributeByRules } from "@/lib/categorization-engine";
+import { categorize, hashTransaction } from "@/lib/categorization-engine";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useCategories } from "@/hooks/useCategories";
 import { useRules } from "@/hooks/useRules";
-import { useAttributionRules } from "@/hooks/useAttributionRules";
-import { useHouseholdMembers } from "@/hooks/useHousehold";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Step = "upload" | "mapping" | "preview" | "done";
 
@@ -24,8 +22,6 @@ export default function ImportPage() {
   const { data: accounts } = useAccounts();
   const { data: categories } = useCategories();
   const { data: rules } = useRules();
-  const { data: attrRules } = useAttributionRules();
-  const { data: householdMembers } = useHouseholdMembers();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState<Step>("upload");
@@ -49,6 +45,7 @@ export default function ImportPage() {
       setCsv(parsed);
       setFileName(file.name);
 
+      // Try to auto-detect preset
       const preset = BANK_PRESETS.find(p =>
         parsed.headers.some(h => h.toLowerCase() === p.dateColumn.toLowerCase()) &&
         parsed.headers.some(h => h.toLowerCase() === p.labelColumn.toLowerCase())
@@ -102,51 +99,8 @@ export default function ImportPage() {
     }).filter(r => r.label.trim() !== "");
   }, [csv, dateCol, labelCol, amountCol, debitCol, creditCol, useDebitCredit, rules, categories]);
 
-  // Fetch existing transactions for transfer detection in preview
-  const { data: existingTxs } = useQuery({
-    queryKey: ["existing-txs-for-transfer", accountId, previewData.length],
-    enabled: !!accountId && previewData.length > 0,
-    queryFn: async () => {
-      const dates = previewData.filter(r => r.valid && r.date).map(r => r.date!);
-      if (!dates.length) return [];
-      const minDate = new Date(Math.min(...dates.map(d => new Date(d).getTime())) - 30 * 86400000).toISOString().split("T")[0];
-      const maxDate = new Date(Math.max(...dates.map(d => new Date(d).getTime())) + 30 * 86400000).toISOString().split("T")[0];
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("id, date, amount, bank_account_id")
-        .gte("date", minDate)
-        .lte("date", maxDate)
-        .limit(1000);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Detect transfers in preview: cross-DB + within new batch
-  const transferIndices = useMemo(() => {
-    if (!accountId || !previewData.length) return new Set<number>();
-    const indices = new Set<number>();
-
-    const newTxs = previewData
-      .map((r, i) => ({ date: r.date || "", amount: r.amount || 0, bank_account_id: accountId, index: i }))
-      .filter(r => r.date);
-
-    // Against existing DB transactions
-    if (existingTxs?.length) {
-      const matches = detectTransfersAgainstExisting(newTxs, existingTxs);
-      matches.forEach(m => indices.add(m.newIndex));
-    }
-
-    // Within the new batch itself (if importing to multiple accounts – rare but handle)
-    const internalSet = detectInternalTransfers(newTxs);
-    internalSet.forEach(i => indices.add(i));
-
-    return indices;
-  }, [previewData, existingTxs, accountId]);
-
   const validCount = previewData.filter(r => r.valid).length;
   const invalidCount = previewData.filter(r => !r.valid).length;
-  const transferCount = transferIndices.size;
 
   const importMutation = useMutation({
     mutationFn: async () => {
@@ -161,117 +115,12 @@ export default function ImportPage() {
         import_hash: hashTransaction(r.date!, r.label, r.amount!),
       }));
 
-      const insertedIds: string[] = [];
+      // Insert in batches of 500
       for (let i = 0; i < toInsert.length; i += 500) {
         const batch = toInsert.slice(i, i + 500);
-        const { data, error } = await supabase.from("transactions").insert(batch).select("id");
+        const { error } = await supabase.from("transactions").insert(batch);
         if (error) throw error;
-        if (data) insertedIds.push(...data.map(d => d.id));
       }
-
-      // Post-import: detect transfers against existing
-      if (insertedIds.length > 0) {
-        const { data: allRecent, error: fetchErr } = await supabase
-          .from("transactions")
-          .select("id, date, amount, bank_account_id, is_internal_transfer")
-          .gte("date", new Date(Math.min(...validRows.map(r => new Date(r.date!).getTime())) - 30 * 86400000).toISOString().split("T")[0])
-          .limit(1000);
-        if (fetchErr) throw fetchErr;
-
-        const insertedSet = new Set(insertedIds);
-        const newTxs = (allRecent || []).filter(t => insertedSet.has(t.id)).map((t, i) => ({
-          ...t, index: i, id_real: t.id
-        }));
-        const existingDbTxs = (allRecent || []).filter(t => !insertedSet.has(t.id));
-
-        const matches = detectTransfersAgainstExisting(
-          newTxs.map(t => ({ date: t.date, amount: t.amount, bank_account_id: t.bank_account_id, index: t.index })),
-          existingDbTxs
-        );
-
-        let transfersDetected = 0;
-        for (const match of matches) {
-          const newTx = newTxs[match.newIndex];
-          if (!newTx) continue;
-          // Cross-link both transactions
-          await supabase.from("transactions").update({
-            is_internal_transfer: true,
-            matched_transfer_id: match.existingId,
-          }).eq("id", newTx.id_real);
-          await supabase.from("transactions").update({
-            is_internal_transfer: true,
-            matched_transfer_id: newTx.id_real,
-          }).eq("id", match.existingId);
-          transfersDetected++;
-        }
-
-        if (transfersDetected > 0) {
-          toast.info(`${transfersDetected} virement(s) interne(s) détecté(s)`);
-        }
-      }
-
-      // Post-import: attribution cascade
-      if (insertedIds.length > 0) {
-        const selectedAccount = accounts?.find(a => a.id === accountId);
-        const { data: newTxsData } = await supabase
-          .from("transactions")
-          .select("id, label")
-          .in("id", insertedIds);
-
-        if (newTxsData) {
-          const toAttribute = new Map<string, string>(); // txId → memberId
-
-          // 1. Personal account → owner
-          if (selectedAccount?.account_type !== "joint" && selectedAccount?.owner_user_id) {
-            const ownerMember = householdMembers?.find(m => m.user_id === selectedAccount.owner_user_id);
-            if (ownerMember) {
-              for (const tx of newTxsData) {
-                toAttribute.set(tx.id, ownerMember.id);
-              }
-            }
-          }
-
-          // 2. Card identifier matching (overrides personal account for joint)
-          const membersWithCards = householdMembers?.filter(m => m.card_identifier) || [];
-          if (membersWithCards.length) {
-            for (const tx of newTxsData) {
-              for (const member of membersWithCards) {
-                if (tx.label.toLowerCase().includes(member.card_identifier!.toLowerCase())) {
-                  toAttribute.set(tx.id, member.id);
-                  break;
-                }
-              }
-            }
-          }
-
-          // 3. Attribution rules (regex-based)
-          if (attrRules?.length) {
-            const sortedRules = [...attrRules].sort((a, b) => b.priority - a.priority);
-            for (const tx of newTxsData) {
-              if (toAttribute.has(tx.id)) continue; // already attributed
-              const memberId = attributeByRules(tx.label, sortedRules as any);
-              if (memberId) toAttribute.set(tx.id, memberId);
-            }
-          }
-
-          // Batch update
-          if (toAttribute.size > 0) {
-            const byMember = new Map<string, string[]>();
-            for (const [txId, memberId] of toAttribute) {
-              const list = byMember.get(memberId) || [];
-              list.push(txId);
-              byMember.set(memberId, list);
-            }
-            for (const [mId, ids] of byMember) {
-              for (let i = 0; i < ids.length; i += 500) {
-                await supabase.from("transactions").update({ attributed_to: mId } as any).in("id", ids.slice(i, i + 500));
-              }
-            }
-            toast.info(`${toAttribute.size} transaction(s) attribuée(s) automatiquement`);
-          }
-        }
-      }
-
       return toInsert.length;
     },
     onSuccess: (count) => {
@@ -323,6 +172,7 @@ export default function ImportPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Account selector */}
               <div className="space-y-2">
                 <Label>Compte bancaire cible</Label>
                 <Select value={accountId} onValueChange={setAccountId}>
@@ -336,6 +186,7 @@ export default function ImportPage() {
                 {!accounts?.length && <p className="text-xs text-destructive">Créez d'abord un compte dans la page Comptes.</p>}
               </div>
 
+              {/* Preset */}
               <div className="space-y-2">
                 <Label>Format bancaire</Label>
                 <Select onValueChange={(v) => {
@@ -351,6 +202,7 @@ export default function ImportPage() {
                 </Select>
               </div>
 
+              {/* Column mapping */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Colonne Date</Label>
@@ -418,7 +270,7 @@ export default function ImportPage() {
           {previewData.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-3 flex-wrap">
+                <CardTitle className="text-base flex items-center gap-3">
                   Aperçu
                   <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
                     <CheckCircle2 className="h-3 w-3 mr-1" />{validCount} valides
@@ -426,11 +278,6 @@ export default function ImportPage() {
                   {invalidCount > 0 && (
                     <Badge variant="secondary" className="bg-orange-500/10 text-orange-600">
                       <AlertTriangle className="h-3 w-3 mr-1" />{invalidCount} erreurs
-                    </Badge>
-                  )}
-                  {transferCount > 0 && (
-                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-600">
-                      <ArrowLeftRight className="h-3 w-3 mr-1" />{transferCount} virement(s)
                     </Badge>
                   )}
                 </CardTitle>
@@ -448,15 +295,8 @@ export default function ImportPage() {
                     </TableHeader>
                     <TableBody>
                       {previewData.slice(0, 50).map((row, i) => (
-                        <TableRow key={i} className={`${!row.valid ? "opacity-50" : ""} ${transferIndices.has(i) ? "opacity-60 bg-muted/30" : ""}`}>
-                          <TableCell className="whitespace-nowrap">
-                            {row.date || "—"}
-                            {transferIndices.has(i) && (
-                              <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 text-blue-600 border-blue-300">
-                                <ArrowLeftRight className="h-2.5 w-2.5 mr-0.5" />Virement
-                              </Badge>
-                            )}
-                          </TableCell>
+                        <TableRow key={i} className={!row.valid ? "opacity-50" : ""}>
+                          <TableCell className="whitespace-nowrap">{row.date || "—"}</TableCell>
                           <TableCell className="max-w-[300px] truncate">{row.label}</TableCell>
                           <TableCell className={`text-right font-mono whitespace-nowrap ${row.amount !== null && row.amount < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
                             {row.amount !== null ? `${row.amount > 0 ? "+" : ""}${row.amount.toFixed(2)} €` : "—"}

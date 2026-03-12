@@ -1,0 +1,61 @@
+# FinancePerso v6.0 - Git Ignore
+
+# Dependencies
+server/venv/
+server/__pycache__/
+server/**/*.pyc
+server/**/*.pyo
+server/**/*.pyd
+server/.Python
+server/*.egg-info/
+server/dist/
+server/build/
+
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/*.local
+
+# Environment
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# Database
+Data/*.db
+Data/*.db-journal
+Data/*.db-shm
+Data/*.db-wal
+Data/backups/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+.coverage
+.pytest_cache/
+.hypothesis/
+htmlcov/
+.tox/
+
+# Misc
+.cache/
+*.tsbuildinfo
