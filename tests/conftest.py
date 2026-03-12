@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Pytest configuration and shared fixtures for FinancePerso tests.
 """

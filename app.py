@@ -3,6 +3,18 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# --- FEATURE FLAG CHECK - REDIRECTION V5.5 ---
+from modules.constants import USE_V5_6_INTERFACE
+
+if USE_V5_6_INTERFACE:
+    # Rediriger vers la nouvelle interface V5.5
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("app_v5_5", Path(__file__).parent / "app_v5_5.py")
+    app_v5_5 = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(app_v5_5)
+    sys.exit(0)
+
+# --- ANCIENNE INTERFACE (V5.0) ---
 import streamlit as st
 
 from modules.encryption import get_encryption

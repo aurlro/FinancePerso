@@ -3,7 +3,6 @@ Tests unitaires pour le module transfer_detection.
 """
 
 import pandas as pd
-import pytest
 
 from modules.transaction_types import (
     EXCLUDED_CATEGORIES,

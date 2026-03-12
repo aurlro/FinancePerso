@@ -496,9 +496,10 @@ def render_quick_actions_grid():
     This replaces the simple buttons with interactive popovers.
     """
     # Afficher les messages flash en attente (pour les actions dans les popovers)
-    from modules.ui.feedback import display_flash_toasts
+    from modules.ui.feedback import display_flash_messages
 
-    display_flash_toasts()
+    # Afficher les messages flash si présents
+    display_flash_messages()
 
     st.subheader("📌 Actions Rapides")
 

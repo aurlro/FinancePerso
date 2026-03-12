@@ -27,7 +27,7 @@ def _on_transactions_changed(**kwargs):
         get_all_hashes.clear()
         logger.debug("Transaction caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear transaction caches: {e}")
+        logger.warning("Failed to clear transaction caches: " + str(e))
 
 
 @on_event("transactions.batch_changed")
@@ -45,7 +45,7 @@ def _on_transactions_batch_changed(**kwargs):
         get_transactions_count.clear()
         logger.debug("Transaction batch caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear batch transaction caches: {e}")
+        logger.warning("Failed to clear batch transaction caches: " + str(e))
 
 
 @on_event("rules.changed")
@@ -58,7 +58,7 @@ def _on_rules_changed(**kwargs):
         get_learning_rules.clear()
         logger.debug("Rule caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear rule caches: {e}")
+        logger.warning("Failed to clear rule caches: " + str(e))
 
 
 @on_event("categories.changed")
@@ -71,7 +71,7 @@ def _on_categories_changed(**kwargs):
         get_categories_with_emojis.clear()
         logger.debug("Category caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear category caches: {e}")
+        logger.warning("Failed to clear category caches: " + str(e))
 
 
 @on_event("members.changed")
@@ -83,7 +83,7 @@ def _on_members_changed(**kwargs):
         get_members.clear()
         logger.debug("Member caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear member caches: {e}")
+        logger.warning("Failed to clear member caches: " + str(e))
 
 
 @on_event("tags.changed")
@@ -99,7 +99,7 @@ def _on_tags_changed(**kwargs):
         get_all_transactions.clear()
         logger.debug("Tag caches cleared via event")
     except Exception as e:
-        logger.warning(f"Failed to clear tag caches: {e}")
+        logger.warning("Failed to clear tag caches: " + str(e))
 
 
 @on_event("audit.changed")

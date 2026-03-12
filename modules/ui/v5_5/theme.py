@@ -1,7 +1,7 @@
-"""Thème Light Mode V5.5 - Design System FinCouple.
+"""Thème Light Mode V5.6 - Design System FinCouple.
 
 Palette de couleurs et styles pour la nouvelle interface light mode,
-inspirée des maquettes Figma.
+inspirée des maquettes Figma FinCouple v5.6.
 
 Usage:
     from modules.ui.v5_5.theme import LightColors, apply_light_theme
@@ -20,13 +20,9 @@ from modules.ui.tokens import BorderRadius, Shadow, Spacing, Typography
 
 
 class LightColors:
-    """Palette de couleurs Light Mode - Maquette V5.5.
-
-    Couleurs principales:
-    - Primary: Emerald (#10B981) - vert émeraude comme dans la maquette
-    - Background: Gris très clair (#F9FAFB) - fond de page
-    - Cards: Blanc pur (#FFFFFF) - fond des cartes
-    - Text: Gris foncé (#1F2937) - texte principal
+    """Palette de couleurs Light Mode - Maquette FinCouple V5.6.
+    
+    Design épuré avec fond très clair et cards blanches.
     """
 
     # ============================================================
@@ -39,11 +35,11 @@ class LightColors:
     PRIMARY_DARK = "#059669"  # Vert foncé
     PRIMARY_BG = "#D1FAE5"  # Vert très clair (fond icônes)
 
-    # Secondary - Indigo (pour variante)
-    SECONDARY = "#6366F1"
-    SECONDARY_LIGHT = "#818CF8"
-    SECONDARY_DARK = "#4F46E5"
-    SECONDARY_BG = "#E0E7FF"
+    # Secondary - Slate
+    SECONDARY = "#64748B"
+    SECONDARY_LIGHT = "#94A3B8"
+    SECONDARY_DARK = "#475569"
+    SECONDARY_BG = "#F1F5F9"
 
     # ============================================================
     # COULEURS SÉMANTIQUES
@@ -74,59 +70,54 @@ class LightColors:
     INFO_BG = "#DBEAFE"
 
     # ============================================================
-    # COULEURS DE FOND
+    # COULEURS DE FOND (Design FinCouple)
     # ============================================================
 
-    BG_PAGE = "#F9FAFB"  # Gris très clair (fond page)
-    BG_CARD = "#FFFFFF"  # Blanc pur (fond cartes)
-    BG_SECONDARY = "#F3F4F6"  # Gris clair (fond secondaire)
-    BG_TERTIARY = "#E5E7EB"  # Gris (fond tertiaire)
+    BG_PAGE = "#F8FAFC"  # Gris très très clair (fond page)
+    BG_SIDEBAR = "#FFFFFF"  # Blanc pur (sidebar)
+    BG_CARD = "#FFFFFF"  # Blanc pur (cards)
+    BG_SECONDARY = "#F1F5F9"  # Gris clair (fond secondaire)
+    BG_TERTIARY = "#E2E8F0"  # Gris (fond tertiaire)
     BG_ELEVATED = "#FFFFFF"  # Blanc (éléments surélevés)
+    BG_HOVER = "#F8FAFC"  # Hover très subtil
 
     # ============================================================
     # COULEURS DE TEXTE
     # ============================================================
 
-    TEXT_PRIMARY = "#1F2937"  # Gris foncé (titres)
-    TEXT_SECONDARY = "#6B7280"  # Gris moyen (sous-titres)
-    TEXT_MUTED = "#9CA3AF"  # Gris clair (texte hint)
-    TEXT_DISABLED = "#D1D5DB"  # Gris très clair (désactivé)
+    TEXT_PRIMARY = "#0F172A"  # Slate 900 (titres)
+    TEXT_SECONDARY = "#475569"  # Slate 600 (sous-titres)
+    TEXT_MUTED = "#64748B"  # Slate 500 (texte hint)
+    TEXT_DISABLED = "#94A3B8"  # Slate 400 (désactivé)
+    TEXT_ON_PRIMARY = "#FFFFFF"  # Blanc sur fond primary
 
     # ============================================================
     # COULEURS DE BORDURE
     # ============================================================
 
-    BORDER = "#E5E7EB"  # Gris clair (bordures standard)
-    BORDER_LIGHT = "#F3F4F6"  # Gris très clair (bordures subtiles)
+    BORDER = "#E2E8F0"  # Gris clair (bordures standard)
+    BORDER_LIGHT = "#F1F5F9"  # Gris très clair (bordures subtiles)
     BORDER_FOCUS = "#10B981"  # Vert (bordure focus)
+    BORDER_SIDEBAR = "#E2E8F0"  # Bordure sidebar
 
     # ============================================================
-    # NUANCES DE GRIS (pour compatibilité)
+    # NUANCES DE GRIS
     # ============================================================
 
-    GRAY_50 = "#F9FAFB"
-    GRAY_100 = "#F3F4F6"
-    GRAY_200 = "#E5E7EB"
-    GRAY_300 = "#D1D5DB"
-    GRAY_400 = "#9CA3AF"
-    GRAY_500 = "#6B7280"
-    GRAY_600 = "#4B5563"
-    GRAY_700 = "#374151"
-    GRAY_800 = "#1F2937"
-    GRAY_900 = "#111827"
+    SLATE_50 = "#F8FAFC"
+    SLATE_100 = "#F1F5F9"
+    SLATE_200 = "#E2E8F0"
+    SLATE_300 = "#CBD5E1"
+    SLATE_400 = "#94A3B8"
+    SLATE_500 = "#64748B"
+    SLATE_600 = "#475569"
+    SLATE_700 = "#334155"
+    SLATE_800 = "#1E293B"
+    SLATE_900 = "#0F172A"
 
 
 class ThemeV5:
-    """Thème complet V5.5 - Light Mode.
-
-    Classe principale qui regroupe tous les tokens de design
-    pour la nouvelle interface.
-
-    Usage:
-        theme = ThemeV5()
-        bg_color = theme.colors.BG_PAGE
-        padding = theme.spacing.MD
-    """
+    """Thème complet V5.6 - Light Mode FinCouple."""
 
     def __init__(self):
         self.colors = LightColors
@@ -141,31 +132,19 @@ class ThemeV5:
 
 
 def apply_light_theme():
-    """Applique le thème light mode V5.5.
-
-    Fonction utilitaire rapide pour appliquer le thème.
-
-    Usage:
-        import streamlit as st
-        from modules.ui.v5_5 import apply_light_theme
-
-        st.set_page_config(page_title="FinancePerso", layout="wide")
-        apply_light_theme()
-    """
+    """Applique le thème light mode V5.6 FinCouple."""
     theme = ThemeV5()
     theme.apply()
 
 
 def get_light_theme_css() -> str:
-    """Génère le CSS complet pour le thème light mode.
-
-    Returns:
-        Chaîne CSS à injecter dans Streamlit
-    """
+    """Génère le CSS complet pour le thème FinCouple."""
+    c = LightColors
+    
     return f"""
     <style>
     /* ========================================
-       FINANCEPERSO V5.5 - LIGHT THEME
+       FINCUPLE V5.6 - LIGHT THEME
        ======================================== */
     
     /* Import des polices */
@@ -173,220 +152,272 @@ def get_light_theme_css() -> str:
     
     /* Variables CSS globales */
     :root {{
-        /* Primary */
-        --v5-primary: {LightColors.PRIMARY};
-        --v5-primary-light: {LightColors.PRIMARY_LIGHT};
-        --v5-primary-dark: {LightColors.PRIMARY_DARK};
-        --v5-primary-bg: {LightColors.PRIMARY_BG};
+        --fc-primary: {c.PRIMARY};
+        --fc-primary-light: {c.PRIMARY_LIGHT};
+        --fc-primary-dark: {c.PRIMARY_DARK};
+        --fc-success: {c.SUCCESS};
+        --fc-danger: {c.DANGER};
+        --fc-warning: {c.WARNING};
+        --fc-info: {c.INFO};
         
-        /* Semantic */
-        --v5-success: {LightColors.SUCCESS};
-        --v5-success-bg: {LightColors.SUCCESS_BG};
-        --v5-danger: {LightColors.DANGER};
-        --v5-danger-bg: {LightColors.DANGER_BG};
-        --v5-warning: {LightColors.WARNING};
-        --v5-warning-bg: {LightColors.WARNING_BG};
-        --v5-info: {LightColors.INFO};
-        --v5-info-bg: {LightColors.INFO_BG};
+        --fc-bg-page: {c.BG_PAGE};
+        --fc-bg-sidebar: {c.BG_SIDEBAR};
+        --fc-bg-card: {c.BG_CARD};
         
-        /* Backgrounds */
-        --v5-bg-page: {LightColors.BG_PAGE};
-        --v5-bg-card: {LightColors.BG_CARD};
-        --v5-bg-secondary: {LightColors.BG_SECONDARY};
-        --v5-bg-tertiary: {LightColors.BG_TERTIARY};
+        --fc-text-primary: {c.TEXT_PRIMARY};
+        --fc-text-secondary: {c.TEXT_SECONDARY};
+        --fc-text-muted: {c.TEXT_MUTED};
         
-        /* Text */
-        --v5-text-primary: {LightColors.TEXT_PRIMARY};
-        --v5-text-secondary: {LightColors.TEXT_SECONDARY};
-        --v5-text-muted: {LightColors.TEXT_MUTED};
-        --v5-text-disabled: {LightColors.TEXT_DISABLED};
+        --fc-border: {c.BORDER};
+        --fc-border-light: {c.BORDER_LIGHT};
         
-        /* Borders */
-        --v5-border: {LightColors.BORDER};
-        --v5-border-light: {LightColors.BORDER_LIGHT};
-        --v5-border-focus: {LightColors.BORDER_FOCUS};
-        
-        /* Typography */
-        --v5-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        
-        /* Espacements */
-        --v5-spacing-xs: {Spacing.XS};
-        --v5-spacing-sm: {Spacing.SM};
-        --v5-spacing-md: {Spacing.MD};
-        --v5-spacing-lg: {Spacing.LG};
-        --v5-spacing-xl: {Spacing.XL};
+        --fc-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
     
     /* ========================================
-       RESET & BASE
+       BASE
        ======================================== */
     
     .stApp {{
-        background-color: var(--v5-bg-page) !important;
-        font-family: var(--v5-font-family) !important;
+        background-color: var(--fc-bg-page) !important;
+        font-family: var(--fc-font) !important;
     }}
     
-    /* Headers */
-    h1, h2, h3, h4, h5, h6 {{
-        font-family: var(--v5-font-family) !important;
-        font-weight: 600 !important;
-        color: var(--v5-text-primary) !important;
-        letter-spacing: -0.025em !important;
+    /* ========================================
+       SIDEBAR (Style FinCouple)
+       ======================================== */
+    
+    [data-testid="stSidebar"] {{
+        background-color: var(--fc-bg-sidebar) !important;
+        border-right: 1px solid var(--fc-border) !important;
     }}
+    
+    [data-testid="stSidebar"] .stMarkdown {{
+        color: var(--fc-text-secondary) !important;
+    }}
+    
+    /* Logo area */
+    [data-testid="stSidebar"] > div:first-child {{
+        padding-top: 1rem !important;
+    }}
+    
+    /* ========================================
+       NAVIGATION (Sidebar items)
+       ======================================== */
+    
+    /* Navigation items */
+    .stSidebar .stButton > button {{
+        background: transparent !important;
+        border: none !important;
+        color: var(--fc-text-secondary) !important;
+        font-weight: 500 !important;
+        font-size: 0.875rem !important;
+        padding: 0.625rem 1rem !important;
+        border-radius: 8px !important;
+        text-align: left !important;
+        width: 100% !important;
+        transition: all 0.15s ease !important;
+    }}
+    
+    .stSidebar .stButton > button:hover {{
+        background: {c.BG_HOVER} !important;
+        color: var(--fc-text-primary) !important;
+    }}
+    
+    .stSidebar .stButton > button[data-active="true"],
+    .stSidebar .stButton > button[aria-current="page"] {{
+        background: {c.BG_SECONDARY} !important;
+        color: var(--fc-text-primary) !important;
+        font-weight: 600 !important;
+    }}
+    
+    /* ========================================
+       HEADERS
+       ======================================== */
     
     h1 {{
-        font-size: 2rem !important;
+        font-family: var(--fc-font) !important;
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        color: var(--fc-text-primary) !important;
+        letter-spacing: -0.025em !important;
         margin-bottom: 0.5rem !important;
     }}
     
     h2 {{
-        font-size: 1.5rem !important;
-        margin-top: 1.5rem !important;
-        margin-bottom: 1rem !important;
+        font-family: var(--fc-font) !important;
+        font-size: 1.25rem !important;
+        font-weight: 600 !important;
+        color: var(--fc-text-primary) !important;
+        letter-spacing: -0.025em !important;
     }}
     
     h3 {{
-        font-size: 1.25rem !important;
-        color: var(--v5-text-primary) !important;
+        font-family: var(--fc-font) !important;
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        color: var(--fc-text-primary) !important;
     }}
     
-    /* Texte */
-    p, span, div {{
-        color: var(--v5-text-primary) !important;
+    /* ========================================
+       CARDS (Style FinCouple)
+       ======================================== */
+    
+    /* Cards principales */
+    .stContainer, div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlock"] {{
+        background: var(--fc-bg-card) !important;
+        border-radius: 12px !important;
+        border: 1px solid var(--fc-border) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        padding: 1.5rem !important;
     }}
     
     /* ========================================
        BOUTONS
        ======================================== */
     
-    /* Bouton primaire - style maquette (fond foncé) */
+    /* Bouton primaire - Vert émeraude */
     .stButton > button[data-testid="baseButton-primary"] {{
-        background: #111827 !important;
+        background: var(--fc-primary) !important;
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.75rem 1.5rem !important;
+        padding: 0.5rem 1rem !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.15s ease !important;
     }}
     
     .stButton > button[data-testid="baseButton-primary"]:hover {{
-        background: #1F2937 !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+        background: var(--fc-primary-dark) !important;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
     }}
     
-    /* Bouton secondaire - style maquette (bordure) */
+    /* Bouton secondaire - Bordure */
     .stButton > button[data-testid="baseButton-secondary"] {{
         background: white !important;
-        color: #374151 !important;
-        border: 1px solid #E5E7EB !important;
+        color: var(--fc-text-secondary) !important;
+        border: 1px solid var(--fc-border) !important;
         border-radius: 8px !important;
-        padding: 0.75rem 1.5rem !important;
+        padding: 0.5rem 1rem !important;
         font-weight: 500 !important;
         font-size: 0.875rem !important;
-        transition: all 0.2s ease !important;
+        transition: all 0.15s ease !important;
     }}
     
     .stButton > button[data-testid="baseButton-secondary"]:hover {{
-        background: #F9FAFB !important;
-        border-color: #D1D5DB !important;
+        background: {c.BG_HOVER} !important;
+        border-color: var(--fc-text-muted) !important;
     }}
     
     /* ========================================
-       INPUTS & FORMULAIRES
+       TABS (Style pills FinCouple)
        ======================================== */
     
-    .stTextInput > div > div > input,
-    .stNumberInput > div > div > input,
-    .stSelectbox > div > div > div,
-    .stDateInput > div > div > input {{
-        background-color: white !important;
-        border: 1px solid var(--v5-border) !important;
+    .stTabs [data-baseweb="tab-list"] {{
+        background: {c.BG_SECONDARY} !important;
         border-radius: 8px !important;
-        color: var(--v5-text-primary) !important;
-        padding: 0.75rem 1rem !important;
-        font-size: 0.875rem !important;
-        transition: all 0.2s ease !important;
+        padding: 4px !important;
+        gap: 4px !important;
     }}
     
-    .stTextInput > div > div > input:focus,
-    .stNumberInput > div > div > input:focus,
-    .stSelectbox > div > div > div:focus {{
-        border-color: var(--v5-primary) !important;
-        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
-        outline: none !important;
-    }}
-    
-    /* Labels */
-    .stTextInput > label,
-    .stNumberInput > label,
-    .stSelectbox > label {{
-        color: var(--v5-text-secondary) !important;
-        font-size: 0.875rem !important;
+    .stTabs [data-baseweb="tab"] {{
+        background: transparent !important;
+        color: var(--fc-text-secondary) !important;
+        border-radius: 6px !important;
+        padding: 0.5rem 1rem !important;
         font-weight: 500 !important;
-    }}
-    
-    /* ========================================
-       SIDEBAR
-       ======================================== */
-    
-    [data-testid="stSidebar"] {{
-        background-color: var(--v5-bg-card) !important;
-        border-right: 1px solid var(--v5-border) !important;
-    }}
-    
-    [data-testid="stSidebar"] .stMarkdown {{
-        color: var(--v5-text-secondary) !important;
-    }}
-    
-    /* ========================================
-       MÉTRIQUES (KPIs)
-       ======================================== */
-    
-    [data-testid="stMetric"] {{
-        background-color: var(--v5-bg-card) !important;
-        border: 1px solid var(--v5-border) !important;
-        border-radius: 12px !important;
-        padding: 1.5rem !important;
-    }}
-    
-    [data-testid="stMetricValue"] {{
-        font-size: 1.875rem !important;
-        font-weight: 700 !important;
-        color: var(--v5-text-primary) !important;
-    }}
-    
-    [data-testid="stMetricLabel"] {{
         font-size: 0.875rem !important;
-        color: var(--v5-text-secondary) !important;
+    }}
+    
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {{
+        background: white !important;
+        color: var(--fc-text-primary) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     }}
     
     /* ========================================
-       DATAFRAMES & TABLEAUX
+       TABLEAUX (Style FinCouple)
        ======================================== */
     
     .stDataFrame {{
+        border: 1px solid var(--fc-border) !important;
         border-radius: 8px !important;
         overflow: hidden !important;
-        border: 1px solid var(--v5-border) !important;
+    }}
+    
+    .stDataFrame thead tr {{
+        background: {c.BG_SECONDARY} !important;
     }}
     
     .stDataFrame th {{
-        background-color: var(--v5-bg-secondary) !important;
-        color: var(--v5-text-primary) !important;
+        background: transparent !important;
+        color: var(--fc-text-secondary) !important;
         font-weight: 600 !important;
         font-size: 0.75rem !important;
         text-transform: uppercase !important;
         letter-spacing: 0.05em !important;
-        padding: 1rem !important;
+        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid var(--fc-border) !important;
     }}
     
     .stDataFrame td {{
-        color: var(--v5-text-secondary) !important;
-        border-bottom: 1px solid var(--v5-border) !important;
+        color: var(--fc-text-primary) !important;
+        font-size: 0.875rem !important;
         padding: 0.875rem 1rem !important;
+        border-bottom: 1px solid var(--fc-border-light) !important;
+    }}
+    
+    .stDataFrame tr:last-child td {{
+        border-bottom: none !important;
+    }}
+    
+    .stDataFrame tr:hover td {{
+        background: {c.BG_HOVER} !important;
+    }}
+    
+    /* ========================================
+       INPUTS
+       ======================================== */
+    
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stSelectbox > div > div > div {{
+        background-color: white !important;
+        border: 1px solid var(--fc-border) !important;
+        border-radius: 8px !important;
+        color: var(--fc-text-primary) !important;
+        padding: 0.625rem 0.875rem !important;
+        font-size: 0.875rem !important;
+    }}
+    
+    .stTextInput > div > div > input:focus,
+    .stNumberInput > div > div > input:focus {{
+        border-color: var(--fc-primary) !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+    }}
+    
+    /* ========================================
+       METRICS (KPIs)
+       ======================================== */
+    
+    [data-testid="stMetric"] {{
+        background-color: var(--fc-bg-card) !important;
+        border: 1px solid var(--fc-border) !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+    }}
+    
+    [data-testid="stMetricLabel"] {{
+        font-size: 0.875rem !important;
+        color: var(--fc-text-secondary) !important;
+        font-weight: 500 !important;
+    }}
+    
+    [data-testid="stMetricValue"] {{
+        font-size: 1.75rem !important;
+        font-weight: 700 !important;
+        color: var(--fc-text-primary) !important;
     }}
     
     /* ========================================
@@ -396,101 +427,86 @@ def get_light_theme_css() -> str:
     .stAlert {{
         border-radius: 8px !important;
         border: 1px solid !important;
-        padding: 1rem 1.25rem !important;
+        padding: 1rem !important;
     }}
     
-    /* Success */
     [data-testid="stAlertContainer-success"] {{
-        background-color: {LightColors.SUCCESS_BG} !important;
-        border-color: {LightColors.SUCCESS} !important;
-        color: {LightColors.SUCCESS_DARK} !important;
+        background-color: {c.SUCCESS_BG} !important;
+        border-color: {c.SUCCESS} !important;
+        color: {c.SUCCESS_DARK} !important;
     }}
     
-    /* Error */
     [data-testid="stAlertContainer-error"] {{
-        background-color: {LightColors.DANGER_BG} !important;
-        border-color: {LightColors.DANGER} !important;
-        color: {LightColors.DANGER_DARK} !important;
-    }}
-    
-    /* Warning */
-    [data-testid="stAlertContainer-warning"] {{
-        background-color: {LightColors.WARNING_BG} !important;
-        border-color: {LightColors.WARNING} !important;
-        color: {LightColors.WARNING_DARK} !important;
-    }}
-    
-    /* Info */
-    [data-testid="stAlertContainer-info"] {{
-        background-color: {LightColors.INFO_BG} !important;
-        border-color: {LightColors.INFO} !important;
-        color: {LightColors.INFO_DARK} !important;
+        background-color: {c.DANGER_BG} !important;
+        border-color: {c.DANGER} !important;
+        color: {c.DANGER_DARK} !important;
     }}
     
     /* ========================================
-       SCROLLBAR
+       UTILITAIRES
        ======================================== */
     
+    /* Card style */
+    .fc-card {{
+        background: var(--fc-bg-card);
+        border: 1px solid var(--fc-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }}
+    
+    /* Header de page */
+    .fc-page-header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--fc-border);
+    }}
+    
+    /* Badge */
+    .fc-badge {{
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }}
+    
+    .fc-badge-primary {{
+        background: {c.PRIMARY_BG};
+        color: {c.PRIMARY_DARK};
+    }}
+    
+    .fc-badge-secondary {{
+        background: {c.SECONDARY_BG};
+        color: {c.SECONDARY_DARK};
+    }}
+    
+    /* Hide elements */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    
+    /* Scrollbar */
     ::-webkit-scrollbar {{
-        width: 8px !important;
-        height: 8px !important;
+        width: 6px !important;
+        height: 6px !important;
     }}
     
     ::-webkit-scrollbar-track {{
-        background: var(--v5-bg-secondary) !important;
+        background: transparent !important;
     }}
     
     ::-webkit-scrollbar-thumb {{
-        background: var(--v5-border) !important;
-        border-radius: 4px !important;
+        background: {c.SLATE_300} !important;
+        border-radius: 3px !important;
     }}
     
     ::-webkit-scrollbar-thumb:hover {{
-        background: var(--v5-text-muted) !important;
+        background: {c.SLATE_400} !important;
     }}
-    
-    /* ========================================
-       UTILITAIRES V5.5
-       ======================================== */
-    
-    /* Card style maquette */
-    .v5-card {{
-        background: var(--v5-bg-card);
-        border: 1px solid var(--v5-border);
-        border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-    }}
-    
-    .v5-card:hover {{
-        border-color: var(--v5-primary);
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
-        transform: translateY(-2px);
-    }}
-    
-    /* Icône dans cercle */
-    .v5-icon-circle {{
-        width: 80px;
-        height: 80px;
-        background: var(--v5-primary-bg);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-    }}
-    
-    /* Texte gradient */
-    .v5-gradient-text {{
-        background: linear-gradient(135deg, var(--v5-primary) 0%, var(--v5-primary-light) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }}
-    
-    /* Hide default Streamlit elements */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
     
     </style>
     """

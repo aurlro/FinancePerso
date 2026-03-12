@@ -3,7 +3,6 @@ Transformateurs de données pour le pipeline d'import.
 """
 
 import re
-from typing import Dict, Optional, List
 from datetime import datetime
 
 
@@ -50,7 +49,7 @@ class DateNormalizer:
         raise ValueError(f"Format de date non reconnu: {date_str}")
     
     @classmethod
-    def detect_format(cls, sample_dates: List[str]) -> str:
+    def detect_format(cls, sample_dates: list[str]) -> str:
         """
         Détecte le format de date le plus probable.
         
@@ -181,10 +180,10 @@ class CategoryMapper:
         'income': 'Revenus',
     }
     
-    def __init__(self, custom_mapping: Dict[str, str] = None):
+    def __init__(self, custom_mapping: dict[str, str] = None):
         self.mapping = {**self.DEFAULT_MAPPING, **(custom_mapping or {})}
     
-    def map_category(self, external_category: str) -> Optional[str]:
+    def map_category(self, external_category: str) -> str | None:
         """
         Mappe une catégorie externe vers une catégorie interne.
         
@@ -215,7 +214,7 @@ class CategoryMapper:
         """Ajoute un mapping personnalisé."""
         self.mapping[external.lower().strip()] = internal
     
-    def get_unknown_categories(self, external_categories: List[str]) -> List[str]:
+    def get_unknown_categories(self, external_categories: list[str]) -> list[str]:
         """
         Retourne les catégories externes non reconnues.
         
@@ -288,7 +287,7 @@ class LabelCleaner:
         
         return label.strip()
     
-    def extract_merchant(self, label: str) -> Optional[str]:
+    def extract_merchant(self, label: str) -> str | None:
         """
         Extrait le nom du commerçant d'un libellé.
         

@@ -10,7 +10,7 @@ Usage:
     streamlit run app_v5_5.py
 
 Ou via feature flag dans app.py:
-    USE_V5_5_INTERFACE = True
+    USE_V5_6_INTERFACE = True
 """
 
 import streamlit as st
@@ -29,12 +29,12 @@ st.set_page_config(
 )
 
 # Imports
+from modules.ui.feedback import toast_success
 from modules.ui.v5_5 import (
     apply_light_theme,
-    render_welcome_or_dashboard,
     get_user_name,
+    render_welcome_or_dashboard,
 )
-from modules.ui.feedback import toast_success, toast_error
 
 
 def render_sidebar():

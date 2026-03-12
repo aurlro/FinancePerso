@@ -3,19 +3,15 @@ Importeurs bulk pour transactions financières.
 """
 
 import csv
-import json
 import hashlib
-import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Iterator, Dict, List, Optional, Callable, Any
-from dataclasses import dataclass
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
-import pandas as pd
-
-from modules.db.connection import get_db_connection
 from modules.categorization import categorize_transaction
+from modules.db.connection import get_db_connection
 from modules.logger import logger
 
 
@@ -34,7 +30,7 @@ class ImportConfig:
     skip_duplicates: bool = True
     auto_categorize: bool = True
     dry_run: bool = False
-    progress_callback: Optional[Callable[[int, int], None]] = None
+    progress_callback: Callable[[int, int], None] | None = None
 
 
 @dataclass
@@ -47,7 +43,7 @@ class ImportResult:
     duplicates: int
     categories_assigned: int
     duration_seconds: float
-    warnings: List[str]
+    warnings: list[str]
 
 
 class BulkTransactionImporter:
@@ -64,12 +60,12 @@ class BulkTransactionImporter:
     def __init__(self, config: ImportConfig = None):
         self.config = config or ImportConfig()
         self._duplicate_cache: set = set()
-        self._warnings: List[str] = []
+        self._warnings: list[str] = []
         
     def import_csv(
         self,
         file_path: str | Path,
-        mapping: Dict[str, str],
+        mapping: dict[str, str],
         account_id: str = "default"
     ) -> ImportResult:
         """
@@ -114,9 +110,9 @@ class BulkTransactionImporter:
     
     def import_multiple_files(
         self,
-        files: List[tuple],
+        files: list[tuple],
         progress_callback: Callable = None
-    ) -> List[ImportResult]:
+    ) -> list[ImportResult]:
         """
         Importe plusieurs fichiers en parallèle.
         
@@ -151,15 +147,15 @@ class BulkTransactionImporter:
     def _parse_csv(
         self,
         file_path: Path,
-        mapping: Dict[str, str]
-    ) -> List[Dict]:
+        mapping: dict[str, str]
+    ) -> list[dict]:
         """Parse le CSV avec le mapping."""
         records = []
         
         # Détecter encoding
         encoding = self._detect_encoding(file_path)
         
-        with open(file_path, 'r', encoding=encoding) as f:
+        with open(file_path, encoding=encoding) as f:
             reader = csv.DictReader(f)
             
             for row in reader:
@@ -173,9 +169,9 @@ class BulkTransactionImporter:
     
     def _validate_and_transform(
         self,
-        records: List[Dict],
+        records: list[dict],
         account_id: str
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """Valide et transforme les records."""
         valid = []
         
@@ -216,7 +212,7 @@ class BulkTransactionImporter:
     
     def _bulk_insert(
         self,
-        records: List[Dict],
+        records: list[dict],
         total: int
     ) -> ImportResult:
         """Insertion bulk optimisée."""
@@ -295,7 +291,7 @@ class BulkTransactionImporter:
     
     def _dry_run_import(
         self,
-        records: List[Dict],
+        records: list[dict],
         total: int
     ) -> ImportResult:
         """Simulation d'import sans écrire en DB."""

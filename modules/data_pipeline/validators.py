@@ -3,7 +3,6 @@ Validateurs pour le pipeline d'import.
 """
 
 import sqlite3
-from typing import List, Dict, Optional, Set
 from dataclasses import dataclass
 
 from modules.db.connection import get_db_connection
@@ -25,9 +24,9 @@ class SchemaValidator:
     REQUIRED_FIELDS = ['date', 'label', 'amount']
     
     def __init__(self):
-        self.errors: List[ValidationError] = []
+        self.errors: list[ValidationError] = []
     
-    def validate_record(self, record: Dict) -> bool:
+    def validate_record(self, record: dict) -> bool:
         """
         Valide un record individuel.
         
@@ -71,7 +70,7 @@ class SchemaValidator:
         
         return len(self.errors) == 0
     
-    def validate_batch(self, records: List[Dict]) -> Dict:
+    def validate_batch(self, records: list[dict]) -> dict:
         """
         Valide un batch de records.
         
@@ -107,7 +106,7 @@ class DuplicateDetector:
     """
     
     def __init__(self):
-        self.seen_hashes: Set[str] = set()
+        self.seen_hashes: set[str] = set()
     
     def is_duplicate(self, tx_hash: str) -> bool:
         """
@@ -147,7 +146,7 @@ class DuplicateDetector:
             # Le check sera refait lors de l'insertion
             return False
     
-    def find_duplicates_in_batch(self, records: List[Dict]) -> List[int]:
+    def find_duplicates_in_batch(self, records: list[dict]) -> list[int]:
         """
         Trouve les indices des doublons dans un batch.
         

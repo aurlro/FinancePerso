@@ -48,6 +48,20 @@ def toast_info(message: str, icon: str = "ℹ️"):
     st.toast(message, icon=icon)
 
 
+def validation_feedback(count: int, item_type: str = "opération"):
+    """
+    Affiche un feedback après validation de transactions.
+    
+    Args:
+        count: Nombre d'éléments validés
+        item_type: Type d'élément (opération, transaction, groupe...)
+    """
+    if count == 1:
+        toast_success(f"1 {item_type} validée", icon="✅")
+    else:
+        toast_success(f"{count} {item_type}s validées", icon="✅")
+
+
 # ============================================================================
 # BANNERS (messages persistants dans la page)
 # ============================================================================
