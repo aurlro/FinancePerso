@@ -1,40 +1,27 @@
 """
-Data Pipeline Module - Import massif et migrations.
+Pipeline de données pour FinancePerso.
 
-Ce module permet d'importer un grand volume de transactions (1000+)
-et de migrer des données depuis d'autres outils (Bankin', YNAB, Mint).
+Modules pour l'import massif, la transformation et la validation des données.
 """
 
-from .importers import (
-    BulkTransactionImporter,
-    ImportConfig,
-    ImportResult,
-    BankinImporter,
-    YNABImporter,
-)
-from .transformers import (
+from modules.data_pipeline.transformers import (
     DateNormalizer,
     AmountNormalizer,
     CategoryMapper,
     LabelCleaner,
 )
-from .validators import (
+from modules.data_pipeline.validators import (
     SchemaValidator,
     DuplicateDetector,
+    ValidationError,
 )
 
 __all__ = [
-    'BulkTransactionImporter',
-    'ImportConfig',
-    'ImportResult',
-    'BankinImporter',
-    'YNABImporter',
-    'DateNormalizer',
-    'AmountNormalizer',
-    'CategoryMapper',
-    'LabelCleaner',
-    'SchemaValidator',
-    'DuplicateDetector',
+    "DateNormalizer",
+    "AmountNormalizer",
+    "CategoryMapper",
+    "LabelCleaner",
+    "SchemaValidator",
+    "DuplicateDetector",
+    "ValidationError",
 ]
-
-__version__ = "1.0.0"

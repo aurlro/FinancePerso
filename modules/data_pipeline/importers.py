@@ -4,6 +4,7 @@ Importeurs bulk pour transactions financières.
 
 import csv
 import json
+import hashlib
 import logging
 from pathlib import Path
 from datetime import datetime
@@ -14,9 +15,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 
 from modules.db.connection import get_db_connection
-from modules.db.transactions import calculate_tx_hash
 from modules.categorization import categorize_transaction
 from modules.logger import logger
+
+
+def _calculate_tx_hash(date: str, label: str, amount: float, account_id: str) -> str:
+    """Calcule le hash unique d'une transaction."""
+    norm_label = str(label).strip().upper()
+    hash_content = f"{date}|{norm_label}|{amount}|{account_id}"
+    return hashlib.md5(hash_content.encode()).hexdigest()[:16]
 
 
 @dataclass
@@ -187,7 +194,7 @@ class BulkTransactionImporter:
                 record['account_id'] = account_id
                 
                 # Générer hash
-                record['tx_hash'] = calculate_tx_hash(
+                record['tx_hash'] = _calculate_tx_hash(
                     record['date'],
                     record['label'],
                     record['amount'],

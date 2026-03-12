@@ -1,37 +1,35 @@
-# Guides Utilisateur - FinancePerso
+# Guide Utilisateur FinancePerso
 
-> Documentation pour les utilisateurs de l'application
+Bienvenue dans le guide utilisateur de FinancePerso !
 
----
+## 📚 Sommaire
 
-## 📚 Guides Disponibles
+| Guide | Description | Status |
+|-------|-------------|--------|
+| 🚀 [Démarrage Rapide](getting-started.md) | Installation et première utilisation | ✅ Complet |
+| 📥 [Import](import.md) | Importer vos transactions | ✅ Complet |
+| ✅ [Validation](validation.md) | Valider et catégoriser | ✅ Complet |
+| 📊 [Dashboard](dashboard.md) | Comprendre vos finances | 📝 À venir |
+| 💰 [Budgets](budgets.md) | Gérer vos budgets | 📝 À venir |
+| ⚙️ [Configuration](configuration.md) | Personnaliser l'application | 📝 À venir |
+| ❓ [FAQ](faq.md) | Questions fréquentes | ✅ Complet |
 
-### [getting-started.md](getting-started.md)
-Guide de démarrage rapide pour les nouveaux utilisateurs.
+## 🎯 Par où commencer ?
 
-**Contenu:**
-- Installation et première connexion
-- Import des premières transactions
-- Navigation de base
-- Conseils de démarrage
+### Vous débutez ?
+1. Suivez le [Démarrage Rapide](getting-started.md)
+2. Importez vos transactions avec le [guide d'import](import.md)
+3. Validez vos transactions selon le [guide de validation](validation.md)
 
----
-
-## 🎯 Prochains Guides (Prévus)
-
-- `import-guide.md` - Guide complet d'import de transactions
-- `categorization.md` - Guide de catégorisation
-- `budgets.md` - Gestion des budgets
-- `reports.md` - Génération de rapports
-- `advanced-features.md` - Fonctionnalités avancées
-
----
+### Vous avez une question ?
+Consultez directement la [FAQ](faq.md) !
 
 ## 🆘 Support
 
-En cas de problème:
-1. Consultez le guide de démarrage
-2. Vérifiez les [guides de migration](../migration/)
-3. Reportez un problème sur GitHub
+- 📖 Documentation technique : [README.md](../../README.md)
+- 👨‍💻 Guide développeur : [AGENTS.md](../../AGENTS.md)
+- 🐛 Signaler un bug : GitHub Issues
 
-[Retour à ACTIVE](../README.md) | [Index global](../../INDEX.md)
+---
+
+*Dernière mise à jour : 2026-03-12*

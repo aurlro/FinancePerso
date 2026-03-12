@@ -1,194 +1,137 @@
-# Guide de Déploiement FinancePerso
+# 🚀 Démarrage Rapide
 
-Ce guide explique comment déployer l'application FinancePerso avec Docker.
+Bienvenue dans **FinancePerso** ! Ce guide vous aidera à configurer votre application en quelques minutes.
 
-## Prérequis
+---
 
-- Docker 20.10+
-- Docker Compose 2.0+
-- 2GB RAM minimum (4GB recommandé)
+## 📋 Prérequis
 
-## Méthode 1: Déploiement Automatique (Recommandé)
+- **Python** 3.11 ou supérieur
+- Un fichier de transactions bancaires (CSV)
+- Environ 5 minutes de temps libre
 
-Utilisez le script de déploiement fourni :
+---
+
+## 🛠️ Installation
+
+### 1. Cloner le repository
 
 ```bash
-# Rendre le script exécutable (une seule fois)
-chmod +x scripts/deploy.sh
-
-# Déployer en développement (défaut)
-./scripts/deploy.sh
-
-# Déployer en production
-./scripts/deploy.sh production
+git clone https://github.com/votre-repo/FinancePerso.git
+cd FinancePerso
 ```
 
-Le script effectue automatiquement :
-1. Vérification des prérequis
-2. Nettoyage des ressources Docker inutilisées
-3. Construction de l'image
-4. Démarrage des containers
-5. Vérification de santé de l'application
+### 2. Créer l'environnement virtuel
 
-## Méthode 2: Déploiement Manuel
+```bash
+python -m venv .venv
 
-### 1. Configuration
+# macOS/Linux
+source .venv/bin/activate
 
-Créez le fichier `.env` à partir du template :
+# Windows
+.venv\Scripts\activate
+```
+
+### 3. Installer les dépendances
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configurer les variables d'environnement
 
 ```bash
 cp .env.example .env
-# Éditez .env avec vos vraies valeurs
-nano .env
 ```
 
-### 2. Build
+Éditez `.env` avec vos clés API (optionnel pour démarrer) :
 
 ```bash
-docker-compose build
+# Optionnel - pour la catégorisation IA
+GEMINI_API_KEY=votre_cle_gemini
 ```
 
-### 3. Démarrage
+### 5. Lancer l'application
 
 ```bash
-docker-compose up -d
+make run
+# ou
+streamlit run app.py
 ```
 
-### 4. Vérification
+🎉 L'application est accessible sur **http://localhost:8501**
 
-```bash
-# Vérifier que l'application répond
-curl http://localhost:8501/_stcore/health
+---
 
-# Voir les logs
-docker-compose logs -f
-```
+## 🎯 Première Utilisation
 
-### 5. Accès
+### Étape 1 : Créer vos catégories
 
-Ouvrez votre navigateur : http://localhost:8501
+1. Allez dans **Configuration** ⚙️
+2. Cliquez sur **Catégories**
+3. Créez vos catégories personnalisées :
+   - 🍽️ Alimentation
+   - 🚗 Transport
+   - 🏠 Logement
+   - 💊 Santé
+   - 🎮 Loisirs
+   - etc.
 
-## Commandes Utiles
+> 💡 **Astuce** : Commencez avec 10-15 catégories maximum, vous pourrez en ajouter plus tard.
 
-```bash
-# Arrêter l'application
-docker-compose down
+### Étape 2 : Importer vos transactions
 
-# Redémarrer
-docker-compose restart
+1. Rendez-vous dans **Import** 📥
+2. Téléchargez votre fichier CSV bancaire
+3. Mappez les colonnes (date, libellé, montant)
+4. Cliquez sur **Importer**
 
-# Rebuild complet (sans cache)
-docker-compose build --no-cache
+> 📚 Voir le [guide d'import complet](import.md)
 
-# Voir les logs en temps réel
-docker-compose logs -f app
+### Étape 3 : Valider et catégoriser
 
-# Shell dans le container
-docker-compose exec app bash
+1. Allez dans **Validation** ✅
+2. Vérifiez les catégories proposées
+3. Corrigez si nécessaire
+4. Validez les transactions
 
-# Mettre à jour l'image
-docker-compose pull
-docker-compose up -d
-```
+> 📚 Voir le [guide de validation](validation.md)
 
-## Variables d'Environnement Importantes
+### Étape 4 : Explorer le dashboard
 
-| Variable | Description | Défaut |
-|----------|-------------|--------|
-| `STREAMLIT_PORT` | Port d'accès à l'application | 8501 |
-| `ENVIRONMENT` | Environnement (development/production) | production |
-| `DB_PATH` | Chemin de la base SQLite | /app/Data/finance.db |
-| `GEMINI_API_KEY` | Clé API Google Gemini | - |
-| `ENCRYPTION_KEY` | Clé de chiffrement AES-256 | - |
+1. Ouvrez **Dashboard** 📊
+2. Découvrez vos statistiques
+3. Analysez vos dépenses par catégorie
+4. Suivez vos budgets
 
-## Persistance des Données
+> 📚 Voir le [guide du dashboard](dashboard.md)
 
-Les données sont persistées via des volumes Docker :
+---
 
-- `./Data` : Base de données SQLite
-- `./logs` : Fichiers de logs
+## ⌨️ Raccourcis Clavier
 
-Pour sauvegarder la base de données :
+FinancePerso supporte la navigation au clavier :
 
-```bash
-# Backup
-cp Data/finance.db backups/finance_$(date +%Y%m%d).db
+| Raccourci | Action |
+|-----------|--------|
+| `?` | Afficher l'aide des raccourcis |
+| `g` + `i` | Aller à la page Import |
+| `g` + `d` | Aller au Dashboard |
+| `g` + `v` | Aller à Validation |
+| `g` + `b` | Aller aux Budgets |
+| `g` + `s` | Aller aux Settings |
+| `n` + `t` | Nouvelle transaction |
+| `Escape` | Fermer / Annuler |
 
-# Restore
-cp backups/finance_YYYYMMDD.db Data/finance.db
-```
+---
 
-## Mise à Jour
+## 🆘 Besoin d'aide ?
 
-Pour mettre à jour l'application :
+- ❓ Consultez la [FAQ](faq.md)
+- 📖 Lisez la [documentation complète](../README.md)
+- 🐛 Signalez un bug sur GitHub
 
-```bash
-# 1. Pull des derniers changements
-git pull
+---
 
-# 2. Rebuild et redémarrage
-./scripts/deploy.sh production
-```
-
-## Dépannage
-
-### L'application ne démarre pas
-
-```bash
-# Vérifier les logs
-docker-compose logs app
-
-# Vérifier le healthcheck
-docker-compose ps
-```
-
-### Problème de permissions
-
-```bash
-# Corriger les permissions sur Data
-sudo chown -R $USER:$USER Data/
-sudo chown -R $USER:$USER logs/
-```
-
-### Port déjà utilisé
-
-```bash
-# Changer le port dans .env
-STREAMLIT_PORT=8502
-```
-
-## Production Avancée
-
-Pour un déploiement production robuste, considérez :
-
-1. **Reverse Proxy** (nginx/traefik) avec HTTPS
-2. **Monitoring** avec Sentry configuré
-3. **Backups automatiques** de la base de données
-4. **Limites de ressources** dans docker-compose.yml
-
-Exemple avec nginx :
-
-```nginx
-server {
-    listen 443 ssl;
-    server_name finance.example.com;
-    
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-    
-    location / {
-        proxy_pass http://localhost:8501;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-    }
-}
-```
-
-## Support
-
-En cas de problème :
-1. Consultez les logs : `docker-compose logs`
-2. Vérifiez la santé : `curl http://localhost:8501/_stcore/health`
-3. Ouvrez une issue sur GitHub
+**Prochaine étape recommandée** : 📥 [Guide d'import](import.md)
