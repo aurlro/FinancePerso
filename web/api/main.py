@@ -63,9 +63,38 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="API REST pour l'application FinancePerso",
-    docs_url="/docs" if settings.is_development else None,
-    redoc_url="/redoc" if settings.is_development else None,
+    description="""
+    API REST complète pour la gestion financière personnelle FinancePerso.
+    
+    ## Fonctionnalités principales
+    
+    - 🔐 **Authentification** : JWT avec refresh tokens
+    - 💳 **Comptes** : Gestion multi-comptes bancaires
+    - 💰 **Transactions** : CRUD, import CSV, catégorisation IA
+    - 📊 **Dashboard** : Statistiques et visualisations
+    - 🤖 **Analytics** : Prédictions, anomalies, tendances
+    - 📤 **Export** : CSV, JSON, rapports
+    - 🔔 **Notifications** : Temps réel via WebSocket
+    - 👥 **Foyers** : Gestion familiale et invitations
+    
+    ## Authentification
+    
+    Tous les endpoints protégés nécessitent un token JWT :
+    ```
+    Authorization: Bearer <token>
+    ```
+    
+    Obtenez un token via `POST /auth/login`
+    
+    ## Documentation
+    
+    - Swagger UI : `/docs`
+    - ReDoc : `/redoc`
+    - OpenAPI : `/openapi.json`
+    """,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
     lifespan=lifespan,
 )
 
