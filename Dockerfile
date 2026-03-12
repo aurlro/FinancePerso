@@ -53,7 +53,7 @@ COPY README.md ./
 COPY modules/ ./modules/
 COPY pages/ ./pages/
 COPY assets/ ./assets/
-COPY views/ ./views/
+COPY web/ ./web/
 COPY scripts/ ./scripts/
 
 # Créer les répertoires nécessaires

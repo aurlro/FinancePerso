@@ -4,11 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [5.6.0] - 2026-03-03
+## [5.6.0] - 2026-03-12
 
-### Nouvelle page fonctionnelle (commits + local)
+### Data Pipeline & Complete Documentation Release
 
 **ADDED**
+- - Data Pipeline: `transformers.py` with DateNormalizer, AmountNormalizer, CategoryMapper, LabelCleaner
+- - Data Pipeline: `validators.py` with SchemaValidator, DuplicateDetector, ValidationError
+- - User Guide: Complete documentation suite (getting-started.md, faq.md, import.md, validation.md)
+- - Dockerfile: Fixed obsolete views/ reference, now includes web/ directory
+- - Release tag: v5.6.0 with complete release notes
 - - S: Add new and archived documentation, and create a backup of the documentation directory.
 - - S: Add Bandit configuration, architectural decision records, and update module READMEs.
 - - 🔧 Add consistency-keeper skill, health check script, and code quality roadmap
@@ -47,6 +52,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - - Enhanced Import Wizard with duplicate preview, account selection, period filter
 
 **FIXED**
+- - 🔧 Dockerfile: Removed obsolete views/ reference causing build failure
+- - 🔧 conftest.py: Added UTF-8 encoding declaration for Python 2 compatibility
 - - 🔧 Phase 2 Complete: Fix E741 ambiguous variable names + UP046 ignore
 - - 🔧 Fix documentation workflow: ignore app URLs in link check
 - - 🐛 Fix import error: set_flash_message -> flash_message
