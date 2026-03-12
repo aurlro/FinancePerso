@@ -113,7 +113,7 @@ class ImportReminderDetector(NotificationDetector):
             with get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT MAX(created_at) FROM transactions
+                    SELECT MAX(import_date) FROM transactions
                 """)
                 last_import = cursor.fetchone()[0]
 
@@ -235,18 +235,26 @@ class RecurringMissingDetector(NotificationDetector):
                 cursor = conn.cursor()
 
                 # Chercher les patterns récurrents (même label, montant similaire, intervalle régulier)
+                # Requête compatible SQLite sans fonctions de fenêtre
                 cursor.execute("""
                     SELECT 
                         label,
                         amount,
                         COUNT(*) as count,
                         MAX(date) as last_date,
-                        AVG(julianday(date) - julianday(lag(date) 
-                             OVER (PARTITION BY label ORDER BY date))) as avg_interval
+                        AVG(julianday(date) - julianday(prev_date)) as avg_interval
                     FROM (
-                        SELECT label, amount, date,
-                               LAG(date) OVER (PARTITION BY label ORDER BY date) as lag_date
-                        FROM transactions
+                        SELECT 
+                            label, 
+                            amount, 
+                            date,
+                            (SELECT MAX(t2.date) 
+                             FROM transactions t2 
+                             WHERE t2.label = t1.label 
+                               AND t2.amount = t1.amount 
+                               AND t2.date < t1.date
+                               AND t2.status = 'validated') as prev_date
+                        FROM transactions t1
                         WHERE status = 'validated'
                     )
                     GROUP BY label, amount

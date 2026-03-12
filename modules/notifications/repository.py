@@ -25,7 +25,7 @@ class NotificationRepository:
         self._ensure_table_exists()
 
     def _ensure_table_exists(self) -> None:
-        """Vérifie que la table existe."""
+        """Vérifie que la table existe, la crée si nécessaire."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -33,9 +33,35 @@ class NotificationRepository:
                 WHERE type='table' AND name='notifications'
             """)
             if not cursor.fetchone():
-                raise RuntimeError(
-                    "Table notifications not found. " "Run migration 007_notifications.sql first."
-                )
+                # Créer la table notifications automatiquement
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS notifications (
+                        id TEXT PRIMARY KEY,
+                        level TEXT NOT NULL CHECK (level IN ('critical', 'warning', 'info', 'success', 'achievement')),
+                        type TEXT NOT NULL,
+                        title TEXT,
+                        message TEXT NOT NULL,
+                        icon TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        read_at TIMESTAMP,
+                        dismissed_at TIMESTAMP,
+                        expires_at TIMESTAMP,
+                        category TEXT,
+                        source TEXT,
+                        actions_json TEXT CHECK (json_valid(actions_json)),
+                        metadata_json TEXT CHECK (json_valid(metadata_json)),
+                        user_id INTEGER DEFAULT 1,
+                        dedup_key TEXT,
+                        is_read BOOLEAN DEFAULT 0,
+                        is_dismissed BOOLEAN DEFAULT 0,
+                        is_pinned BOOLEAN DEFAULT 0
+                    )
+                """)
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_notifications_user_read 
+                    ON notifications(user_id, is_read, created_at DESC)
+                """)
+                conn.commit()
 
     def create(self, notification: Notification) -> Notification:
         """Crée une notification en base."""
