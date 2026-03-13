@@ -2,39 +2,151 @@
   "name": "financeperso-electron",
   "productName": "FinancePerso",
   "version": "1.0.0",
-  "description": "Gestion financière de couple",
+  "description": "Gestion financière personnelle et de couple",
   "main": ".vite/build/main.js",
   "scripts": {
-    "dev": "node scripts/dev.mjs",
+    "dev": "node scripts/dev-with-vite.mjs",
     "start": "npm run dev",
-    "build": "vite build --config vite.renderer.config.mjs",
-    "package": "electron-forge package",
-    "make": "electron-forge make"
+    "build": "npm run build:main && vite build --config vite.renderer.config.mjs",
+    "build:main": "vite build --config vite.main.config.mjs && vite build --config vite.preload.config.mjs",
+    "package": "npm run build && electron-builder",
+    "package:mac": "npm run build && electron-builder --mac",
+    "package:win": "npm run build && electron-builder --win",
+    "package:linux": "npm run build && electron-builder --linux",
+    "make": "npm run package",
+    "publish": "npm run build && electron-builder --publish=always",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:smoke": "playwright test smoke.spec.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "clsx": "^2.1.0",
+    "csv-parse": "^^6.1.0",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-updater": "^6.3.0",
+    "lucide-react": "^0.344.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tailwind-merge": "^3.5.0"
+    "react-router-dom": "^6.22.3",
+    "recharts": "^2.15.0",
+    "sqlite3": "^5.1.7",
+    "tailwind-merge": "^2.2.1"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.11.1",
-    "@electron-forge/maker-deb": "^7.11.1",
-    "@electron-forge/maker-rpm": "^7.11.1",
-    "@electron-forge/maker-squirrel": "^7.11.1",
-    "@electron-forge/maker-zip": "^7.11.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.11.1",
-    "@electron-forge/plugin-fuses": "^7.11.1",
-    "@electron-forge/plugin-vite": "^7.11.1",
-    "@electron/fuses": "^1.8.0",
+    "@playwright/test": "^1.58.2",
     "@types/react": "^18.2.61",
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
-    "electron": "^33.3.2",
+    "autoprefixer": "^10.4.27",
+    "electron": "33.3.2",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.3.3",
     "vite": "^5.1.6"
+  },
+  "build": {
+    "appId": "com.financeperso.app",
+    "productName": "FinancePerso",
+    "copyright": "Copyright © 2025 FinancePerso",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      ".vite/build/**/*",
+      "node_modules/sqlite3/**/*",
+      "node_modules/csv-parse/**/*",
+      "node_modules/electron-updater/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/sqlite3/**/*.node",
+      "node_modules/better-sqlite3/**/*.node"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "votre-username",
+      "repo": "financeperso-electron",
+      "releaseType": "release"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "category": "public.app-category.finance",
+      "icon": "assets/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "publisherName": "FinancePerso"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "category": "Office",
+      "icon": "assets/icon.png",
+      "maintainer": "FinancePerso Team",
+      "vendor": "FinancePerso",
+      "synopsis": "Gestion financière personnelle",
+      "description": "Application de gestion financière pour couples et familles"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "FinancePerso",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 540,
+        "height": 380
+      }
+    }
   }
 }

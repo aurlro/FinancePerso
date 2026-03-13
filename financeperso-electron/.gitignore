@@ -90,3 +90,13 @@ typings/
 
 # Electron-Forge
 out/
+
+# Playwright E2E Test results
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Test videos and screenshots (optional)
+*.webm
+screenshots/
+recordings/

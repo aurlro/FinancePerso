@@ -1,40 +1,95 @@
 import { useCallback } from 'react';
-import type { Transaction, Category, DashboardStats, ImportResult } from '@/types';
+import type { Transaction, Category, ImportResult } from '@/types';
+
+// Types pour l'API Electron
+declare global {
+  interface Window {
+    electronAPI: {
+      db: {
+        getAllTransactions: (limit?: number, offset?: number) => Promise<Transaction[]>;
+        getTransaction: (id: number) => Promise<Transaction>;
+        createTransaction: (data: any) => Promise<Transaction>;
+        updateTransaction: (id: number, data: any) => Promise<Transaction>;
+        deleteTransaction: (id: number) => Promise<void>;
+        getStatsByMonth: (year: number, month: number) => Promise<any[]>;
+        getCategoriesStats: (year: number, month: number) => Promise<any[]>;
+        getCategories: () => Promise<Category[]>;
+      };
+      file: {
+        importCSV: (filePath: string, options?: any) => Promise<ImportResult>;
+        selectCSV: () => Promise<string | null>;
+      };
+      app: {
+        getVersion: () => Promise<string>;
+        getPath: (name: string) => Promise<string>;
+      };
+      platform: string;
+    };
+  }
+}
+
+export interface DashboardStats {
+  income: number;
+  expense: number;
+  balance: number;
+}
 
 export function useElectron() {
   const api = window.electronAPI;
 
   // Database operations
-  const queryDB = useCallback(async (sql: string, params?: unknown[]) => {
-    return api.db.query(sql, params);
+  const getAllTransactions = useCallback(async (limit?: number, offset?: number) => {
+    return api.db.getAllTransactions(limit, offset);
   }, []);
 
-  const getTransactions = useCallback(async (options?: { limit?: number; offset?: number }) => {
-    return api.db.getTransactions(options) as Promise<Transaction[]>;
+  const getTransaction = useCallback(async (id: number) => {
+    return api.db.getTransaction(id);
   }, []);
 
-  const getTransactionsByMonth = useCallback(async (year: number, month: number) => {
-    return api.db.getTransactionsByMonth(year, month) as Promise<Transaction[]>;
-  }, []);
-
-  const getDashboardStats = useCallback(async (year: number, month: number) => {
-    return api.db.getDashboardStats(year, month) as Promise<DashboardStats>;
-  }, []);
-
-  const insertTransaction = useCallback(async (data: Omit<Transaction, 'id'>) => {
-    return api.db.insertTransaction(data) as Promise<Transaction>;
+  const createTransaction = useCallback(async (data: Omit<Transaction, 'id'>) => {
+    return api.db.createTransaction(data);
   }, []);
 
   const updateTransaction = useCallback(async (id: number, data: Partial<Transaction>) => {
-    return api.db.updateTransaction(id, data) as Promise<Transaction>;
+    return api.db.updateTransaction(id, data);
   }, []);
 
   const deleteTransaction = useCallback(async (id: number) => {
     return api.db.deleteTransaction(id);
   }, []);
 
+  const getStatsByMonth = useCallback(async (year: number, month: number) => {
+    return api.db.getStatsByMonth(year, month);
+  }, []);
+
+  const getCategoriesStats = useCallback(async (year: number, month: number) => {
+    return api.db.getCategoriesStats(year, month);
+  }, []);
+
   const getCategories = useCallback(async () => {
-    return api.db.getCategories() as Promise<Category[]>;
+    return api.db.getCategories();
+  }, []);
+
+  // Helper pour obtenir les stats du dashboard
+  const getDashboardStats = useCallback(async (year: number, month: number): Promise<DashboardStats> => {
+    const stats = await api.db.getStatsByMonth(year, month);
+    
+    let income = 0;
+    let expense = 0;
+    
+    for (const stat of stats) {
+      if (stat.type === 'income') {
+        income = stat.total || 0;
+      } else if (stat.type === 'expense') {
+        expense = stat.total || 0;
+      }
+    }
+    
+    return {
+      income,
+      expense,
+      balance: income - expense,
+    };
   }, []);
 
   // File operations
@@ -42,8 +97,8 @@ export function useElectron() {
     return api.file.selectCSV();
   }, []);
 
-  const importCSV = useCallback(async (filePath: string, options?: unknown) => {
-    return api.file.importCSV(filePath, options) as Promise<ImportResult>;
+  const importCSV = useCallback(async (filePath: string, options?: any) => {
+    return api.file.importCSV(filePath, options);
   }, []);
 
   // App info
@@ -55,29 +110,17 @@ export function useElectron() {
     return api.app.getPath(name);
   }, []);
 
-  // Theme
-  const setTheme = useCallback(async (theme: 'light' | 'dark' | 'system') => {
-    return api.theme.set(theme);
-  }, []);
-
-  const getTheme = useCallback(async () => {
-    return api.theme.get();
-  }, []);
-
-  const onThemeChanged = useCallback((callback: (theme: 'light' | 'dark') => void) => {
-    return api.theme.onChanged(callback);
-  }, []);
-
   return {
     // Database
-    queryDB,
-    getTransactions,
-    getTransactionsByMonth,
-    getDashboardStats,
-    insertTransaction,
+    getAllTransactions,
+    getTransaction,
+    createTransaction,
     updateTransaction,
     deleteTransaction,
+    getStatsByMonth,
+    getCategoriesStats,
     getCategories,
+    getDashboardStats,
     
     // File
     selectCSV,
@@ -86,10 +129,5 @@ export function useElectron() {
     // App
     getVersion,
     getPath,
-    
-    // Theme
-    setTheme,
-    getTheme,
-    onThemeChanged,
   };
 }

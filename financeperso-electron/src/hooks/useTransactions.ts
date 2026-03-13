@@ -1,71 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useElectron } from './useElectron';
-import type { Transaction } from '@/types';
+import { useIPC } from './useIPC';
+import type { Transaction, DashboardStats, CategoryStat } from '../types';
 
-interface UseTransactionsOptions {
-  year?: number;
-  month?: number;
-  limit?: number;
-}
-
-export function useTransactions(options: UseTransactionsOptions = {}) {
-  const { year, month, limit = 100 } = options;
-  const electron = useElectron();
-  
+export function useTransactions(limit = 100) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { getAllTransactions, createTransaction: createTxAPI } = useIPC();
 
   const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
+      const results = await getAllTransactions(limit, 0);
+      setTransactions(results);
       setError(null);
-      
-      let data: Transaction[];
-      if (year !== undefined && month !== undefined) {
-        data = await electron.getTransactionsByMonth(year, month);
-      } else {
-        data = await electron.getTransactions({ limit });
-      }
-      
-      setTransactions(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur de chargement');
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     } finally {
       setLoading(false);
     }
-  }, [year, month, limit, electron]);
+  }, [getAllTransactions, limit]);
 
-  const addTransaction = useCallback(async (data: Omit<Transaction, 'id'>) => {
+  const addTransaction = useCallback(async (transaction: Omit<Transaction, 'id'>) => {
     try {
-      const newTx = await electron.insertTransaction(data);
-      setTransactions(prev => [newTx, ...prev]);
-      return newTx;
+      await createTxAPI(transaction);
+      await fetchTransactions();
+      return true;
     } catch (err) {
-      throw err instanceof Error ? err : new Error('Erreur d\'ajout');
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout');
+      return false;
     }
-  }, [electron]);
-
-  const updateTransaction = useCallback(async (id: number, data: Partial<Transaction>) => {
-    try {
-      const updated = await electron.updateTransaction(id, data);
-      setTransactions(prev => 
-        prev.map(tx => tx.id === id ? { ...tx, ...updated } : tx)
-      );
-      return updated;
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Erreur de mise à jour');
-    }
-  }, [electron]);
-
-  const removeTransaction = useCallback(async (id: number) => {
-    try {
-      await electron.deleteTransaction(id);
-      setTransactions(prev => prev.filter(tx => tx.id !== id));
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Erreur de suppression');
-    }
-  }, [electron]);
+  }, [createTxAPI, fetchTransactions]);
 
   useEffect(() => {
     fetchTransactions();
@@ -77,7 +42,96 @@ export function useTransactions(options: UseTransactionsOptions = {}) {
     error,
     refresh: fetchTransactions,
     addTransaction,
-    updateTransaction,
-    removeTransaction,
+  };
+}
+
+export function useDashboardStats(year: number, month: number) {
+  const [stats, setStats] = useState<DashboardStats>({
+    income: 0,
+    expense: 0,
+    balance: 0,
+  });
+  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { getStatsByMonth, getCategoriesStats } = useIPC();
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const [monthStats, catStats] = await Promise.all([
+        getStatsByMonth(year, month),
+        getCategoriesStats(year, month),
+      ]);
+
+      // Calculer les totaux
+      let income = 0;
+      let expense = 0;
+
+      for (const stat of monthStats) {
+        if (stat.type === 'income') {
+          income = stat.total || 0;
+        } else if (stat.type === 'expense') {
+          expense = stat.total || 0;
+        }
+      }
+
+      setStats({
+        income,
+        expense,
+        balance: income - expense,
+      });
+      
+      setCategoryStats(catStats);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+    } finally {
+      setLoading(false);
+    }
+  }, [getStatsByMonth, getCategoriesStats, year, month]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  return {
+    stats,
+    categoryStats,
+    loading,
+    error,
+    refresh: fetchStats,
+  };
+}
+
+export function useCategories() {
+  const [categories, setCategories] = useState<Array<{ id: number; name: string; emoji: string; color: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { getCategories } = useIPC();
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      const results = await getCategories();
+      setCategories(results);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
+    } finally {
+      setLoading(false);
+    }
+  }, [getCategories]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  return {
+    categories,
+    loading,
+    error,
+    refresh: fetchCategories,
   };
 }

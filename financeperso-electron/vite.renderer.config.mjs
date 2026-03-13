@@ -5,8 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig(({ mode }) => ({
-  mode: 'development',
+export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
@@ -19,8 +18,5 @@ export default defineConfig(({ mode }) => ({
     host: '0.0.0.0',
     cors: true,
   },
-  build: {
-    minify: false,
-    sourcemap: true,
-  },
-}));
+  // Pas de build outDir pour le renderer en dev mode
+});

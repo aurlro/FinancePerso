@@ -1,195 +1,263 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import * as React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTransactions } from '@/hooks/useTransactions';
-import { 
-  ArrowUpDown, 
-  Calendar, 
-  Tag, 
-  RefreshCw, 
-  Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Search
-} from 'lucide-react';
+import { useMembers, useSplitTransaction } from '@/hooks/useMembers';
+import { Member } from '@/types';
+import { User } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function Transactions() {
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth() + 1);
-  const [search, setSearch] = useState('');
-  
-  const { transactions, loading, error, refresh } = useTransactions({ year, month });
-
-  const monthNames = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-  ];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: '2-digit',
-      month: 'short'
-    }).format(date);
-  };
-
-  const handlePreviousMonth = () => {
-    if (month === 1) {
-      setMonth(12);
-      setYear(year - 1);
-    } else {
-      setMonth(month - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (month === 12) {
-      setMonth(1);
-      setYear(year + 1);
-    } else {
-      setMonth(month + 1);
-    }
-  };
-
-  // Filtrer par recherche
-  const filteredTransactions = transactions.filter(tx => 
-    tx.label.toLowerCase().includes(search.toLowerCase()) ||
-    (tx.category && tx.category.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
-      </div>
-    );
+declare global {
+  interface Window {
+    electronAPI: {
+      getAllTransactions: (limit?: number, offset?: number) => Promise<any[]>;
+      createTransaction: (data: any) => Promise<any>;
+      deleteTransaction: (id: number) => Promise<any>;
+      getCategories: () => Promise<any[]>;
+    };
   }
+}
 
-  if (error) {
+function MemberBadge({ member, size = 'sm' }: { member?: Member | null; size?: 'sm' | 'md' }) {
+  if (!member) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg">
-          <p>Erreur: {error}</p>
-          <Button onClick={refresh} variant="outline" className="mt-2">
-            Réessayer
-          </Button>
-        </div>
+      <div className={cn(
+        'rounded-full flex items-center justify-center bg-gray-100 text-gray-400',
+        size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm'
+      )}>
+        <User className="w-3 h-3" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-gray-500">Gérez vos opérations bancaires</p>
-        </div>
+    <div
+      className={cn(
+        'rounded-full flex items-center justify-center border-2',
+        size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm'
+      )}
+      style={{ 
+        backgroundColor: `${member.color}20`,
+        borderColor: member.color 
+      }}
+      title={member.name}
+    >
+      <span>{member.emoji}</span>
+    </div>
+  );
+}
+
+function MemberSelect({ 
+  transactionId, 
+  currentMemberId, 
+  members, 
+  onAssign 
+}: { 
+  transactionId: number; 
+  currentMemberId?: number | null; 
+  members: Member[];
+  onAssign: (transactionId: number, memberId: number) => void;
+}) {
+  const currentMember = members.find(m => m.id === currentMemberId);
+
+  return (
+    <Select
+      value={currentMemberId?.toString() || ''}
+      onValueChange={(value) => onAssign(transactionId, parseInt(value))}
+    >
+      <SelectTrigger className="w-32 h-8 text-xs">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span className="font-medium">
-              {monthNames[month - 1]} {year}
-            </span>
-          </div>
-          <Button variant="outline" size="icon" onClick={handleNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={refresh}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
+          <MemberBadge member={currentMember} size="sm" />
+          <span className="truncate">{currentMember?.name || 'Assigner...'}</span>
         </div>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-gray-400" />
+            <span>Non assigné</span>
+          </div>
+        </SelectItem>
+        {members.map((member) => (
+          <SelectItem key={member.id} value={member.id.toString()}>
+            <div className="flex items-center gap-2">
+              <span>{member.emoji}</span>
+              <span>{member.name}</span>
+              {member.type === 'primary' && (
+                <span className="text-xs text-emerald-600">(principal)</span>
+              )}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+export function Transactions() {
+  const [transactions, setTransactions] = React.useState<any[]>([]);
+  const [categories, setCategories] = React.useState<any[]>([]);
+  const [transactionMembers, setTransactionMembers] = React.useState<Record<number, Member>>({});
+  const [loading, setLoading] = React.useState(true);
+  
+  const { members, loading: membersLoading } = useMembers();
+  const { assignToMember, getMemberForTransaction } = useSplitTransaction();
+
+  React.useEffect(() => {
+    loadData();
+  }, []);
+
+  // Charger les membres assignés pour chaque transaction
+  React.useEffect(() => {
+    if (transactions.length > 0 && members.length > 0) {
+      loadTransactionMembers();
+    }
+  }, [transactions, members]);
+
+  const loadTransactionMembers = async () => {
+    const memberMap: Record<number, Member> = {};
+    for (const tx of transactions) {
+      const member = await getMemberForTransaction(tx.id);
+      if (member) {
+        memberMap[tx.id] = member;
+      }
+    }
+    setTransactionMembers(memberMap);
+  };
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [txData, catData] = await Promise.all([
+        window.electronAPI.getAllTransactions(50, 0),
+        window.electronAPI.getCategories(),
+      ]);
+      setTransactions(txData);
+      setCategories(catData);
+    } catch (error) {
+      console.error('Failed to load transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Supprimer cette transaction ?')) return;
+    try {
+      await window.electronAPI.deleteTransaction(id);
+      loadData();
+    } catch (error) {
+      console.error('Failed to delete:', error);
+    }
+  };
+
+  const handleAddTest = async () => {
+    try {
+      const types = ['expense', 'income'];
+      const type = types[Math.floor(Math.random() * types.length)];
+      const amount = Math.round(Math.random() * 200);
+      
+      await window.electronAPI.createTransaction({
+        date: new Date().toISOString().split('T')[0],
+        description: type === 'income' ? 'Salaire' : 'Achat ' + Math.floor(Math.random() * 100),
+        amount: amount,
+        category: categories[Math.floor(Math.random() * categories.length)]?.name || 'Autre',
+        type: type,
+        account: 'Compte principal',
+        notes: '',
+      });
+      loadData();
+    } catch (error) {
+      console.error('Failed to create:', error);
+    }
+  };
+
+  const handleAssignMember = async (transactionId: number, memberId: number) => {
+    const success = await assignToMember(transactionId, memberId);
+    if (success) {
+      // Mettre à jour le mapping local
+      const member = members.find(m => m.id === memberId);
+      if (member) {
+        setTransactionMembers(prev => ({
+          ...prev,
+          [transactionId]: member
+        }));
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center p-8">Chargement...</div>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">
+            Transactions ({transactions.length})
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Gérez vos transactions et assignez-les aux membres
+          </p>
+        </div>
+        <Button onClick={handleAddTest}>
+          ➕ Ajouter test
+        </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Rechercher une transaction..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        />
-      </div>
-
-      {/* Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Liste des transactions</span>
-            <span className="text-sm font-normal text-gray-500">
-              {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredTransactions.length > 0 ? (
-            <div className="divide-y">
-              {filteredTransactions.map((tx) => (
-                <div 
-                  key={tx.id} 
-                  className="py-3 flex items-center justify-between hover:bg-gray-50 px-2 rounded-lg transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Icon/Emoji */}
-                    <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-                      style={{ backgroundColor: tx.color ? `${tx.color}20` : '#F3F4F6' }}
-                    >
-                      {tx.emoji || (tx.type === 'credit' ? '💰' : '💳')}
-                    </div>
-                    
-                    {/* Info */}
-                    <div>
-                      <p className="font-medium text-gray-900">{tx.label}</p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <span>{formatDate(tx.date)}</span>
-                        {tx.category && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <Tag className="h-3 w-3" />
-                              {tx.category}
-                            </span>
-                          </>
-                        )}
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {transactions.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Aucune transaction
+              </div>
+            ) : (
+              transactions.map((tx) => {
+                const member = transactionMembers[tx.id];
+                return (
+                  <div
+                    key={tx.id}
+                    className={cn(
+                      'flex items-center justify-between p-4 hover:bg-gray-50 transition-colors',
+                      member && 'bg-gray-50/50'
+                    )}
+                  >
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <MemberBadge member={member} size="md" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{tx.description}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {tx.date} • {tx.category} • {tx.account}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center gap-4">
+                      {!membersLoading && (
+                        <MemberSelect
+                          transactionId={tx.id}
+                          currentMemberId={member?.id}
+                          members={members}
+                          onAssign={handleAssignMember}
+                        />
+                      )}
+                      <span className={`font-bold min-w-[80px] text-right ${tx.type === 'expense' ? 'text-red-600' : 'text-green-600'}`}>
+                        {tx.type === 'expense' ? '-' : '+'}{tx.amount.toFixed(2)}€
+                      </span>
+                      <button
+                        onClick={() => handleDelete(tx.id)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
                   </div>
-                  
-                  {/* Amount */}
-                  <div className={`font-semibold ${
-                    tx.type === 'credit' ? 'text-emerald-600' : 'text-gray-900'
-                  }`}>
-                    {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.amount)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <ArrowUpDown className="h-6 w-6 text-gray-400" />
-              </div>
-              <p className="text-gray-500">Aucune transaction ce mois-ci</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Importez un relevé bancaire pour commencer
-              </p>
-            </div>
-          )}
+                );
+              })
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
