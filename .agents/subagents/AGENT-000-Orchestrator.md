@@ -72,6 +72,21 @@ Orchestrateur central de tous les agents spécialisés de FinancePerso. Responsa
 │  │ Wealth      │  │ Management  │  │ System      │                          │
 │  └─────────────┘  └─────────────┘  └─────────────┘                          │
 │                                                                              │
+│  LAYER 7: DESKTOP & HYBRID (Multi-Platform)                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                          │
+│  │ AGENT-023   │◄─┤ AGENT-024   │◄─┤ AGENT-025   │                          │
+│  │ FastAPI     │  │ React       │  │ Electron    │                          │
+│  │ Architect   │  │ Integration │  │ Desktop     │                          │
+│  │             │  │ Specialist  │  │ Architect   │                          │
+│  └─────────────┘  └─────────────┘  └─────────────┘                          │
+│         │                │                │                                  │
+│         └────────────────┴────────────────┘                                  │
+│                          ↓                                                   │
+│              ┌──────────────────────┐                                        │
+│              │  FinancePerso App    │                                        │
+│              │  (Web + Desktop)     │                                        │
+│              └──────────────────────┘                                        │
+│                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -79,22 +94,31 @@ Orchestrateur central de tous les agents spécialisés de FinancePerso. Responsa
 
 | Agent | Dépend de | Fournit à |
 |-------|-----------|-----------|
-| AGENT-001 | - | 002, 003, 004, 005, 006, 014, 015, 016 |
+| AGENT-001 | - | 002, 003, 004, 005, 006, 014, 015, 016, 023, 025 |
 | AGENT-002 | - | Tous (sécurité transverse) |
 | AGENT-003 | - | Tous (infrastructure) |
 | AGENT-004 | 001, 002 | 005, 006, 011 |
-| AGENT-005 | 001, 004, 007 | 006, 008, 011 |
+| AGENT-005 | 001, 004, 007 | 006, 008, 011, 025 |
 | AGENT-006 | 001, 004, 005 | 009, 010 |
 | AGENT-007 | 002, 003 | 005, 008 |
 | AGENT-008 | 001, 004, 007 | 006, 009, 016 |
-| AGENT-009 | 006, 008 | 010, 011 |
+| AGENT-009 | 006, 008 | 010, 011, 024, 025 |
 | AGENT-010 | 006, 009 | 011 |
 | AGENT-011 | 004, 005, 009 | 016 |
 | AGENT-012 | 001-011 | - |
-| AGENT-013 | 001-011 | - |
+| AGENT-013 | 001-021 | - |
 | AGENT-014 | 001, 004, 006 | 009, 016 |
 | AGENT-015 | 001, 002 | 004, 006, 016 |
 | AGENT-016 | 001, 014, 015 | 009, 010 |
+| AGENT-017 | 001, 005 | 005, 006, 016, 019 |
+| AGENT-018 | 002, 005 | 005, 006, 016 |
+| AGENT-019 | 001, 003 | 001, 003, 006, 015 |
+| AGENT-020 | 009, 010 | 009, 010, 015 |
+| AGENT-021 | 000, 017, 018 | 003, 015 |
+| **AGENT-022** | 000, 001-021 | 000, 001-021 |
+| **AGENT-023** | 001, 002 | 024, 025 |
+| **AGENT-024** | 009, 023 | 025 |
+| **AGENT-025** | 001, 002, 003, 009, 023, 024 | 003, 012 |
 
 ---
 
@@ -435,25 +459,28 @@ def diagnose_conflict(agent_a: str, agent_b: str) -> dict:
 
 | Besoin | Agent Primaire | Agents Secondaires |
 |--------|----------------|-------------------|
-| Nouvelle table DB | **001** | 002, 003 |
-| Chiffrement données | **002** | 001, 015 |
-| Pipeline CI/CD | **003** | 002, 012 |
-| Import fichier | **004** | 001, 005, 011 |
+| Nouvelle table DB | **001** | 002, 003, 025 |
+| Chiffrement données | **002** | 001, 015, 025 |
+| Pipeline CI/CD | **003** | 002, 012, 025 |
+| Import fichier | **004** | 001, 005, 011, 025 |
 | Catégorisation | **005** | 004, 007, 008 |
 | Nouveau graphique | **006** | 009, 010 |
 | Provider IA | **007** | 002, 005, 008 |
 | Anomalies ML | **008** | 005, 006, 016 |
-| Composant UI | **009** | 006, 008, 010 |
+| Composant UI | **009** | 006, 008, 010, 024, 025 |
 | Navigation | **010** | 009, 011 |
 | Validation données | **011** | 004, 005, 009 |
 | Nouveau test | **012** | Agent concerné |
-| Test E2E | **013** | 009, 010, 011 |
+| Test E2E | **013** | 009, 010, 011, 025 |
 | Budget/épargne | **014** | 001, 006, 016 |
 | Membres | **015** | 001, 002, 004 |
 | Notification | **016** | 014, 015 |
-| Audit architectural | **022** | 001-021 |
-| Refactoring majeur | **022** | 009, 010, 012 |
+| Audit architectural | **022** | 001-025 |
+| Refactoring majeur | **022** | 009, 010, 012, 024, 025 |
 | Création agent | **022** | 000 |
+| **API Backend** | **023** | 001, 002, 024 |
+| **Frontend React** | **024** | 009, 023, 025 |
+| **App Desktop Electron** | **025** | 001, 002, 003, 009, 023, 024 |
 
 ---
 
@@ -901,9 +928,205 @@ def on_master_architect_task_completed(result: dict):
     print(f"💡 Leçon apprise: {result['memory_json'].get('nouvelle_regle_acquise', 'N/A')}")
 ```
 
+### 12. Protocol: API Backend Request (023)
+
+```python
+"""
+Quand AGENT-023 (FastAPI) reçoit une requête du frontend.
+"""
+
+def on_api_request_received(endpoint: str, method: str, payload: dict):
+    """
+    Handler requête API reçue.
+    """
+    # Vérifier authentification via AGENT-002
+    notify_agent('002', {
+        'event': 'VERIFY_AUTH',
+        'token': payload.get('auth_token'),
+        'endpoint': endpoint
+    })
+    
+    # Route vers le bon service
+    if endpoint.startswith('/transactions'):
+        notify_agent('004', {
+            'event': 'API_TRANSACTION_REQUEST',
+            'method': method,
+            'payload': payload
+        })
+    elif endpoint.startswith('/categories'):
+        notify_agent('005', {
+            'event': 'API_CATEGORIZATION_REQUEST',
+            'method': method,
+            'payload': payload
+        })
+    elif endpoint.startswith('/dashboard'):
+        notify_agent('006', {
+            'event': 'API_ANALYTICS_REQUEST',
+            'method': method,
+            'payload': payload
+        })
+    elif endpoint.startswith('/budgets'):
+        notify_agent('014', {
+            'event': 'API_BUDGET_REQUEST',
+            'method': method,
+            'payload': payload
+        })
+
+def on_fastapi_startup_complete():
+    """
+    Handler démarrage FastAPI réussi.
+    """
+    # Notifier AGENT-025 (Electron) que l'API est disponible
+    notify_agent('025', {
+        'event': 'API_BACKEND_READY',
+        'url': 'http://localhost:8000',
+        'status': 'online'
+    })
+    
+    # Notifier AGENT-024 pour adapter les hooks frontend
+    notify_agent('024', {
+        'event': 'API_ENDPOINTS_AVAILABLE',
+        'docs_url': 'http://localhost:8000/docs'
+    })
+```
+
+### 13. Protocol: Frontend React Adaptation (024)
+
+```python
+"""
+Quand AGENT-024 adapte le frontend React pour l'API FastAPI.
+"""
+
+def on_react_component_adapted(component_name: str, changes: list):
+    """
+    Handler adaptation composant React.
+    """
+    # Notifier AGENT-025 si changements affectent Electron
+    if component_name in ['ImportWizard', 'FileUploader', 'ExportDialog']:
+        notify_agent('025', {
+            'event': 'FRONTEND_COMPONENT_CHANGED',
+            'component': component_name,
+            'changes': changes,
+            'action_required': 'verify_ipc_handlers'
+        })
+    
+    # Tests via AGENT-012
+    notify_agent('012', {
+        'event': 'COMPONENT_UPDATED',
+        'component': component_name,
+        'test_type': 'integration'
+    })
+
+def on_api_client_generated(api_spec: dict):
+    """
+    Handler génération client API TypeScript.
+    """
+    # Partager avec AGENT-025 pour aligner types
+    notify_agent('025', {
+        'event': 'API_TYPES_GENERATED',
+        'types_file': api_spec.get('types_path'),
+        'endpoints': api_spec.get('endpoints', [])
+    })
+```
+
+### 14. Protocol: Desktop App Lifecycle (025)
+
+```python
+"""
+Quand AGENT-025 (Electron) gère le cycle de vie de l'app desktop.
+"""
+
+def on_electron_app_launch(mode: str):
+    """
+    Handler lancement application Electron.
+    
+    Args:
+        mode: 'development' | 'production'
+    """
+    # Initialiser base SQLite locale via AGENT-001
+    notify_agent('001', {
+        'event': 'INIT_LOCAL_SQLITE',
+        'db_path': '${userData}/finance.db',
+        'sync_with_cloud': mode == 'production'
+    })
+    
+    # Démarrer FastAPI en mode dev
+    if mode == 'development':
+        notify_agent('023', {
+            'event': 'START_FASTAPI_SERVER',
+            'port': 8000,
+            'requested_by': '025'
+        })
+    
+    # Vérifier sécurité via AGENT-002
+    notify_agent('002', {
+        'event': 'VERIFY_DESKTOP_SECURITY',
+        'checks': ['csp', 'preload_isolation', 'context_bridge']
+    })
+
+def on_csv_import_requested(file_path: str):
+    """
+    Handler import CSV via Electron (native file dialog).
+    """
+    # Traiter le fichier localement
+    notify_agent('004', {
+        'event': 'PROCESS_CSV_IMPORT',
+        'file_path': file_path,
+        'source': 'electron_native'
+    })
+    
+    # Mettre à jour UI
+    notify_agent('009', {
+        'event': 'SHOW_IMPORT_PROGRESS',
+        'modal': True
+    })
+
+def on_data_sync_requested(direction: str):
+    """
+    Handler synchronisation données local ↔ cloud.
+    
+    Args:
+        direction: 'local_to_cloud' | 'cloud_to_local' | 'bidirectional'
+    """
+    if direction in ['local_to_cloud', 'bidirectional']:
+        # Envoyer données locales vers cloud
+        notify_agent('023', {
+            'event': 'SYNC_LOCAL_TO_CLOUD',
+            'db_path': '${userData}/finance.db'
+        })
+    
+    if direction in ['cloud_to_local', 'bidirectional']:
+        # Récupérer données cloud
+        notify_agent('023', {
+            'event': 'SYNC_CLOUD_TO_LOCAL',
+            'callback': 'update_sqlite_db'
+        })
+
+def on_desktop_build_requested(platforms: list):
+    """
+    Handler demande build application desktop.
+    
+    Args:
+        platforms: ['mac', 'win', 'linux']
+    """
+    # Pipeline CI/CD via AGENT-003
+    notify_agent('003', {
+        'event': 'BUILD_ELECTRON_APP',
+        'platforms': platforms,
+        'sign_binaries': True,
+        'create_updater': True
+    })
+    
+    # Tests E2E via AGENT-012
+    notify_agent('012', {
+        'event': 'RUN_DESKTOP_E2E_TESTS',
+        'platforms': platforms
+    })
+```
+
 ---
 
-## 📊 Matrice de Dépendances Étendue (001-021)
+## 📊 Matrice de Dépendances Étendue (001-025)
 
 | Agent | Dépend de | Fournit à |
 |-------|-----------|-----------|
@@ -913,10 +1136,20 @@ def on_master_architect_task_completed(result: dict):
 | **020** | 009, 010 | 009, 010, 015 |
 | **021** | 000, 017, 018 | 003, 015 |
 | **022** | 000, 001-021 | 000, 001-021 |
+| **023** | 001, 002 | 024, 025 |
+| **024** | 009, 023 | 025 |
+| **025** | 001, 002, 003, 009, 023, 024 | 003, 012 |
+
+### LAYER 7: Desktop & Multi-Platform (Agents 023-025)
+
+Ces agents gèrent la stratégie multi-platforme de FinancePerso :
+- **AGENT-023 (FastAPI)** : Backend API REST pour tous les clients
+- **AGENT-024 (React Integration)** : Adaptation frontend React pour API  
+- **AGENT-025 (Electron)** : Application desktop native
 
 ---
 
-## 🎯 Quick Reference: Agents 017-021
+## 🎯 Quick Reference: Agents 017-025
 
 | Besoin | Agent Primaire | Agents Secondaires |
 |--------|----------------|-------------------|
@@ -933,6 +1166,21 @@ def on_master_architect_task_completed(result: dict):
 | Audit architectural | **022** | Agents locaux du projet |
 | Refactoring majeur | **022** | Agents locaux UI/Test |
 | Création agent local | **022** | 000 |
+| **API Backend** | **023** | 001, 002, 024 |
+| **Frontend React** | **024** | 009, 023, 025 |
+| **App Desktop** | **025** | 001, 003, 009, 023, 024 |
+
+### Spécifique Multi-Platforme
+
+| Besoin | Agent Primaire | Agents Secondaires |
+|--------|----------------|-------------------|
+| Créer API FastAPI | **023** | 001, 002 |
+| Adapter React hooks | **024** | 009, 023 |
+| Builder app Electron | **025** | 003, 012 |
+| Synchronisation local/cloud | **025** | 001, 023 |
+| Import CSV natif (desktop) | **025** | 004 |
+| Export PDF/Excel natif | **025** | 006 |
+| Auto-updater desktop | **025** | 003, 002 |
 
 ---
 
@@ -1068,7 +1316,83 @@ npx -y @executeautomation/playwright-mcp-server
 
 ---
 
-**Version**: 2.3  
-**Date**: 2026-03-08  
-**Agents Supervisés**: 001-0XX (dynamique par projet) + 022 (universel)  
+**Version**: 2.4  
+**Date**: 2026-03-12  
+**Agents Supervisés**: 001-025 (FinancePerso) + 022 (universel)  
 **MCP Support**: sqlite, filesystem, playwright, github, fetch, context7
+
+---
+
+## 🔌 NOUVEAUX AGENTS 023-025 - Intégration Multi-Platforme
+
+*(Ajout pour la stratégie multi-platforme de FinancePerso)*
+
+### Vue d'ensemble
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│           ARCHITECTURE MULTI-PLATFORM FINANCEPERSO              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  WEB (Streamlit)        │  WEB MODERNE (React)   │  DESKTOP     │
+│  ┌─────────────────┐   │  ┌─────────────────┐   │  ┌──────────┐ │
+│  │  app.py         │   │  │  React + Vite   │   │  │ Electron │ │
+│  │  (Python)       │   │  │  TypeScript     │   │  │ + React  │ │
+│  └────────┬────────┘   │  └────────┬────────┘   │  └────┬─────┘ │
+│           │            │           │            │       │       │
+│           └────────────┴───────────┴────────────┘       │       │
+│                        ↓                                │       │
+│              ┌─────────────────┐   ←─────────────────────┘       │
+│              │  AGENT-023      │   API REST (FastAPI)            │
+│              │  FastAPI        │   (Python)                      │
+│              │  Backend        │                                 │
+│              └────────┬────────┘                                 │
+│                       ↓                                          │
+│              ┌─────────────────┐                                 │
+│              │  Base de données│                                 │
+│              │  (PostgreSQL/   │                                 │
+│              │   SQLite)       │                                 │
+│              └─────────────────┘                                 │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Rôles des Agents
+
+| Agent | Mission | Technologies |
+|-------|---------|--------------|
+| **AGENT-023** | API Backend FastAPI | Python, FastAPI, Pydantic, Uvicorn |
+| **AGENT-024** | Frontend React Integration | React, TypeScript, Vite, TanStack Query |
+| **AGENT-025** | Desktop Electron | Electron, Vite, React, better-sqlite3 |
+
+### Coordination Inter-Agents
+
+```python
+# Exemple de flux: Import CSV sur Desktop
+
+# 1. AGENT-025 détecte fichier CSV via dialog natif
+file_path = await window.electronAPI.file.selectCSV()
+
+# 2. AGENT-025 notifie AGENT-004 (Transaction Engine)
+notify_agent('004', {
+    'event': 'CSV_IMPORT_REQUEST',
+    'file_path': file_path,
+    'source': 'electron_native'
+})
+
+# 3. AGENT-004 parse et valide le fichier
+# 4. AGENT-005 catégorise via AI
+# 5. AGENT-001 insère dans SQLite locale
+# 6. AGENT-025 met à jour l'UI (via React)
+```
+
+### Matrice de Responsabilités
+
+| Tâche | Web (Legacy) | Web Moderne | Desktop |
+|-------|--------------|-------------|---------|
+| Import CSV | AGENT-004 | AGENT-024 | AGENT-025 |
+| Catégorisation | AGENT-005 | AGENT-005 | AGENT-005 |
+| Dashboard | AGENT-006 | AGENT-024 | AGENT-024 |
+| Export PDF | AGENT-006 | AGENT-023 | AGENT-025 |
+| Base données | AGENT-001 | AGENT-023 | AGENT-025 |
+| Notifications | AGENT-016 | AGENT-024 | AGENT-025 |

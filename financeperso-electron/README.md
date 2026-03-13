@@ -1,18 +1,59 @@
-# Vue 3 + TypeScript + Vite
+# FinancePerso - Application Electron
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Application de gestion financière de couple, migration depuis Streamlit vers Electron + React.
 
-## Recommended IDE Setup
+## Architecture
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+- **Electron** : Framework desktop (via electron-forge)
+- **React 18** : UI library
+- **TypeScript** : Typage
+- **Vite** : Build tool
+- **Tailwind CSS** : Styling
+- **shadcn/ui** : Composants UI
 
-## Type Support For `.vue` Imports in TS
+## Structure
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+```
+src/
+  ├── main.js              # Processus principal Electron
+  ├── preload.js           # Pont sécurisé IPC
+  ├── renderer.tsx         # Point d'entrée React
+  ├── App.tsx              # Composant racine
+  ├── components/ui/       # Composants shadcn/ui
+  │   ├── button.tsx
+  │   └── card.tsx
+  └── lib/
+      └── utils.ts         # Utilitaires (cn, etc.)
+```
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+## Scripts
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+```bash
+# Développement
+npm start
+
+# Build
+npm run package
+
+# Créer les installers
+npm run make
+```
+
+## Résolution du problème ESM/CJS
+
+Le problème `Cannot read properties of undefined (reading 'handle')` était dû à :
+1. Le package npm `electron` exporte le chemin de l'exécutable
+2. Les imports ESM nommés (`import { app } from 'electron'`) ne fonctionnent pas
+3. `require('electron')` retourne une chaîne, pas l'objet module
+
+**Solution** : Utiliser `electron-forge` qui gère correctement :
+- Le bundling du main process avec les bonnes externalisations
+- Le chargement des modules natifs Electron
+- Le hot reload en développement
+
+## Prochaines étapes
+
+- [ ] Ajouter better-sqlite3
+- [ ] Créer les services (auth, database)
+- [ ] Implémenter les pages (login, dashboard, etc.)
+- [ ] Migrer la logique depuis le projet Streamlit

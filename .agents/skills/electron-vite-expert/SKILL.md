@@ -13,439 +13,228 @@ Créer des applications Electron modernes avec :
 
 ---
 
-## 🏗️ Architecture Recommandée
+## 🔧 Solution Recommandée : electron-forge
 
-### Structure des fichiers
+**Pourquoi electron-forge ?**
+
+Le problème classique avec Electron + Vite :
+```
+TypeError: Cannot read properties of undefined (reading 'handle')
+```
+
+Cela arrive car :
+1. Le package npm `electron` exporte le chemin de l'exécutable
+2. Les imports ESM nommés (`import { app } from 'electron'`) échouent
+3. `require('electron')` retourne une chaîne, pas l'objet module
+
+**electron-forge résout tout ça** en gérant correctement le bundling et les externalisations.
+
+---
+
+## 🚀 Création d'un projet
+
+```bash
+# Créer un projet avec le template Vite
+npm create electron-app@latest my-app -- --template=vite
+
+# Ou avec TypeScript
+npm create electron-app@latest my-app -- --template=vite-typescript
+```
+
+---
+
+## 📁 Structure du projet
 
 ```
-project/
-├── electron/               # Main process (CommonJS)
-│   ├── main.js            # Entry point (CJS)
-│   ├── preload.js         # Preload script (CJS)
-│   └── services/          # Backend services
-│       └── database.cjs   # SQLite (CJS)
-├── src/                   # Renderer (ESM/React)
-│   ├── main.tsx
-│   ├── App.tsx
-│   └── ...
+my-app/
+├── src/
+│   ├── main.js              # Processus principal (CommonJS)
+│   ├── preload.js           # Pont IPC
+│   ├── renderer.tsx         # Entry point React
+│   ├── App.tsx              # Composant racine
+│   ├── components/ui/       # Composants shadcn/ui
+│   └── lib/
+│       └── utils.ts         # Utilitaires
+├── index.html               # HTML template
 ├── package.json
-└── vite.config.ts
-```
-
-### Règles d'or
-
-1. **Main process** : Toujours en `.js` ou `.cjs` (CommonJS)
-2. **Renderer process** : Toujours en `.tsx` (ESM/React)
-3. **Services backend** : `.cjs` pour compatibilité Node.js
-4. **Pas de `.ts` dans electron/** : Évite les problèmes de transpilation
-
----
-
-## 📦 Configuration package.json
-
-```json
-{
-  "name": "app-electron",
-  "version": "1.0.0",
-  "type": "module",
-  "main": "electron/main.js",
-  "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron electron/main.js\"",
-    "build": "tsc && vite build && electron-builder",
-    "build:mac": "tsc && vite build && electron-builder --mac",
-    "build:win": "tsc && vite build && electron-builder --win"
-  },
-  "dependencies": {
-    "better-sqlite3": "^9.4.3",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "uuid": "^9.0.1"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.9",
-    "@types/bcryptjs": "^2.4.6",
-    "concurrently": "^8.2.2",
-    "electron": "^29.1.0",
-    "electron-builder": "^24.13.3",
-    "vite": "^5.1.5",
-    "wait-on": "^7.2.0"
-  }
-}
+├── forge.config.js          # Config electron-forge
+├── vite.renderer.config.mjs # Config Vite renderer
+├── vite.main.config.mjs     # Config Vite main
+└── vite.preload.config.mjs  # Config Vite preload
 ```
 
 ---
 
-## ⚡ Configuration Vite
+## ⚙️ Configuration
 
-### vite.config.ts
+### 1. Ajouter React
 
-```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+```bash
+npm install react react-dom
+npm install -D @types/react @types/react-dom
+```
+
+### 2. Configurer Vite pour React
+
+```javascript
+// vite.renderer.config.mjs
+import { defineConfig } from 'vite';
+import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  esbuild: {
+    jsx: 'transform',
+    jsxFactory: 'React.createElement',
+    jsxFragment: 'React.Fragment',
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
-  server: {
-    port: 5173,
-  },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-  },
-})
+});
 ```
 
-**Important** : Ne pas utiliser `vite-plugin-electron` (source de problèmes).
-
----
-
-## 🔧 Electron Main Process
-
-### electron/main.js (CommonJS)
-
-```javascript
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path')
-
-// Database services
-let dbService
-let authService
-
-const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
-const RENDERER_DIST = path.join(__dirname, '../dist')
-
-// Init services
-async function initServices() {
-  // Dynamic import for ESM modules
-  const { DatabaseService } = await import('./services/database.cjs')
-  const { AuthService } = await import('./services/auth.cjs')
-  
-  const dbPath = path.join(app.getPath('userData'), 'app.db')
-  dbService = new DatabaseService(dbPath)
-  authService = new AuthService(dbService)
-  
-  console.log('Database initialized:', dbPath)
-}
-
-let mainWindow = null
-
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-    show: false,
-  })
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show()
-  })
-
-  if (VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(VITE_DEV_SERVER_URL)
-    mainWindow.webContents.openDevTools()
-  } else {
-    mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'))
-  }
-}
-
-// IPC Handlers - Define after app ready
-function setupIpcHandlers() {
-  ipcMain.handle('db:init', () => dbService.init())
-  ipcMain.handle('db:query', (_, sql, params) => dbService.query(sql, params))
-  ipcMain.handle('auth:login', (_, email, password) => authService.login(email, password))
-  // ... autres handlers
-}
-
-// App lifecycle
-app.whenReady().then(async () => {
-  await initServices()
-  setupIpcHandlers()
-  createWindow()
-})
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
-})
-```
-
----
-
-## 🔌 Preload Script
-
-### electron/preload.js (CommonJS)
-
-```javascript
-const { contextBridge, ipcRenderer } = require('electron')
-
-const api = {
-  // Database
-  db: {
-    init: () => ipcRenderer.invoke('db:init'),
-    query: (sql, params) => ipcRenderer.invoke('db:query', sql, params),
-  },
-  
-  // Auth
-  auth: {
-    login: (email, password) => ipcRenderer.invoke('auth:login', email, password),
-    register: (email, password, name) => ipcRenderer.invoke('auth:register', email, password, name),
-  }
-}
-
-contextBridge.exposeInMainWorld('electronAPI', api)
-```
-
----
-
-## 🗄️ Backend Services (CJS)
-
-### electron/services/database.cjs
-
-```javascript
-const Database = require('better-sqlite3')
-const path = require('path')
-const fs = require('fs')
-
-class DatabaseService {
-  constructor(dbPath) {
-    this.dbPath = dbPath
-    this.db = null
-    
-    // Ensure directory exists
-    const dir = path.dirname(dbPath)
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true })
-    }
-  }
-
-  init() {
-    try {
-      this.db = new Database(this.dbPath)
-      this.db.pragma('journal_mode = WAL')
-      this.createTables()
-      return true
-    } catch (error) {
-      console.error('DB init error:', error)
-      return false
-    }
-  }
-
-  createTables() {
-    this.db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `)
-    // ... autres tables
-  }
-
-  query(sql, params) {
-    if (!this.db) throw new Error('Database not initialized')
-    
-    const stmt = this.db.prepare(sql)
-    if (sql.trim().toLowerCase().startsWith('select')) {
-      return params ? stmt.all(...params) : stmt.all()
-    } else {
-      return params ? stmt.run(...params) : stmt.run()
-    }
-  }
-}
-
-module.exports = { DatabaseService }
-```
-
-### electron/services/auth.cjs
-
-```javascript
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-const { v4: uuidv4 } = require('uuid')
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-prod'
-const SALT_ROUNDS = 10
-
-class AuthService {
-  constructor(db) {
-    this.db = db
-  }
-
-  async register(email, password, displayName) {
-    const existing = this.db.query('SELECT id FROM users WHERE email = ?', [email])
-    if (existing.length > 0) {
-      return { success: false, error: 'Email exists' }
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
-    const userId = uuidv4()
-    
-    this.db.query(
-      'INSERT INTO users (id, email, password_hash, display_name) VALUES (?, ?, ?, ?)',
-      [userId, email, passwordHash, displayName]
-    )
-
-    const token = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '7d' })
-    return { success: true, token, user: { id: userId, email, display_name: displayName } }
-  }
-
-  async login(email, password) {
-    const users = this.db.query(
-      'SELECT id, email, password_hash, display_name FROM users WHERE email = ?',
-      [email]
-    )
-
-    if (users.length === 0) {
-      return { success: false, error: 'Invalid credentials' }
-    }
-
-    const user = users[0]
-    const valid = await bcrypt.compare(password, user.password_hash)
-    
-    if (!valid) {
-      return { success: false, error: 'Invalid credentials' }
-    }
-
-    const token = jwt.sign({ userId: user.id, email }, JWT_SECRET, { expiresIn: '7d' })
-    return { success: true, token, user: { id: user.id, email, display_name: user.display_name } }
-  }
-}
-
-module.exports = { AuthService }
-```
-
----
-
-## ⚛️ Frontend (React + TypeScript)
-
-### Types pour IPC
-
-```typescript
-// src/types/electron.d.ts
-declare global {
-  interface Window {
-    electronAPI: {
-      db: {
-        init: () => Promise<boolean>
-        query: (sql: string, params?: any[]) => Promise<any>
-      }
-      auth: {
-        login: (email: string, password: string) => Promise<any>
-        register: (email: string, password: string, name: string) => Promise<any>
-      }
-    }
-  }
-}
-
-export {}
-```
-
-### Exemple d'utilisation
-
-```typescript
-// src/App.tsx
-import { useState, useEffect } from 'react'
-
-function App() {
-  const [dbReady, setDbReady] = useState(false)
-
-  useEffect(() => {
-    window.electronAPI.db.init().then(setDbReady)
-  }, [])
-
-  const handleLogin = async () => {
-    const result = await window.electronAPI.auth.login('test@test.com', 'password')
-    console.log(result)
-  }
-
-  return (
-    <div>
-      <h1>My Electron App</h1>
-      <p>DB Ready: {dbReady ? 'Yes' : 'No'}</p>
-      <button onClick={handleLogin}>Login</button>
-    </div>
-  )
-}
-```
-
----
-
-## 🚀 Commandes de démarrage
+### 3. Configurer Tailwind CSS
 
 ```bash
-# Installation
-npm install
+npm install -D tailwindcss postcss autoprefixer tailwindcss-animate
+npm install class-variance-authority clsx tailwind-merge lucide-react
+npx tailwindcss init -p
+```
 
-# Développement (Vite + Electron)
-npm run dev
+```javascript
+// tailwind.config.js
+module.exports = {
+  darkMode: ["class"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+```
 
-# Build production
-npm run build
+### 4. Créer le composant racine
+
+```typescript
+// src/renderer.tsx
+import * as React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  React.createElement(React.StrictMode, {},
+    React.createElement(App, {})
+  )
+)
 ```
 
 ---
 
-## 🐛 Dépannage
+## 🔌 Ajouter better-sqlite3
 
-### Erreur : "Cannot read properties of undefined (reading 'handle')"
-**Cause** : Import ESM de Electron dans du CJS  
-**Solution** : Utiliser `require('electron')` dans main.js
+```bash
+npm install better-sqlite3
+npm install -D @types/better-sqlite3
+```
 
-### Erreur : "module is not defined"
-**Cause** : Fichier tailwind.config.js en ESM  
-**Solution** : Renommer en `tailwind.config.cjs`
+```javascript
+// src/main.js
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const Database = require('better-sqlite3');
 
-### Erreur : "Unexpected identifier 'Promise'"
-**Cause** : PostCSS config en ESM  
-**Solution** : Renommer en `postcss.config.cjs`
+// Database initialization
+const db = new Database(path.join(app.getPath('userData'), 'app.db'));
 
-### Erreur : "Identifier '__dirname' has already been declared"
-**Cause** : Redéfinition de `__dirname`  
-**Solution** : Enlever `const __dirname = ...` dans les fichiers .cjs
+// IPC handlers
+ipcMain.handle('db:query', (event, sql, params) => {
+  return db.prepare(sql).all(params);
+});
+```
 
 ---
 
-## ✅ Checklist création projet
+## 🚫 Ce qu'il faut éviter
 
-- [ ] `package.json` avec `"type": "module"`
-- [ ] `electron/main.js` en CommonJS (pas .ts)
-- [ ] `electron/preload.js` en CommonJS
-- [ ] Services backend en `.cjs`
-- [ ] Frontend React en `.tsx`
-- [ ] `vite.config.ts` simple (sans electron-plugin)
-- [ ] `tailwind.config.cjs` (pas .js)
-- [ ] `postcss.config.cjs` (pas .js)
-- [ ] Dépendances `concurrently` et `wait-on`
-- [ ] Script `dev` avec `wait-on`
+1. **Ne PAS utiliser** `import { app } from 'electron'` dans le main process
+   - ✅ `const { app } = require('electron')`
+   - ❌ `import { app } from 'electron'`
+
+2. **Ne PAS utiliser** `.ts` pour le main process
+   - ✅ `.js` ou `.cjs`
+   - ❌ `.ts`
+
+3. **Ne PAS installer** `electron` globalement
+   - ✅ Utiliser la version locale dans node_modules
+   - ❌ `npm install -g electron`
+
+4. **Ne PAS essayer** de bundler `electron` avec Vite
+   - ✅ Laisser electron-forge gérer
+   - ❌ Configurer Vite pour bundler electron
+
+---
+
+## 📜 Scripts utiles
+
+```json
+{
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish"
+  }
+}
+```
+
+---
+
+## 🐛 Débogage
+
+### Voir les logs du main process
+
+```bash
+DEBUG=* npm start
+```
+
+### Ouvrir DevTools automatiquement
+
+```javascript
+// main.js
+mainWindow.webContents.openDevTools();
+```
+
+### Logs dans la console système
+
+```javascript
+console.log('Message from main process');
+```
 
 ---
 
 ## 📚 Ressources
 
-- [Electron Documentation](https://www.electronjs.org/docs/latest)
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
+- [electron-forge](https://www.electronforge.io/)
+- [Electron documentation](https://www.electronjs.org/docs/latest)
+- [Vite documentation](https://vitejs.dev/)
 
 ---
 
-**Version** : 1.0  
-**Dernière mise à jour** : Mars 2026
+## ✅ Checklist de validation
+
+- [ ] `npm start` lance l'application sans erreur
+- [ ] Le main process démarre (voir logs)
+- [ ] La fenêtre s'affiche
+- [ ] React s'hydrate correctement
+- [ ] Les imports `@/` fonctionnent
+- [ ] Le hot reload fonctionne
