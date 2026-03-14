@@ -207,6 +207,65 @@ ipcMain.handle('db:get-transaction-member', async (_, transactionId) => {
   return dbService.getTransactionMember(transactionId);
 });
 
+// IPC Handlers - Wealth Accounts
+ipcMain.handle('db:get-wealth-accounts', async () => {
+  return dbService.getAllWealthAccounts();
+});
+
+ipcMain.handle('db:create-wealth-account', async (_, data) => {
+  return dbService.createWealthAccount(data);
+});
+
+ipcMain.handle('db:update-wealth-account', async (_, id, data) => {
+  return dbService.updateWealthAccount(id, data);
+});
+
+ipcMain.handle('db:delete-wealth-account', async (_, id) => {
+  return dbService.deleteWealthAccount(id);
+});
+
+// IPC Handlers - Savings Goals
+ipcMain.handle('db:get-savings-goals', async () => {
+  return dbService.getAllSavingsGoals();
+});
+
+ipcMain.handle('db:create-savings-goal', async (_, data) => {
+  return dbService.createSavingsGoal(data);
+});
+
+ipcMain.handle('db:update-savings-goal', async (_, id, data) => {
+  return dbService.updateSavingsGoal(id, data);
+});
+
+ipcMain.handle('db:delete-savings-goal', async (_, id) => {
+  return dbService.deleteSavingsGoal(id);
+});
+
+// IPC Handlers - Subscriptions
+ipcMain.handle('db:get-subscriptions', async () => {
+  return dbService.getAllSubscriptions();
+});
+
+ipcMain.handle('db:create-subscription', async (_, data) => {
+  return dbService.createSubscription(data);
+});
+
+ipcMain.handle('db:update-subscription', async (_, id, data) => {
+  return dbService.updateSubscription(id, data);
+});
+
+ipcMain.handle('db:delete-subscription', async (_, id) => {
+  return dbService.deleteSubscription(id);
+});
+
+ipcMain.handle('db:detect-subscriptions', async () => {
+  return dbService.detectSubscriptions();
+});
+
+ipcMain.handle('db:get-upcoming-payments', async (_, days) => {
+  return dbService.getUpcomingPayments(days);
+});
+
 // IPC Handlers - File Import
 ipcMain.handle('file:select-csv', async () => {
   if (!mainWindow) return null;

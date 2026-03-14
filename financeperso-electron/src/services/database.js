@@ -169,18 +169,78 @@ class DatabaseService {
                         split_amount REAL,
                         PRIMARY KEY (transaction_id, member_id)
                       )
-                    `, async (err) => {
+                    `, (err) => {
                       if (err) {
                         reject(err);
                         return;
                       }
 
-                      // Insère les catégories par défaut
-                      await this.insertDefaultCategories();
-                      // Insère le membre principal par défaut
-                      await this.insertDefaultMember();
-                      console.log('[DB] Tables created successfully');
-                      resolve();
+                      // Table des abonnements
+                      this.db.run(`
+                        CREATE TABLE IF NOT EXISTS subscriptions (
+                          id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          name TEXT NOT NULL,
+                          amount REAL NOT NULL,
+                          frequency TEXT CHECK(frequency IN ('monthly', 'yearly', 'weekly')) DEFAULT 'monthly',
+                          category TEXT,
+                          next_payment_date TEXT,
+                          provider TEXT,
+                          is_active INTEGER DEFAULT 1,
+                          logo_url TEXT,
+                          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                        )
+                      `, async (err) => {
+                        if (err) {
+                          reject(err);
+                          return;
+                        }
+
+                        // Table des comptes de patrimoine
+                        this.db.run(`
+                          CREATE TABLE IF NOT EXISTS wealth_accounts (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL,
+                            type TEXT CHECK(type IN ('checking', 'savings', 'investment', 'crypto', 'other')) DEFAULT 'checking',
+                            balance REAL DEFAULT 0,
+                            currency TEXT DEFAULT 'EUR',
+                            institution TEXT,
+                            is_active INTEGER DEFAULT 1,
+                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                          )
+                        `, (err) => {
+                          if (err) {
+                            reject(err);
+                            return;
+                          }
+
+                          // Table des objectifs d'épargne
+                          this.db.run(`
+                            CREATE TABLE IF NOT EXISTS savings_goals (
+                              id INTEGER PRIMARY KEY AUTOINCREMENT,
+                              name TEXT NOT NULL,
+                              target_amount REAL NOT NULL,
+                              current_amount REAL DEFAULT 0,
+                              deadline TEXT,
+                              category TEXT,
+                              monthly_contribution REAL,
+                              is_active INTEGER DEFAULT 1,
+                              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                            )
+                          `, async (err) => {
+                            if (err) {
+                              reject(err);
+                              return;
+                            }
+
+                            // Insère les catégories par défaut
+                            await this.insertDefaultCategories();
+                            // Insère le membre principal par défaut
+                            await this.insertDefaultMember();
+                            console.log('[DB] Tables created successfully');
+                            resolve();
+                          });
+                        });
+                      });
                     });
                   });
                 });
@@ -934,6 +994,613 @@ class DatabaseService {
         (err, row) => {
           if (err) reject(err);
           else resolve(row || null);
+        }
+      );
+    });
+  }
+
+  // ========== SUBSCRIPTIONS METHODS ==========
+
+  /**
+   * Récupère tous les abonnements actifs
+   */
+  getAllSubscriptions() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT * FROM subscriptions 
+         WHERE is_active = 1 
+         ORDER BY next_payment_date ASC`,
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Récupère un abonnement par son ID
+   */
+  getSubscriptionById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT * FROM subscriptions WHERE id = ?',
+        [id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+  }
+
+  /**
+   * Crée un nouvel abonnement
+   */
+  createSubscription(data) {
+    return new Promise((resolve, reject) => {
+      const { 
+        name, 
+        amount, 
+        frequency = 'monthly', 
+        category, 
+        next_payment_date, 
+        provider, 
+        logo_url 
+      } = data;
+      
+      this.db.run(
+        `INSERT INTO subscriptions 
+         (name, amount, frequency, category, next_payment_date, provider, logo_url) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [name, amount, frequency, category, next_payment_date, provider, logo_url],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ 
+            id: this.lastID, 
+            name, 
+            amount, 
+            frequency, 
+            category, 
+            next_payment_date, 
+            provider,
+            logo_url,
+            is_active: 1 
+          });
+        }
+      );
+    });
+  }
+
+  /**
+   * Met à jour un abonnement
+   */
+  updateSubscription(id, data) {
+    return new Promise((resolve, reject) => {
+      const { 
+        name, 
+        amount, 
+        frequency, 
+        category, 
+        next_payment_date, 
+        provider, 
+        is_active, 
+        logo_url 
+      } = data;
+      
+      this.db.run(
+        `UPDATE subscriptions 
+         SET name = COALESCE(?, name),
+             amount = COALESCE(?, amount),
+             frequency = COALESCE(?, frequency),
+             category = COALESCE(?, category),
+             next_payment_date = COALESCE(?, next_payment_date),
+             provider = COALESCE(?, provider),
+             is_active = COALESCE(?, is_active),
+             logo_url = COALESCE(?, logo_url)
+         WHERE id = ?`,
+        [name, amount, frequency, category, next_payment_date, provider, is_active, logo_url, id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ id, ...data });
+        }
+      );
+    });
+  }
+
+  /**
+   * Supprime (désactive) un abonnement
+   */
+  deleteSubscription(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'UPDATE subscriptions SET is_active = 0 WHERE id = ?',
+        [id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ success: true });
+        }
+      );
+    });
+  }
+
+  /**
+   * Récupère les abonnements avec paiement prévu dans les prochains jours
+   */
+  getUpcomingPayments(days = 7) {
+    return new Promise((resolve, reject) => {
+      const today = new Date().toISOString().split('T')[0];
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + days);
+      const futureDateStr = futureDate.toISOString().split('T')[0];
+      
+      this.db.all(
+        `SELECT * FROM subscriptions 
+         WHERE is_active = 1 
+         AND next_payment_date <= ?
+         AND next_payment_date >= ?
+         ORDER BY next_payment_date ASC`,
+        [futureDateStr, today],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Détecte automatiquement les abonnements depuis les transactions
+   * Analyse les transactions pour trouver des patterns réguliers
+   */
+  async detectSubscriptions() {
+    return new Promise((resolve, reject) => {
+      // Récupère toutes les transactions de type dépense des 12 derniers mois
+      const twelveMonthsAgo = new Date();
+      twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+      const startDate = twelveMonthsAgo.toISOString().split('T')[0];
+      
+      this.db.all(
+        `SELECT id, date, description, amount, category 
+         FROM transactions 
+         WHERE type = 'expense' 
+         AND date >= ?
+         AND category != 'Ignoré'
+         ORDER BY description ASC, date ASC`,
+        [startDate],
+        async (err, rows) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          try {
+            const detected = this._analyzeSubscriptionPatterns(rows);
+            resolve(detected);
+          } catch (error) {
+            reject(error);
+          }
+        }
+      );
+    });
+  }
+
+  /**
+   * Analyse les patterns de transactions pour détecter des abonnements
+   * @private
+   */
+  _analyzeSubscriptionPatterns(transactions) {
+    const patterns = new Map();
+    const detected = [];
+    
+    // Regroupe les transactions par description normalisée
+    for (const tx of transactions) {
+      const normalizedDesc = this._normalizeDescription(tx.description);
+      if (!patterns.has(normalizedDesc)) {
+        patterns.set(normalizedDesc, []);
+      }
+      patterns.get(normalizedDesc).push(tx);
+    }
+    
+    // Analyse chaque groupe pour détecter des patterns réguliers
+    for (const [desc, txs] of patterns) {
+      if (txs.length >= 2) {
+        const pattern = this._detectPattern(txs);
+        if (pattern) {
+          detected.push({
+            name: this._extractProviderName(desc),
+            provider: desc,
+            amount: pattern.amount,
+            frequency: pattern.frequency,
+            category: txs[0].category,
+            transactions: txs,
+            confidence: pattern.confidence
+          });
+        }
+      }
+    }
+    
+    // Trie par confiance décroissante
+    return detected.sort((a, b) => b.confidence - a.confidence);
+  }
+
+  /**
+   * Normalise une description pour le regroupement
+   * @private
+   */
+  _normalizeDescription(description) {
+    if (!description) return '';
+    
+    return description
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .replace(/\d{4,}/g, '') // Retire les numéros de carte, etc.
+      .replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, '') // Retire les dates
+      .replace(/\b\d{1,2}-\d{1,2}-\d{2,4}\b/g, '')
+      .replace(/EUR|\$|€/g, '')
+      .trim();
+  }
+
+  /**
+   * Extrait le nom du fournisseur d'une description
+   * @private
+   */
+  _extractProviderName(description) {
+    if (!description) return 'Abonnement';
+    
+    // Liste de mots-clés connus
+    const knownProviders = {
+      'NETFLIX': 'Netflix',
+      'SPOTIFY': 'Spotify',
+      'AMAZON': 'Amazon',
+      'PRIME': 'Amazon Prime',
+      'DISNEY': 'Disney+',
+      'CANAL': 'Canal+',
+      'OCS': 'OCS',
+      'YOUTUBE': 'YouTube',
+      'PREMIUM': 'YouTube Premium',
+      'ADOBE': 'Adobe',
+      'MICROSOFT': 'Microsoft',
+      'OFFICE': 'Microsoft 365',
+      '365': 'Microsoft 365',
+      'GOOGLE': 'Google',
+      'ONE': 'Google One',
+      'DROPBOX': 'Dropbox',
+      'APPLE': 'Apple',
+      'ICLOUD': 'iCloud',
+      'EDF': 'EDF',
+      'ENGIE': 'Engie',
+      'TOTAL': 'TotalEnergies',
+      'FREE': 'Free',
+      'ORANGE': 'Orange',
+      'SFR': 'SFR',
+      'BOUYGUES': 'Bouygues Telecom',
+      'TELECOM': 'Télécom',
+      'GYM': 'Salle de sport',
+      'FITNESS': 'Salle de sport',
+      'LE MONDE': 'Le Monde',
+      'FIGARO': 'Le Figaro',
+      'NYT': 'New York Times',
+      'LINKEDIN': 'LinkedIn',
+      'SLACK': 'Slack',
+      'NOTION': 'Notion',
+      'FIGMA': 'Figma',
+      'GITHUB': 'GitHub',
+      'GITLAB': 'GitLab',
+      'DOCKER': 'Docker',
+      'HEROKU': 'Heroku',
+      'VERCEL': 'Vercel',
+      'NETLIFY': 'Netlify',
+      'CLOUDFLARE': 'Cloudflare',
+      'AWS': 'AWS',
+      'AZURE': 'Azure',
+      'GCP': 'Google Cloud',
+    };
+    
+    const upperDesc = description.toUpperCase();
+    for (const [key, name] of Object.entries(knownProviders)) {
+      if (upperDesc.includes(key)) {
+        return name;
+      }
+    }
+    
+    // Prend les 2-3 premiers mots significatifs
+    const words = description.split(' ').filter(w => w.length > 2);
+    return words.slice(0, 2).join(' ') || 'Abonnement';
+  }
+
+  /**
+   * Détecte le pattern de récurrence d'un groupe de transactions
+   * @private
+   */
+  _detectPattern(transactions) {
+    if (transactions.length < 2) return null;
+    
+    // Calcule les intervalles entre transactions
+    const intervals = [];
+    for (let i = 1; i < transactions.length; i++) {
+      const date1 = new Date(transactions[i - 1].date);
+      const date2 = new Date(transactions[i].date);
+      const diffDays = Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+      intervals.push(diffDays);
+    }
+    
+    // Calcule l'intervalle moyen
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    
+    // Détermine la fréquence
+    let frequency = 'monthly';
+    if (avgInterval >= 25 && avgInterval <= 35) {
+      frequency = 'monthly';
+    } else if (avgInterval >= 350 && avgInterval <= 380) {
+      frequency = 'yearly';
+    } else if (avgInterval >= 5 && avgInterval <= 9) {
+      frequency = 'weekly';
+    } else {
+      // Intervalle irrégulier
+      return null;
+    }
+    
+    // Vérifie la régularité (écart-type)
+    const variance = intervals.reduce((sum, val) => sum + Math.pow(val - avgInterval, 2), 0) / intervals.length;
+    const stdDev = Math.sqrt(variance);
+    const isRegular = stdDev <= 5; // Tolérance de 5 jours
+    
+    // Calcule le montant moyen (tolérance de 5%)
+    const amounts = transactions.map(t => t.amount);
+    const avgAmount = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+    const amountVariance = amounts.reduce((sum, val) => sum + Math.pow(val - avgAmount, 2), 0) / amounts.length;
+    const amountStdDev = Math.sqrt(amountVariance);
+    const isAmountStable = (amountStdDev / avgAmount) <= 0.05;
+    
+    if (!isRegular || !isAmountStable) {
+      return null;
+    }
+    
+    // Calcule la confiance
+    const confidence = Math.min(
+      0.3 + (transactions.length * 0.15) + (isRegular ? 0.2 : 0) + (isAmountStable ? 0.2 : 0),
+      1.0
+    );
+    
+    return {
+      amount: avgAmount,
+      frequency,
+      confidence
+    };
+  }
+
+  // ========== WEALTH ACCOUNTS METHODS ==========
+
+  /**
+   * Récupère tous les comptes de patrimoine actifs
+   */
+  getAllWealthAccounts() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT * FROM wealth_accounts 
+         WHERE is_active = 1 
+         ORDER BY 
+           CASE type 
+             WHEN 'checking' THEN 1 
+             WHEN 'savings' THEN 2 
+             WHEN 'investment' THEN 3 
+             WHEN 'crypto' THEN 4 
+             ELSE 5 
+           END,
+           name`,
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Récupère un compte de patrimoine par son ID
+   */
+  getWealthAccountById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT * FROM wealth_accounts WHERE id = ? AND is_active = 1',
+        [id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+  }
+
+  /**
+   * Crée un nouveau compte de patrimoine
+   */
+  createWealthAccount(data) {
+    return new Promise((resolve, reject) => {
+      const { name, type = 'checking', balance = 0, currency = 'EUR', institution } = data;
+      this.db.run(
+        `INSERT INTO wealth_accounts (name, type, balance, currency, institution) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [name, type, balance, currency, institution],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ 
+            id: this.lastID, 
+            name, 
+            type, 
+            balance, 
+            currency, 
+            institution,
+            is_active: 1 
+          });
+        }
+      );
+    });
+  }
+
+  /**
+   * Met à jour un compte de patrimoine
+   */
+  updateWealthAccount(id, data) {
+    return new Promise((resolve, reject) => {
+      const { name, type, balance, currency, institution, is_active } = data;
+      this.db.run(
+        `UPDATE wealth_accounts 
+         SET name = COALESCE(?, name),
+             type = COALESCE(?, type),
+             balance = COALESCE(?, balance),
+             currency = COALESCE(?, currency),
+             institution = COALESCE(?, institution),
+             is_active = COALESCE(?, is_active)
+         WHERE id = ?`,
+        [name, type, balance, currency, institution, is_active, id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ id, ...data });
+        }
+      );
+    });
+  }
+
+  /**
+   * Supprime (désactive) un compte de patrimoine
+   */
+  deleteWealthAccount(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'UPDATE wealth_accounts SET is_active = 0 WHERE id = ?',
+        [id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ success: true });
+        }
+      );
+    });
+  }
+
+  // ========== SAVINGS GOALS METHODS ==========
+
+  /**
+   * Récupère tous les objectifs d'épargne actifs
+   */
+  getAllSavingsGoals() {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT * FROM savings_goals 
+         WHERE is_active = 1 
+         ORDER BY 
+           CASE WHEN deadline IS NULL THEN 1 ELSE 0 END,
+           deadline ASC,
+           name`,
+        [],
+        (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        }
+      );
+    });
+  }
+
+  /**
+   * Récupère un objectif d'épargne par son ID
+   */
+  getSavingsGoalById(id) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT * FROM savings_goals WHERE id = ? AND is_active = 1',
+        [id],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+  }
+
+  /**
+   * Crée un nouvel objectif d'épargne
+   */
+  createSavingsGoal(data) {
+    return new Promise((resolve, reject) => {
+      const { 
+        name, 
+        target_amount, 
+        current_amount = 0, 
+        deadline, 
+        category, 
+        monthly_contribution 
+      } = data;
+      
+      this.db.run(
+        `INSERT INTO savings_goals 
+         (name, target_amount, current_amount, deadline, category, monthly_contribution) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [name, target_amount, current_amount, deadline, category, monthly_contribution],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ 
+            id: this.lastID, 
+            name, 
+            target_amount, 
+            current_amount, 
+            deadline, 
+            category,
+            monthly_contribution,
+            is_active: 1 
+          });
+        }
+      );
+    });
+  }
+
+  /**
+   * Met à jour un objectif d'épargne
+   */
+  updateSavingsGoal(id, data) {
+    return new Promise((resolve, reject) => {
+      const { 
+        name, 
+        target_amount, 
+        current_amount, 
+        deadline, 
+        category, 
+        monthly_contribution,
+        is_active 
+      } = data;
+      
+      this.db.run(
+        `UPDATE savings_goals 
+         SET name = COALESCE(?, name),
+             target_amount = COALESCE(?, target_amount),
+             current_amount = COALESCE(?, current_amount),
+             deadline = COALESCE(?, deadline),
+             category = COALESCE(?, category),
+             monthly_contribution = COALESCE(?, monthly_contribution),
+             is_active = COALESCE(?, is_active)
+         WHERE id = ?`,
+        [name, target_amount, current_amount, deadline, category, monthly_contribution, is_active, id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ id, ...data });
+        }
+      );
+    });
+  }
+
+  /**
+   * Supprime (désactive) un objectif d'épargne
+   */
+  deleteSavingsGoal(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'UPDATE savings_goals SET is_active = 0 WHERE id = ?',
+        [id],
+        (err) => {
+          if (err) reject(err);
+          else resolve({ success: true });
         }
       );
     });

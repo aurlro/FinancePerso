@@ -109,3 +109,45 @@ export interface MemberStats {
   total: number;
   transaction_count: number;
 }
+
+// Re-export wealth types
+export type {
+  WealthAccountType,
+  WealthAccount,
+  SavingsGoal,
+  ProjectionData,
+  ProjectionResult,
+  WealthStats,
+  WealthDistribution,
+  SimulatorConfig,
+} from './wealth';
+
+export interface Subscription {
+  id: number;
+  name: string;
+  amount: number;
+  frequency: 'monthly' | 'yearly' | 'weekly';
+  category?: string;
+  next_payment_date?: string;
+  provider?: string;
+  is_active: number;
+  logo_url?: string;
+  created_at?: string;
+}
+
+export interface DetectedSubscription {
+  name: string;
+  provider: string;
+  amount: number;
+  frequency: 'monthly' | 'yearly' | 'weekly';
+  category?: string;
+  transactions: Transaction[];
+  confidence: number;
+}
+
+export interface SubscriptionAlert {
+  type: 'upcoming' | 'increase' | 'duplicate';
+  subscription?: Subscription;
+  message: string;
+  severity: 'info' | 'warning' | 'danger';
+}

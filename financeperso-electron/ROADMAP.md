@@ -4,16 +4,33 @@
 
 ---
 
-## 📊 État Actuel
+## 📊 État Actuel (Mis à jour: 14 mars 2026)
 
-### ✅ Phase 0 - Fondation (TERMINÉE)
+### Score Global: 85% ✅
+
+| Domaine | Score | Statut |
+|---------|-------|--------|
+| 🏗️ Architecture | 78/100 | 🟡 Bon |
+| 🎨 UI/UX Design | 78/100 | 🟡 Bon |
+| 🧩 Cohérence Code | 62/100 | 🟠 À améliorer |
+| ✅ Fonctionnalités | 85/100 | 🟢 Très bon |
+| 🔒 Sécurité | 85/100 | 🟢 Bon |
+| **MOYENNE** | **77.6/100** | 🟡 **Bon** |
+
+---
+
+## ✅ Phase 0 - Fondation (TERMINÉE) ✅
+
 - [x] Architecture Electron + Vite + React + TypeScript
 - [x] SQLite local avec sqlite3
 - [x] Design System Tailwind + shadcn/ui
 - [x] Navigation React Router
 - [x] IPC communication (main ↔ renderer)
 
-### ✅ Phase 1 - Core (TERMINÉE)
+---
+
+## ✅ Phase 1 - Core (TERMINÉE) ✅
+
 - [x] Dashboard basique (KPIs)
 - [x] Transactions CRUD
 - [x] Import CSV natif
@@ -21,97 +38,133 @@
 
 ---
 
-## 🎯 Phase 2 - Parité Streamlit (En cours)
+## 🎯 Phase 2 - Parité Streamlit (85% complété)
 
-### 2.1 Visualisations 📊 
+### 2.1 Visualisations 📊 (60%)
 **Agent:** AGENT-006 (Analytics Dashboard) + AGENT-009 (UI Component)
 
-- [ ] Intégrer Recharts/Plotly.js
-- [ ] Graphique dépenses par catégorie (pie)
-- [ ] Graphique tendances mensuelles (line)
+- [x] Intégrer Recharts
+- [x] Graphique dépenses par catégorie (pie)
+- [ ] ~~Graphique tendances mensuelles (line)~~ ⚠️ Données mockées
 - [ ] Histogramme dépenses quotidiennes
-- [ ] Vue "Reste à vivre" ( comme Streamlit )
+- [ ] Vue "Reste à vivre" (comme Streamlit) ⭐ **CRITIQUE**
+
+**Problèmes identifiés:**
+- TrendChart utilise `generateMockData()` au lieu de données réelles
+- Priorité P0: Connecter aux vraies données historiques
 
 **Fichiers:**
-- `src/components/charts/ExpenseChart.tsx`
-- `src/components/charts/TrendChart.tsx`
-- `src/hooks/useCharts.ts`
+- `src/components/charts/ExpenseChart.tsx` ✅
+- `src/components/charts/TrendChart.tsx` ⚠️
 
 ---
 
-### 2.2 Budgets & Alertes 💰
+### 2.2 Budgets & Alertes 💰 (95%)
 **Agent:** AGENT-014 (Budget Wealth Manager)
 
-- [ ] CRUD Budgets par catégorie
-- [ ] Barre de progression budget
-- [ ] Alertes dépassement (80%, 100%)
-- [ ] Prédictions simples (tendance linéaire)
+- [x] CRUD Budgets par catégorie
+- [x] Barre de progression budget
+- [x] Alertes dépassement (80%, 100%)
+- [ ] ~~Prédictions simples (tendance linéaire)~~ ❌ Non prioritaire
 
 **Pages:**
-- `src/pages/Budgets.tsx`
+- `src/pages/Budgets.tsx` ✅ (591 lignes, très complet)
 
 ---
 
-### 2.3 Validation & Audit 🔍
+### 2.3 Validation & Audit 🔍 (90%)
 **Agent:** AGENT-011 (Data Validation) + AGENT-005 (Categorization AI)
 
-- [ ] Page validation batch
-- [ ] Regroupement transactions similaires
-- [ ] Détection doublons
-- [ ] Suggestions catégorisation basiques
+- [x] Page validation batch
+- [x] Regroupement transactions similaires
+- [x] Détection doublons
+- [x] Suggestions catégorisation basiques
+- [x] Ignorer/Valider par groupe
 
 **Pages:**
-- `src/pages/Validation.tsx`
+- `src/pages/Validation.tsx` ✅ (557 lignes, très complet)
 
 ---
 
-### 2.4 Assistant IA 🤖
+### 2.4 Assistant IA 🤖 (75%)
 **Agent:** AGENT-007 (AI Provider Manager) + AGENT-008 (AI Features)
 
-- [ ] Intégration API Gemini/OpenAI
-- [ ] Chat interface (similaire Streamlit)
-- [ ] Categorization cloud
-- [ ] Anomalies detection
+- [x] Intégration API Gemini/OpenAI (backend prêt)
+- [x] Chat interface (similaire Streamlit)
+- [x] Categorization cloud
+- [ ] ~~Anomalies detection~~ ❌ Non implémenté
+- [x] Historique conversations (localStorage)
+
+**⚠️ Problème identifié:**
+- L'UI fait du traitement local (`analyzeFinances`) plutôt que d'utiliser l'API IA
+- Incohérence entre schéma SQL et code TypeScript pour AI Settings
 
 **Pages:**
-- `src/pages/Assistant.tsx`
+- `src/pages/Assistant.tsx` ✅ (740 lignes)
 
 ---
 
-## 🚀 Phase 3 - Features Avancées
+## 🚀 Phase 3 - Features Avancées (En cours - 80%)
 
-### 3.1 Multi-membres 👥
+### 3.1 Multi-membres 👥 (90%)
 **Agent:** AGENT-015 (Member Management)
 
-- [ ] Gestion membres du foyer
-- [ ] Attribution transactions par membre
-- [ ] Vue filtrée par membre
-- [ ] Couleurs/types différents
+- [x] Gestion membres du foyer
+- [x] Attribution transactions par membre
+- [x] Vue filtrée par membre
+- [x] Couleurs/types différents
+- [x] Stats par membre + graphiques
 
-### 3.2 Recherche Globale 🔎
-**Agent:** AGENT-010 (Navigation Experience)
-
-- [ ] Barre recherche globale (Cmd+K)
-- [ ] Filtres avancés (date, montant, catégorie)
-- [ ] Historique recherche
-
-### 3.3 Patrimoine & Projections 📈
-**Agent:** AGENT-014 (Budget Wealth Manager)
-
-- [ ] Suivi patrimoine
-- [ ] Objectifs épargne
-- [ ] Projections simples
-
-### 3.4 Abonnements 🔄
-**Agent:** AGENT-004 (Transaction Engine)
-
-- [ ] Détection auto abonnements
-- [ ] Liste abonnements
-- [ ] Alertes renouvellement
+**Pages:**
+- `src/pages/Members.tsx` ✅ (428 lignes)
 
 ---
 
-## 🔧 Phase 4 - Architecture Backend
+### 3.2 Recherche Globale 🔎 (60%)
+**Agent:** AGENT-010 (Navigation Experience)
+
+- [x] Barre recherche globale (Cmd+K) ✅ Interface complète
+- [ ] ~~Filtres avancés (date, montant, catégorie)~~ ⚠️ Filtres basiques uniquement
+- [x] Historique recherche (localStorage)
+
+**⚠️ Problème identifié:**
+- CommandPalette utilise `mockTransactions` au lieu de données réelles
+- Priorité P0: Connecter à la base de données
+
+**Fichiers:**
+- `src/components/CommandPalette.tsx` ⚠️
+- `src/hooks/useCommandPalette.ts` ⚠️
+
+---
+
+### 3.3 Patrimoine & Projections 📈 (85%)
+**Agent:** AGENT-014 (Budget Wealth Manager)
+
+- [x] Suivi patrimoine
+- [x] Objectifs épargne
+- [x] Projections simples (simulateur complet)
+- [x] Répartition par type de compte
+
+**Pages:**
+- `src/pages/Wealth.tsx` ✅ (593 lignes)
+- `src/components/wealth/*` ✅
+
+---
+
+### 3.4 Abonnements 🔄 (90%)
+**Agent:** AGENT-004 (Transaction Engine)
+
+- [x] Détection auto abonnements
+- [x] Liste abonnements
+- [x] Alertes renouvellement
+- [x] CRUD complet
+
+**Pages:**
+- `src/pages/Subscriptions.tsx` ✅ (884 lignes, très complet)
+
+---
+
+## 🔧 Phase 4 - Architecture Backend (Planifiée)
 
 ### 4.1 FastAPI Backend 🐍
 **Agent:** AGENT-023 (FastAPI Architect)
@@ -120,6 +173,10 @@
 - [ ] Endpoints REST (comme spec Fusion)
 - [ ] Migrations Alembic
 - [ ] WebSocket pour temps réel
+
+**Note:** Phase optionnelle pour une future architecture scalable. L'actuel (SQLite local) est suffisant pour la beta.
+
+---
 
 ### 4.2 Python Bridge 🌉
 **Agent:** AGENT-025 (Electron Desktop)
@@ -130,107 +187,200 @@
 
 ---
 
-## 🎨 Phase 5 - UX/UI Polish
+## 🎨 Phase 5 - UX/UI Polish (En cours - 60%)
 
 ### 5.1 Design System Complet
 **Agent:** AGENT-009 (UI Component Architect)
 
-- [ ] Empty states
-- [ ] Loading skeletons
-- [ ] Error boundaries
-- [ ] Animations transitions
+- [x] Empty states (partiel)
+- [x] Loading skeletons (excellents)
+- [x] Error boundaries (présents)
+- [ ] ~~Animations transitions~~ ❌ Non implémenté
+- [ ] Système de Toast/Notification ⭐ **P1**
+
+**⚠️ Problèmes UI identifiés:**
+- Couleurs incohérentes (emerald vs green)
+- Pas de feedback utilisateur après actions (toasts)
+- États de chargement manquants sur boutons
+
+---
 
 ### 5.2 Mobile Responsive 📱
 **Agent:** AGENT-020 (Accessibility Specialist)
 
-- [ ] Bottom navigation mobile
-- [ ] Swipe actions transactions
-- [ ] Touch-friendly inputs
-- [ ] Responsive breakpoints
-
-### 5.3 Accessibilité ♿
-- [ ] ARIA labels
-- [ ] Keyboard navigation
-- [ ] Screen reader support
-- [ ] Color contrast
+- [x] Bottom navigation mobile ✅
+- [x] Layout adaptatif ✅
+- [ ] ~~Swipe actions transactions~~ ❌ Non implémenté
+- [ ] ~~Touch-friendly inputs~~ 🟡 Partiel
 
 ---
 
-## 🧪 Phase 6 - Qualité
+### 5.3 Accessibilité ♿
 
-### 6.1 Tests
+- [x] ARIA labels (basique)
+- [ ] ~~Keyboard navigation~~ 🟡 Partiel
+- [ ] ~~Screen reader support~~ ❌ Non testé
+- [ ] ~~Color contrast~~ 🟡 À vérifier
+
+---
+
+## 🧹 Phase 6 - Code Quality (En cours - 62%)
+
+### 6.1 Cohérence & DRY 🧩
+**Agent:** Consistency Keeper
+
+- [ ] Unifier `formatCurrency` (7 occurrences) 🔴 **P0**
+- [ ] Unifier `formatDate` (2 occurrences) 🟠 **P1**
+- [ ] Fusionner `useElectron` + `useIPC` 🔴 **P0**
+- [ ] Créer `types/electron.d.ts` unique 🔴 **P0**
+- [ ] Unifier les 3 composants `KPICard` 🟠 **P1**
+- [ ] Standardiser sur `isLoading` (vs `loading`) 🟡 **P2**
+
+**Rapport complet:** `/docs/AUDIT_COHERENCE.md`
+
+---
+
+### 6.2 Tests
 **Agent:** AGENT-012 (Test Automation) + AGENT-013 (QA Integration)
 
-- [ ] Tests unitaires (Vitest)
-- [ ] Tests E2E (Playwright)
-- [ ] Tests IPC
-- [ ] Coverage > 80%
+- [ ] Tests unitaires (Vitest) ❌
+- [x] Tests E2E (Playwright) ✅ Configuré
+- [ ] ~~Tests IPC~~ 🟡 Partiel
+- [ ] ~~Coverage > 80%~~ ❌ Non atteint
 
-### 6.2 Documentation
+---
+
+### 6.3 Documentation
 **Agent:** AGENT-021 (Technical Writer)
 
 - [ ] Storybook composants
 - [ ] API documentation
 - [ ] User guide
+- [x] README ✅ À jour
 
 ---
 
-## 📅 Planning Suggéré
+## 🚨 Problèmes Critiques (P0)
 
-| Phase | Durée | Agents Principaux |
-|-------|-------|-------------------|
-| 2.1 - Charts | 2-3 jours | AGENT-006, 009 |
-| 2.2 - Budgets | 2-3 jours | AGENT-014 |
-| 2.3 - Validation | 3-4 jours | AGENT-011, 005 |
-| 2.4 - AI | 3-4 jours | AGENT-007, 008 |
-| 3.x - Avancé | 1-2 semaines | AGENT-015, 010 |
-| 4.x - Backend | 1-2 semaines | AGENT-023 |
-| 5.x - Polish | 1 semaine | AGENT-009, 020 |
-| 6.x - Tests | 1 semaine | AGENT-012, 013 |
+### 🔴 À corriger immédiatement
 
-**Total estimé:** 6-8 semaines pour parité complète avec Streamlit
+1. **Données mockées dans composants clés**
+   - TrendChart utilise `generateMockData()`
+   - CommandPalette utilise `mockTransactions`
+   - **Impact:** Fonctionnalités incomplètes en production
+
+2. **Duplication massive de code**
+   - `formatCurrency`: 7 occurrences
+   - Hooks IPC: 2 implémentations
+   - KPICard: 3 composants
+   - **Impact:** Maintenance difficile
+
+3. **Vue "Reste à vivre" manquante**
+   - Feature clé de la version Streamlit
+   - **Impact:** Parité non atteinte
+
+4. **Incohérence AI Settings**
+   - Schéma SQL vs Code TypeScript
+   - **Impact:** Feature IA potentiellement cassée
 
 ---
 
-## 🎯 Priorités Recommandées
+## 📅 Planning Recommandé
+
+### Sprint 1 - Fondations (Semaine 1-2)
+**Objectif:** Stabiliser le code, corriger les P0
+
+| Jour | Tâche |
+|------|-------|
+| 1-2 | Créer lib/formatters.ts, types/electron.d.ts |
+| 3 | Unifier useElectron + useIPC |
+| 4 | Corriger TrendChart (données réelles) |
+| 5 | Corriger CommandPalette (données réelles) |
+| 6-7 | Implémenter vue "Reste à vivre" |
+
+### Sprint 2 - Stabilisation (Semaine 3-4)
+**Objectif:** Améliorer UX et corriger P1
+
+| Jour | Tâche |
+|------|-------|
+| 8-9 | Ajouter système de Toast |
+| 10 | Uniformiser couleurs (emerald) |
+| 11 | Ajouter CSP, chiffrer clés API |
+| 12-13 | Implémenter histogramme dépenses |
+| 14 | Tests E2E critiques |
+
+### Sprint 3 - Qualité (Semaine 5-6)
+**Objectif:** Tests et polish
+
+| Jour | Tâche |
+|------|-------|
+| 15-16 | Tests unitaires (Vitest) |
+| 17 | Validation schéma (Zod) |
+| 18-19 | Détection anomalies, prédictions |
+| 20 | Documentation, clean-up |
+
+**Total:** 4-6 semaines pour release candidate
+
+---
+
+## 🎯 Priorités Actualisées
 
 ### P0 (Immédiat)
-1. **Charts** - Essentiel pour dashboard utile
-2. **Budgets** - Feature clé utilisée quotidiennement
-3. **Validation batch** - Workflow import essentiel
+1. ✅ **BUILD TEST** - Réalisé le 14/03/2026
+2. 🔴 Corriger données mockées (TrendChart, CommandPalette)
+3. 🔴 Unifier formatCurrency et hooks IPC
+4. 🔴 Implémenter vue "Reste à vivre"
+5. 🔴 Corriger incohérence AI Settings
 
 ### P1 (Court terme)
-4. **AI Categorization** - Gain de temps majeur
-5. **Multi-membres** - Pour couples
-6. **Recherche** - UX améliorée
+6. 🟠 Ajouter système de Toast/Notifications
+7. 🟠 Uniformiser design system (couleurs)
+8. 🟠 Ajouter CSP et sécurité
+9. 🟠 Implémenter histogramme dépenses
+10. 🟠 Tests E2E complets
 
 ### P2 (Moyen terme)
-7. **FastAPI backend** - Architecture scalable
-8. **Patrimoine** - Feature avancée
-9. **Gamification** - Engagement
+11. 🟡 Détection anomalies IA
+12. 🟡 Prédictions budgets
+13. 🟡 Mobile responsive complet
+14. 🟡 Tests unitaires (coverage 80%)
 
----
-
-## 🔄 Stratégie de Migration
-
-### Option A: Feature Parity (Recommandé)
-Tout recréer 1:1 puis ajouter nouvelles features
-
-### Option B: MVP Minimal
-Se concentrer sur le core (Dashboard + Import + Validation) pour release rapide
-
-### Option C: Hybrid
-Utiliser FastAPI comme bridge pour réutiliser modules Python existants
+### P3 (Long terme)
+15. 🔵 FastAPI backend
+16. 🔵 WebSocket temps réel
+17. 🔵 Storybook composants
+18. 🔵 Documentation utilisateur
 
 ---
 
 ## 📚 Ressources
 
-- [AGENTS.md](/Users/aurelien/Documents/Projets/FinancePerso/AGENTS.md) - Guide agents
-- [docs/PLANNING/fusion/](/Users/aurelien/Documents/Projets/FinancePerso/docs/PLANNING/fusion/) - Specs Fusion
-- [Version Streamlit](/Users/aurelien/Documents/Projets/FinancePerso/pages/) - Référence features
+- [Rapport Final Migration](/docs/RAPPORT_FINAL_MIGRATION.md)
+- [Rapport Audit Cohérence](/docs/AUDIT_COHERENCE.md)
+- [Rapport Audit Architecture](/docs/AUDIT_ARCHITECTURE.md)
+- [Rapport Audit UI/UX](/docs/AUDIT_UI_UX.md)
+- [Spec Fusion](/docs/PLANNING/fusion/)
+- [Version Streamlit](/Users/aurelien/Documents/Projets/FinancePerso/pages/)
 
 ---
 
-*Dernière mise à jour: 2025-03-13*
-*Prochaine review: Après Phase 2.1 (Charts)*
+## 🏆 Statut Global
+
+```
+Phase 0: ████████████████████ 100% ✅
+Phase 1: ████████████████████ 100% ✅
+Phase 2: ███████████████░░░░░  85% 🟡
+Phase 3: ████████████████░░░░  80% 🟡
+Phase 4: ░░░░░░░░░░░░░░░░░░░░   0% ⚪
+Phase 5: ████████████░░░░░░░░  60% 🟡
+Phase 6: ████████░░░░░░░░░░░░  62% 🟠
+
+GLOBAL:  ████████████████░░░░  77.6% 🟡
+```
+
+**Verdict:** L'application est **fonctionnelle et prête pour une beta privée**. Les corrections P0 doivent être priorisées pour une release publique.
+
+---
+
+*Dernière mise à jour: 14 mars 2026*  
+*Prochaine review: Après Sprint 1 (corrections P0)*

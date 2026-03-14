@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { Transaction, Category, ImportResult } from '@/types';
+import type { Transaction, Category, ImportResult, Budget, BudgetStatus } from '@/types';
 
 // Types pour l'API Electron
 declare global {
@@ -14,6 +14,8 @@ declare global {
         getStatsByMonth: (year: number, month: number) => Promise<any[]>;
         getCategoriesStats: (year: number, month: number) => Promise<any[]>;
         getCategories: () => Promise<Category[]>;
+        getBudgets: () => Promise<Budget[]>;
+        getBudgetStatus: (year: number, month: number) => Promise<BudgetStatus[]>;
       };
       file: {
         importCSV: (filePath: string, options?: any) => Promise<ImportResult>;
@@ -70,6 +72,14 @@ export function useElectron() {
     return api.db.getCategories();
   }, []);
 
+  const getBudgets = useCallback(async () => {
+    return api.db.getBudgets();
+  }, []);
+
+  const getBudgetStatus = useCallback(async (year: number, month: number) => {
+    return api.db.getBudgetStatus(year, month);
+  }, []);
+
   // Helper pour obtenir les stats du dashboard
   const getDashboardStats = useCallback(async (year: number, month: number): Promise<DashboardStats> => {
     const stats = await api.db.getStatsByMonth(year, month);
@@ -120,6 +130,8 @@ export function useElectron() {
     getStatsByMonth,
     getCategoriesStats,
     getCategories,
+    getBudgets,
+    getBudgetStatus,
     getDashboardStats,
     
     // File

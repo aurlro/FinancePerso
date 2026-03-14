@@ -5,9 +5,12 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊', exact: true },
   { path: '/transactions', label: 'Transactions', icon: '💳' },
+  { path: '/subscriptions', label: 'Abonnements', icon: '📅' },
   { path: '/budgets', label: 'Budgets', icon: '🎯' },
   { path: '/categories', label: 'Catégories', icon: '📁' },
   { path: '/members', label: 'Membres', icon: '👥' },
+  { path: '/wealth', label: 'Patrimoine', icon: '💰' },
+  { path: '/assistant', label: 'Assistant IA', icon: '🤖' },
   { path: '/import', label: 'Import', icon: '📥' },
   { path: '/validation', label: 'Validation', icon: '✅' },
   { path: '/settings', label: 'Paramètres', icon: '⚙️' },

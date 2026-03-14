@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { ImportResult, Budget, BudgetStatus, Member, MemberStats } from '../types';
+import type { ImportResult, Budget, BudgetStatus, Member, MemberStats, Subscription } from '../types';
 
 // Types de l'API Electron
 declare global {
@@ -39,6 +39,16 @@ declare global {
         assignTransactionMember: (transactionId: number, memberId: number, splitAmount?: number | null) => Promise<any>;
         getMemberStats: (year: number, month: number) => Promise<MemberStats[]>;
         getTransactionMember: (transactionId: number) => Promise<Member | null>;
+        // Wealth Accounts
+        getWealthAccounts: () => Promise<any[]>;
+        createWealthAccount: (data: any) => Promise<any>;
+        updateWealthAccount: (id: number, data: any) => Promise<any>;
+        deleteWealthAccount: (id: number) => Promise<{ success: boolean }>;
+        // Savings Goals
+        getSavingsGoals: () => Promise<any[]>;
+        createSavingsGoal: (data: any) => Promise<any>;
+        updateSavingsGoal: (id: number, data: any) => Promise<any>;
+        deleteSavingsGoal: (id: number) => Promise<{ success: boolean }>;
       };
       file: {
         importCSV: (filePath: string, options?: any) => Promise<ImportResult>;
@@ -183,6 +193,65 @@ export function useIPC() {
     return api.db.getTransactionMember(transactionId);
   }, []);
 
+  // Wealth Account operations
+  const getWealthAccounts = useCallback(async () => {
+    return api.db.getWealthAccounts();
+  }, []);
+
+  const createWealthAccount = useCallback(async (data: any) => {
+    return api.db.createWealthAccount(data);
+  }, []);
+
+  const updateWealthAccount = useCallback(async (id: number, data: any) => {
+    return api.db.updateWealthAccount(id, data);
+  }, []);
+
+  const deleteWealthAccount = useCallback(async (id: number) => {
+    return api.db.deleteWealthAccount(id);
+  }, []);
+
+  // Savings Goal operations
+  const getSavingsGoals = useCallback(async () => {
+    return api.db.getSavingsGoals();
+  }, []);
+
+  const createSavingsGoal = useCallback(async (data: any) => {
+    return api.db.createSavingsGoal(data);
+  }, []);
+
+  const updateSavingsGoal = useCallback(async (id: number, data: any) => {
+    return api.db.updateSavingsGoal(id, data);
+  }, []);
+
+  const deleteSavingsGoal = useCallback(async (id: number) => {
+    return api.db.deleteSavingsGoal(id);
+  }, []);
+
+  // Subscription operations
+  const getSubscriptions = useCallback(async () => {
+    return api.db.getSubscriptions();
+  }, []);
+
+  const createSubscription = useCallback(async (data: Partial<Subscription>) => {
+    return api.db.createSubscription(data);
+  }, []);
+
+  const updateSubscription = useCallback(async (id: number, data: Partial<Subscription>) => {
+    return api.db.updateSubscription(id, data);
+  }, []);
+
+  const deleteSubscription = useCallback(async (id: number) => {
+    return api.db.deleteSubscription(id);
+  }, []);
+
+  const detectSubscriptions = useCallback(async () => {
+    return api.db.detectSubscriptions();
+  }, []);
+
+  const getUpcomingPayments = useCallback(async (days?: number) => {
+    return api.db.getUpcomingPayments(days);
+  }, []);
+
   // File operations
   const selectCSV = useCallback(async () => {
     return api.file.selectCSV();
@@ -238,6 +307,23 @@ export function useIPC() {
     assignTransactionMember,
     getMemberStats,
     getTransactionMember,
+    // Wealth Accounts
+    getWealthAccounts,
+    createWealthAccount,
+    updateWealthAccount,
+    deleteWealthAccount,
+    // Savings Goals
+    getSavingsGoals,
+    createSavingsGoal,
+    updateSavingsGoal,
+    deleteSavingsGoal,
+    // Subscriptions
+    getSubscriptions,
+    createSubscription,
+    updateSubscription,
+    deleteSubscription,
+    detectSubscriptions,
+    getUpcomingPayments,
     // File
     selectCSV,
     importCSV,

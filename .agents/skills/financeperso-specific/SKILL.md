@@ -1,34 +1,53 @@
 ---
 name: financeperso-specific
-description: Conventions spécifiques au projet FinancePerso (app Streamlit de gestion financière). À utiliser TOUJOURS COMBINÉ avec python-app-auditor (audit code) et/ou streamlit-app-auditor (audit fonctionnel). Ce skill fournit les patterns, architecture et bonnes pratiques propres à FinancePerso. Ne pas utiliser seul - toujours combiner avec un skill d'audit technique.
+description: Conventions spécifiques au projet FinancePerso. COUVRE DEUX APPLICATIONS : (1) Application Streamlit legacy (racine) et (2) Application Electron moderne (financeperso-electron/). Ce skill fournit les patterns, architecture et bonnes pratiques propres à FinancePerso. À utiliser TOUJOURS COMBINÉ avec python-app-auditor (pour Streamlit), electron-vite-expert (pour Electron), ou streamlit-app-auditor.
 ---
 
 # FinancePerso - Conventions Projet
 
-## Architecture du projet
+## 🏗️ Architecture Dual-Stack
 
-### Structure
+Ce projet contient **DEUX applications** :
+
 ```
 FinancePerso/
-├── app.py                    # Onboarding + Dashboard
-├── pages/                    # Pages Streamlit (numérotées)
-│   ├── 1_Import.py
-│   ├── 2_Validation.py
-│   ├── 3_Synthese.py
-│   └── ...
-├── modules/                  # Modules métier
-│   ├── ai/                  # Suite IA (anomaly_detector, budget_predictor...)
-│   ├── db/                  # Couche accès données (connection, transactions...)
-│   ├── ui/                  # Composants UI (feedback, layout, components)
-│   └── *.py                 # Modules métier (categorization, ingestion...)
-├── Data/
-│   └── finance.db          # Base SQLite
-└── tests/                   # Tests
+├── [RACINE]                    # Application Streamlit (Legacy)
+│   ├── app.py                  # Point d'entrée Streamlit
+│   ├── pages/                  # Pages Streamlit (01_*.py, 02_*.py...)
+│   ├── modules/                # Modules Python métier
+│   │   ├── ai/                 # Suite IA
+│   │   ├── db/                 # Couche accès données SQLite
+│   │   ├── ui/                 # Composants UI Streamlit
+│   │   └── *.py                # Modules métier
+│   ├── Data/
+│   │   └── finance.db          # Base SQLite (partagée)
+│   └── tests/                  # Tests Python
+│
+└── financeperso-electron/      # Application Electron (Nouveau)
+    ├── src/
+    │   ├── main.js             # Electron Main Process (Node.js)
+    │   ├── preload.js          # Pont IPC sécurisé
+    │   ├── App.tsx             # Root React
+    │   ├── pages/              # 11 pages React
+    │   ├── components/         # Composants React
+    │   ├── hooks/              # Hooks personnalisés
+    │   ├── services/           # Services (DB, AI, File)
+    │   └── types/              # Types TypeScript
+    ├── src/services/
+    │   ├── database.js         # SQLite service (sqlite3)
+    │   ├── file-import.cjs     # Import CSV natif
+    │   └── ai-service.cjs      # Service IA (API Gemini/OpenAI)
+    ├── tests/e2e/              # Tests Playwright
+    └── package.json
 ```
 
-## Patterns spécifiques
+---
 
-### Connexion base de données
+## 📱 Application 1: Streamlit (Legacy)
+
+### Patterns spécifiques Streamlit
+
+#### Connexion base de données
 ```python
 from modules.db.connection import get_db_connection
 
@@ -37,7 +56,7 @@ with get_db_connection() as conn:
     cursor.execute("SELECT * FROM transactions WHERE id = ?", (id,))
 ```
 
-### Session State
+#### Session State
 ```python
 # Initialisation toujours avec check
 if 'key' not in st.session_state:
@@ -48,21 +67,21 @@ st.session_state.key = new_value
 st.rerun()
 ```
 
-### Widget keys
+#### Widget keys
 Format obligatoire: `f"{type}_{unique_id}"`
 ```python
 st.button("Save", key=f"btn_save_{tx_id}")
 st.text_input("Label", key=f"input_label_{i}")
 ```
 
-### Messages utilisateur
+#### Messages utilisateur
 Toujours en français:
 ```python
 st.success("✅ Transaction enregistrée")
 st.error("❌ Une erreur est survenue")
 ```
 
-## Modules IA
+### Modules IA Streamlit
 
 Pattern d'utilisation:
 ```python
@@ -73,7 +92,7 @@ provider = get_ai_provider()
 anomalies = detect_amount_anomalies(df)
 ```
 
-## UI Components
+### UI Components Streamlit
 
 Import convention:
 ```python
@@ -81,57 +100,246 @@ from modules.ui import load_css, card_kpi, display_flash_messages
 from modules.ui.components import render_transaction_drill_down
 ```
 
-## Gestion des transactions
+### Tests Streamlit
 
-- `tx_hash` pour déduplication
-- Tags stockés comme JSON array
-- Table `transaction_history` pour undo
-
-## Tests
-
-Lancer tests:
 ```bash
 pytest
 pytest tests/db/ -v
 pytest tests/ai/ -v
 ```
 
-## Combinaison avec les skills globaux & agents
+---
 
-Ce skill contient les conventions spécifiques à FinancePerso. Pour un audit complet, **toujours le combiner** avec:
+## 💻 Application 2: Electron (Nouveau)
 
-### Coordination générale
-→ **consistency-keeper** → **AGENT-000** → [Agents spécialisés]
+### Patterns spécifiques Electron
 
-**Document de référence:** [SKILLS_AGENTS_COORDINATION.md](../SKILLS_AGENTS_COORDINATION.md)
+#### Communication IPC (Renderer → Main)
 
-### Audit technique code
-→ **python-app-auditor** + **financeperso-specific** + **AGENT-001/004/005**
-
-```
-1. Lire AGENTS.md + ce skill pour conventions
-2. Lancer python-app-auditor pour audit qualité/sécurité
-3. AGENT-000 route vers agent(s) spécialisé(s)
-4. Appliquer les patterns spécifiques FinancePerso
+**Dans le renderer (React)**:
+```typescript
+// Utiliser window.electronAPI exposé par preload.js
+const transactions = await window.electronAPI.db.getAllTransactions(100);
+const filePath = await window.electronAPI.file.selectCSV();
 ```
 
-### Audit fonctionnel Streamlit  
-→ **streamlit-app-auditor** + **financeperso-specific** + **AGENT-009/010/006**
+**Dans le main (Node.js)**:
+```javascript
+const { ipcMain } = require('electron');
 
+ipcMain.handle('db:get-all-transactions', async (_, limit) => {
+  return await dbService.getAllTransactions(limit);
+});
 ```
-1. Lancer l'app avec streamlit-app-auditor
-2. AGENT-000 coordonne agents UI/UX
-3. Tester les fonctionnalités métier
-4. Vérifier les patterns FinancePerso (session_state, cache, etc.)
+
+#### Base de données SQLite (sqlite3)
+
+```javascript
+// src/services/database.js - Pattern async/await
+class DatabaseService {
+  async getAllTransactions(limit = 100, offset = 0) {
+    return new Promise((resolve, reject) => {
+      this.db.all(
+        `SELECT * FROM transactions ORDER BY date DESC LIMIT ? OFFSET ?`,
+        [limit, offset],
+        (err, rows) => err ? reject(err) : resolve(rows)
+      );
+    });
+  }
+}
 ```
 
-### Audit UX
-→ **ux-product-designer** + **AGENT-009/010** (UI/UX spécialisés)
+#### Hooks React personnalisés
 
-### Audit produit/stratégie
-→ **product-indispensability-audit** seul (pas besoin de ce skill)
+```typescript
+// src/hooks/useTransactions.ts
+import { useState, useEffect } from 'react';
 
-## Références
+export function useTransactions(limit = 100) {
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-- [references/architecture.md](references/architecture.md) - Détails architecture
-- AGENTS.md à la racine - Guide complet
+  useEffect(() => {
+    loadTransactions();
+  }, [limit]);
+
+  const loadTransactions = async () => {
+    setLoading(true);
+    try {
+      const data = await window.electronAPI.db.getAllTransactions(limit);
+      setTransactions(data);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { transactions, loading, refresh: loadTransactions };
+}
+```
+
+#### Composants UI shadcn/ui
+
+```typescript
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+// Usage
+<Card>
+  <CardHeader>
+    <CardTitle>Titre</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <Button onClick={handleClick}>Action</Button>
+  </CardContent>
+</Card>
+```
+
+#### Graphiques Recharts
+
+```typescript
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+
+// Pattern avec ResponsiveContainer
+<ResponsiveContainer width="100%" height={300}>
+  <PieChart>
+    <Pie data={data} dataKey="value" nameKey="name">
+      {data.map((entry, index) => (
+        <Cell key={`cell-${index}`} fill={entry.color} />
+      ))}
+    </Pie>
+    <Tooltip />
+  </PieChart>
+</ResponsiveContainer>
+```
+
+### Tests Electron
+
+```bash
+cd financeperso-electron
+npm run test              # Tests E2E Playwright
+npm run test:ui           # Mode UI Playwright
+npx playwright test tests/e2e/dashboard.spec.ts  # Test spécifique
+```
+
+### Build Electron
+
+```bash
+cd financeperso-electron
+npm run dev               # Développement
+npm run build             # Build production
+npm run package           # Package local
+npm run make              # Créer les installateurs
+```
+
+---
+
+## 🔄 Points Communs / Partagés
+
+### Schéma Base de Données (Identique)
+
+```sql
+-- Utilisé par les DEUX applications (même fichier SQLite)
+transactions:
+  - id, date, label, amount, type (debit/credit)
+  - category, category_validated
+  - member, tags (JSON)
+  - tx_hash (déduplication)
+
+categories:
+  - id, name, emoji, color, is_fixed, budget_amount
+
+members:
+  - id, name, member_type, color
+
+learning_rules:
+  - id, pattern, category, priority
+```
+
+### Localisation des données
+
+- **Streamlit**: `Data/finance.db` (configurable via DB_PATH)
+- **Electron**: `~/Library/Application Support/Electron/finance.db` (macOS)
+- **Electron**: `%APPDATA%/Electron/finance.db` (Windows)
+
+### Feature Parité
+
+| Feature | Streamlit | Electron | Statut |
+|---------|-----------|----------|--------|
+| Dashboard | ✅ | ✅ | Parité |
+| Import CSV | ✅ | ✅ | Parité |
+| Validation | ✅ | ✅ | Parité |
+| Budgets | ✅ | ✅ | Parité |
+| Multi-membres | ✅ | ✅ | Parité |
+| Patrimoine | ✅ | ✅ | Parité |
+| Abonnements | ✅ | ✅ | Parité |
+| Assistant IA | ✅ | ✅ | Parité |
+| Recherche | ⚠️ | ✅ | Electron > |
+| Auto-updater | ❌ | ✅ | Bonus Electron |
+| Packaging natif | ❌ | ✅ | Bonus Electron |
+
+---
+
+## 🤖 Combinaison avec les Skills & Agents
+
+### Pour travailler sur l'application Streamlit
+```
+consistency-keeper → python-app-auditor + financeperso-specific → AGENT-001/004/005
+```
+
+### Pour travailler sur l'application Electron
+```
+consistency-keeper → electron-vite-expert + financeperso-specific → AGENT-025/009/012
+```
+
+### Pour synchroniser les deux applications
+```
+electron-python-sync (pour data sync) + AGENT-017/018
+```
+
+### Agents spécialisés par app
+
+**Streamlit:**
+- AGENT-001: Database Architect
+- AGENT-004: Transaction Engine
+- AGENT-005: Categorization AI
+- AGENT-006: Analytics Dashboard
+
+**Electron:**
+- AGENT-025: Electron Desktop Architect
+- AGENT-009: UI Component Architect
+- AGENT-010: Navigation Experience
+- AGENT-012: Test Automation
+
+**Communs:**
+- AGENT-014: Budget Wealth Manager
+- AGENT-015: Member Management
+- AGENT-007/008: AI Providers
+
+---
+
+## ⚠️ Anti-patterns à Éviter
+
+### Streamlit
+| Problème | Solution |
+|----------|----------|
+| `from modules.ui import card_kpi` dans boucle | Importer une seule fois en haut |
+| Modification DB sans invalider cache | `st.cache_data.clear()` |
+| Requête DB sans context manager | `with get_db_connection() as conn:` |
+| Clés widgets en dur | `key=f"btn_{unique_id}"` |
+
+### Electron
+| Problème | Solution |
+|----------|----------|
+| `import { app } from 'electron'` | Utiliser `require('electron')` |
+| Appel DB depuis renderer sans IPC | Toujours passer par `window.electronAPI` |
+| SQL injection | Toujours utiliser des paramètres bind `?` |
+| Fenêtre sans preload | Configurer `contextIsolation: true` |
+
+---
+
+## 📚 Références
+
+- [references/architecture.md](references/architecture.md) - Détails architecture Streamlit
+- [financeperso-electron/PROJECT_COMPLETION_REPORT.md](../financeperso-electron/PROJECT_COMPLETION_REPORT.md) - Rapport Electron
+- AGENTS.md à la racine - Guide complet agents

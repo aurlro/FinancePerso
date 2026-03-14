@@ -51,3 +51,9 @@ node_modules/
 *.swp
 *.swo
 *~
+# Electron build artifacts
+financeperso-electron/release/
+financeperso-electron/out/
+*.dmg
+*.zip
+*.asar

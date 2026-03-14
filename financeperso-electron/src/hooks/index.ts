@@ -6,3 +6,5 @@ export { useBudgets, useBudgetStatus } from './useBudgets';
 export { useAI, useAICategorization } from './useAI';
 export { useCommandPalette } from './useCommandPalette';
 export { useMembers, useMemberTransactions, useMemberStats, useSplitTransaction } from './useMembers';
+export { useSubscriptions, useUpcomingPayments } from './useSubscriptions';
+export { useWealthAccounts, useSavingsGoals, useProjections, useSuggestedContribution } from './useWealth';

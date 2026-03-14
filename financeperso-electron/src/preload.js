@@ -43,6 +43,23 @@ const electronAPI = {
     assignTransactionMember: (transactionId, memberId, splitAmount) => ipcRenderer.invoke('db:assign-transaction-member', transactionId, memberId, splitAmount),
     getMemberStats: (year, month) => ipcRenderer.invoke('db:get-member-stats', year, month),
     getTransactionMember: (transactionId) => ipcRenderer.invoke('db:get-transaction-member', transactionId),
+    // Wealth Accounts
+    getWealthAccounts: () => ipcRenderer.invoke('db:get-wealth-accounts'),
+    createWealthAccount: (data) => ipcRenderer.invoke('db:create-wealth-account', data),
+    updateWealthAccount: (id, data) => ipcRenderer.invoke('db:update-wealth-account', id, data),
+    deleteWealthAccount: (id) => ipcRenderer.invoke('db:delete-wealth-account', id),
+    // Savings Goals
+    getSavingsGoals: () => ipcRenderer.invoke('db:get-savings-goals'),
+    createSavingsGoal: (data) => ipcRenderer.invoke('db:create-savings-goal', data),
+    updateSavingsGoal: (id, data) => ipcRenderer.invoke('db:update-savings-goal', id, data),
+    deleteSavingsGoal: (id) => ipcRenderer.invoke('db:delete-savings-goal', id),
+    // Subscriptions
+    getSubscriptions: () => ipcRenderer.invoke('db:get-subscriptions'),
+    createSubscription: (data) => ipcRenderer.invoke('db:create-subscription', data),
+    updateSubscription: (id, data) => ipcRenderer.invoke('db:update-subscription', id, data),
+    deleteSubscription: (id) => ipcRenderer.invoke('db:delete-subscription', id),
+    detectSubscriptions: () => ipcRenderer.invoke('db:detect-subscriptions'),
+    getUpcomingPayments: (days) => ipcRenderer.invoke('db:get-upcoming-payments', days),
   },
   
   // File operations
