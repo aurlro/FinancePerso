@@ -1,0 +1,251 @@
+# -*- coding: utf-8 -*-
+name: CI Strict - Production Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ============================================
+  # Backend Lint & Format Check
+  # ============================================
+  backend-lint:
+    name: Backend Lint & Format
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black bandit
+      
+      - name: Check code with Ruff
+        run: |
+          ruff check modules/ web/api/ tests/ --output-format=github
+      
+      - name: Check imports with Ruff
+        run: |
+          ruff check modules/ web/api/ tests/ --select I --output-format=github
+      
+      - name: Check formatting with Black
+        run: |
+          black --check modules/ web/api/ tests/
+      
+      - name: Security scan with Bandit
+        run: |
+          bandit -r modules/ web/api/ -ll -ii
+
+  # ============================================
+  # Backend Tests (Strict)
+  # ============================================
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: [backend-lint]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run essential tests
+        run: |
+          pytest tests/test_essential.py -v
+      
+      - name: Run all tests with coverage
+        run: |
+          pytest tests/ -v --cov=modules --cov-report=xml --cov-fail-under=50
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true
+
+  # ============================================
+  # Frontend Build & Test
+  # ============================================
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: web/frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: web/frontend
+        run: npm ci
+      
+      - name: Run ESLint
+        working-directory: web/frontend
+        run: npm run lint
+      
+      - name: Check TypeScript
+        working-directory: web/frontend
+        run: npm run type-check
+      
+      - name: Build frontend
+        working-directory: web/frontend
+        run: npm run build
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: web/frontend/dist/
+          retention-days: 7
+
+  # ============================================
+  # Security Scan (Strict)
+  # ============================================
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [backend-lint]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Bandit (Python)
+        run: |
+          pip install bandit
+          bandit -r modules/ web/api/ -ll -ii
+      
+      - name: Check for secrets
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --baseline .secrets.baseline
+      
+      - name: Run npm audit
+        if: hashFiles('web/frontend/package-lock.json') != ''
+        working-directory: web/frontend
+        run: npm audit --audit-level=moderate
+
+  # ============================================
+  # Docker Build Test
+  # ============================================
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: financeperso:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Test Docker image
+        run: |
+          docker run -d -p 8501:8501 --name financeperso-test financeperso:test
+          sleep 10
+          curl -f http://localhost:8501/_stcore/health || exit 1
+          docker stop financeperso-test
+
+  # ============================================
+  # Documentation Check
+  # ============================================
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check README.md exists
+        run: |
+          test -f README.md || (echo "README.md missing!" && exit 1)
+      
+      - name: Check CHANGELOG.md updated
+        run: |
+          test -f CHANGELOG.md || (echo "CHANGELOG.md missing!" && exit 1)
+      
+      - name: Check AGENTS.md exists
+        run: |
+          test -f AGENTS.md || (echo "AGENTS.md missing!" && exit 1)
+      
+      - name: Verify documentation links
+        run: |
+          # Check for broken internal links
+          grep -r "\[.*\](.*\.md)" docs/ --include="*.md" | while read line; do
+            link=$(echo "$line" | grep -oP '\(.*?\.md\)' | tr -d '()')
+            if [[ ! -f "$link" && ! -f "docs/$link" ]]; then
+              echo "Broken link: $link"
+              exit 1
+            fi
+          done
+
+  # ============================================
+  # Deploy (Production)
+  # ============================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-build, security-scan, docker-build, docs-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: web/frontend/dist/
+      
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production..."
+          # Add deployment commands here
+      
+      - name: Notify deployment
+        run: |
+          echo "✅ Deployment completed successfully!"

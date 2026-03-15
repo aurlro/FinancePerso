@@ -8,27 +8,83 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "Europe/Paris"
-    open-pull-requests-limit: 10
-    reviewers:
-      - "aurelien"
-    assignees:
-      - "aurelien"
+    open-pull-requests-limit: 5
+    groups:
+      # Groupe pour les mises à jour de sécurité critiques
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
+      # Groupe pour les mises à jour de patch (auto-merge possible)
+      patch-updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+      # Groupe pour les mises à jour mineures
+      minor-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+      # Groupe pour les mises à jour majeures (manuelles)
+      major-updates:
+        applies-to: version-updates
+        update-types:
+          - "major"
     labels:
       - "dependencies"
       - "python"
     commit-message:
-      prefix: "⬆️"
-      prefix-development: "⬆️ dev"
+      prefix: "⬆️ pip"
       include: "scope"
     ignore:
-      # Ignore major version updates for critical packages (manual review required)
+      # Ignorer les versions majeures de Streamlit (nécessite tests manuels)
       - dependency-name: "streamlit"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "pandas"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "cryptography"
-        update-types: ["version-update:semver-major"]
+    auto-merge-conditions:
+      - dependency-type: "direct:production"
+        update-type: "patch"
+      - dependency-type: "development"
+        update-type: "semver:minor"
+
+  # Node.js dependencies (frontend)
+  - package-ecosystem: "npm"
+    directory: "/web/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+          - "major"
+      patch-updates:
+        applies-to: version-updates
+        update-types:
+          - "patch"
+      minor-updates:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+      major-updates:
+        applies-to: version-updates
+        update-types:
+          - "major"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "⬆️ npm"
+      include: "scope"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -37,13 +93,41 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "Europe/Paris"
     open-pull-requests-limit: 5
-    reviewers:
-      - "aurelien"
+    groups:
+      actions-patch:
+        applies-to: version-updates
+        patterns:
+          - "actions/*"
+        update-types:
+          - "patch"
+      actions-minor:
+        applies-to: version-updates
+        patterns:
+          - "actions/*"
+        update-types:
+          - "minor"
+      docker-actions:
+        applies-to: version-updates
+        patterns:
+          - "docker/*"
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
-      prefix: "⬆️ ci"
+      prefix: "⬆️ gh-actions"
+      include: "scope"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "⬆️ docker"
       include: "scope"

@@ -77,8 +77,13 @@ ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 ENV STREAMLIT_SERVER_HEADLESS=true
-ENV STREAMLIT_SERVER_ENABLECORS=false
-ENV STREAMLIT_SERVER_ENABLEXsSRFProtection=false
+# Security settings
+# CORS and XSRF protection enabled by default for production
+# Set to false only for local development
+ARG ENABLE_CORS=true
+ARG ENABLE_XSRF=true
+ENV STREAMLIT_SERVER_ENABLECORS=${ENABLE_CORS}
+ENV STREAMLIT_SERVER_ENABLEXsSRFProtection=${ENABLE_XSRF}
 
 # =============================================================================
 # Health check
