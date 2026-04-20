@@ -30,7 +30,7 @@ jobs:
 
       - name: Cleanup merged branches
         id: cleanup_branches
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -148,7 +148,7 @@ jobs:
 
       - name: Close stale dependabot PRs
         id: cleanup_prs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
